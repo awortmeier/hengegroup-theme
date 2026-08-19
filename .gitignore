@@ -1,0 +1,7 @@
+node_modules
+vendor
+dist
+.env
+.deploy-state
+.claude/settings.local.json
+.phpunit.cache

@@ -1,0 +1,51 @@
+{
+    "name": "base-theme",
+    "version": "1.0.0",
+    "private": true,
+    "license": "UNLICENSED",
+    "type": "module",
+    "packageManager": "pnpm@11.18.0",
+    "scripts": {
+        "clean": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/clean.ps1",
+        "version": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-theme-version.ps1",
+        "sync-theme-version": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-theme-version.ps1 -NoGitAdd",
+        "sync-theme-tokens": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-theme-tokens.ps1",
+        "build:assets": "vite build",
+        "build:theme": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
+        "build": "pnpm run build:theme",
+        "deploy:all": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy.ps1",
+        "deploy:changed": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-changed.ps1",
+        "i18n": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/i18n-make-pot.ps1",
+        "i18n:compile": "php scripts/i18n-compile-mo.php languages/de_DE.po languages/en_GB.po",
+        "i18n:pot": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/i18n-make-pot.ps1",
+        "icons:lucide": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-lucide-icons.ps1",
+        "icons:tabler": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync-tabler-icons.ps1",
+        "format": "prettier --write \"**/*.{css,js,json,md,php}\"",
+        "format:check": "prettier --check \"**/*.{css,js,json,md,php}\"",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "audit": "pnpm audit",
+        "prepare": "husky"
+    },
+    "devDependencies": {
+        "@prettier/plugin-php": "^0.24.0",
+        "@tabler/icons": "^3.46.0",
+        "@tailwindcss/vite": "^4.3.3",
+        "husky": "^9.1.7",
+        "jsdom": "^30.0.1",
+        "lint-staged": "^17.3.0",
+        "lucide-static": "^1.31.0",
+        "prettier": "^3.9.6",
+        "prettier-plugin-tailwindcss": "^0.6.14",
+        "tailwindcss": "^4.3.3",
+        "vite": "^8.2.1",
+        "vitest": "^4.1.10"
+    },
+    "lint-staged": {
+        "*.php": [
+            "prettier --write",
+            "vendor/bin/phpcs"
+        ],
+        "*.{css,js,json,md}": "prettier --write"
+    }
+}

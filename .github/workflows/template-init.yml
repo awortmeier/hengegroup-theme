@@ -1,0 +1,64 @@
+# One-shot initializer for repos created via GitHub's "Use this template" button
+# (Settings -> Template repository must be enabled on wordpress-base-theme itself for that button
+# to show up there in the first place).
+#
+# "Use this template" performs a real initial push into the new repo (unlike a plain git Fork,
+# which doesn't), so this workflow fires automatically on that push and runs the equivalent of
+# README "Neues Projekt aus dieser Vorlage starten" step 2 (scripts/rename-theme.ps1) for you:
+# slug/prefix are derived from the new repo's name, committed back, and the workflow then deletes
+# itself so it never runs again (also guarded by the "job only runs on repos other than the base
+# template itself" check below, so pushes to THIS repo never trigger the rename).
+#
+# Does NOT cover README step 3 (Theme URI/Description/Author URI) or steps 4-6 (logo, brand
+# colors, .env) - those still need the manual follow-up documented in README, there's no sane
+# default to auto-derive them from a repo name.
+name: Template Init
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  init:
+    if: github.repository != 'awortmeier/wordpress-base-theme'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rename base-theme -> repo slug, then remove this workflow
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          $currentName = (Get-Content package.json -Raw | ConvertFrom-Json).name
+          if ($currentName -ne "base-theme") {
+              Write-Output "package.json 'name' ist bereits '$currentName' (nicht 'base-theme') - scheint schon initialisiert zu sein, ueberspringe Rename."
+          } else {
+              $slug = $env:REPO_NAME.ToLowerInvariant() -replace '[^a-z0-9]+', '-'
+              $slug = $slug.Trim('-')
+              if ($slug -notmatch '^[a-z0-9]+(-[a-z0-9]+)*$') {
+                  throw "Konnte aus Repo-Name '$env:REPO_NAME' keinen gueltigen kebab-case Slug ableiten ('$slug'). Bitte scripts/rename-theme.ps1 manuell mit -NewSlug ausfuehren."
+              }
+              & "./scripts/rename-theme.ps1" -NewSlug $slug -ThemeName $env:REPO_NAME
+          }
+
+          if (Test-Path ".github/workflows/template-init.yml") {
+              Remove-Item ".github/workflows/template-init.yml" -Force
+          }
+
+      - name: Commit
+        run: |
+          if (git status --porcelain) {
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add -A
+              git commit -m "chore: initialize project from base-theme template"
+              git push
+          } else {
+              Write-Output "Nichts zu committen."
+          }

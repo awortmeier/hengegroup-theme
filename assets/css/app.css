@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@layer components {
+    body {
+    }
+
+    .wrapper {
+    }
+
+    .wrapper-small {
+    }
+}

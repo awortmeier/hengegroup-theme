@@ -1,0 +1,65 @@
+# Lint + test gate for every push/PR (see CLAUDE.md Regel 11 and docs/to-do.md
+# Abschnitt 1 -- before this workflow, `composer lint`/`pnpm format`/PHPUnit/Vitest all existed but
+# only ran on-demand, nothing enforced them). Split into two jobs (php/js) so either toolchain can
+# fail independently without blocking the other's feedback; a11y (axe-core against the still-
+# missing component showcase page) and visual regression (Phase 2 only) are intentionally NOT part
+# of this workflow yet, see docs/entscheidungen.md.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - run: composer install --no-interaction --prefer-dist
+
+      - name: Lint (phpcs)
+        run: composer lint
+
+      - name: Test (PHPUnit)
+        run: composer test
+
+      - name: Dependency audit (report only, see docs/entscheidungen.md)
+        run: composer audit
+        continue-on-error: true
+
+  js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Format check (Prettier)
+        run: pnpm format:check
+
+      - name: Test (Vitest)
+        run: pnpm test
+
+      - name: Dependency audit (report only, see docs/entscheidungen.md)
+        run: pnpm audit
+        continue-on-error: true

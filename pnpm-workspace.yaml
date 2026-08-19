@@ -1,0 +1,11 @@
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: false
+
+# Vite listet sass/sass-embedded als optionale Peer-Deps fuer CSS-Preprocessing (ungenutzt in
+# diesem Tailwind-only-Projekt, wird trotzdem mitinstalliert) und zieht darueber eine
+# verwundbare immutable-Version rein (GHSA-v56q-mh7h-f735/GHSA-xvcm-6775-5m9r, siehe
+# docs/to-do.md #4) -- per Override auf die gepatchte Version erzwungen, ohne
+# dass dieses Projekt selbst eine direkte Abhaengigkeit zu immutable braucht.
+overrides:
+  immutable: ^5.1.9

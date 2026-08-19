@@ -1,0 +1,21 @@
+/*
+ * Zentrale Design-Tokens fuer dieses Theme.
+ *
+ * Fuer neutrale Grautoene (Text, Hintergruende, Rahmen) wird bewusst Tailwinds
+ * eigene neutral-Skala verwendet (z. B. "neutral-800", ueber theme(--color-neutral-800)
+ * in Roh-CSS oder direkt als Utility-Klasse) statt eigener Alias-Tokens.
+ *
+ * --color-accent ist der einzige Wert, der sich pro Projekt aendert (Marken-Akzentfarbe).
+ * Wird von app.css und login.css importiert, damit die Variable in beiden
+ * (unabhaengigen) Vite-Entrypoints zur Laufzeit zur Verfuegung steht.
+ *
+ * Bei einem neuen Projekt: --color-accent durch die Marken-Akzentfarbe ersetzen, danach
+ * `pnpm run sync-theme-tokens` ausfuehren (siehe scripts/sync-theme-tokens.ps1) — zieht denselben
+ * Wert automatisch in theme.json (settings.color.palette "accent", styles.elements.link) nach,
+ * da theme.json diese Datei nicht importieren kann (reines JSON, kein CSS-Pipeline-Zugriff).
+ */
+@theme static {
+    --color-accent: #737373; /* Platzhalter (Tailwind neutral-500) — durch Marken-Akzentfarbe ersetzen */
+
+    --font-accent: ui-sans-serif, system-ui, sans-serif;
+}

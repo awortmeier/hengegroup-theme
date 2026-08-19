@@ -1,0 +1,31 @@
+{
+    "name": "base-theme/theme",
+    "description": "Dev-only tooling (WPCS-Lint, PHPUnit) fuer base-theme. Nicht zur Laufzeit benoetigt, siehe CLAUDE.md Regel 11.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^3.9",
+        "wp-coding-standards/wpcs": "^3.1",
+        "php-stubs/wordpress-stubs": "^7.0",
+        "phpunit/phpunit": "^13.3",
+        "brain/monkey": "^2.7"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BaseTheme\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "lint": "phpcs",
+        "lint:fix": "phpcbf",
+        "test": "phpunit"
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "plugins": ["@prettier/plugin-php", "prettier-plugin-tailwindcss"],
+    "tabWidth": 4,
+    "useTabs": false,
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": false,
+    "printWidth": 100,
+    "htmlWhitespaceSensitivity": "css",
+    "overrides": [
+        {
+            "files": "*.php",
+            "options": {
+                "singleQuote": true
+            }
+        },
+        {
+            "files": "*.js",
+            "options": {
+                "singleQuote": false
+            }
+        },
+        {
+            "files": ["*.scss", "*.css"],
+            "options": {
+                "singleQuote": false
+            }
+        }
+    ]
+}

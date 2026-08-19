@@ -1,0 +1,6 @@
+@reference "tailwindcss";
+
+@layer components {
+    #site-header {
+    }
+}

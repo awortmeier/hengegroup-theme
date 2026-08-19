@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Runs PHPUnit + Brain Monkey (see tests/bootstrap.php) against the pure-logic helpers in
+    inc/template-parts/helpers.php — Brain Monkey stubs the handful of WP
+    functions those helpers call (esc_attr/esc_html/_doing_it_wrong) so this suite runs without a
+    full WordPress install. See docs/entscheidungen.md for why Brain Monkey over a real
+    wp-env/WP test suite, and docs/to-do.md Abschnitt 1 for the wider testing
+    roadmap this is one piece of.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <file>inc/template-parts/helpers.php</file>
+        </include>
+    </source>
+</phpunit>

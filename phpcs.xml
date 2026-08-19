@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<ruleset name="base-theme">
+    <description>
+        Automatisierte Pruefung fuer die in CLAUDE.md schriftlich fixierten PHP-Konventionen
+        (strict_types, Escaping, sanitisierte Datei-Zugriffe) via WPCS. Bewusst NICHT die volle
+        WordPress-Extra-Formatierung (Tabs, Whitespace, Array-Einrueckung, ...) -- die uebernimmt
+        bereits @prettier/plugin-php (siehe .prettierrc.json); ein zweites, konkurrierendes
+        Format-Tool waere Drift-Risiko statt Mehrwert. Siehe CLAUDE.md Regel 11 ("Tooling").
+    </description>
+
+    <file>.</file>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/dist/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/languages/*</exclude-pattern>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+
+    <!-- CLAUDE.md Regel 4: declare(strict_types=1); als erste Zeile jeder Komponente.
+         Kein WPCS-Sniff dafuer vorhanden (WordPress.PHP.StrictTypes existiert in WPCS 3.x nicht,
+         siehe docs/audit-2026-08-07-base-components.md Befund 3), der Sniff kommt aus
+         PHPCS-Core selbst. -->
+    <rule ref="Generic.PHP.RequireStrictTypes"/>
+
+    <!-- CLAUDE.md Regel 4: Ausgabe ausschliesslich ueber esc_html()/esc_attr(); vorab escapte/
+         zusammengesetzte Strings tragen ein dokumentiertes phpcs:ignore -->
+    <rule ref="WordPress.Security.EscapeOutput"/>
+
+    <!-- CLAUDE.md Regel 6: Konfigwerte, die in einen Dateipfad einfliessen (icon.php/image.php),
+         muessen vor dem Zugriff sanitisiert/validiert sein -->
+    <rule ref="WordPress.Security.ValidatedSanitizedInput"/>
+
+    <config name="minimum_supported_wp_version" value="6.5"/>
+</ruleset>

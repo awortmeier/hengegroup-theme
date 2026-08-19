@@ -1,0 +1,39 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/theme.json",
+    "version": 3,
+    "settings": {
+        "appearanceTools": true,
+        "color": {
+            "palette": [
+                {
+                    "slug": "accent",
+                    "name": "Accent",
+                    "color": "#737373"
+                }
+            ]
+        },
+        "layout": {
+            "contentSize": "48rem",
+            "wideSize": "72rem"
+        },
+        "spacing": {
+            "units": ["px", "rem", "%", "vw", "vh"]
+        },
+        "typography": {
+            "fluid": true
+        }
+    },
+    "styles": {
+        "color": {
+            "background": "#fafafa",
+            "text": "#262626"
+        },
+        "elements": {
+            "link": {
+                "color": {
+                    "text": "#737373"
+                }
+            }
+        }
+    }
+}
