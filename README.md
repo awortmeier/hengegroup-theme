@@ -1,4 +1,4 @@
-# base-theme
+# hengegroup-theme
 
 Persönliche Basis-Vorlage für WordPress- und WooCommerce-Themes.
 

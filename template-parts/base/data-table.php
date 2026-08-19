@@ -121,7 +121,7 @@ $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : 
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
 
 if ($empty_text === '') {
-    $empty_text = esc_html__('No results.', 'base-theme');
+    $empty_text = esc_html__('No results.', 'hengegroup-theme');
 }
 
 if (!in_array($order, ['asc', 'desc'], true)) {
@@ -193,7 +193,7 @@ foreach ($columns as $column) {
             $icon_name = 'chevrons-up-down';
         }
 
-        $sort_icon = base_theme_render_icon(['name' => $icon_name, 'set' => 'lucide']);
+        $sort_icon = hengegroup_theme_render_icon(['name' => $icon_name, 'set' => 'lucide']);
 
         $header_content = sprintf(
             '<a href="%1$s" data-slot="data-table-sort">%2$s%3$s</a>',
@@ -365,7 +365,7 @@ if ($pagination_config !== null) {
             'data_slot' => 'data-table-pagination-label',
             'text' => sprintf(
                 /* translators: 1: current page number, 2: total number of pages */
-                esc_html__('Page %1$d of %2$d', 'base-theme'),
+                esc_html__('Page %1$d of %2$d', 'hengegroup-theme'),
                 $current_page,
                 $total_pages,
             ),
@@ -379,25 +379,25 @@ if ($pagination_config !== null) {
     // left implicit (native <nav> already carries it, no need to double up).
     $pagination_markup = sprintf(
         '<nav data-slot="data-table-pagination" aria-label="%1$s">%2$s%3$s%4$s%5$s%6$s</nav>',
-        esc_attr__('Pagination', 'base-theme'),
-        $nav_button('1', 'chevrons-left', esc_html__('First page', 'base-theme'), !$has_previous), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        esc_attr__('Pagination', 'hengegroup-theme'),
+        $nav_button('1', 'chevrons-left', esc_html__('First page', 'hengegroup-theme'), !$has_previous), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $nav_button(
             (string) max(1, $current_page - 1),
             'chevron-left',
-            esc_html__('Previous page', 'base-theme'),
+            esc_html__('Previous page', 'hengegroup-theme'),
             !$has_previous,
         ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $page_label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $nav_button(
             (string) min($total_pages, $current_page + 1),
             'chevron-right',
-            esc_html__('Next page', 'base-theme'),
+            esc_html__('Next page', 'hengegroup-theme'),
             !$has_next,
         ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $nav_button(
             (string) $total_pages,
             'chevrons-right',
-            esc_html__('Last page', 'base-theme'),
+            esc_html__('Last page', 'hengegroup-theme'),
             !$has_next,
         ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
@@ -423,7 +423,7 @@ foreach ($data_attributes as $name => $value) {
 
 printf(
     '<div%1$s>%2$s%3$s</div>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $table_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $pagination_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

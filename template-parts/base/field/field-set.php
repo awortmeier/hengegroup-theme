@@ -50,6 +50,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<fieldset%1$s>%2$s</fieldset>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

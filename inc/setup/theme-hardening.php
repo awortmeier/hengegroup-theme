@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-function base_theme_filter_wp_headers_remove_pingback(array $headers): array
+function hengegroup_theme_filter_wp_headers_remove_pingback(array $headers): array
 {
     unset($headers['X-Pingback']);
 
@@ -15,7 +15,7 @@ function base_theme_filter_wp_headers_remove_pingback(array $headers): array
  * break wp-admin or a plugin's own inline scripts. See docs/entscheidungen.md for why
  * these run everywhere but the CSP below is front-end only.
  */
-function base_theme_send_security_headers(): void
+function hengegroup_theme_send_security_headers(): void
 {
     if (headers_sent()) {
         return;
@@ -33,9 +33,9 @@ function base_theme_send_security_headers(): void
         'Permissions-Policy: camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), usb=()',
     );
 }
-add_action('send_headers', 'base_theme_send_security_headers');
-add_action('admin_init', 'base_theme_send_security_headers');
-add_action('login_init', 'base_theme_send_security_headers');
+add_action('send_headers', 'hengegroup_theme_send_security_headers');
+add_action('admin_init', 'hengegroup_theme_send_security_headers');
+add_action('login_init', 'hengegroup_theme_send_security_headers');
 
 /**
  * A deliberately loose starter Content-Security-Policy, front-end only. `frame-ancestors 'self'`
@@ -44,7 +44,7 @@ add_action('login_init', 'base_theme_send_security_headers');
  * hosts this project loads from. See docs/entscheidungen.md for why it starts this
  * loose.
  */
-function base_theme_send_front_end_csp_header(): void
+function hengegroup_theme_send_front_end_csp_header(): void
 {
     if (headers_sent() || is_admin()) {
         return;
@@ -61,28 +61,28 @@ function base_theme_send_front_end_csp_header(): void
             "frame-ancestors 'self';",
     );
 }
-add_action('send_headers', 'base_theme_send_front_end_csp_header');
+add_action('send_headers', 'hengegroup_theme_send_front_end_csp_header');
 
-function base_theme_filter_empty_admin_footer_text(): string
+function hengegroup_theme_filter_empty_admin_footer_text(): string
 {
     return '';
 }
 
-function base_theme_remove_admin_color_scheme_picker(): void
+function hengegroup_theme_remove_admin_color_scheme_picker(): void
 {
     remove_action('admin_color_scheme_picker', 'admin_color_scheme_picker');
 }
-add_action('admin_init', 'base_theme_remove_admin_color_scheme_picker');
+add_action('admin_init', 'hengegroup_theme_remove_admin_color_scheme_picker');
 
-function base_theme_disable_global_styles_output(): void
+function hengegroup_theme_disable_global_styles_output(): void
 {
     remove_action('wp_enqueue_scripts', 'wp_enqueue_global_styles');
     remove_action('wp_footer', 'wp_enqueue_global_styles', 1);
     remove_action('wp_body_open', 'wp_global_styles_render_svg_filters');
 }
-add_action('init', 'base_theme_disable_global_styles_output');
+add_action('init', 'hengegroup_theme_disable_global_styles_output');
 
-function base_theme_cleanup_core_frontend_styles(): void
+function hengegroup_theme_cleanup_core_frontend_styles(): void
 {
     if (is_admin()) {
         return;
@@ -92,14 +92,14 @@ function base_theme_cleanup_core_frontend_styles(): void
     wp_dequeue_style('wp-block-library-theme');
     wp_dequeue_style('classic-theme-styles');
 }
-add_action('wp_enqueue_scripts', 'base_theme_cleanup_core_frontend_styles', 999);
+add_action('wp_enqueue_scripts', 'hengegroup_theme_cleanup_core_frontend_styles', 999);
 
 // Kommentare sind fuer normale Beitraege/Seiten standardmaessig zu (persoenliche Praeferenz fuer
 // dieses Base Theme, siehe docs/to-do.md). Bewusst NICHT auf 'product' (oder
 // andere Custom Post Types) angewendet: WooCommerce-Produktbewertungen laufen technisch ueber
 // denselben comments_open()-Mechanismus und sollen weiterhin funktionieren, falls ein Projekt sie
 // braucht. Kein eigenes comments.php noetig, solange comments_open() ueberall false liefert.
-function base_theme_filter_close_comments_for_posts_and_pages(bool $open, int $post_id): bool
+function hengegroup_theme_filter_close_comments_for_posts_and_pages(bool $open, int $post_id): bool
 {
     if (in_array(get_post_type($post_id), ['post', 'page'], true)) {
         return false;
@@ -107,19 +107,19 @@ function base_theme_filter_close_comments_for_posts_and_pages(bool $open, int $p
 
     return $open;
 }
-add_filter('comments_open', 'base_theme_filter_close_comments_for_posts_and_pages', 10, 2);
-add_filter('pings_open', 'base_theme_filter_close_comments_for_posts_and_pages', 10, 2);
+add_filter('comments_open', 'hengegroup_theme_filter_close_comments_for_posts_and_pages', 10, 2);
+add_filter('pings_open', 'hengegroup_theme_filter_close_comments_for_posts_and_pages', 10, 2);
 
-function base_theme_action_remove_comments_support_for_posts_and_pages(): void
+function hengegroup_theme_action_remove_comments_support_for_posts_and_pages(): void
 {
     remove_post_type_support('post', 'comments');
     remove_post_type_support('post', 'trackbacks');
     remove_post_type_support('page', 'comments');
     remove_post_type_support('page', 'trackbacks');
 }
-add_action('init', 'base_theme_action_remove_comments_support_for_posts_and_pages');
+add_action('init', 'hengegroup_theme_action_remove_comments_support_for_posts_and_pages');
 
-function base_theme_delete_default_themes_after_core_update($upgrader, array $hook_extra): void
+function hengegroup_theme_delete_default_themes_after_core_update($upgrader, array $hook_extra): void
 {
     $action = $hook_extra['action'] ?? '';
     $type = $hook_extra['type'] ?? '';
@@ -149,7 +149,7 @@ function base_theme_delete_default_themes_after_core_update($upgrader, array $ho
 }
 add_action(
     'upgrader_process_complete',
-    'base_theme_delete_default_themes_after_core_update',
+    'hengegroup_theme_delete_default_themes_after_core_update',
     10,
     2,
 );
@@ -169,6 +169,6 @@ remove_action('admin_print_styles', 'print_emoji_styles');
 add_filter('emoji_svg_url', '__return_false');
 add_filter('xmlrpc_enabled', '__return_false');
 add_filter('show_admin_bar', '__return_false');
-add_filter('admin_footer_text', 'base_theme_filter_empty_admin_footer_text');
-add_filter('wp_headers', 'base_theme_filter_wp_headers_remove_pingback');
+add_filter('admin_footer_text', 'hengegroup_theme_filter_empty_admin_footer_text');
+add_filter('wp_headers', 'hengegroup_theme_filter_wp_headers_remove_pingback');
 add_filter('should_load_separate_core_block_assets', '__return_true');

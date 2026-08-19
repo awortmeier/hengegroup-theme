@@ -116,11 +116,11 @@ if (!in_array($mode, $allowed_modes, true)) {
 }
 
 if ($placeholder === '') {
-    $placeholder = esc_html__('Pick a date', 'base-theme');
+    $placeholder = esc_html__('Pick a date', 'hengegroup-theme');
 }
 
 if ($id === '') {
-    $id = 'base-theme-date-picker-' . wp_unique_id();
+    $id = 'hengegroup-theme-date-picker-' . wp_unique_id();
 }
 
 $selected_dates = [];
@@ -145,13 +145,13 @@ if ($selected_dates !== []) {
         count($formatted) > 2
             ? sprintf(
                 /* translators: %d: number of selected dates */
-                esc_html__('%d dates selected', 'base-theme'),
+                esc_html__('%d dates selected', 'hengegroup-theme'),
                 count($formatted),
             )
             : implode(' - ', $formatted);
 }
 
-$icon_markup = $icon_config !== null ? base_theme_render_icon($icon_config) : '';
+$icon_markup = $icon_config !== null ? hengegroup_theme_render_icon($icon_config) : '';
 
 $calendar_config = ['mode' => $mode, 'id' => $id . '-calendar'];
 
@@ -204,7 +204,7 @@ if ($aria_label !== '') {
 
 $trigger_markup = sprintf(
     '<summary%1$s>%2$s<span data-slot="date-picker-value">%3$s</span></summary>',
-    base_theme_render_attributes($trigger_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($trigger_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $icon_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     esc_html($value_text),
 );
@@ -223,7 +223,7 @@ if ($class_name !== '') {
 $wrapper_attributes['data-slot'] = 'date-picker';
 $wrapper_attributes['data-mode'] = $mode;
 $wrapper_attributes['data-placeholder'] = $placeholder;
-$wrapper_attributes['data-count-template'] = esc_html__('%d dates selected', 'base-theme');
+$wrapper_attributes['data-count-template'] = esc_html__('%d dates selected', 'hengegroup-theme');
 $wrapper_attributes['id'] = $id;
 
 foreach ($data_attributes as $attribute_key => $attribute_value) {
@@ -238,7 +238,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<details%1$s>%2$s%3$s</details>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $trigger_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

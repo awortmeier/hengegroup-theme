@@ -32,7 +32,7 @@
                 <?php
                 endif; ?>
 
-                <nav aria-label="<?php esc_attr_e('Primary Navigation', 'base-theme'); ?>">
+                <nav aria-label="<?php esc_attr_e('Primary Navigation', 'hengegroup-theme'); ?>">
                     <?php wp_nav_menu([
                         'theme_location' => 'primary',
                         'container' => false,

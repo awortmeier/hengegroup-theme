@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-function base_theme_theme_setup(): void
+function hengegroup_theme_theme_setup(): void
 {
-    load_theme_textdomain('base-theme', get_template_directory() . '/languages');
+    load_theme_textdomain('hengegroup-theme', get_template_directory() . '/languages');
     add_theme_support('title-tag');
     add_theme_support('post-thumbnails');
     // 'align-wide' passt zu den in theme.json bereits gesetzten settings.layout.contentSize/
@@ -34,8 +34,8 @@ function base_theme_theme_setup(): void
     add_theme_support('wc-product-gallery-slider');
 
     register_nav_menus([
-        'primary' => __('Primary Menu', 'base-theme'),
-        'footer' => __('Footer Menu', 'base-theme'),
+        'primary' => __('Primary Menu', 'hengegroup-theme'),
+        'footer' => __('Footer Menu', 'hengegroup-theme'),
     ]);
 }
-add_action('after_setup_theme', 'base_theme_theme_setup');
+add_action('after_setup_theme', 'hengegroup_theme_theme_setup');

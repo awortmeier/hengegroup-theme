@@ -15,7 +15,7 @@ declare(strict_types=1);
  * - true renders the attribute name only (boolean HTML attributes).
  * - everything else is cast to string and escaped via esc_attr().
  */
-function base_theme_render_attributes(array $attributes): string
+function hengegroup_theme_render_attributes(array $attributes): string
 {
     $parts = [];
 
@@ -44,7 +44,7 @@ function base_theme_render_attributes(array $attributes): string
  * Matches are whole occurrences of the given words, longest word first, so overlapping needles
  * don't get partially matched.
  */
-function base_theme_render_accent_text(string $content, array $highlighted_words): string
+function hengegroup_theme_render_accent_text(string $content, array $highlighted_words): string
 {
     $needles = [];
 
@@ -106,7 +106,7 @@ function base_theme_render_accent_text(string $content, array $highlighted_words
  * chevron, a badge's icon). Buffers get_template_part() output instead of every component
  * duplicating the same ob_start()/get_template_part()/ob_get_clean() closure locally.
  */
-function base_theme_render_icon(array $icon_config): string
+function hengegroup_theme_render_icon(array $icon_config): string
 {
     ob_start();
     get_template_part('template-parts/base/icon', null, ['config' => $icon_config]);
@@ -121,9 +121,9 @@ function base_theme_render_icon(array $icon_config): string
  * before deciding what else to render, e.g. avatar.php falling back to initials/an icon, card.php
  * skipping its optional cover-media wrapper entirely. Buffers get_template_part() output instead
  * of every component duplicating the same ob_start()/get_template_part()/ob_get_clean() closure
- * locally -- same idiom as base_theme_render_icon() above, just for image.php.
+ * locally -- same idiom as hengegroup_theme_render_icon() above, just for image.php.
  */
-function base_theme_render_image(array $image_config): string
+function hengegroup_theme_render_image(array $image_config): string
 {
     ob_start();
     get_template_part('template-parts/base/image', null, ['config' => $image_config]);
@@ -139,28 +139,28 @@ function base_theme_render_image(array $image_config): string
  * of the caller inventing/copying one id by hand in two places (see field.php's
  * header comment for the full wiring example).
  */
-function base_theme_field_description_id(string $control_id): string
+function hengegroup_theme_field_description_id(string $control_id): string
 {
     return $control_id . '-description';
 }
 
 /**
- * Same idea as base_theme_field_description_id(), for template-parts/base/field/field-error.php.
+ * Same idea as hengegroup_theme_field_description_id(), for template-parts/base/field/field-error.php.
  */
-function base_theme_field_error_id(string $control_id): string
+function hengegroup_theme_field_error_id(string $control_id): string
 {
     return $control_id . '-error';
 }
 
 /**
  * Builds a ready-to-use `aria-describedby` value for a field's control, e.g.
- * base_theme_field_describedby('email') -> 'email-description email-error' (space-separated, as
+ * hengegroup_theme_field_describedby('email') -> 'email-description email-error' (space-separated, as
  * aria-describedby requires for multiple ids). Pass $has_description/$has_error as false to omit
  * the id for whichever of field-description.php/field-error.php isn't actually rendered for this
  * control -- an id pointing at a non-existent element is worse than no id. Drop the result straight
  * into the control's own `attributes: ['aria-describedby' => ...]`.
  */
-function base_theme_field_describedby(
+function hengegroup_theme_field_describedby(
     string $control_id,
     bool $has_description = true,
     bool $has_error = true,
@@ -168,11 +168,11 @@ function base_theme_field_describedby(
     $ids = [];
 
     if ($has_description) {
-        $ids[] = base_theme_field_description_id($control_id);
+        $ids[] = hengegroup_theme_field_description_id($control_id);
     }
 
     if ($has_error) {
-        $ids[] = base_theme_field_error_id($control_id);
+        $ids[] = hengegroup_theme_field_error_id($control_id);
     }
 
     return implode(' ', $ids);
@@ -185,7 +185,7 @@ function base_theme_field_describedby(
  * same as WordPress core's own API misuse warnings, so this is safe to call unconditionally on
  * every render: zero behavioural/markup difference in production, a visible nudge while developing.
  */
-function base_theme_warn_missing_aria_label(
+function hengegroup_theme_warn_missing_aria_label(
     string $component,
     bool $is_icon_only,
     string $aria_label,
@@ -203,6 +203,6 @@ function base_theme_warn_missing_aria_label(
                 $component,
             ),
         ),
-        'base-theme 1.0.0',
+        'hengegroup-theme 1.0.0',
     );
 }

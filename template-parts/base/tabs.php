@@ -202,7 +202,7 @@ if (!in_array($active_value, $item_values, true)) {
 }
 
 if ($name === '') {
-    $name = 'base-theme-tabs-' . wp_unique_id();
+    $name = 'hengegroup-theme-tabs-' . wp_unique_id();
 }
 
 $render_badge = static function (array $badge_config): string {
@@ -217,8 +217,8 @@ $panels_markup = '';
 
 foreach ($items as $item) {
     $unique = wp_unique_id();
-    $trigger_id = 'base-theme-tabs-trigger-' . $unique;
-    $content_id = 'base-theme-tabs-content-' . $unique;
+    $trigger_id = 'hengegroup-theme-tabs-trigger-' . $unique;
+    $content_id = 'hengegroup-theme-tabs-content-' . $unique;
     $is_checked = $item['value'] === $active_value;
     $is_disabled = $group_disabled || $item['disabled'];
     $is_icon_only = $item['trigger'] === '' && $item['icon'] !== null;
@@ -235,7 +235,7 @@ foreach ($items as $item) {
             );
         }
 
-        $icon_markup = base_theme_render_icon($icon_config);
+        $icon_markup = hengegroup_theme_render_icon($icon_config);
     } else {
         $icon_markup = '';
     }
@@ -295,8 +295,8 @@ foreach ($items as $item) {
 
     $triggers_markup .= sprintf(
         '<span data-slot="tabs-trigger-item"><input%1$s><label%2$s>%3$s</label></span>',
-        base_theme_render_attributes($input_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-        base_theme_render_attributes($label_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($input_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($label_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 
@@ -309,7 +309,7 @@ foreach ($items as $item) {
 
     $panels_markup .= sprintf(
         '<div%1$s>%2$s</div>',
-        base_theme_render_attributes($panel_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($panel_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $item['content'], // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 }
@@ -351,8 +351,8 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<div%1$s><div%2$s>%3$s</div><div data-slot="tabs-panels">%4$s</div></div>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    base_theme_render_attributes($list_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($list_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $triggers_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $panels_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

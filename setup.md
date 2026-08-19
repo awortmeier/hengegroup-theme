@@ -10,11 +10,11 @@ konservative Defaults (siehe Verweise unten), die je nach Projekt aufgehoben wer
 
 Z. B. durch ein Kontakt-/Bewerbungsformular, eine Newsletter-Anmeldung, wieder aktivierte
 Kommentare o. Ae. (Kommentare sind in dieser Vorlage standardmaessig geschlossen, siehe
-`inc/setup/theme-hardening.php`, `base_theme_filter_close_comments_for_posts_and_pages()`.)
+`inc/setup/theme-hardening.php`, `hengegroup_theme_filter_close_comments_for_posts_and_pages()`.)
 
 - **Nein** (Default dieser Vorlage): nichts zu tun, aktuelle Einstellungen passen.
 - **Ja**:
-    1. In `inc/setup/theme-admin.php`, Funktion `base_theme_action_admin_menu_cleanup()`: die beiden
+    1. In `inc/setup/theme-admin.php`, Funktion `hengegroup_theme_action_admin_menu_cleanup()`: die beiden
        Eintraege `remove_submenu_page('tools.php', 'export-personal-data.php')` und
        `remove_submenu_page('tools.php', 'erase-personal-data.php')` entfernen, damit die
        DSGVO-Tools-Seiten (Werkzeuge → Persoenliche Daten exportieren/loeschen) im Backend wieder

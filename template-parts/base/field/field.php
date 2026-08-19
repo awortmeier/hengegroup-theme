@@ -26,7 +26,7 @@ declare(strict_types=1);
 //       'config' => [
 //           'id' => $control_id,
 //           'type' => 'email',
-//           'attributes' => ['aria-describedby' => base_theme_field_describedby($control_id)],
+//           'attributes' => ['aria-describedby' => hengegroup_theme_field_describedby($control_id)],
 //       ],
 //   ]);
 //   get_template_part('template-parts/base/field/field-description', null, ['config' => ['for' => $control_id, 'text' => 'We will never share your email.']]);
@@ -36,11 +36,11 @@ declare(strict_types=1);
 //
 // Accessibility wiring is the CALLER's responsibility, same as pairing `for`/`id` already is
 // elsewhere: field-description.php/field-error.php each accept a `for` (the control's own id --
-// derives their rendered `id` from it via base_theme_field_description_id()/
-// base_theme_field_error_id(), see those files' header comments) or an explicit `id` (auto-generated
+// derives their rendered `id` from it via hengegroup_theme_field_description_id()/
+// hengegroup_theme_field_error_id(), see those files' header comments) or an explicit `id` (auto-generated
 // via wp_unique_id() when neither is given, like every other component here). Either way, pass the
 // matching id(s) into the control's own `attributes: ['aria-describedby' => ...]` --
-// base_theme_field_describedby($control_id) builds that value from the same $control_id instead of
+// hengegroup_theme_field_describedby($control_id) builds that value from the same $control_id instead of
 // the caller inventing/copying an id string by hand in two places (pass `has_description`/
 // `has_error` as false to its 2nd/3rd args when only one of the two is actually rendered). Field
 // itself still cannot wire this automatically, since it never sees or generates the control -- it
@@ -117,6 +117,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<div%1$s>%2$s</div>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

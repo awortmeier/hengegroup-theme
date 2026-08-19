@@ -80,7 +80,7 @@ declare(strict_types=1);
 // toggle.php would otherwise have rendered for it.
 //
 // Also the first base component to use WordPress's own i18n functions (`date_i18n()` for the
-// month/weekday labels, `esc_attr__()` with this theme's `base-theme` text domain for the "Previous
+// month/weekday labels, `esc_attr__()` with this theme's `hengegroup-theme` text domain for the "Previous
 // month"/"Next month" nav labels) -- every other component so far only ever renders CALLER-supplied
 // text (already the caller's responsibility to translate before passing in), but weekday/month
 // names and the nav labels are static UI chrome this component invents itself, so they need real
@@ -181,7 +181,7 @@ if (array_key_exists('selected', $config)) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-calendar-' . wp_unique_id();
+    $id = 'hengegroup-theme-calendar-' . wp_unique_id();
 }
 
 if ($nav_name === '') {
@@ -189,7 +189,7 @@ if ($nav_name === '') {
 }
 
 if ($name === '') {
-    $name = 'base-theme-calendar-day-' . wp_unique_id();
+    $name = 'hengegroup-theme-calendar-day-' . wp_unique_id();
 }
 
 $today = current_time('Y-m-d');
@@ -293,17 +293,17 @@ if ($navigation) {
     $prev_url = esc_url(add_query_arg($nav_name, sprintf('%04d-%02d', $prev_year, $prev_month)));
     $next_url = esc_url(add_query_arg($nav_name, sprintf('%04d-%02d', $next_year, $next_month)));
 
-    $prev_icon = base_theme_render_icon(['name' => 'chevron-left', 'set' => 'lucide']);
-    $next_icon = base_theme_render_icon(['name' => 'chevron-right', 'set' => 'lucide']);
+    $prev_icon = hengegroup_theme_render_icon(['name' => 'chevron-left', 'set' => 'lucide']);
+    $next_icon = hengegroup_theme_render_icon(['name' => 'chevron-right', 'set' => 'lucide']);
 
     $nav_markup = sprintf(
         '<div data-slot="calendar-nav"><a href="%1$s" data-slot="calendar-nav-button" data-nav="prev" aria-label="%2$s">%3$s</a><span data-slot="calendar-caption">%4$s</span><a href="%5$s" data-slot="calendar-nav-button" data-nav="next" aria-label="%6$s">%7$s</a></div>',
         $prev_url,
-        esc_attr__('Previous month', 'base-theme'),
+        esc_attr__('Previous month', 'hengegroup-theme'),
         $prev_icon, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         esc_html(date_i18n('F Y', $first_of_month->getTimestamp())),
         $next_url,
-        esc_attr__('Next month', 'base-theme'),
+        esc_attr__('Next month', 'hengegroup-theme'),
         $next_icon, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 }
@@ -322,7 +322,7 @@ if ($aria_label !== '') {
 
 $table_markup = sprintf(
     '<table%1$s><thead><tr data-slot="calendar-row">%2$s</tr></thead><tbody>%3$s</tbody></table>',
-    base_theme_render_attributes($table_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($table_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $weekday_headers, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $body_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
@@ -382,7 +382,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<div%1$s>%2$s%3$s</div>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $nav_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $table_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

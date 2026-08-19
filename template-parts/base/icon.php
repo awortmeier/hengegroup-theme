@@ -128,7 +128,7 @@ if ($decorative) {
     if ($title === '') {
         $svg_attributes['aria-label'] = $name;
     } else {
-        $title_id = 'base-theme-icon-title-' . wp_unique_id();
+        $title_id = 'hengegroup-theme-icon-title-' . wp_unique_id();
         $svg_attributes['aria-labelledby'] = $title_id;
         $title_markup = '<title id="' . esc_attr($title_id) . '">' . esc_html($title) . '</title>';
         $svg = preg_replace('/<svg\b[^>]*>/i', '$0' . $title_markup, $svg, 1) ?? $svg;
@@ -147,7 +147,7 @@ foreach ($data_attributes as $attribute_key => $value) {
 
 $svg_attributes = array_merge($svg_attributes, $attributes);
 
-$attribute_string = base_theme_render_attributes($svg_attributes);
+$attribute_string = hengegroup_theme_render_attributes($svg_attributes);
 $svg = preg_replace('/<svg\b([^>]*)>/i', '<svg$1' . $attribute_string . '>', $svg, 1) ?? $svg;
 
 echo $svg; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

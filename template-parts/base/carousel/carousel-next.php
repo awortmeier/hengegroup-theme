@@ -30,7 +30,7 @@ $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : 
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
 
 if ($aria_label === '') {
-    $aria_label = esc_html__('Next slide', 'base-theme');
+    $aria_label = esc_html__('Next slide', 'hengegroup-theme');
 }
 
 $data_attributes['carousel-nav'] = 'next';

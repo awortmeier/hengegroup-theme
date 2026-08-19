@@ -94,7 +94,7 @@ if (!in_array($size, $allowed_sizes, true)) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-select-' . wp_unique_id();
+    $id = 'hengegroup-theme-select-' . wp_unique_id();
 }
 
 // Flatten groups once, just to resolve the trigger's initial label text -- native-select.php does
@@ -222,12 +222,12 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
     $trigger_attributes['data-' . $data_name] = $attribute_value;
 }
 
-$chevron_markup = base_theme_render_icon(['name' => 'chevron-down', 'set' => 'lucide']);
-$check_markup = base_theme_render_icon(['name' => 'check', 'set' => 'lucide']);
+$chevron_markup = hengegroup_theme_render_icon(['name' => 'chevron-down', 'set' => 'lucide']);
+$check_markup = hengegroup_theme_render_icon(['name' => 'check', 'set' => 'lucide']);
 
 $trigger_markup = sprintf(
     '<button%1$s><span data-slot="select-value">%2$s</span>%3$s</button>',
-    base_theme_render_attributes($trigger_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($trigger_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     esc_html($trigger_text),
     $chevron_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

@@ -7,11 +7,11 @@ declare(strict_types=1);
 // theme-setup.php), meta description, canonical link, robots meta, Open Graph + Twitter Card
 // tags, and a JSON-LD Organization schema. Every resolver below follows the same fallback chain:
 // per-page "SEO" meta box value (theme-seo-admin.php) -> site-wide Settings > SEO default
-// (base_theme_get_seo_options(), same file) -> a sensible computed default (post excerpt,
+// (hengegroup_theme_get_seo_options(), same file) -> a sensible computed default (post excerpt,
 // featured image, permalink, ...) -> omitted entirely. See docs/to-do.md #3.
 //
-// Structured data (base_theme_get_seo_structured_data() below) is extensible via the
-// `base_theme_seo_structured_data` filter; hreflang is intentionally not implemented here -- see
+// Structured data (hengegroup_theme_get_seo_structured_data() below) is extensible via the
+// `hengegroup_theme_seo_structured_data` filter; hreflang is intentionally not implemented here -- see
 // docs/how-to.md for the extension HowTo and docs/entscheidungen.md for the multilingual decision.
 
 /**
@@ -21,7 +21,7 @@ declare(strict_types=1);
  * treats that view as an archive (is_singular() is false) even though it's backed by a real, SEO-
  * meta-box-editable Page.
  */
-function base_theme_seo_current_post_id(): int
+function hengegroup_theme_seo_current_post_id(): int
 {
     if (is_singular()) {
         return (int) get_queried_object_id();
@@ -37,19 +37,19 @@ function base_theme_seo_current_post_id(): int
     return 0;
 }
 
-function base_theme_filter_pre_get_document_title(string $title): string
+function hengegroup_theme_filter_pre_get_document_title(string $title): string
 {
-    $post_id = base_theme_seo_current_post_id();
+    $post_id = hengegroup_theme_seo_current_post_id();
     if ($post_id <= 0) {
         return $title;
     }
 
-    $seo_title = trim((string) get_post_meta($post_id, '_base_theme_seo_title', true));
+    $seo_title = trim((string) get_post_meta($post_id, '_hengegroup_theme_seo_title', true));
     if ($seo_title !== '') {
         return $seo_title;
     }
 
-    $options = base_theme_get_seo_options();
+    $options = hengegroup_theme_get_seo_options();
     $template = trim($options['title_template']);
     if ($template === '') {
         return $title;
@@ -63,20 +63,20 @@ function base_theme_filter_pre_get_document_title(string $title): string
 
     return trim(strtr($template, $replacements));
 }
-add_filter('pre_get_document_title', 'base_theme_filter_pre_get_document_title', 20);
+add_filter('pre_get_document_title', 'hengegroup_theme_filter_pre_get_document_title', 20);
 
-function base_theme_get_seo_description(): string
+function hengegroup_theme_get_seo_description(): string
 {
-    $post_id = base_theme_seo_current_post_id();
+    $post_id = hengegroup_theme_seo_current_post_id();
 
     if ($post_id > 0) {
-        $meta = trim((string) get_post_meta($post_id, '_base_theme_seo_description', true));
+        $meta = trim((string) get_post_meta($post_id, '_hengegroup_theme_seo_description', true));
         if ($meta !== '') {
             return $meta;
         }
     }
 
-    $options = base_theme_get_seo_options();
+    $options = hengegroup_theme_get_seo_options();
     if ($options['description'] !== '') {
         return $options['description'];
     }
@@ -91,16 +91,16 @@ function base_theme_get_seo_description(): string
     return '';
 }
 
-function base_theme_get_seo_canonical(): string
+function hengegroup_theme_get_seo_canonical(): string
 {
     if (is_404()) {
         return '';
     }
 
-    $post_id = base_theme_seo_current_post_id();
+    $post_id = hengegroup_theme_seo_current_post_id();
 
     if ($post_id > 0) {
-        $meta = trim((string) get_post_meta($post_id, '_base_theme_seo_canonical', true));
+        $meta = trim((string) get_post_meta($post_id, '_hengegroup_theme_seo_canonical', true));
         if ($meta !== '') {
             return esc_url_raw($meta);
         }
@@ -123,22 +123,22 @@ function base_theme_get_seo_canonical(): string
     return '';
 }
 
-function base_theme_get_seo_robots(): string
+function hengegroup_theme_get_seo_robots(): string
 {
-    $options = base_theme_get_seo_options();
+    $options = hengegroup_theme_get_seo_options();
     $noindex = (bool) $options['robots_noindex'];
     $nofollow = (bool) $options['robots_nofollow'];
 
-    $post_id = base_theme_seo_current_post_id();
+    $post_id = hengegroup_theme_seo_current_post_id();
     if ($post_id > 0) {
-        $robots_index = (string) get_post_meta($post_id, '_base_theme_seo_robots_index', true);
+        $robots_index = (string) get_post_meta($post_id, '_hengegroup_theme_seo_robots_index', true);
         if ($robots_index === 'index') {
             $noindex = false;
         } elseif ($robots_index === 'noindex') {
             $noindex = true;
         }
 
-        $robots_follow = (string) get_post_meta($post_id, '_base_theme_seo_robots_follow', true);
+        $robots_follow = (string) get_post_meta($post_id, '_hengegroup_theme_seo_robots_follow', true);
         if ($robots_follow === 'follow') {
             $nofollow = false;
         } elseif ($robots_follow === 'nofollow') {
@@ -166,20 +166,20 @@ function base_theme_get_seo_robots(): string
  * or [] when nothing resolves. Fallback chain: per-page image -> site-wide default image ->
  * featured image of the current post -> nothing.
  */
-function base_theme_get_seo_image(): array
+function hengegroup_theme_get_seo_image(): array
 {
     $attachment_id = 0;
-    $post_id = base_theme_seo_current_post_id();
+    $post_id = hengegroup_theme_seo_current_post_id();
 
     if ($post_id > 0) {
-        $meta_id = (int) get_post_meta($post_id, '_base_theme_seo_image_id', true);
+        $meta_id = (int) get_post_meta($post_id, '_hengegroup_theme_seo_image_id', true);
         if ($meta_id > 0) {
             $attachment_id = $meta_id;
         }
     }
 
     if ($attachment_id <= 0) {
-        $options = base_theme_get_seo_options();
+        $options = hengegroup_theme_get_seo_options();
         if ((int) $options['og_image_id'] > 0) {
             $attachment_id = (int) $options['og_image_id'];
         }
@@ -212,7 +212,7 @@ function base_theme_get_seo_image(): array
  * (theme-setup.php), same has_custom_logo()/get_theme_mod('custom_logo') pair header.php already
  * relies on for the visible header logo.
  */
-function base_theme_get_seo_organization_schema(): array
+function hengegroup_theme_get_seo_organization_schema(): array
 {
     $schema = [
         '@context' => 'https://schema.org',
@@ -241,26 +241,26 @@ function base_theme_get_seo_organization_schema(): array
  * All JSON-LD schema objects for the current request, each rendered as its own
  * <script type="application/ld+json"> tag (valid per the JSON-LD spec, and simpler for additive
  * filter callbacks than merging into one shared @graph). Starts with the base Organization schema
- * above; the `base_theme_seo_structured_data` filter is where page-type-specific schema gets
+ * above; the `hengegroup_theme_seo_structured_data` filter is where page-type-specific schema gets
  * added later -- callbacks receive the full array (append their own entry, or replace/remove an
  * existing one by @type) plus the resolved post id for the current request (0 outside a
- * singular/page-for-posts context, see base_theme_seo_current_post_id()) to decide whether/what
+ * singular/page-for-posts context, see hengegroup_theme_seo_current_post_id()) to decide whether/what
  * to add. See docs/how-to.md for a usage example.
  */
-function base_theme_get_seo_structured_data(): array
+function hengegroup_theme_get_seo_structured_data(): array
 {
     $schemas = apply_filters(
-        'base_theme_seo_structured_data',
-        [base_theme_get_seo_organization_schema()],
-        base_theme_seo_current_post_id(),
+        'hengegroup_theme_seo_structured_data',
+        [hengegroup_theme_get_seo_organization_schema()],
+        hengegroup_theme_seo_current_post_id(),
     );
 
     return array_values(array_filter(is_array($schemas) ? $schemas : [], 'is_array'));
 }
 
-function base_theme_action_wp_head_seo_structured_data(): void
+function hengegroup_theme_action_wp_head_seo_structured_data(): void
 {
-    foreach (base_theme_get_seo_structured_data() as $schema) {
+    foreach (hengegroup_theme_get_seo_structured_data() as $schema) {
         // wp_json_encode() escapes forward slashes by default (no JSON_UNESCAPED_SLASHES), which
         // keeps a literal "</script>" from ever appearing in a string value and breaking out of
         // the tag below -- still valid JSON, just written as "<\/script>".
@@ -275,15 +275,15 @@ function base_theme_action_wp_head_seo_structured_data(): void
         echo '<script type="application/ld+json">' . $json . '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     }
 }
-add_action('wp_head', 'base_theme_action_wp_head_seo_structured_data', 5);
+add_action('wp_head', 'hengegroup_theme_action_wp_head_seo_structured_data', 5);
 
-function base_theme_action_wp_head_seo_meta_tags(): void
+function hengegroup_theme_action_wp_head_seo_meta_tags(): void
 {
-    $description = base_theme_get_seo_description();
-    $canonical = base_theme_get_seo_canonical();
-    $robots = base_theme_get_seo_robots();
-    $image = base_theme_get_seo_image();
-    $options = base_theme_get_seo_options();
+    $description = hengegroup_theme_get_seo_description();
+    $canonical = hengegroup_theme_get_seo_canonical();
+    $robots = hengegroup_theme_get_seo_robots();
+    $image = hengegroup_theme_get_seo_image();
+    $options = hengegroup_theme_get_seo_options();
     $title = wp_get_document_title();
     $type = is_singular('post') ? 'article' : 'website';
 
@@ -349,4 +349,4 @@ function base_theme_action_wp_head_seo_meta_tags(): void
             "\n";
     }
 }
-add_action('wp_head', 'base_theme_action_wp_head_seo_meta_tags', 1);
+add_action('wp_head', 'hengegroup_theme_action_wp_head_seo_meta_tags', 1);

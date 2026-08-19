@@ -30,7 +30,7 @@ declare(strict_types=1);
 //   aria_label     string   required for icon-only buttons (no visible text to name them) -- a
 //                           missing value doesn't hard-fail the render, but triggers
 //                           a WP_DEBUG-only _doing_it_wrong() hint, see
-//                           base_theme_warn_missing_aria_label()
+//                           hengegroup_theme_warn_missing_aria_label()
 //   class / attributes / data_attributes   passthrough, as in the other base parts
 
 if (!isset($args['config']) || !is_array($args['config'])) {
@@ -101,7 +101,7 @@ if ($active_icon_config !== null) {
         );
     }
 
-    $icon_markup = base_theme_render_icon($active_icon_config);
+    $icon_markup = hengegroup_theme_render_icon($active_icon_config);
 } else {
     $icon_markup = '';
 }
@@ -133,7 +133,7 @@ if ($is_icon_only && $aria_label !== '') {
     $element_attributes['aria-label'] = $aria_label;
 }
 
-base_theme_warn_missing_aria_label('button.php', $is_icon_only, $aria_label);
+hengegroup_theme_warn_missing_aria_label('button.php', $is_icon_only, $aria_label);
 
 foreach ($data_attributes as $name => $value) {
     $data_name = trim((string) $name);
@@ -156,7 +156,7 @@ if ($href !== '') {
 
     printf(
         '<a%1$s>%2$s</a>',
-        base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 
@@ -177,6 +177,6 @@ if ($disabled) {
 
 printf(
     '<button%1$s>%2$s</button>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

@@ -164,7 +164,7 @@ $default_type_icons = $icons_disabled
         $icons_override,
     );
 
-$close_icon_markup = base_theme_render_icon(['name' => 'x', 'set' => 'lucide']);
+$close_icon_markup = hengegroup_theme_render_icon(['name' => 'x', 'set' => 'lucide']);
 
 $toasts_markup = '';
 
@@ -197,7 +197,7 @@ foreach ($toasts_config as $toast_config) {
     $toast_id = trim((string) ($toast_config['id'] ?? ''));
 
     if ($toast_id === '') {
-        $toast_id = 'base-theme-toast-' . wp_unique_id();
+        $toast_id = 'hengegroup-theme-toast-' . wp_unique_id();
     }
 
     $icon_config = array_key_exists('icon', $toast_config)
@@ -207,7 +207,7 @@ foreach ($toasts_config as $toast_config) {
     $icon_markup = is_array($icon_config)
         ? sprintf(
             '<div data-slot="toast-icon">%s</div>',
-            base_theme_render_icon($icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            hengegroup_theme_render_icon($icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         )
         : '';
 
@@ -244,7 +244,7 @@ foreach ($toasts_config as $toast_config) {
 
             $action_markup = sprintf(
                 '<a%1$s>%2$s</a>',
-                base_theme_render_attributes($action_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                hengegroup_theme_render_attributes($action_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 esc_html($action_label),
             );
         }
@@ -256,7 +256,7 @@ foreach ($toasts_config as $toast_config) {
         $cancel_label = trim((string) ($toast_config['cancel']['label'] ?? ''));
 
         if ($cancel_label === '') {
-            $cancel_label = esc_html__('Dismiss', 'base-theme');
+            $cancel_label = esc_html__('Dismiss', 'hengegroup-theme');
         }
 
         $cancel_markup = sprintf(
@@ -280,7 +280,7 @@ foreach ($toasts_config as $toast_config) {
     if ($close_button) {
         $close_markup = sprintf(
             '<button type="button" data-slot="toast-close" aria-label="%1$s">%2$s</button>',
-            esc_attr__('Close', 'base-theme'),
+            esc_attr__('Close', 'hengegroup-theme'),
             $close_icon_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         );
     }
@@ -315,7 +315,7 @@ foreach ($default_type_icons as $icon_type => $icon_config) {
     $templates_markup .= sprintf(
         '<template data-slot="toast-icon-template" data-type="%1$s">%2$s</template>',
         esc_attr($icon_type),
-        base_theme_render_icon($icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_icon($icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 }
 
@@ -331,7 +331,7 @@ $viewport_attributes['data-visible-toasts'] = (string) $visible_toasts;
 $viewport_attributes['data-duration'] = (string) $default_duration;
 $viewport_attributes['role'] = 'region';
 $viewport_attributes['aria-live'] = 'polite';
-$viewport_attributes['aria-label'] = esc_attr__('Notifications', 'base-theme');
+$viewport_attributes['aria-label'] = esc_attr__('Notifications', 'hengegroup-theme');
 
 if ($expand) {
     $viewport_attributes['data-expand'] = 'true';
@@ -357,7 +357,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<ol%1$s>%2$s%3$s</ol>',
-    base_theme_render_attributes($viewport_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($viewport_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $toasts_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $templates_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

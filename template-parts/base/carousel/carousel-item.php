@@ -46,7 +46,7 @@ if (trim($content) === '') {
 }
 
 if ($id === '') {
-    $id = 'base-theme-carousel-item-' . wp_unique_id();
+    $id = 'hengegroup-theme-carousel-item-' . wp_unique_id();
 }
 
 if (!preg_match('/^\d+(\.\d+)?(%|px|rem|em|vw|vh)$/', $basis)) {
@@ -80,6 +80,6 @@ foreach ($data_attributes as $name => $value) {
 
 printf(
     '<div%1$s>%2$s</div>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

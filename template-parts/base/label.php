@@ -67,6 +67,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<label%1$s>%2$s</label>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     esc_html($text),
 );

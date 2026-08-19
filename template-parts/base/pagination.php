@@ -25,7 +25,7 @@ declare(strict_types=1);
 // for what "is a button" looks like ([data-slot="button"][data-variant="..."][data-size="..."]
 // inside <li data-slot="pagination-item"> is hook enough for Phase 2 styling), any
 // component-specific meaning is layered on top via other attributes instead of a renamed
-// data-slot. The ellipsis item nests template-parts/base/icon.php via base_theme_render_icon(),
+// data-slot. The ellipsis item nests template-parts/base/icon.php via hengegroup_theme_render_icon(),
 // same default Lucide `ellipsis` glyph as breadcrumb.php's own ellipsis item.
 //
 // Supported config:
@@ -89,7 +89,7 @@ if ($items_config === []) {
 }
 
 if ($aria_label === '') {
-    $aria_label = __('pagination', 'base-theme');
+    $aria_label = __('pagination', 'hengegroup-theme');
 }
 
 $allowed_types = ['page', 'previous', 'next', 'ellipsis'];
@@ -128,8 +128,8 @@ foreach ($items_config as $item_config) {
 
         $inner_markup = sprintf(
             '<span data-slot="pagination-ellipsis" aria-hidden="true">%1$s<span class="sr-only">%2$s</span></span>',
-            base_theme_render_icon($icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            esc_html__('More pages', 'base-theme'),
+            hengegroup_theme_render_icon($icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            esc_html__('More pages', 'hengegroup-theme'),
         );
     } elseif ($type === 'previous' || $type === 'next') {
         $text = trim((string) ($item_config['text'] ?? ''));
@@ -139,14 +139,14 @@ foreach ($items_config as $item_config) {
 
         if ($type === 'previous') {
             $icon_position = 'start';
-            $default_text = __('Previous', 'base-theme');
+            $default_text = __('Previous', 'hengegroup-theme');
             $default_icon = ['name' => 'chevron-left', 'set' => 'lucide'];
-            $default_aria_label = __('Go to previous page', 'base-theme');
+            $default_aria_label = __('Go to previous page', 'hengegroup-theme');
         } else {
             $icon_position = 'end';
-            $default_text = __('Next', 'base-theme');
+            $default_text = __('Next', 'hengegroup-theme');
             $default_icon = ['name' => 'chevron-right', 'set' => 'lucide'];
-            $default_aria_label = __('Go to next page', 'base-theme');
+            $default_aria_label = __('Go to next page', 'hengegroup-theme');
         }
 
         $inner_markup = $render_button([
@@ -189,7 +189,7 @@ foreach ($items_config as $item_config) {
 
     $list_items_markup .= sprintf(
         '<li%1$s>%2$s</li>',
-        base_theme_render_attributes($item_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($item_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $inner_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 }
@@ -219,6 +219,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<nav%1$s><ul data-slot="pagination-content">%2$s</ul></nav>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $list_items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

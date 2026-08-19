@@ -91,14 +91,14 @@ Whitespace, Array-Einrueckung, ...) — die uebernimmt bereits `@prettier/plugin
 (`.prettierrc.json`); zwei konkurrierende Format-Tools waeren Drift-Risiko statt Mehrwert.
 
 Ergaenzend dazu deckt PHPUnit (`phpunit/phpunit` + `brain/monkey`, `tests/Unit/`) die reinen
-Logik-Helper (`base_theme_render_attributes()`, `base_theme_render_accent_text()`, die
-`field_*`-ID-Helper, `base_theme_warn_missing_aria_label()`) mit echten Verhaltens-Tests ab, statt
+Logik-Helper (`hengegroup_theme_render_attributes()`, `hengegroup_theme_render_accent_text()`, die
+`field_*`-ID-Helper, `hengegroup_theme_warn_missing_aria_label()`) mit echten Verhaltens-Tests ab, statt
 nur Syntax-/Escaping-Muster zu pruefen — Brain Monkey stubt die paar WP-Funktionen, die diese
 Helper aufrufen (`esc_attr()`/`esc_html()`/`_doing_it_wrong()`), ohne dass dafuer eine echte
 WordPress-Installation noetig ist (siehe `docs/entscheidungen.md` fuer die Begruendung
 dieser Wahl statt eines vollen `wp-env`-Testcontainers). Vitest (`vitest.config.js`) deckt analog
 dazu die komplexeren JS-Enhancement-Module unter `assets/js/template-parts/` ab (aktuell
-`toggle.js` als erstes Beispiel) via `jsdom`. `base_theme_render_icon()`/`base_theme_render_image()`
+`toggle.js` als erstes Beispiel) via `jsdom`. `hengegroup_theme_render_icon()`/`hengegroup_theme_render_image()`
 sowie alles, was tatsaechliches PHP-Template-Rendering braucht, bleibt bewusst ausserhalb dieser
 Unit-Suite — das ist ein spaeterer WP-gestuetzter Integrationstest, kein Job fuer Brain Monkey (siehe
 `docs/to-do.md` Abschnitt 1).

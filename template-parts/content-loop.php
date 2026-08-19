@@ -11,5 +11,5 @@
     endwhile; ?>
   </div>
 <?php else: ?>
-  <p><?php esc_html_e('Keine Inhalte gefunden.', 'base-theme'); ?></p>
+  <p><?php esc_html_e('Keine Inhalte gefunden.', 'hengegroup-theme'); ?></p>
 <?php endif; ?>

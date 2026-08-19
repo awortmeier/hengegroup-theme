@@ -1,6 +1,6 @@
 {
-    "name": "base-theme/theme",
-    "description": "Dev-only tooling (WPCS-Lint, PHPUnit) fuer base-theme. Nicht zur Laufzeit benoetigt, siehe CLAUDE.md Regel 11.",
+    "name": "hengegroup-theme/theme",
+    "description": "Dev-only tooling (WPCS-Lint, PHPUnit) fuer hengegroup-theme. Nicht zur Laufzeit benoetigt, siehe CLAUDE.md Regel 11.",
     "type": "project",
     "license": "proprietary",
     "require": {

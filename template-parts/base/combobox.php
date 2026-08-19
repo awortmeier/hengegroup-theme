@@ -43,7 +43,7 @@ declare(strict_types=1);
 // `data-group` is, like `data-value`, a JS-only rendering hint on the native `<option>`.
 //
 // Same optional label pairing as input.php (nests template-parts/base/label.php);
-// same indicator-template composition as select.php (base_theme_render_icon() buffers the check
+// same indicator-template composition as select.php (hengegroup_theme_render_icon() buffers the check
 // icon once into a <template>, cloned per matching item by combobox.js instead of a second,
 // JS-duplicated icon implementation).
 //
@@ -109,7 +109,7 @@ $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : 
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
 
 if ($empty_text === '') {
-    $empty_text = esc_html__('No results found.', 'base-theme');
+    $empty_text = esc_html__('No results found.', 'hengegroup-theme');
 }
 
 $options_markup = '';
@@ -151,7 +151,7 @@ foreach ($options_config as $option_config) {
 
     $options_markup .= sprintf(
         '<option%1$s>%2$s</option>',
-        base_theme_render_attributes($option_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($option_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         esc_html($text),
     );
 }
@@ -161,7 +161,7 @@ if ($options_markup === '') {
 }
 
 if ($id === '') {
-    $id = 'base-theme-combobox-' . wp_unique_id();
+    $id = 'hengegroup-theme-combobox-' . wp_unique_id();
 }
 
 $element_attributes = $attributes;
@@ -220,7 +220,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
     $element_attributes['data-' . $data_name] = $attribute_value;
 }
 
-$input_markup = '<input' . base_theme_render_attributes($element_attributes) . '>';
+$input_markup = '<input' . hengegroup_theme_render_attributes($element_attributes) . '>';
 
 $datalist_markup = sprintf(
     '<datalist id="%1$s">%2$s</datalist>',
@@ -233,7 +233,7 @@ $content_markup = sprintf(
     esc_attr($id . '-listbox'),
 );
 
-$indicator_markup = base_theme_render_icon(['name' => 'check', 'set' => 'lucide']);
+$indicator_markup = hengegroup_theme_render_icon(['name' => 'check', 'set' => 'lucide']);
 $indicator_template_markup = sprintf(
     '<template data-slot="combobox-item-indicator-template">%s</template>',
     $indicator_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

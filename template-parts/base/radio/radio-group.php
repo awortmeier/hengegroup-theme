@@ -67,7 +67,7 @@ if (!in_array($orientation, $allowed_orientations, true)) {
 }
 
 if ($name === '') {
-    $name = 'base-theme-radio-group-' . wp_unique_id();
+    $name = 'hengegroup-theme-radio-group-' . wp_unique_id();
 }
 
 $items_markup = '';
@@ -138,6 +138,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<div%1$s>%2$s</div>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

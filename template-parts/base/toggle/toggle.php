@@ -101,7 +101,7 @@ declare(strict_types=1);
 //                              "Monday, January 5, 2026" while the visible label stays just "5").
 //                              A missing value on an icon-only toggle doesn't hard-fail the render,
 //                              but triggers a WP_DEBUG-only _doing_it_wrong() hint,
-//                              see base_theme_warn_missing_aria_label()
+//                              see hengegroup_theme_warn_missing_aria_label()
 //   class / attributes / data_attributes   passthrough onto the visible <label> (the styling
 //                              target), not onto the hidden checkbox
 
@@ -169,7 +169,7 @@ if ($has_icon) {
         );
     }
 
-    $icon_markup = base_theme_render_icon($active_icon_config);
+    $icon_markup = hengegroup_theme_render_icon($active_icon_config);
 } else {
     $icon_markup = '';
 }
@@ -184,7 +184,7 @@ if ($is_icon_only) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-toggle-' . wp_unique_id();
+    $id = 'hengegroup-theme-toggle-' . wp_unique_id();
 }
 
 $checkbox_attributes = [
@@ -223,9 +223,9 @@ if ($aria_label !== '') {
     $checkbox_attributes['aria-label'] = $aria_label;
 }
 
-base_theme_warn_missing_aria_label('toggle.php', $is_icon_only, $aria_label);
+hengegroup_theme_warn_missing_aria_label('toggle.php', $is_icon_only, $aria_label);
 
-$checkbox_markup = '<input' . base_theme_render_attributes($checkbox_attributes) . '>';
+$checkbox_markup = '<input' . hengegroup_theme_render_attributes($checkbox_attributes) . '>';
 
 $label_attributes = $attributes;
 
@@ -260,6 +260,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 printf(
     '%1$s<label%2$s>%3$s</label>',
     $checkbox_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    base_theme_render_attributes($label_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($label_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

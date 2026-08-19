@@ -33,7 +33,7 @@ generischen WAI-ARIA-Checkliste, die von der echten Implementierung abweichen ko
 - **Nur die Checkliste selbst ist fertig, nicht ihre Ausfuehrung.** Ein tatsaechlicher Durchlauf
   (Tastatur-only + NVDA/VoiceOver) braucht eine laufende WP-Instanz mit Testseiten pro Komponente —
   dafuer fehlt aktuell die zurueckgestellte Komponenten-Showcase-Seite (siehe Eintrag oben).
-  `base-theme` ist zwar ein voll aktivierbares Theme, eine Wegwerf-Testseite pro Durchlauf waere bis
+  `hengegroup-theme` ist zwar ein voll aktivierbares Theme, eine Wegwerf-Testseite pro Durchlauf waere bis
   dahin die pragmatische Zwischenloesung. Die Status-Tabelle in der neuen Datei bleibt bis zum ersten
   echten Durchlauf leer.
 - Dokumentiert bewusst auch bekannte, aktuell fehlende Patterns als "kein Befund" statt als offene
@@ -44,7 +44,7 @@ generischen WAI-ARIA-Checkliste, die von der echten Implementierung abweichen ko
 ### i18n-Konsistenz-Check: keine Abweichungen gefunden (2026-08-18)
 
 Grep ueber alle `__()`/`_e()`/`esc_html__()`/`esc_attr__()`/... -Aufrufe im gesamten Theme
-(`template-parts/`, `inc/`, Root-Templates) ergab durchgehend die Text-Domain `base-theme` (identisch
+(`template-parts/`, `inc/`, Root-Templates) ergab durchgehend die Text-Domain `hengegroup-theme` (identisch
 zu `style.css`s `Text Domain`-Header) — keine Abweichungen gefunden, kein Fix noetig. JS-seitig
 (`assets/js/`) gibt es bewusst keine `wp.i18n`-Nutzung (siehe Kopfkommentar von `toast.js`: JS hat
 keinen Zugriff auf WordPress' PHP-Uebersetzungen, Strings werden dort manuell dupliziert) — kein
@@ -155,7 +155,7 @@ Regel 11 fuer die Befehle.
   eine echte laufende WP-Instanz brauchen (axe-core/Playwright gegen eine gerenderte Seite, nicht
   gegen isolierte PHP-Funktionen) — dann lohnt sich `wp-env` fuer diesen Zweck, nicht als Ersatz
   fuer die schnelle Brain-Monkey-Suite.
-- **`base_theme_render_icon()`/`base_theme_render_image()` bewusst nicht in dieser Suite getestet**:
+- **`hengegroup_theme_render_icon()`/`hengegroup_theme_render_image()` bewusst nicht in dieser Suite getestet**:
   beide puffern `get_template_part()`-Aufrufe gegen echte Template-Dateien (`template-parts/base/
 icon.php`/`image.php`) — Brain Monkey kann `get_template_part()` stubben, aber dann wird nicht
   mehr das echte Rendering getestet, nur noch, dass der Helper die Funktion aufruft. Ein

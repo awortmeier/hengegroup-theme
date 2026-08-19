@@ -29,7 +29,7 @@ declare(strict_types=1);
 //                              top of shadcn's typography vocabulary (shadcn's own scale has no
 //                              separate color axis), for
 //                              cases like light text on a dark hero section
-//   accent_words     array    words to highlight, rendered via base_theme_render_accent_text()
+//   accent_words     array    words to highlight, rendered via hengegroup_theme_render_accent_text()
 //   data_slot        string   overrides the root `data-slot` value (default: 'typography') --
 //                              same composing-parent escape hatch as input.php's/textarea.php's/
 //                              label.php's `data_slot`; card.php requests 'card-title'/
@@ -117,6 +117,6 @@ foreach ($data_attributes as $name => $value) {
 printf(
     '<%1$s%2$s>%3$s</%1$s>',
     esc_html($tag),
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    base_theme_render_accent_text($text, $accent_words), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_accent_text($text, $accent_words), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

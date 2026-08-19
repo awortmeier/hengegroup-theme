@@ -149,7 +149,7 @@ if ($is_single) {
     $selected_values = array_key_exists('value', $config) ? [(string) $config['value']] : [];
 
     if ($name === '') {
-        $name = 'base-theme-toggle-group-' . wp_unique_id();
+        $name = 'hengegroup-theme-toggle-group-' . wp_unique_id();
     }
 } else {
     $raw_values = $config['value'] ?? [];
@@ -248,6 +248,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<div%1$s>%2$s</div>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

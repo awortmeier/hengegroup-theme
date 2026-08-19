@@ -9,7 +9,7 @@ declare(strict_types=1);
 // navigation on top once it initializes, it doesn't replace basic activation.
 //
 // Composition: `icon` nests template-parts/base/icon.php via
-// base_theme_render_icon(), exactly like button.php's icon slot. `shortcut` is caller-provided,
+// hengegroup_theme_render_icon(), exactly like button.php's icon slot. `shortcut` is caller-provided,
 // pre-rendered HTML -- pass a buffered template-parts/base/kbd/kbd.php or kbd-group.php call
 // (shadcn's own DropdownMenuShortcut is just styled text, kbd.php already covers that, see
 // dropdown-menu.php's header comment).
@@ -58,7 +58,7 @@ if (!in_array($variant, $allowed_variants, true)) {
     $variant = 'default';
 }
 
-$icon_markup = $icon_config !== null ? base_theme_render_icon($icon_config) : '';
+$icon_markup = $icon_config !== null ? hengegroup_theme_render_icon($icon_config) : '';
 
 $inner_html = sprintf(
     '%1$s<span data-slot="dropdown-menu-item-text">%2$s</span>%3$s',
@@ -100,7 +100,7 @@ if ($href !== '') {
 
     printf(
         '<a%1$s>%2$s</a>',
-        base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 
@@ -115,6 +115,6 @@ if ($disabled) {
 
 printf(
     '<button%1$s>%2$s</button>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

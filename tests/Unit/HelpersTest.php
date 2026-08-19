@@ -10,14 +10,14 @@ use Brain\Monkey\Functions;
 /**
  * Unit tests for the pure-logic helpers in inc/template-parts/helpers.php. Only
  * covers the helpers that are meaningfully testable without a full WordPress install:
- * base_theme_render_icon()/base_theme_render_image() call get_template_part() against real
+ * hengegroup_theme_render_icon()/hengegroup_theme_render_image() call get_template_part() against real
  * template-parts files and are intentionally left to a future WP-backed integration suite instead
  * (see docs/to-do.md Abschnitt 1).
  */
 final class HelpersTest extends TestCase
 {
     /**
-     * Stubs esc_attr()/esc_html() as pass-through for tests that assert on base_theme_*()'s own
+     * Stubs esc_attr()/esc_html() as pass-through for tests that assert on hengegroup_theme_*()'s own
      * assembly logic (attribute order, whitespace, which words get wrapped, ...), not on core's
      * escaping behaviour itself. Deliberately NOT a setUp() blanket stub: Mockery matches the
      * first still-open expectation added for a given function, so a test that instead needs a
@@ -35,7 +35,7 @@ final class HelpersTest extends TestCase
     {
         $this->stubEscapingPassthrough();
 
-        $result = base_theme_render_attributes([
+        $result = hengegroup_theme_render_attributes([
             'class' => 'foo',
             'disabled' => true,
             'data-x' => 'y',
@@ -48,7 +48,7 @@ final class HelpersTest extends TestCase
     {
         $this->stubEscapingPassthrough();
 
-        $result = base_theme_render_attributes([
+        $result = hengegroup_theme_render_attributes([
             'class' => 'foo',
             'hidden' => false,
             'aria-label' => null,
@@ -59,14 +59,14 @@ final class HelpersTest extends TestCase
 
     public function test_render_attributes_returns_empty_string_for_no_attributes(): void
     {
-        $this->assertSame('', base_theme_render_attributes([]));
+        $this->assertSame('', hengegroup_theme_render_attributes([]));
     }
 
     public function test_render_attributes_skips_blank_attribute_names(): void
     {
         $this->stubEscapingPassthrough();
 
-        $result = base_theme_render_attributes([
+        $result = hengegroup_theme_render_attributes([
             '' => 'ignored',
             '  ' => 'ignored',
             'class' => 'foo',
@@ -84,7 +84,7 @@ final class HelpersTest extends TestCase
         // stubEscapingPassthrough()'s doc comment above).
         Functions\expect('esc_attr')->once()->with('foo"bar')->andReturn('foo&quot;bar');
 
-        $result = base_theme_render_attributes(['title' => 'foo"bar']);
+        $result = hengegroup_theme_render_attributes(['title' => 'foo"bar']);
 
         $this->assertSame(' title="foo&quot;bar"', $result);
     }
@@ -93,7 +93,7 @@ final class HelpersTest extends TestCase
     {
         $this->stubEscapingPassthrough();
 
-        $result = base_theme_render_accent_text('Build faster, ship sooner', ['faster', 'sooner']);
+        $result = hengegroup_theme_render_accent_text('Build faster, ship sooner', ['faster', 'sooner']);
 
         $this->assertSame(
             'Build <span class="font-accent">faster</span>, ship <span class="font-accent">sooner</span>',
@@ -107,7 +107,7 @@ final class HelpersTest extends TestCase
         // esc_html() instead of esc_attr().
         Functions\expect('esc_html')->once()->with('plain text')->andReturn('plain text');
 
-        $result = base_theme_render_accent_text('plain text', []);
+        $result = hengegroup_theme_render_accent_text('plain text', []);
 
         $this->assertSame('plain text', $result);
     }
@@ -119,7 +119,7 @@ final class HelpersTest extends TestCase
         // 'ship' is a substring of nothing here, but 'faster' vs. a hypothetical shorter overlap
         // is exactly the case the longest-first sort in the implementation guards against -- this
         // asserts both needles still resolve to independent, correctly wrapped spans.
-        $result = base_theme_render_accent_text('fast and faster', ['fast', 'faster']);
+        $result = hengegroup_theme_render_accent_text('fast and faster', ['fast', 'faster']);
 
         $this->assertSame(
             '<span class="font-accent">fast</span> and <span class="font-accent">faster</span>',
@@ -131,31 +131,31 @@ final class HelpersTest extends TestCase
     {
         $this->stubEscapingPassthrough();
 
-        $result = base_theme_render_accent_text('hello world', ['', '   ']);
+        $result = hengegroup_theme_render_accent_text('hello world', ['', '   ']);
 
         $this->assertSame('hello world', $result);
     }
 
     public function test_field_description_id_appends_suffix(): void
     {
-        $this->assertSame('email-description', base_theme_field_description_id('email'));
+        $this->assertSame('email-description', hengegroup_theme_field_description_id('email'));
     }
 
     public function test_field_error_id_appends_suffix(): void
     {
-        $this->assertSame('email-error', base_theme_field_error_id('email'));
+        $this->assertSame('email-error', hengegroup_theme_field_error_id('email'));
     }
 
     public function test_field_describedby_combines_both_ids_by_default(): void
     {
-        $this->assertSame('email-description email-error', base_theme_field_describedby('email'));
+        $this->assertSame('email-description email-error', hengegroup_theme_field_describedby('email'));
     }
 
     public function test_field_describedby_omits_missing_description(): void
     {
         $this->assertSame(
             'email-error',
-            base_theme_field_describedby('email', has_description: false),
+            hengegroup_theme_field_describedby('email', has_description: false),
         );
     }
 
@@ -163,7 +163,7 @@ final class HelpersTest extends TestCase
     {
         $this->assertSame(
             'email-description',
-            base_theme_field_describedby('email', has_error: false),
+            hengegroup_theme_field_describedby('email', has_error: false),
         );
     }
 
@@ -171,7 +171,7 @@ final class HelpersTest extends TestCase
     {
         $this->assertSame(
             '',
-            base_theme_field_describedby('email', has_description: false, has_error: false),
+            hengegroup_theme_field_describedby('email', has_description: false, has_error: false),
         );
     }
 
@@ -180,7 +180,7 @@ final class HelpersTest extends TestCase
         $this->stubEscapingPassthrough();
         Functions\expect('_doing_it_wrong')->once();
 
-        base_theme_warn_missing_aria_label('button.php', true, '');
+        hengegroup_theme_warn_missing_aria_label('button.php', true, '');
 
         // No assertion beyond the Functions\expect() above -- Brain Monkey fails the test in
         // tearDown() if the expected call didn't happen.
@@ -191,7 +191,7 @@ final class HelpersTest extends TestCase
     {
         Functions\expect('_doing_it_wrong')->never();
 
-        base_theme_warn_missing_aria_label('button.php', true, 'Close');
+        hengegroup_theme_warn_missing_aria_label('button.php', true, 'Close');
 
         $this->assertTrue(true);
     }
@@ -200,7 +200,7 @@ final class HelpersTest extends TestCase
     {
         Functions\expect('_doing_it_wrong')->never();
 
-        base_theme_warn_missing_aria_label('button.php', false, '');
+        hengegroup_theme_warn_missing_aria_label('button.php', false, '');
 
         $this->assertTrue(true);
     }

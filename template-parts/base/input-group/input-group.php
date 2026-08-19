@@ -15,7 +15,7 @@ declare(strict_types=1);
 //
 //   ob_start();
 //   get_template_part('template-parts/base/input-group/input-group-addon', null, [
-//       'config' => ['content' => base_theme_render_icon(['name' => 'search', 'set' => 'lucide'])],
+//       'config' => ['content' => hengegroup_theme_render_icon(['name' => 'search', 'set' => 'lucide'])],
 //   ]);
 //   get_template_part('template-parts/base/input', null, [
 //       'config' => ['type' => 'search', 'placeholder' => 'Search...', 'data_slot' => 'input-group-control'],
@@ -80,6 +80,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<div%1$s>%2$s</div>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

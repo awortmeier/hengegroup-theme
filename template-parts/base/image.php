@@ -193,4 +193,4 @@ foreach ($data_attributes as $name => $value) {
 
 $image_attributes = array_merge($image_attributes, $attributes);
 
-echo '<img' . base_theme_render_attributes($image_attributes) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo '<img' . hengegroup_theme_render_attributes($image_attributes) . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

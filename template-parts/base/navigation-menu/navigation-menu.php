@@ -137,7 +137,7 @@ if (!is_numeric($close_delay)) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-navigation-menu-' . wp_unique_id();
+    $id = 'hengegroup-theme-navigation-menu-' . wp_unique_id();
 }
 
 $group_name = $id . '-group';
@@ -247,6 +247,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<nav%1$s>%2$s</nav>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $list_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

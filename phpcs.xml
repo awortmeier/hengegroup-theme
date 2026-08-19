@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ruleset name="base-theme">
+<ruleset name="hengegroup-theme">
     <description>
         Automatisierte Pruefung fuer die in CLAUDE.md schriftlich fixierten PHP-Konventionen
         (strict_types, Escaping, sanitisierte Datei-Zugriffe) via WPCS. Bewusst NICHT die volle

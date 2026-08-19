@@ -63,7 +63,7 @@ $class_name = trim((string) ($config['class'] ?? ''));
 $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : [];
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
 
-$image_markup = base_theme_render_image([
+$image_markup = hengegroup_theme_render_image([
     'src' => $src,
     'name' => $name,
     'set' => $set,
@@ -82,7 +82,7 @@ if ($image_markup !== '') {
 } elseif ($fallback_icon_config !== null) {
     $content_markup = sprintf(
         '<span data-slot="avatar-fallback">%s</span>',
-        base_theme_render_icon($fallback_icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_icon($fallback_icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 } else {
     return;
@@ -119,6 +119,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<span%1$s>%2$s</span>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

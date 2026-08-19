@@ -108,7 +108,7 @@ $render_option = static function (array $option_config) use ($selected_values): 
 
     return sprintf(
         '<option%1$s>%2$s</option>',
-        base_theme_render_attributes($option_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($option_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         esc_html($text),
     );
 };
@@ -124,7 +124,7 @@ if ($placeholder !== '') {
 
     $options_markup .= sprintf(
         '<option%1$s>%2$s</option>',
-        base_theme_render_attributes($placeholder_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($placeholder_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         esc_html($placeholder),
     );
 }
@@ -168,7 +168,7 @@ if ($options_markup === '') {
 }
 
 if ($id === '') {
-    $id = 'base-theme-native-select-' . wp_unique_id();
+    $id = 'hengegroup-theme-native-select-' . wp_unique_id();
 }
 
 $element_attributes = $attributes;
@@ -218,7 +218,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 $select_markup = sprintf(
     '<select%1$s>%2$s</select>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $options_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 

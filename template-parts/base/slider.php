@@ -71,7 +71,7 @@ if (!in_array($orientation, $allowed_orientations, true)) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-slider-' . wp_unique_id();
+    $id = 'hengegroup-theme-slider-' . wp_unique_id();
 }
 
 $element_attributes = $attributes;
@@ -129,7 +129,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
     $element_attributes['data-' . $data_name] = $attribute_value;
 }
 
-$slider_markup = '<input' . base_theme_render_attributes($element_attributes) . '>';
+$slider_markup = '<input' . hengegroup_theme_render_attributes($element_attributes) . '>';
 
 if ($label_text === '') {
     echo $slider_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

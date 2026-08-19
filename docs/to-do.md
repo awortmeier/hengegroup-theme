@@ -28,7 +28,7 @@ Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als ne
 - **Keine automatisierte a11y-Pruefung.** Weiterhin offen, haengt an der aktuell zurueckgestellten
   Komponenten-Showcase-Seite als Scan-Ziel (siehe `docs/entscheidungen.md`). `CLAUDE.md`
   und `docs/neue-komponente-erstellen.md` investieren sehr viel in a11y-Konventionen (Regel 5,
-  Regel 10, `base_theme_warn_missing_aria_label()`) — das ist aktuell komplett auf manuelle/Agent-gestuetzte
+  Regel 10, `hengegroup_theme_warn_missing_aria_label()`) — das ist aktuell komplett auf manuelle/Agent-gestuetzte
   Review angewiesen. Ein automatisierter Check (`@axe-core/playwright` gegen die Showcase-Seite,
   gehostet ueber `@wordpress/env`/`wp-env` in CI) wuerde genau diese Investition absichern.
 - **Keine visuelle Regressionstestung.** Aktuell irrelevant (Phase 1 hat kein Styling), wird aber
@@ -61,7 +61,7 @@ Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als ne
   oder (falls Ueberbleibsel) entfernen, damit er nicht als stiller, nicht eingeloester Claim im
   Repo liegen bleibt.
 - **Phase 3:** `inc/setup/theme-admin.php` versteckt Site-Editor-/Customizer-Menuepunkte aktiv
-  (`base_theme_action_admin_menu_cleanup()`), was fuer ein reines klassisches Theme sinnvoll ist —
+  (`hengegroup_theme_action_admin_menu_cleanup()`), was fuer ein reines klassisches Theme sinnvoll ist —
   sollte aber gegengeprueft werden, sobald Phase 3 eigene Bloecke registriert (der normale
   Block-Editor in Seiten/Beitraegen bleibt davon unabhaengig ohnehin erreichbar, braucht dafuer
   keinen sichtbaren Site Editor).

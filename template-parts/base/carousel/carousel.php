@@ -103,6 +103,6 @@ foreach ($data_attributes as $name => $value) {
 
 printf(
     '<div%1$s>%2$s</div>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

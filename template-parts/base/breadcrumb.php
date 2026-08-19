@@ -86,12 +86,12 @@ if ($items === []) {
 }
 
 if ($aria_label === '') {
-    $aria_label = __('breadcrumb', 'base-theme');
+    $aria_label = __('breadcrumb', 'hengegroup-theme');
 }
 
 $last_index = count($items) - 1;
 $separator_markup =
-    $separator_icon_config !== null ? base_theme_render_icon($separator_icon_config) : '';
+    $separator_icon_config !== null ? hengegroup_theme_render_icon($separator_icon_config) : '';
 
 $list_items_markup = '';
 
@@ -114,10 +114,10 @@ foreach ($items as $index => $item) {
 
         $inner_markup = sprintf(
             '<span data-slot="breadcrumb-ellipsis" role="presentation" aria-hidden="true">%s</span>',
-            base_theme_render_icon($ellipsis_icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            hengegroup_theme_render_icon($ellipsis_icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         );
     } else {
-        $icon_markup = $item['icon'] !== null ? base_theme_render_icon($item['icon']) : '';
+        $icon_markup = $item['icon'] !== null ? hengegroup_theme_render_icon($item['icon']) : '';
         $label_markup = $icon_markup . esc_html($item['text']);
 
         if ($index === $last_index) {
@@ -130,7 +130,7 @@ foreach ($items as $index => $item) {
 
             $inner_markup = sprintf(
                 '<a%1$s>%2$s</a>',
-                base_theme_render_attributes($link_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                hengegroup_theme_render_attributes($link_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             );
         } else {
@@ -140,7 +140,7 @@ foreach ($items as $index => $item) {
 
     $list_items_markup .= sprintf(
         '<li%1$s>%2$s</li>',
-        base_theme_render_attributes($item_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($item_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $inner_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 }
@@ -166,6 +166,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<nav%1$s><ol data-slot="breadcrumb-list">%2$s</ol></nav>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $list_items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

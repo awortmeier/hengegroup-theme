@@ -66,7 +66,7 @@ if ($has_icon && !$is_icon_only) {
     );
 }
 
-$icon_markup = $has_icon ? base_theme_render_icon($icon_config) : '';
+$icon_markup = $has_icon ? hengegroup_theme_render_icon($icon_config) : '';
 
 if ($is_icon_only) {
     $inner_html = $icon_markup;
@@ -110,6 +110,6 @@ if ($href !== '') {
 printf(
     '<%1$s%2$s>%3$s</%1$s>',
     esc_html($tag),
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

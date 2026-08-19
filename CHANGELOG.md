@@ -26,18 +26,18 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 - SEO-/Meta-Grundgerüst ohne SEO-Plugin (`inc/setup/theme-seo-admin.php`,
   `inc/setup/theme-seo-output.php`, `assets/js/admin/theme-seo.js`): eigenes "Settings > SEO"
   fuer site-weite Standardwerte (Titel-Vorlage, Meta-Beschreibung, Social-Bild, Twitter-Handle,
-  Indexierung) plus eine "SEO"-Metabox auf Beitraegen/Seiten (`base_theme_seo_post_types`-Filter
+  Indexierung) plus eine "SEO"-Metabox auf Beitraegen/Seiten (`hengegroup_theme_seo_post_types`-Filter
   fuer weitere Post-Types) fuer Seiten-spezifische Ueberschreibungen — leer gelassen greift immer
   der site-weite Standard. Rendert `<title>`, Meta-Description, Canonical, Robots-Meta,
   Open-Graph-/Twitter-Card-Tags sowie ein JSON-LD-Organization-Schema; Letzteres ueber den
-  `base_theme_seo_structured_data`-Filter erweiterbar (Vormerkung fuer spaeter: Product-/
+  `hengegroup_theme_seo_structured_data`-Filter erweiterbar (Vormerkung fuer spaeter: Product-/
   JobPosting-Schema auf entsprechenden CPT-Templates). `robots.txt`/XML-Sitemap bleiben bewusst
   WordPress-Core ueberlassen, `hreflang` bewusst ausgeklammert bis zur geplanten Multisite-basierten
   Mehrsprachigkeit (siehe Kopfkommentar von `theme-seo-admin.php`/`theme-seo-output.php` sowie
   `docs/entscheidungen.md`). Schliesst `docs/to-do.md` Punkt 3.
 - `docs/entscheidungen.md`/`docs/how-to.md`: zentraler Log fuer bewusste Architektur-/Prozess-
   entscheidungen (Warum) und praktische Erweiterungs-Anleitungen (Wie, z. B. weiteres JSON-LD-
-  Schema per `base_theme_seo_structured_data`-Filter ergaenzen) — bisher nur verstreut in
+  Schema per `hengegroup_theme_seo_structured_data`-Filter ergaenzen) — bisher nur verstreut in
   Kopfkommentaren/CHANGELOG dokumentiert. `CLAUDE.md` Regel 12 macht das Pflegen dieser Dateien
   verbindlich fuer kuenftige Entscheidungen/HowTos. Spaeter (siehe letzter Eintrag unten) aus einer
   gemeinsamen `docs/entscheidungen-und-howtos.md` in zwei fokussierte Dateien aufgeteilt.
@@ -93,7 +93,7 @@ Erste versionierte Basis, mit Git-Historie ab diesem Stand (siehe README "Prozes
 ### Added
 
 - Erstes Git-Repository fuer die Basis-Vorlage (vorher unversioniert), inkl. Remote auf
-  `github.com/awortmeier/wordpress-base-theme`.
+  `github.com/awortmeier/wordpress-hengegroup-theme`.
 - ~90 generische, projektunabhaengige Base-Komponenten unter `template-parts/base/` (Phase 1 laut
   `CLAUDE.md`: Markup, Config-API, Verhalten, Barrierefreiheit — noch ohne visuelles Styling).
 - Progressive-Enhancement-JS fuer die interaktiveren Komponenten unter
@@ -106,5 +106,5 @@ Erste versionierte Basis, mit Git-Historie ab diesem Stand (siehe README "Prozes
   Regel 11).
 - `LICENSE` (proprietaer/All Rights Reserved).
 
-[Unreleased]: https://github.com/awortmeier/wordpress-base-theme/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/awortmeier/wordpress-base-theme/releases/tag/v1.0.0
+[Unreleased]: https://github.com/awortmeier/wordpress-hengegroup-theme/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/awortmeier/wordpress-hengegroup-theme/releases/tag/v1.0.0

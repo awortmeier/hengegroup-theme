@@ -4,10 +4,10 @@ get_header();
 ?>
 
 <header class="archive-header">
-  <p class="eyebrow"><?php esc_html_e('Suche', 'base-theme'); ?></p>
+  <p class="eyebrow"><?php esc_html_e('Suche', 'hengegroup-theme'); ?></p>
   <h1>
     <?php printf(
-        esc_html__('Suchergebnisse fuer: %s', 'base-theme'),
+        esc_html__('Suchergebnisse fuer: %s', 'hengegroup-theme'),
         '<span>' . esc_html(get_search_query()) . '</span>',
     ); ?>
   </h1>

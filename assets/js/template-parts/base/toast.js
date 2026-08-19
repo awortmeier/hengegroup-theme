@@ -40,7 +40,7 @@ function getTypeIconTemplate(type) {
 function nextId() {
     idCounter += 1;
 
-    return `base-theme-toast-js-${idCounter}`;
+    return `hengegroup-theme-toast-js-${idCounter}`;
 }
 
 function getViewportDuration() {

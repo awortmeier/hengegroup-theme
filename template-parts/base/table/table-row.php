@@ -60,6 +60,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<tr%1$s>%2$s</tr>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

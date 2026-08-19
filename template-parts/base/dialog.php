@@ -155,7 +155,7 @@ if (!in_array($title_tag, $allowed_title_tags, true)) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-dialog-' . wp_unique_id();
+    $id = 'hengegroup-theme-dialog-' . wp_unique_id();
 }
 
 $title_markup = '';
@@ -211,8 +211,8 @@ if ($show_close_button) {
     $close_button_markup = sprintf(
         '<button type="button" data-slot="dialog-close" command="close" commandfor="%1$s" aria-label="%2$s">%3$s</button>',
         esc_attr($id),
-        esc_attr__('Close', 'base-theme'),
-        base_theme_render_icon(['name' => 'x', 'set' => 'lucide']), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        esc_attr__('Close', 'hengegroup-theme'),
+        hengegroup_theme_render_icon(['name' => 'x', 'set' => 'lucide']), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 }
 
@@ -267,6 +267,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<dialog%1$s>%2$s</dialog>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

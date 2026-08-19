@@ -62,7 +62,7 @@ $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : 
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
 
 if ($id === '') {
-    $id = 'base-theme-radio-' . wp_unique_id();
+    $id = 'hengegroup-theme-radio-' . wp_unique_id();
 }
 
 $element_attributes = $attributes;
@@ -115,7 +115,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
     $element_attributes['data-' . $data_name] = $attribute_value;
 }
 
-$input_markup = '<input' . base_theme_render_attributes($element_attributes) . '>';
+$input_markup = '<input' . hengegroup_theme_render_attributes($element_attributes) . '>';
 
 if ($label_text === '') {
     echo $input_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

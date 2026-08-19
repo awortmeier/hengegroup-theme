@@ -15,9 +15,9 @@ declare(strict_types=1);
 //   errors   array    multiple error messages, rendered as a <ul>; takes priority over `text` when
 //                      both are given
 //   for      string   the paired control's id -- when given (and `id` is omitted), the id rendered
-//                      here is derived from it via base_theme_field_error_id() instead of a fresh
+//                      here is derived from it via hengegroup_theme_field_error_id() instead of a fresh
 //                      wp_unique_id(), so the control's own `aria-describedby` can compute the
-//                      identical string independently (base_theme_field_describedby($control_id)) --
+//                      identical string independently (hengegroup_theme_field_describedby($control_id)) --
 //                      no id invented/copied by hand in two places. See field.php's header comment
 //                      for the full wiring example, same convention as field-description.php's `for`
 //   id       string   native `id`, takes priority over `for` when both are given; auto-generated via
@@ -56,7 +56,7 @@ if ($errors === [] && $text === '') {
 
 if ($id === '') {
     $id =
-        $for !== '' ? base_theme_field_error_id($for) : 'base-theme-field-error-' . wp_unique_id();
+        $for !== '' ? hengegroup_theme_field_error_id($for) : 'hengegroup-theme-field-error-' . wp_unique_id();
 }
 
 $element_attributes = $attributes;
@@ -78,7 +78,7 @@ if (count($errors) > 1) {
 
     printf(
         '<div%1$s><ul>%2$s</ul></div>',
-        base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 
@@ -89,6 +89,6 @@ $message = $errors !== [] ? $errors[0] : $text;
 
 printf(
     '<div%1$s>%2$s</div>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     esc_html($message),
 );

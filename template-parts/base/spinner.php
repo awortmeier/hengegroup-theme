@@ -60,10 +60,10 @@ $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_
 
 if ($aria_label === '') {
     // Translate only, don't escape here -- like every other component in this theme, escaping
-    // happens once, at render time, via base_theme_render_attributes(). Escaping twice (here via
-    // esc_attr__(), then again when base_theme_render_icon() -> icon.php merges this into its
+    // happens once, at render time, via hengegroup_theme_render_attributes(). Escaping twice (here via
+    // esc_attr__(), then again when hengegroup_theme_render_icon() -> icon.php merges this into its
     // <svg> attributes) double-encodes entities in the translated string (e.g. `&` -> `&amp;amp;`).
-    $aria_label = __('Loading', 'base-theme');
+    $aria_label = __('Loading', 'hengegroup-theme');
 }
 
 $svg_attributes = $attributes;
@@ -73,7 +73,7 @@ if ($decorative) {
     $svg_attributes['aria-hidden'] = 'true';
 } else {
     // icon.php defaults to aria-hidden="true" (its own `decorative` default) -- explicitly
-    // cancel that out (false is dropped by base_theme_render_attributes()) in favor of the
+    // cancel that out (false is dropped by hengegroup_theme_render_attributes()) in favor of the
     // role="status" + aria-label pairing shadcn's Spinner ships out of the box.
     $svg_attributes['aria-hidden'] = false;
     $svg_attributes['role'] = 'status';
@@ -96,4 +96,4 @@ $icon_config['attributes'] = array_merge(
     $svg_attributes,
 );
 
-echo base_theme_render_icon($icon_config); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_icon($icon_config); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

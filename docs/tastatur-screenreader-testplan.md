@@ -10,7 +10,7 @@ Screenreader-Ankuendigungen.
 ## Voraussetzung zum Ausfuehren
 
 Diese Datei dokumentiert **was** zu pruefen ist, nicht das Ergebnis eines bereits durchgefuehrten
-Durchlaufs — `base-theme` ist zwar ein voll aktivierbares WordPress-Theme (`page.php`, `index.php`,
+Durchlaufs — `hengegroup-theme` ist zwar ein voll aktivierbares WordPress-Theme (`page.php`, `index.php`,
 ... existieren bereits), es braucht dafuer aber trotzdem eine laufende WP-Instanz mit ein paar
 Testseiten, die `get_template_part()` fuer die jeweilige Komponente aufrufen. Bis die zurueckgestellte
 Komponenten-Showcase-Seite existiert (siehe `docs/entscheidungen.md`), reicht dafuer eine

@@ -57,8 +57,8 @@ $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_
 
 if ($aria_label === '') {
     // Translate only, don't escape here -- like spinner.php, escaping happens once, at render
-    // time, via base_theme_render_attributes().
-    $aria_label = __('Loading', 'base-theme');
+    // time, via hengegroup_theme_render_attributes().
+    $aria_label = __('Loading', 'hengegroup-theme');
 }
 
 $element_attributes = $attributes;
@@ -88,5 +88,5 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<div%s></div>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

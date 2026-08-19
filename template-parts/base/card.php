@@ -100,7 +100,7 @@ if (!in_array($size, $allowed_sizes, true)) {
 $media_markup = '';
 
 if ($image_config !== null) {
-    $image_markup = base_theme_render_image($image_config);
+    $image_markup = hengegroup_theme_render_image($image_config);
 
     if (trim($image_markup) !== '') {
         $media_markup = sprintf(
@@ -192,6 +192,6 @@ foreach ($data_attributes as $name => $value) {
 printf(
     '<%1$s%2$s>%3$s</%1$s>',
     esc_html($tag),
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

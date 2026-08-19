@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $languagesPath = Join-Path $repoRoot "languages"
-$potFilePath = Join-Path $languagesPath "base-theme.pot"
+$potFilePath = Join-Path $languagesPath "hengegroup-theme.pot"
 
 if (-not (Test-Path -LiteralPath $languagesPath)) {
     New-Item -ItemType Directory -Path $languagesPath -Force | Out-Null
@@ -17,7 +17,7 @@ if ($null -eq $wpCommand) {
 
 Push-Location $repoRoot
 try {
-    & $wpCommand.Source i18n make-pot . $potFilePath --domain=base-theme --exclude=node_modules,dist,.git,.deploy-state,languages
+    & $wpCommand.Source i18n make-pot . $potFilePath --domain=hengegroup-theme --exclude=node_modules,dist,.git,.deploy-state,languages
     if ($LASTEXITCODE -ne 0) {
         throw "WP-CLI konnte die POT-Datei nicht erzeugen."
     }

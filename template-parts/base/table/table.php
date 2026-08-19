@@ -70,7 +70,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 $table_markup = sprintf(
     '<table%1$s>%2$s</table>',
-    base_theme_render_attributes($table_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($table_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 

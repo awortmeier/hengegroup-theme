@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-function base_theme_action_wp_enqueue_scripts_cleanup(): void
+function hengegroup_theme_action_wp_enqueue_scripts_cleanup(): void
 {
     wp_deregister_script('wp-polyfill');
     wp_deregister_script('regenerator-runtime');
 }
 
-function base_theme_action_login_enqueue_scripts(): void
+function hengegroup_theme_action_login_enqueue_scripts(): void
 {
-    base_theme_enqueue_vite_style_entry('base-theme-login-styles', 'assets/js/login.js');
+    hengegroup_theme_enqueue_vite_style_entry('hengegroup-theme-login-styles', 'assets/js/login.js');
 }
 
-function base_theme_action_admin_menu_cleanup(): void
+function hengegroup_theme_action_admin_menu_cleanup(): void
 {
     $request_uri = isset($_SERVER['REQUEST_URI'])
         ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI']))
@@ -61,7 +61,7 @@ function base_theme_action_admin_menu_cleanup(): void
     }
 }
 
-function base_theme_action_wp_dashboard_setup_cleanup(): void
+function hengegroup_theme_action_wp_dashboard_setup_cleanup(): void
 {
     remove_meta_box('dashboard_right_now', 'dashboard', 'normal');
     remove_meta_box('dashboard_activity', 'dashboard', 'normal');
@@ -71,14 +71,14 @@ function base_theme_action_wp_dashboard_setup_cleanup(): void
     remove_action('welcome_panel', 'wp_welcome_panel');
 }
 
-function base_theme_action_wp_network_dashboard_setup_cleanup(): void
+function hengegroup_theme_action_wp_network_dashboard_setup_cleanup(): void
 {
     remove_meta_box('network_dashboard_right_now', 'dashboard-network', 'normal');
     remove_meta_box('woocommerce_network_orders', 'dashboard-network', 'normal');
     remove_meta_box('dashboard_primary', 'dashboard-network', 'side');
 }
 
-function base_theme_action_admin_bar_menu_cleanup(): void
+function hengegroup_theme_action_admin_bar_menu_cleanup(): void
 {
     global $wp_admin_bar;
     $wp_admin_bar->remove_menu('wp-logo');
@@ -90,7 +90,7 @@ function base_theme_action_admin_bar_menu_cleanup(): void
     $wp_admin_bar->remove_node('archive');
 }
 
-function base_theme_action_admin_bar_multisite_cleanup(): void
+function hengegroup_theme_action_admin_bar_multisite_cleanup(): void
 {
     if (!is_multisite()) {
         return;
@@ -108,20 +108,20 @@ function base_theme_action_admin_bar_multisite_cleanup(): void
     }
 }
 
-function base_theme_action_wp_before_admin_bar_render_cleanup(): void
+function hengegroup_theme_action_wp_before_admin_bar_render_cleanup(): void
 {
     global $wp_admin_bar;
     $wp_admin_bar->remove_menu('comments');
     $wp_admin_bar->remove_menu('customize');
 }
 
-function base_theme_action_network_admin_menu_cleanup(): void
+function hengegroup_theme_action_network_admin_menu_cleanup(): void
 {
     remove_submenu_page('themes.php', 'theme-editor.php');
     remove_submenu_page('plugins.php', 'plugin-editor.php');
 }
 
-function base_theme_action_block_hidden_admin_pages(): void
+function hengegroup_theme_action_block_hidden_admin_pages(): void
 {
     if (!is_admin()) {
         return;
@@ -147,24 +147,24 @@ function base_theme_action_block_hidden_admin_pages(): void
     }
 }
 
-function base_theme_register_admin_hooks(): void
+function hengegroup_theme_register_admin_hooks(): void
 {
-    add_action('wp_enqueue_scripts', 'base_theme_action_wp_enqueue_scripts_cleanup');
-    add_action('login_enqueue_scripts', 'base_theme_action_login_enqueue_scripts');
-    add_action('admin_menu', 'base_theme_action_admin_menu_cleanup', 999);
-    add_action('network_admin_menu', 'base_theme_action_network_admin_menu_cleanup', 999);
-    add_action('wp_dashboard_setup', 'base_theme_action_wp_dashboard_setup_cleanup');
+    add_action('wp_enqueue_scripts', 'hengegroup_theme_action_wp_enqueue_scripts_cleanup');
+    add_action('login_enqueue_scripts', 'hengegroup_theme_action_login_enqueue_scripts');
+    add_action('admin_menu', 'hengegroup_theme_action_admin_menu_cleanup', 999);
+    add_action('network_admin_menu', 'hengegroup_theme_action_network_admin_menu_cleanup', 999);
+    add_action('wp_dashboard_setup', 'hengegroup_theme_action_wp_dashboard_setup_cleanup');
     add_action(
         'wp_network_dashboard_setup',
-        'base_theme_action_wp_network_dashboard_setup_cleanup',
+        'hengegroup_theme_action_wp_network_dashboard_setup_cleanup',
     );
-    add_action('admin_bar_menu', 'base_theme_action_admin_bar_menu_cleanup', 999);
-    add_action('admin_bar_menu', 'base_theme_action_admin_bar_multisite_cleanup', 999);
+    add_action('admin_bar_menu', 'hengegroup_theme_action_admin_bar_menu_cleanup', 999);
+    add_action('admin_bar_menu', 'hengegroup_theme_action_admin_bar_multisite_cleanup', 999);
     add_action(
         'wp_before_admin_bar_render',
-        'base_theme_action_wp_before_admin_bar_render_cleanup',
+        'hengegroup_theme_action_wp_before_admin_bar_render_cleanup',
     );
-    add_action('admin_init', 'base_theme_action_block_hidden_admin_pages');
+    add_action('admin_init', 'hengegroup_theme_action_block_hidden_admin_pages');
 }
 
-base_theme_register_admin_hooks();
+hengegroup_theme_register_admin_hooks();

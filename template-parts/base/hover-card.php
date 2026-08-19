@@ -123,7 +123,7 @@ if (!is_numeric($close_delay)) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-hover-card-' . wp_unique_id();
+    $id = 'hengegroup-theme-hover-card-' . wp_unique_id();
 }
 
 $wrapper_attributes = $attributes;
@@ -169,7 +169,7 @@ $content_markup = sprintf(
 
 printf(
     '<span%1$s>%2$s%3$s</span>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $trigger_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

@@ -37,7 +37,7 @@ if ($text === '') {
     return;
 }
 
-$indicator_markup = base_theme_render_icon(['name' => 'circle', 'set' => 'lucide']);
+$indicator_markup = hengegroup_theme_render_icon(['name' => 'circle', 'set' => 'lucide']);
 
 $inner_html = sprintf(
     '<span data-slot="dropdown-menu-item-indicator">%1$s</span><span data-slot="dropdown-menu-item-text">%2$s</span>',
@@ -73,6 +73,6 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<button%1$s>%2$s</button>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $inner_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

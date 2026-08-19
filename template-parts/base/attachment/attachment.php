@@ -101,7 +101,7 @@ if (!in_array($orientation, $allowed_orientations, true)) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-attachment-' . wp_unique_id();
+    $id = 'hengegroup-theme-attachment-' . wp_unique_id();
 }
 
 $trigger_markup = '';
@@ -118,7 +118,7 @@ if ($href !== '') {
         $trigger_attributes['aria-label'] = $trigger_aria_label;
     }
 
-    $trigger_markup = '<a' . base_theme_render_attributes($trigger_attributes) . '></a>';
+    $trigger_markup = '<a' . hengegroup_theme_render_attributes($trigger_attributes) . '></a>';
 }
 
 $media_markup = '';
@@ -133,9 +133,9 @@ if ($media_config !== null) {
     $media_content = '';
 
     if ($media_variant === 'image' && is_array($media_config['image'] ?? null)) {
-        $media_content = base_theme_render_image($media_config['image']);
+        $media_content = hengegroup_theme_render_image($media_config['image']);
     } elseif ($media_variant === 'icon' && is_array($media_config['icon'] ?? null)) {
-        $media_content = base_theme_render_icon($media_config['icon']);
+        $media_content = hengegroup_theme_render_icon($media_config['icon']);
     }
 
     if ($media_content !== '') {
@@ -195,7 +195,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<div%1$s>%2$s%3$s%4$s%5$s</div>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $trigger_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $media_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

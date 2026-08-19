@@ -93,11 +93,11 @@ abdeckt (Previous/Next-Buttons).
 Vor jeder neuen Komponente pruefen, ob sie eine bestehende Base-Komponente **nutzen** kann, statt
 Markup zu duplizieren — Vorbild ist `button.php`, das `icon.php` fuer sein Icon-Slot einbindet.
 Das Puffern (`ob_start()`/`get_template_part()`/`ob_get_clean()`) steckt dafuer nicht mehr lokal in
-jeder Komponente, sondern zentral im Helper `base_theme_render_icon()`
+jeder Komponente, sondern zentral im Helper `hengegroup_theme_render_icon()`
 (`inc/template-parts/helpers.php`, siehe Regel 7):
 
 ```php
-$icon_markup = base_theme_render_icon(["name" => "arrow-right", "set" => "lucide"]);
+$icon_markup = hengegroup_theme_render_icon(["name" => "arrow-right", "set" => "lucide"]);
 ```
 
 Zwei wiederkehrende Muster dafuer:
@@ -196,15 +196,15 @@ Pfade ohne diese Pruefung.
 
 Cross-cutting Logik, die mehrere Base-Komponenten brauchen (Attribute-Array → HTML-String,
 Text-Highlighting, u. ae.), lebt **ausschliesslich** in `inc/template-parts/helpers.php`
-(eingebunden ueber `functions.php`, global verfuegbar, Praefix `base_theme_`). Aktuell vorhanden:
+(eingebunden ueber `functions.php`, global verfuegbar, Praefix `hengegroup_theme_`). Aktuell vorhanden:
 
-- `base_theme_render_attributes(array $attributes): string` — Attribute-Array in einen
+- `hengegroup_theme_render_attributes(array $attributes): string` — Attribute-Array in einen
   HTML-Attribut-String rendern (inkl. Bool-Attribute, `esc_attr()`). Genutzt von praktisch allen
   Base-Komponenten, inkl. `icon.php` (dort in den bestehenden `<svg>`-Tag injiziert statt einen
   neuen Tag zu erzeugen).
-- `base_theme_render_accent_text(string $content, array $highlighted_words): string` —
+- `hengegroup_theme_render_accent_text(string $content, array $highlighted_words): string` —
   `accent_words`-Highlighting (`<span class="font-accent">`). Genutzt von `typography.php`.
-- `base_theme_render_icon(array $icon_config): string` — puffert einen `template-parts/base/icon`-
+- `hengegroup_theme_render_icon(array $icon_config): string` — puffert einen `template-parts/base/icon`-
   Aufruf und gibt das SVG-Markup als String zurueck. Genutzt von `button.php` (Icon-Slot +
   Loading-Spinner), `accordion.php` (Chevron), `badge.php` (Icon-Slot), `avatar.php`
   (Icon-Fallback), `breadcrumb.php` (Separator + Ellipsis), `select.php` (Chevron +
@@ -217,7 +217,7 @@ Text-Highlighting, u. ae.), lebt **ausschliesslich** in `inc/template-parts/help
   `calendar`), `data-table.php` (Sortier-Chevrons in sortierbaren Spaltenkoepfen) — ersetzt die
   vorher in mehreren Dateien lokal duplizierte `ob_start()`/`get_template_part()`/
   `ob_get_clean()`-Closure.
-- `base_theme_render_image(array $image_config): string` — puffert einen
+- `hengegroup_theme_render_image(array $image_config): string` — puffert einen
   `template-parts/base/image`-Aufruf und gibt das Markup als String zurueck (leerer String, wenn
   `image.php` selbst nichts rendert, z. B. fehlende Datei — siehe dessen `is_file()`-Check). Genutzt
   von `avatar.php` (Bild-Slot, dessen Leer-Pruefung den Fallback triggert, siehe Regel 2),
@@ -225,21 +225,21 @@ Text-Highlighting, u. ae.), lebt **ausschliesslich** in `inc/template-parts/help
   gleiches `variant`-Switch-Prinzip wie dessen Icon-Media-Slot oben) — ersetzt die vorher in
   mehreren Dateien separat duplizierte `ob_start()`/`get_template_part('.../image')`/
   `ob_get_clean()`-Sequenz, gleiches
-  Prinzip wie `base_theme_render_icon()` oben, nur fuer `image.php`.
-- `base_theme_warn_missing_aria_label(string $component, bool $is_icon_only, string $aria_label): void`
+  Prinzip wie `hengegroup_theme_render_icon()` oben, nur fuer `image.php`.
+- `hengegroup_theme_warn_missing_aria_label(string $component, bool $is_icon_only, string $aria_label): void`
   — Dev-Time-Hinweis (`_doing_it_wrong()`, no-op ausser bei `WP_DEBUG`) fuer icon-only interaktive
   Elemente ohne das dokumentiert-Pflicht-`aria_label`; rendert in Produktion identisch, macht den
   Fehler beim Entwickeln sichtbar statt ihn erst im a11y-Audit zu finden (verhindert kein Rendering,
   siehe Regel 4s "nie hart failen"). Genutzt von `button.php` und `toggle.php` (beide dokumentieren
   `aria_label` als Pflicht fuer den Icon-only-Fall, siehe deren Kopfkommentare).
-- `base_theme_field_description_id(string $control_id): string` /
-  `base_theme_field_error_id(string $control_id): string` — leiten die `id` von
+- `hengegroup_theme_field_description_id(string $control_id): string` /
+  `hengegroup_theme_field_error_id(string $control_id): string` — leiten die `id` von
   `field-description.php`/`field-error.php` deterministisch aus der `id` der zugehoerigen
   Formular-Kontrolle ab (reine Funktionen, kein `wp_unique_id()`), statt dass der Aufrufer eine
   eigene `id` erfindet und an zwei Stellen (Description/Error-Komponente + Kontrolle) identisch
   abtippen muss. Genutzt von `field-description.php`/`field-error.php` selbst (ueber deren `for`-
-  Config) sowie von `base_theme_field_describedby()` direkt darunter.
-- `base_theme_field_describedby(string $control_id, bool $has_description = true, bool $has_error = true): string`
+  Config) sowie von `hengegroup_theme_field_describedby()` direkt darunter.
+- `hengegroup_theme_field_describedby(string $control_id, bool $has_description = true, bool $has_error = true): string`
   — baut den `aria-describedby`-Wert fuer eine Formular-Kontrolle aus denselben zwei Helpern oben
   (space-separated, wie `aria-describedby` es fuer mehrere IDs verlangt); `$has_description`/
   `$has_error` auf `false`, wenn nur eine der beiden Komponenten tatsaechlich gerendert wird (eine
@@ -255,11 +255,11 @@ Text-Highlighting, u. ae.), lebt **ausschliesslich** in `inc/template-parts/help
    durchsuchen, bevor eine neue Closure/Funktion fuer Attribut-Rendering, Text-Verarbeitung o. ae.
    geschrieben wird. Nicht blind eine lokale Kopie anlegen.
 2. **Nichts mehr lokal (per `static function`-Closure) im Template-Part nachbauen**, was schon in
-   `helpers.php` existiert — einfach aufrufen (`base_theme_render_attributes($element_attributes)`
+   `helpers.php` existiert — einfach aufrufen (`hengegroup_theme_render_attributes($element_attributes)`
    statt einer neuen `$render_attributes`-Closure).
 3. **Wird eine neue, wirklich komponentenuebergreifende Funktion gebraucht** (nicht nur fuer eine
    einzelne Komponente), gehoert sie ebenfalls nach `inc/template-parts/helpers.php` mit
-   `base_theme_`-Praefix — nicht in die einzelne Template-Part-Datei.
+   `hengegroup_theme_`-Praefix — nicht in die einzelne Template-Part-Datei.
 
 ## 8. Abgrenzung zu `components/`/`sections/`
 

@@ -93,5 +93,5 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 
 printf(
     '<progress%s></progress>',
-    base_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

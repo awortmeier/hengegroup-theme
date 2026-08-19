@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-function base_theme_get_woocommerce_submenu_pages_to_remove(): array
+function hengegroup_theme_get_woocommerce_submenu_pages_to_remove(): array
 {
     return [
         [
@@ -24,9 +24,9 @@ function base_theme_get_woocommerce_submenu_pages_to_remove(): array
     ];
 }
 
-function base_theme_action_admin_menu_cleanup_woocommerce(): void
+function hengegroup_theme_action_admin_menu_cleanup_woocommerce(): void
 {
-    foreach (base_theme_get_woocommerce_submenu_pages_to_remove() as $submenu_page) {
+    foreach (hengegroup_theme_get_woocommerce_submenu_pages_to_remove() as $submenu_page) {
         $parent = $submenu_page['parent'] ?? '';
         $slug = $submenu_page['slug'] ?? '';
 
@@ -38,16 +38,16 @@ function base_theme_action_admin_menu_cleanup_woocommerce(): void
     }
 }
 
-function base_theme_action_admin_bar_menu_cleanup_woocommerce(): void
+function hengegroup_theme_action_admin_bar_menu_cleanup_woocommerce(): void
 {
     global $wp_admin_bar;
     $wp_admin_bar->remove_node('woocommerce-site-visibility-badge');
 }
 
-function base_theme_register_admin_woocommerce_hooks(): void
+function hengegroup_theme_register_admin_woocommerce_hooks(): void
 {
-    add_action('admin_menu', 'base_theme_action_admin_menu_cleanup_woocommerce', 999);
-    add_action('admin_bar_menu', 'base_theme_action_admin_bar_menu_cleanup_woocommerce', 999);
+    add_action('admin_menu', 'hengegroup_theme_action_admin_menu_cleanup_woocommerce', 999);
+    add_action('admin_bar_menu', 'hengegroup_theme_action_admin_bar_menu_cleanup_woocommerce', 999);
 }
 
-base_theme_register_admin_woocommerce_hooks();
+hengegroup_theme_register_admin_woocommerce_hooks();

@@ -87,7 +87,7 @@ if (!in_array($align, $allowed_aligns, true)) {
 }
 
 if ($id === '') {
-    $id = 'base-theme-dropdown-menu-' . wp_unique_id();
+    $id = 'hengegroup-theme-dropdown-menu-' . wp_unique_id();
 }
 
 $wrapper_attributes = $attributes;
@@ -123,7 +123,7 @@ $content_markup = sprintf(
 
 printf(
     '<details%1$s>%2$s%3$s</details>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $trigger_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

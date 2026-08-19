@@ -112,7 +112,7 @@ if ($items === []) {
     return;
 }
 
-$group_name = 'base-theme-accordion-' . wp_unique_id();
+$group_name = 'hengegroup-theme-accordion-' . wp_unique_id();
 
 $render_heading = static function (string $tag, string $text): string {
     ob_start();
@@ -123,13 +123,13 @@ $render_heading = static function (string $tag, string $text): string {
     return (string) ob_get_clean();
 };
 
-$icon_markup = $icon_config !== null ? base_theme_render_icon($icon_config) : '';
+$icon_markup = $icon_config !== null ? hengegroup_theme_render_icon($icon_config) : '';
 
 $items_markup = '';
 
 foreach ($items as $item) {
     $item_value =
-        $item['value'] !== '' ? $item['value'] : 'base-theme-accordion-item-' . wp_unique_id();
+        $item['value'] !== '' ? $item['value'] : 'hengegroup-theme-accordion-item-' . wp_unique_id();
 
     $trigger_markup =
         $heading_tag !== ''
@@ -155,7 +155,7 @@ foreach ($items as $item) {
 
     $items_markup .= sprintf(
         '<details%1$s><summary data-slot="accordion-trigger">%2$s%3$s</summary><div data-slot="accordion-content">%4$s</div></details>',
-        base_theme_render_attributes($details_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        hengegroup_theme_render_attributes($details_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $trigger_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $icon_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $item['content'], // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -183,6 +183,6 @@ foreach ($data_attributes as $name => $value) {
 
 printf(
     '<div%1$s>%2$s</div>',
-    base_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
