@@ -44,11 +44,10 @@ Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als ne
 
 ## 3. Phase 2 / Phase 3 Vorbereitung
 
-- **Phase 2:** ausser `--color-accent`/`--font-accent` gibt es noch kein dokumentiertes Konzept fuer
-  den Umfang des Design-Token-Systems (z. B. ob/wie Dark Mode ueber `tokens.css` abgebildet wird,
-  ob weitere semantische Farb-Tokens neben Tailwinds `neutral`-Skala dazukommen). Keine Aenderung
-  jetzt noetig, aber eine kurze Vorab-Entscheidung wuerde verhindern, dass das erste Projekt, das
-  Phase 2 tatsaechlich durchlaeuft, das Token-Modell nebenbei neu erfinden muss.
+- **Phase 2:** Design-Token-Umfang fuer Farben/Fonts ist jetzt geklaert (siehe
+  `docs/entscheidungen.md`, "Marken-Tokens: drei Akzentfarben, Grau-Mapping, zwei Font-Rollen"),
+  offen bleibt nur noch, ob/wie Dark Mode ueber `tokens.css` abgebildet wird — keine Aenderung
+  jetzt noetig, Vormerkung fuer den Start von Phase 2.
 - **Phase 2:** `add_theme_support('editor-styles')` + `add_editor_style()` fehlen noch bewusst —
   `align-wide`/`responsive-embeds` sind bereits gesetzt (`inc/setup/theme-setup.php`), da sie schon
   jetzt normale Core-Bloecke in Beitraegen/Seiten betreffen; `editor-styles` bringt erst etwas,

@@ -10,7 +10,10 @@ function hengegroup_theme_action_wp_enqueue_scripts_cleanup(): void
 
 function hengegroup_theme_action_login_enqueue_scripts(): void
 {
-    hengegroup_theme_enqueue_vite_style_entry('hengegroup-theme-login-styles', 'assets/js/login.js');
+    hengegroup_theme_enqueue_vite_style_entry(
+        'hengegroup-theme-login-styles',
+        'assets/js/login.js',
+    );
 }
 
 function hengegroup_theme_action_admin_menu_cleanup(): void
@@ -49,8 +52,10 @@ function hengegroup_theme_action_admin_menu_cleanup(): void
     remove_submenu_page('tools.php', 'ms-delete-site.php');
     remove_submenu_page('tools.php', 'import.php');
     remove_submenu_page('tools.php', 'export.php');
-    remove_submenu_page('tools.php', 'export-personal-data.php');
-    remove_submenu_page('tools.php', 'erase-personal-data.php');
+    // export-personal-data.php/erase-personal-data.php bleiben sichtbar (siehe setup.md,
+    // "Verarbeitet diese Website personenbezogene Daten?" = Ja) — DSGVO-Auskunfts-/
+    // Loeschrecht braucht diese Tools-Seiten als Erreichbarkeitspunkt fuer
+    // wp_privacy_personal_data_exporters/-erasers.
     remove_submenu_page('options-general.php', 'options-media.php');
     remove_submenu_page('options-general.php', 'options-discussion.php');
     remove_submenu_page('options-general.php', 'options-writing.php');

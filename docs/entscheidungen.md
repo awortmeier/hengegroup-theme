@@ -21,6 +21,57 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Marken-Tokens: drei Akzentfarben, Grau-Mapping, zwei Font-Rollen (2026-08-19)
+
+Projekt-Setup (README "Neues Projekt aus dieser Vorlage starten", Schritt 3) fuer die echte
+Henge-Group-Marke: drei Akzentfarben (henge-green, henge-blue, henge-grey), drei Marken-Grautoene
+und zwei self-gehostete Fonts (Outfit, Crillee) — mehr als das bisherige "ein `--color-accent`, ein
+`--font-accent`"-Modell aus `assets/css/tokens.css` vorsah. `docs/to-do.md` Abschnitt 3 listete den
+Umfang des Design-Token-Systems als offene Grundsatzfrage; folgende Entscheidungen loesen sie:
+
+- **Farben:** `--color-accent` (henge-green, `#3b875e`) bleibt die _eine_ automatisiert per
+  `pnpm run sync-theme-tokens` nach `theme.json` gesynct'e Farbe (Link-Farbe,
+  `settings.color.palette`-Slug `accent`) — das Sync-Skript kann nur einen Wert abbilden.
+  `--color-henge-blue`/`--color-henge-grey` sind zusaetzliche, eigene Tokens im
+  `--color-*`-Namespace (erzeugen automatisch `.bg-henge-blue`/`.text-henge-blue`-Utilities etc.)
+  und manuell zusaetzlich in `theme.json`s `settings.color.palette` gepflegt, da sie ausserhalb der
+  Sync-Skript-Automatik liegen.
+- **Marken-Grautoene:** grey-light `#EFEFEF`, grey-medium `#E5E3DF`, grey-dark `#222222` bekommen
+  bewusst **keine** eigenen Tokens, sondern werden per Kommentar in `tokens.css` auf die
+  naechstliegenden Tailwind-`neutral-*`-Stufen gemappt (neutral-100/neutral-200/neutral-800) — haelt
+  die bestehende Konvention ("Tailwinds `neutral`-Skala statt eigener Grau-Aliase") statt sie fuer
+  drei Werte aufzuweichen. Einzige Naeherung: grey-medium hat einen warmen/beigen Unterton, den
+  neutral-200 nicht abbildet; falls ein Anwendungsfall den exakten Wert braucht, dafuer gezielt ein
+  eigenes Token ergaenzen statt neutral-200 zu erzwingen.
+- **Zwei Font-Rollen statt einer:** `--font-primary` (Outfit) fuer Fliesstext/UI, `--font-accent`
+  (Crillee, vorher nur System-Font-Platzhalter) fuer Akzent-/Display-Text. Bewusst **nicht** als
+  Tailwinds `--font-sans` registriert — das wuerde ueber Tailwinds Preflight-Basisstil sofort
+  site-weit die Body-Schrift aendern, ein pauschales visuelles Styling, das laut `CLAUDE.md` Regel 1
+  erst Phase 2 gehoert. `--font-primary` erzeugt zwar schon jetzt die Utility-Klasse `.font-primary`,
+  bleibt aber ungenutzt bis Phase 2. `--font-accent` ist dagegen schon jetzt aktiv (Akzent-Woerter
+  in `typography.php` ueber `hengegroup_theme_render_accent_text()`), weil das eine dokumentierte
+  funktionale API ist, keine pauschale Optik-Entscheidung.
+- **Font-Loading vorgezogen:** die in "Komponenten-Showcase-Seite und Performance-Tooling" (unten)
+  fuer Phase 2 skizzierte Font-Loading-Strategie (Self-Hosting, `font-display: swap`) wird jetzt
+  schon fuer Outfit/Crillee angewendet (`assets/css/fonts.css`, `assets/fonts/README.md`), obwohl
+  Phase 1 noch laeuft — Ausnahme, weil es sich um das Bereitstellen von Marken-Assets handelt
+  (Projekt-Setup), nicht um deren visuelle Anwendung in einer Komponente. Bewusst noch offen:
+  Preload/Subsetting — weiterhin fuer den tatsaechlichen Phase-2-Start vorgemerkt, sobald eine
+  konkrete above-the-fold-Nutzung feststeht.
+- **WOFF2-Konvertierung nachgezogen (2026-08-19, Ergaenzung):** `npx ttf2woff2 < input > output`
+  funktioniert zuverlaessig (der fruehere Haenger beim ersten Test lag an leerem Stdin-Input als
+  Testfall, nicht am Tool selbst) — `outfit.ttf` (110.572 -> 45.704 Bytes, -59 %) und `crillee.otf`
+  (28.136 -> 16.616 Bytes, -41 %) liegen jetzt zusaetzlich als WOFF2 vor, `fonts.css` listet WOFF2
+  vor der jeweiligen TTF/OTF-Quelle (Browser waehlt das erste unterstuetzte Format). Dabei
+  festgestellt: `outfit.ttf` ist ein **Variable Font** (Achse `wght`, 100–900) — `font-weight` in
+  `fonts.css` deshalb auf die Bereichs-Syntax `100 900` korrigiert (vorher faelschlich `400`, hat die
+  Variable-Font-Faehigkeit nicht genutzt). `crillee.otf` ist statisch, keine `fvar`-Tabelle.
+- **`setup.md` PII-Frage mit "Ja" beantwortet:** `inc/setup/theme-admin.php`s
+  `hengegroup_theme_action_admin_menu_cleanup()` entfernt `export-personal-data.php`/
+  `erase-personal-data.php` nicht mehr aus dem Tools-Menue. `wp_add_privacy_policy_content()` sowie
+  `wp_privacy_personal_data_exporters`-/`-erasers`-Filter bleiben offen, bis das konkrete
+  PII-sammelnde Feature (z. B. Kontaktformular) technisch existiert (siehe `setup.md`).
+
 ### Manueller Tastatur-/Screenreader-Testplan angelegt (2026-08-18)
 
 `docs/to-do.md` Abschnitt 2 forderte einen dokumentierten manuellen Testplan als guenstige Ergaenzung

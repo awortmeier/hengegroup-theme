@@ -1,0 +1,50 @@
+/*
+ * Self-gehostete Marken-Schriftschnitte (Outfit, Crillee). Nur von app.css importiert, nicht von
+ * login.css — der Login-Screen nutzt weiterhin nur System-/Fallback-Schriften, da dort keine
+ * Marken-Typografie (--font-primary/--font-accent, siehe tokens.css) zum Einsatz kommt und ein
+ * zusaetzliches Webfont-Gewicht dort keinen Mehrwert haette.
+ *
+ * Dateien liegen in assets/fonts/<font>/ (siehe assets/fonts/README.md fuer die erwartete
+ * Namenskonvention) und werden von Vite ueber die in vite.config.js bereits konfigurierte
+ * assetFileNames-Regel fuer woff2/ttf/otf/eot verarbeitet (Hashing, Ablage unter
+ * dist/assets/fonts/).
+ *
+ * font-display: swap als Default (siehe docs/entscheidungen.md, Font-Loading-Strategie) —
+ * verhindert Flash-of-Invisible-Text, waehrend das Webfont laedt.
+ *
+ * WOFF2 als bevorzugtes Format (Brotli-komprimiert, ~40-60% kleiner als die roh eingebundene
+ * TTF/OTF-Quelle, siehe docs/entscheidungen.md), TTF/OTF bleibt als Fallback-Quelle in der
+ * `src`-Liste (Browser waehlt das erste unterstuetzte Format — alle aktuell relevanten Browser
+ * unterstuetzen WOFF2, der Fallback ist reine Absicherung). Konvertiert mit `npx ttf2woff2 <
+ * input > output`.
+ *
+ * Outfit ist ein Variable Font (Achse "wght", 100-900) — `font-weight: 100 900` (Bereichs-Syntax)
+ * statt eines einzelnen Werts, damit jedes angeforderte Gewicht aus der einen Datei bedient wird.
+ *
+ * Crillee liegt nur als Schnitt 700 vor (kein Regular/400, kein Variable Font) — `font-weight: 700`
+ * deklariert, aber da dies der einzige fuer "Crillee" registrierte Schnitt ist, matcht der Browser
+ * ihn fuer JEDE angeforderte Font-Weight dieser Familie (Fuellwort-Match pro Family, nicht nur exakt
+ * 700) — Text ueber .font-accent erscheint also immer im Crillee-Bold-Schnitt, unabhaengig vom
+ * umgebenden font-weight. Sobald ein weiterer Schnitt (z. B. Regular) vorliegt, hier als eigenen
+ * @font-face-Block mit passendem font-weight ergaenzen.
+ */
+
+@font-face {
+    font-family: "Outfit";
+    src:
+        url("../fonts/outfit/outfit.woff2") format("woff2"),
+        url("../fonts/outfit/outfit.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Crillee";
+    src:
+        url("../fonts/crillee/crillee.woff2") format("woff2"),
+        url("../fonts/crillee/crillee.otf") format("opentype");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}

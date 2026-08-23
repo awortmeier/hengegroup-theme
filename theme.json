@@ -7,8 +7,18 @@
             "palette": [
                 {
                     "slug": "accent",
-                    "name": "Accent",
-                    "color": "#737373"
+                    "name": "Henge Green",
+                    "color": "#3b875e"
+                },
+                {
+                    "slug": "henge-blue",
+                    "name": "Henge Blue",
+                    "color": "#075f8f"
+                },
+                {
+                    "slug": "henge-grey",
+                    "name": "Henge Grey",
+                    "color": "#646a6c"
                 }
             ]
         },
@@ -31,7 +41,7 @@
         "elements": {
             "link": {
                 "color": {
-                    "text": "#737373"
+                    "text": "#3b875e"
                 }
             }
         }

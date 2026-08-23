@@ -3,19 +3,48 @@
  *
  * Fuer neutrale Grautoene (Text, Hintergruende, Rahmen) wird bewusst Tailwinds
  * eigene neutral-Skala verwendet (z. B. "neutral-800", ueber theme(--color-neutral-800)
- * in Roh-CSS oder direkt als Utility-Klasse) statt eigener Alias-Tokens.
+ * in Roh-CSS oder direkt als Utility-Klasse) statt eigener Alias-Tokens. Die drei
+ * projektspezifischen Marken-Grautoene (Design-Vorgabe: grey-light #EFEFEF, grey-medium #E5E3DF,
+ * grey-dark #222222) liegen nah genug an bestehenden neutral-*-Stufen, dass bewusst KEINE eigenen
+ * Tokens dafuer angelegt wurden — haelt die obige Konvention statt sie fuer drei Werte aufzuweichen:
  *
- * --color-accent ist der einzige Wert, der sich pro Projekt aendert (Marken-Akzentfarbe).
- * Wird von app.css und login.css importiert, damit die Variable in beiden
- * (unabhaengigen) Vite-Entrypoints zur Laufzeit zur Verfuegung steht.
+ *   - grey-light  #EFEFEF -> neutral-100 (#F5F5F5), Differenz ~6/Kanal.
+ *   - grey-medium #E5E3DF -> neutral-200 (#E5E5E5), Differenz ~2-6/Kanal — Naeherung: grey-medium
+ *     hat einen warmen/beigen Unterton (R>G>B), den die reine neutral-Skala nicht abbildet. Falls
+ *     ein Anwendungsfall den exakten Markenwert 1:1 braucht, dafuer gezielt ein eigenes Token
+ *     ergaenzen statt neutral-200 zu nutzen.
+ *   - grey-dark   #222222 -> neutral-800 (#262626), Differenz ~4/Kanal.
  *
- * Bei einem neuen Projekt: --color-accent durch die Marken-Akzentfarbe ersetzen, danach
- * `pnpm run sync-theme-tokens` ausfuehren (siehe scripts/sync-theme-tokens.ps1) — zieht denselben
- * Wert automatisch in theme.json (settings.color.palette "accent", styles.elements.link) nach,
- * da theme.json diese Datei nicht importieren kann (reines JSON, kein CSS-Pipeline-Zugriff).
+ * --color-accent (henge-green) ist die primaere Marken-Akzentfarbe — der einzige Farbwert, der
+ * automatisiert per `pnpm run sync-theme-tokens` nach theme.json uebernommen wird (siehe
+ * scripts/sync-theme-tokens.ps1: sync't settings.color.palette "accent" + styles.elements.link).
+ * --color-henge-blue/--color-henge-grey sind sekundaere Marken-Akzentfarben, manuell zusaetzlich in
+ * theme.json (settings.color.palette) gepflegt, da das Sync-Skript bewusst nur den einen
+ * automatisiert kritischen Wert (Link-Farbe/Editor-Default) abdeckt.
+ *
+ * --font-primary (Outfit) ist die Fliesstext-/UI-Schrift, --font-accent (Crillee) die
+ * Akzent-/Display-Schrift — genutzt u. a. von hengegroup_theme_render_accent_text() ueber die
+ * .font-accent-Klasse (siehe inc/template-parts/helpers.php, template-parts/base/typography.php).
+ * Beide sind bewusst NICHT als Tailwinds --font-sans registriert: das wuerde ueber Tailwinds
+ * Preflight-Basisstil sofort site-weit die Body-Schrift aendern — ein pauschales visuelles Styling,
+ * das laut CLAUDE.md Regel 1 erst Phase 2 gehoert. --font-primary erzeugt trotzdem schon jetzt die
+ * Utility-Klasse .font-primary (ungenutzt, bis Phase 2 sie tatsaechlich einsetzt); --font-accent ist
+ * dagegen bereits jetzt aktiv im Einsatz, weil das eine dokumentierte funktionale API ist (Akzent-
+ * Woerter hervorheben), keine pauschale Optik-Entscheidung.
+ *
+ * Self-Hosting/@font-face siehe assets/css/fonts.css, erwartete Font-Dateien siehe
+ * assets/fonts/README.md.
+ *
+ * Wird von app.css und login.css importiert, damit die Variablen in beiden
+ * (unabhaengigen) Vite-Entrypoints zur Laufzeit zur Verfuegung stehen.
  */
 @theme static {
-    --color-accent: #737373; /* Platzhalter (Tailwind neutral-500) — durch Marken-Akzentfarbe ersetzen */
+    --color-accent: #3b875e; /* henge-green — primaere Marken-Akzentfarbe */
+    --color-henge-blue: #075f8f;
+    --color-henge-grey: #646a6c;
 
-    --font-accent: ui-sans-serif, system-ui, sans-serif;
+    --font-primary:
+        "Outfit", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+    --font-accent: "Crillee", ui-sans-serif, system-ui, sans-serif;
 }
