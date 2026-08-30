@@ -261,7 +261,10 @@ function hengegroup_theme_render_seo_settings_page(): void
                     <tr>
                         <th scope="row">
                             <label for="hengegroup_theme_seo_options_description">
-                                <?php esc_html_e('Standard Meta-Beschreibung', 'hengegroup-theme'); ?>
+                                <?php esc_html_e(
+                                    'Standard Meta-Beschreibung',
+                                    'hengegroup-theme',
+                                ); ?>
                             </label>
                         </th>
                         <td>
@@ -515,8 +518,11 @@ function hengegroup_theme_render_seo_meta_box(WP_Post $post): void
     <?php
 }
 
-function hengegroup_theme_update_or_delete_post_meta(int $post_id, string $meta_key, string $value): void
-{
+function hengegroup_theme_update_or_delete_post_meta(
+    int $post_id,
+    string $meta_key,
+    string $value,
+): void {
     if ($value === '') {
         delete_post_meta($post_id, $meta_key);
         return;

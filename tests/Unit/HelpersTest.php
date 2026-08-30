@@ -93,7 +93,10 @@ final class HelpersTest extends TestCase
     {
         $this->stubEscapingPassthrough();
 
-        $result = hengegroup_theme_render_accent_text('Build faster, ship sooner', ['faster', 'sooner']);
+        $result = hengegroup_theme_render_accent_text('Build faster, ship sooner', [
+            'faster',
+            'sooner',
+        ]);
 
         $this->assertSame(
             'Build <span class="font-accent">faster</span>, ship <span class="font-accent">sooner</span>',
@@ -148,7 +151,10 @@ final class HelpersTest extends TestCase
 
     public function test_field_describedby_combines_both_ids_by_default(): void
     {
-        $this->assertSame('email-description email-error', hengegroup_theme_field_describedby('email'));
+        $this->assertSame(
+            'email-description email-error',
+            hengegroup_theme_field_describedby('email'),
+        );
     }
 
     public function test_field_describedby_omits_missing_description(): void

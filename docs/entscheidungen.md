@@ -21,6 +21,22 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### PHPUnit `^13.3` -> `^11.5`: CI-Runner nutzt PHP 8.2, `composer.json` verspricht `>=8.2` (2026-08-30)
+
+CI (`.github/workflows/ci.yml`) scheiterte im `php`-Job bei `composer install` mit lauter
+"requires php >=8.4"-Fehlern (PHPUnit 13.3.1 + dessen `sebastian/*`/`phpunit/php-*`-Unterpakete).
+Ursache: `composer.json`s eigene `require.php` sagt `>=8.2`, aber `phpunit/phpunit: ^13.3` zieht
+PHPUnit 13 nach, das selbst PHP `>=8.4.1` braucht -- ein in sich widersprüchliches
+`composer.json`, das lokal nur deshalb nicht auffiel, weil die Entwicklungsmaschine PHP 8.5 hat
+und `composer update` dort klaglos die neueste (PHP-8.4-only) PHPUnit-Version aufloeste.
+
+Fix: `phpunit/phpunit` auf `^11.5` (letzte Major-Linie, die noch `php: >=8.2` voraussetzt,
+`composer update phpunit/phpunit --with-all-dependencies`) statt CI/`composer.json`s
+PHP-Untergrenze auf 8.4 anzuheben -- `>=8.2` bleibt die bewusste Kompatibilitätszusage dieses
+Themes (siehe CI-Konfiguration), nicht die zufällige lokale PHP-Version. `composer test`/
+`composer lint` liefen nach dem Downgrade unveraendert gruen (18/18 Tests), kein API-Bruch fuer
+die hier genutzte PHPUnit-Oberflaeche (`TestCase`, Brain-Monkey-Setup).
+
 ### `typography.php` gestylt: Groessen-Skala aus Referenzdesign statt shadcn-Stock-Werten, `variant`/`tag` bewusst entkoppelt (2026-08-30)
 
 Dritte tatsaechlich gestylte Base-Komponente (siehe `button.php`/`badge.php`-Eintraege unten fuer

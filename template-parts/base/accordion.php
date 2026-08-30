@@ -129,7 +129,9 @@ $items_markup = '';
 
 foreach ($items as $item) {
     $item_value =
-        $item['value'] !== '' ? $item['value'] : 'hengegroup-theme-accordion-item-' . wp_unique_id();
+        $item['value'] !== ''
+            ? $item['value']
+            : 'hengegroup-theme-accordion-item-' . wp_unique_id();
 
     $trigger_markup =
         $heading_tag !== ''

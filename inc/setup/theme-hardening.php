@@ -119,8 +119,10 @@ function hengegroup_theme_action_remove_comments_support_for_posts_and_pages(): 
 }
 add_action('init', 'hengegroup_theme_action_remove_comments_support_for_posts_and_pages');
 
-function hengegroup_theme_delete_default_themes_after_core_update($upgrader, array $hook_extra): void
-{
+function hengegroup_theme_delete_default_themes_after_core_update(
+    $upgrader,
+    array $hook_extra,
+): void {
     $action = $hook_extra['action'] ?? '';
     $type = $hook_extra['type'] ?? '';
 

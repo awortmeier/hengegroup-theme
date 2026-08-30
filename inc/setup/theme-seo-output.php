@@ -131,14 +131,22 @@ function hengegroup_theme_get_seo_robots(): string
 
     $post_id = hengegroup_theme_seo_current_post_id();
     if ($post_id > 0) {
-        $robots_index = (string) get_post_meta($post_id, '_hengegroup_theme_seo_robots_index', true);
+        $robots_index = (string) get_post_meta(
+            $post_id,
+            '_hengegroup_theme_seo_robots_index',
+            true,
+        );
         if ($robots_index === 'index') {
             $noindex = false;
         } elseif ($robots_index === 'noindex') {
             $noindex = true;
         }
 
-        $robots_follow = (string) get_post_meta($post_id, '_hengegroup_theme_seo_robots_follow', true);
+        $robots_follow = (string) get_post_meta(
+            $post_id,
+            '_hengegroup_theme_seo_robots_follow',
+            true,
+        );
         if ($robots_follow === 'follow') {
             $nofollow = false;
         } elseif ($robots_follow === 'nofollow') {

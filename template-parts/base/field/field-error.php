@@ -56,7 +56,9 @@ if ($errors === [] && $text === '') {
 
 if ($id === '') {
     $id =
-        $for !== '' ? hengegroup_theme_field_error_id($for) : 'hengegroup-theme-field-error-' . wp_unique_id();
+        $for !== ''
+            ? hengegroup_theme_field_error_id($for)
+            : 'hengegroup-theme-field-error-' . wp_unique_id();
 }
 
 $element_attributes = $attributes;

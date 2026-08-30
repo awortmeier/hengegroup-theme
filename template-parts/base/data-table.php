@@ -380,7 +380,12 @@ if ($pagination_config !== null) {
     $pagination_markup = sprintf(
         '<nav data-slot="data-table-pagination" aria-label="%1$s">%2$s%3$s%4$s%5$s%6$s</nav>',
         esc_attr__('Pagination', 'hengegroup-theme'),
-        $nav_button('1', 'chevrons-left', esc_html__('First page', 'hengegroup-theme'), !$has_previous), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        $nav_button(
+            '1',
+            'chevrons-left',
+            esc_html__('First page', 'hengegroup-theme'),
+            !$has_previous,
+        ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $nav_button(
             (string) max(1, $current_page - 1),
             'chevron-left',
