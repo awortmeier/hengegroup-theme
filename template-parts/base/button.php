@@ -28,6 +28,8 @@ declare(strict_types=1);
 //                           `icon-*` sizes used to not exist in shadcn's stock vocabulary, they
 //                           do now, so nothing here is a project addition anymore)
 //   type           string   button | submit | reset (ignored when href is set)
+//   full_width     bool     stretches the button to 100% of its parent's width (adds `w-full`) --
+//                           combinable with every variant/size, on explicit request
 //   disabled       bool
 //   loading        bool     implies disabled; swaps the icon slot for a spinner and sets aria-busy
 //   icon           array    icon.php config, e.g. ['name' => 'arrow-right', 'set' => 'lucide'].
@@ -60,6 +62,7 @@ $href = trim((string) ($config['href'] ?? ''));
 $variant = trim((string) ($config['variant'] ?? 'henge-green'));
 $size = trim((string) ($config['size'] ?? 'default'));
 $type = trim((string) ($config['type'] ?? 'button'));
+$full_width = !empty($config['full_width']);
 $disabled = !empty($config['disabled']);
 $loading = !empty($config['loading']);
 $icon_config = is_array($config['icon'] ?? null) ? $config['icon'] : null;
@@ -104,11 +107,21 @@ if (!in_array($size, $allowed_sizes, true)) {
 }
 
 // Base/variant/size classes taken 1:1 from shadcn's buttonVariants() cva() call (see file header
-// for source/deviations). font-family/text-color are NOT repeated here -- inherited from the
-// site-wide `body` rule (assets/css/app.css), same "only declare what deviates from the global
-// default" pattern shadcn itself uses.
+// for source/deviations), except:
+//   - outline/ghost/link's hover-state colors, which use this project's grey-dark/grey-light
+//     brand tokens instead of shadcn's neutral accent/-foreground (design request 2026-08-30):
+//     outline's border also switched from --color-input to --color-grey-dark for the same reason.
+//   - shape/padding (design request 2026-08-30, per-size hengegroup.com pill-button reference):
+//     rounded-md swapped for a fully rounded pill (rounded-full) everywhere, horizontal padding
+//     widened per size (default now matches the reference nav pill's 10px/20px exactly, lg matches
+//     the reference hero CTA's 28px horizontal exactly) -- vertical padding stays governed by each
+//     size's fixed h-* like before, only default already carried an explicit py-* (bumped
+//     proportionally, same as its px-*).
+// font-family/text-color are NOT repeated here -- inherited from the site-wide `body` rule
+// (assets/css/app.css), same "only declare what deviates from the global default" pattern shadcn
+// itself uses.
 $base_classes =
-    'inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium ' .
+    'inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-medium ' .
     'whitespace-nowrap transition-all outline-none focus-visible:border-ring ' .
     'focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none ' .
     'disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 ' .
@@ -123,24 +136,28 @@ $variant_classes = [
     'destructive' =>
         'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive/20',
     'outline' =>
-        'border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground',
-    'ghost' => 'hover:bg-accent hover:text-accent-foreground',
-    'link' => 'text-henge-green underline-offset-4 hover:underline',
+        'border border-grey-dark bg-background shadow-xs hover:bg-grey-light hover:text-grey-light-foreground',
+    'ghost' => 'hover:bg-grey-light hover:text-grey-light-foreground',
+    'link' => 'text-grey-dark underline-offset-4 hover:underline',
 ];
 
 $size_classes = [
-    'default' => 'h-9 px-4 py-2 has-[>svg]:px-3',
+    'default' => 'h-9 px-5 py-2.5 has-[>svg]:px-4',
     'xs' =>
-        "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-    'sm' => 'h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5',
-    'lg' => 'h-10 rounded-md px-6 has-[>svg]:px-4',
+        "h-6 gap-1 rounded-full px-2.5 text-xs has-[>svg]:px-2 [&_svg:not([class*='size-'])]:size-3",
+    'sm' => 'h-8 gap-1.5 rounded-full px-4 has-[>svg]:px-3',
+    'lg' => 'h-10 rounded-full px-7 has-[>svg]:px-5',
     'icon' => 'size-9',
-    'icon-xs' => "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
+    'icon-xs' => "size-6 rounded-full [&_svg:not([class*='size-'])]:size-3",
     'icon-sm' => 'size-8',
     'icon-lg' => 'size-10',
 ];
 
 $computed_class = "{$base_classes} {$variant_classes[$variant]} {$size_classes[$size]}";
+
+if ($full_width) {
+    $computed_class .= ' w-full';
+}
 
 if ($icon_position !== 'end') {
     $icon_position = 'start';

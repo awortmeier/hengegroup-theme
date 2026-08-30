@@ -152,6 +152,28 @@ $icon_sizes = ['icon-xs', 'icon-sm', 'icon', 'icon-lg'];
     </section>
 
     <section class="mb-16">
+        <h2 class="mb-6 text-xl font-semibold">Full-width (<code>full_width</code>)</h2>
+        <div class="max-w-sm space-y-3">
+            <?php
+            get_template_part('template-parts/base/button', null, [
+                'config' => ['text' => 'Henge Green', 'full_width' => true],
+            ]);
+            get_template_part('template-parts/base/button', null, [
+                'config' => ['text' => 'Outline', 'variant' => 'outline', 'full_width' => true],
+            ]);
+            get_template_part('template-parts/base/button', null, [
+                'config' => [
+                    'text' => 'Mit Icon',
+                    'icon' => ['name' => 'arrow-right', 'set' => 'lucide'],
+                    'icon_position' => 'end',
+                    'full_width' => true,
+                ],
+            ]);
+            ?>
+        </div>
+    </section>
+
+    <section class="mb-16">
         <h2 class="mb-6 text-xl font-semibold">Custom class (Passthrough)</h2>
         <div class="flex flex-wrap items-center gap-3">
             <?php get_template_part('template-parts/base/button', null, [
