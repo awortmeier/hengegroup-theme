@@ -21,6 +21,102 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `typography.php` gestylt: Groessen-Skala aus Referenzdesign statt shadcn-Stock-Werten, `variant`/`tag` bewusst entkoppelt (2026-08-30)
+
+Dritte tatsaechlich gestylte Base-Komponente (siehe `button.php`/`badge.php`-Eintraege unten fuer
+den generellen Ablauf: Phase 2 startet inhaltlich bereits, obwohl `CLAUDE.md`s Kopfabschnitt
+weiterhin "aktuell laeuft Phase 1" sagt). Anders als `button.php`/`badge.php` NICHT 1:1 aus shadcns
+eigener `buttonVariants()`/`badgeVariants()`-cva()-Definition uebernommen -- shadcns Typography-
+Groessen tauchen im Referenzdesign nirgends auf. Stattdessen alle sechs `.dc.html`-Seiten des
+Referenzdesigns (Startseite, Karriere, Karrieredetail, Produkte, Produktdetail, Anwendungen,
+Downloads, `claude.ai/design`-Projekt, live analysiert 2026-08-30) nach Schriftgroesse/-gewicht/
+-line-height geclustert und auf die neun bestehenden Varianten (`h1-h4/p/lead/large/small/muted`)
+gemappt, siehe `typography.php`-Kopfkommentar fuer die konkreten Klassen. Zwei bewusste
+Entscheidungen, beide auf expliziten Wunsch:
+
+- **Kein `clamp()`.** Das Referenzdesign nutzt fuer seine Hero-Ueberschriften (H1/H2) echtes
+  CSS `clamp()` (viewport-fluid). Hier stattdessen einfache Tailwind-Breakpoints (`sm:`/`md:`/
+  `lg:`) -- weniger exakte 1:1-Übernahme, aber idiomatischeres Tailwind ohne Extra-Sonderfall pro
+  Komponente. `clamp()` bleibt ein moeglicher spaeterer Ausbauschritt, kein aktueller Bedarf.
+- **`variant` (Optik) und `tag` (Semantik) sind bewusst unabhaengige Achsen**, nicht wie bei einem
+  klassischen `h1`-`h6`-Set 1:1 gekoppelt. Grund: das Referenzdesign nutzt fuer denselben visuellen
+  "H2"-Look sowohl grosse Hauptsektionstitel (34-42px, z. B. "Produkte"/"Kontakt") als auch
+  kleinere Box-Titel (26-30px, z. B. "Ansprechpartner") -- beide liessen sich durch `h2`s eigene
+  Breakpoint-Spanne (`text-3xl md:text-4xl`, 30px Basis -> 36px ab `md:`) abdecken, ohne dafuer
+  eine zehnte Variante zu erfinden oder eine feste 1:1-Kopplung an ein bestimmtes `<h*>`-Tag zu
+  brauchen. Praktische Konsequenz: eine visuell "h2"-grosse Ueberschrift kann als `<h4>` gerendert
+  werden (oder umgekehrt), je nachdem was die tatsaechliche Dokumentgliederung an der Stelle
+  braucht -- `tag` immer explizit setzen, sobald visuelle Groesse und semantische Ebene
+  auseinanderfallen. `typography.php` unterstuetzte dieses Auseinanderfallen von `variant`/`tag`
+  strukturell schon vorher (Phase-1-API), diese Entscheidung nutzt es jetzt aktiv statt es nur
+  bereitzuhalten.
+
+Der bestehende `color`-Config-Key (`default | light | neutral`) bleibt die einzige Farbachse --
+`muted` ist die eine Ausnahme, die (wie in shadcns eigenem Stock-Schema) ihre eigene gedaempfte
+Farbe fest in der Variante traegt statt sie ueber `color` zu beziehen, siehe Kopfkommentar. Ersetzt
+damit auch das Referenzdesign-Muster, gedaempften Text ueber `opacity:0.6/0.7` auf der normalen
+Textfarbe zu simulieren (z. B. Job-Standort-Zeile), durch das echte `--color-muted-foreground`-
+Token.
+
+### `button.php`: `full_width`-Config-Key (2026-08-30)
+
+Auf expliziten Wunsch bekommt `button.php` einen neuen `full_width`-Bool-Config-Key statt eines
+neuen `size`-Werts -- anders als `size` ist "volle Breite des Elternelements" orthogonal zu
+Variante/Groesse (mit jeder Kombination kombinierbar) statt eine eigene Groessenstufe. Haengt bei
+`true` schlicht `w-full` an die berechnete Klasse an; kein neues `data-*`-Attribut dafuer, gleiche
+Begruendung wie bei `disabled`/`loading` (native/aria Semantik reicht dort, hier ist es ein reiner
+Layout-Utility ohne eigenen State zum Selektieren).
+
+### `badge.php`: Padding/Schriftgroesse an Produkte-/Karriere-Referenz angepasst (2026-08-30)
+
+Auf expliziten Wunsch, orientiert an den Pill-Labels der Produkte-/Karriere-Sektion im
+Startseite-Referenzdesign (`Startseite.dc.html`: Produkt-Kategorie-Badge, Anwendungs-Tags,
+Karriere-Job-Tag) -- alle drei nutzen dort spuerbar grosszuegigeres Padding (~6px/12px) und
+12-14px Text statt shadcns knappem `px-2 py-0.5 text-xs`. Geaendert: `px-2 py-0.5 text-xs` ->
+`px-3 py-1.5 text-sm`. Bewusst NICHT angefasst (auf expliziten Wunsch): Variant-Vokabular, Farben,
+`rounded-full` (Form/Rundung passte bereits zur Referenz, siehe Eintrag "badge.php gestylt"
+unten).
+
+### `badge.php`: `font`-Config-Key fuer Outfit/Crillee (2026-08-30)
+
+Auf expliziten Wunsch bekommt `badge.php` einen neuen `font`-Config-Key (`primary | accent`,
+Default `primary`) statt eines neuen `variant`-Werts oder eines pauschalen CSS-Overrides -- die
+Startseiten-Referenz (`Startseite.dc.html`, Karriere-Job-Badges wie "IMEXCO"/"HENGE") nutzt fuer
+einzelne Badges bewusst die Marken-Akzentschrift Crillee statt der site-weiten Outfit-Fliesstext-
+schrift. Kein neuer eigener CSS-Klassenname: `accent` haengt dieselbe `.font-accent`-Utility an, die
+`hengegroup_theme_render_accent_text()` (siehe `inc/template-parts/helpers.php`) bereits fuer
+einzelne hervorgehobene Woerter in `typography.php` nutzt -- hier auf das gesamte Label angewendet
+statt auf einzelne Woerter, aber dieselbe Font-Rolle/dasselbe Token (`--font-accent`,
+`assets/css/tokens.css`). `primary` fuegt bewusst keine Klasse hinzu (bereits von der site-weiten
+`body`-Regel geerbt) -- gleiches "nur Abweichungen vom globalen Default deklarieren"-Muster wie
+ueberall sonst in diesem Theme. Zusaetzliches `data-font`-Attribut als Hook, gleiche Konvention wie
+`data-variant`.
+
+### `badge.php` gestylt: engeres Variant-Vokabular als `button.php` (2026-08-30)
+
+Zweite tatsaechlich gestylte Base-Komponente nach `button.php` (siehe dessen Eintrag oben fuer den
+generellen Ablauf/die generelle Begruendung: Phase 2 startet inhaltlich bereits, obwohl `CLAUDE.md`s
+Kopfabschnitt weiterhin "aktuell laeuft Phase 1" sagt). Klassen 1:1 aus shadcns echter
+`badgeVariants()`-cva()-Definition uebernommen (`registry/new-york-v4/ui/badge.tsx` auf GitHub, live
+abgerufen 2026-08-30 -- siehe `badge.php`-Kopfkommentar), mit denselben zwei button.php-Abweichungen
+(`dark:`-Klassen weggelassen, keine eigene Dark-Mode-Strategie) plus zwei badge-spezifischen:
+
+- **Variant-Vokabular auf Marken-Farbnamen umbenannt UND bewusst enger als `button.php`**, auf
+  expliziten Wunsch: `grey-dark | grey-light | henge-blue | henge-green | henge-grey | outline` --
+  dieselben fuenf Voll-Farb-Namen wie bei `button.php`, aber ohne `destructive`/`ghost`/`link`
+  (anders als `button.php`, das diese drei shadcn-Varianten unveraendert behaelt). Begruendung: ein
+  statisches Label hat kein Destruktiv-/Call-to-Action-/Inline-Text-Link-Anwendungsfall -- die drei
+  Varianten waeren totes API-Vokabular gewesen (Regel: shadcns Vokabular uebernehmen, nicht frei
+  erfinden, aber auch nicht ungenutztes Vokabular mitschleppen). `default`/`secondary` faellt damit
+  ebenfalls weg (ersetzt durch `henge-green`/`grey-light`, gleiches Mapping wie bei `button.php`).
+- **`outline`s Border nutzt `--color-grey-light` statt shadcns `--color-border`-Rolle**, ebenfalls
+  auf expliziten Wunsch -- analog zu `button.php`s `outline`/`ghost`-Hover-Farben, die ebenfalls das
+  Marken-Grau statt der generischen shadcn-Rolle nutzen (siehe `button.php`-Kopfkommentar).
+
+`class`-Config-Key ist jetzt wie bei `button.php` kein reines Passthrough mehr, sondern wird HINTER
+die berechneten Base-/Variant-Klassen angehaengt (String-Konkatenation, kein `tailwind-merge`/`cn()`
+in PHP verfuegbar) -- gleiche Einschraenkung, gleiche Doku-Stelle (Kopfkommentar).
+
 ### `build.ps1`/`build.sh`: Top-Level-PHP-Templates per `*.php`-Wildcard statt fester Liste (2026-08-29)
 
 Beide Fassungen kopierten Top-Level-Theme-Dateien bislang ueber eine fest enumerierte Liste
