@@ -116,10 +116,13 @@ if ($title !== '') {
     ob_start();
     get_template_part('template-parts/base/typography', null, [
         'config' => [
-            'variant' => 'h3',
+            'variant' => 'body-large',
             'tag' => $title_tag,
             'text' => $title,
             'data_slot' => 'card-title',
+            // body-large is font-normal by default (see typography.php) -- a card title needs to
+            // stand out from card-description below it, hence the added emphasis here.
+            'class' => 'font-semibold',
         ],
     ]);
     $title_markup = (string) ob_get_clean();
@@ -131,7 +134,7 @@ if ($description !== '') {
     ob_start();
     get_template_part('template-parts/base/typography', null, [
         'config' => [
-            'variant' => 'p',
+            'variant' => 'body-small',
             'text' => $description,
             'data_slot' => 'card-description',
         ],

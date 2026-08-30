@@ -21,6 +21,56 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `typography.php`: Variant-Vokabular von shadcns `h1-h4/p/lead/large/small/muted` auf eigenes `headline-1..4`/`body-large/medium/small/tiny` umgestellt (2026-08-30)
+
+Auf expliziten Wunsch komplett eigenes, groessenbasiertes Vokabular statt shadcns Namen zu
+uebernehmen (bewusste Abweichung von `docs/neue-komponente-erstellen.md` Regel 2, gleiche
+Kategorie Entscheidung wie button.php's/badge.php's Marken-Farbnamen, siehe deren Eintraege oben).
+Ausloeser: eine konkrete Ziel-Groessen-Tabelle (`headline-1: 64px` ... `text-tiny: 14px`), gemappt
+auf die naechstliegende(n) echte(n) Tailwind-`text-*`-Klasse(n) -- **keine** eigenen
+Pixel-Arbitrary-Values, nur die eingebaute Skala (`text-6xl`/`text-5xl`/`text-4xl`/`text-3xl`/
+`text-2xl`/`text-lg`/`text-base`/`text-sm`).
+
+- **`headline-3` (42px) faellt komplett weg statt zu kollidieren.** Tailwinds Skala springt fix von
+  `text-4xl` (36px) auf `text-5xl` (48px) -- 42px liegt exakt in der Mitte, jede Zuordnung waere
+  optisch identisch mit einer Nachbarstufe (`headline-2`/48px oder dem, was `headline-4` werden
+  sollte/36px) gewesen. Auf expliziten Wunsch deshalb nur 4 Ueberschriften-Stufen statt der
+  urspruenglich geplanten 5 (`headline-1..4` = `text-6xl/5xl/4xl/3xl` = 60/48/36/30px), keine
+  kuenstlich zusammengelegte Stufe.
+- **`text-large` (22px) -> `text-2xl` (24px) statt `text-xl` (20px).** Ebenfalls eine Luecke in
+  Tailwinds Skala (kein Stop bei 22px, `text-xl`/20px und `text-2xl`/24px gleich weit entfernt),
+  hier aber unkritisch (keine Kollision mit einer Nachbarstufe) -- `text-2xl` gewaehlt fuer eine
+  gleichmaessigere Stufung zur naechstgroesseren Stufe (`headline-4`/30px) hin.
+- **`text-*`-Namenspraefix zu `body-*` umbenannt**, auf meinen Vorschlag: `text-*` kollidiert
+  begrifflich mit Tailwinds eigenem generischem `text-`-Praefix (Groesse UND Farbe, z. B.
+  `text-red-500`) -- `headline-*`/`body-*` ist zudem ein gaengiges Namenspaar fuer Ueberschrift vs.
+  Fliesstext.
+
+Kein eigener `muted`-Groessen-Wert mehr -- die vorherige `muted`-Variante bekam ihre gedaempfte
+Farbe fest eingebacken; jetzt macht das ausschliesslich die bereits bestehende `color`-Achse
+(`color: 'neutral'` -> `text-muted-foreground`) auf einer beliebigen Groessen-Variante, siehe
+`typography.php`-Kopfkommentar. Vereinfacht die Komponente: keine Sonderfall-Farblogik pro Variante
+mehr, `color` ist jetzt die alleinige Farbachse fuer alle acht Varianten.
+
+**Migration der vier Composing-Komponenten**, die die alten Variant-Namen direkt referenzierten
+(sonst waeren sie durch den Fallback auf `body-medium` degradiert, ohne Fehler, aber falsch
+gestylt):
+
+- `card.php` (Titel: `h3` -> `body-large` + `class: 'font-semibold'`, Beschreibung: `p` ->
+  `body-small`), `dialog.php` (Titel: `h2` -> `body-large` + `class: 'font-semibold'`,
+  Beschreibung: `p` -> `body-small`), `accordion.php` (Trigger-Heading: `h4` -> `body-medium` +
+  `class: 'font-semibold'`) -- `body-large`/`body-medium` sind per Default `font-normal` (siehe
+  oben, keine eigene Gewichts-Skala pro Groessen-Stufe angefragt), Titel/Trigger brauchen aber
+  sichtbare Betonung gegenueber ihrem Beschreibungstext -- deshalb per additivem `class`-Passthrough
+  ergaenzt statt eine eigene "titel"-Variante zu erfinden.
+- `data-table.php` (Pagination-Label: `muted` -> `body-tiny` + `color: 'neutral'`) -- 1:1-Ersatz,
+  keine Groessenaenderung (beide 14px/`text-sm`).
+
+`page-component-showcase-typography.php` auf das neue Vokabular nachgezogen (Abschnitt "muted"
+entfernt, Farben-Abschnitt erklaert stattdessen die `color: 'neutral'`-Ablaesung).
+
+---
+
 ### PHPUnit `^13.3` -> `^11.5`: CI-Runner nutzt PHP 8.2, `composer.json` verspricht `>=8.2` (2026-08-30)
 
 CI (`.github/workflows/ci.yml`) scheiterte im `php`-Job bei `composer install` mit lauter

@@ -361,7 +361,8 @@ if ($pagination_config !== null) {
     ob_start();
     get_template_part('template-parts/base/typography', null, [
         'config' => [
-            'variant' => 'muted',
+            'variant' => 'body-tiny',
+            'color' => 'neutral',
             'data_slot' => 'data-table-pagination-label',
             'text' => sprintf(
                 /* translators: 1: current page number, 2: total number of pages */

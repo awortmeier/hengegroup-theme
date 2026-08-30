@@ -117,7 +117,14 @@ $group_name = 'hengegroup-theme-accordion-' . wp_unique_id();
 $render_heading = static function (string $tag, string $text): string {
     ob_start();
     get_template_part('template-parts/base/typography', null, [
-        'config' => ['variant' => 'h4', 'tag' => $tag, 'text' => $text],
+        // body-medium is font-normal by default (see typography.php) -- an accordion trigger
+        // needs to stand out as a heading, hence the added emphasis here.
+        'config' => [
+            'variant' => 'body-medium',
+            'tag' => $tag,
+            'text' => $text,
+            'class' => 'font-semibold',
+        ],
     ]);
 
     return (string) ob_get_clean();
