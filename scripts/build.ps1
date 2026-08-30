@@ -6,18 +6,12 @@ $cleanScriptPath = Join-Path $PSScriptRoot "clean.ps1"
 $syncLucideIconsScriptPath = Join-Path $PSScriptRoot "sync-lucide-icons.ps1"
 $syncTablerIconsScriptPath = Join-Path $PSScriptRoot "sync-tabler-icons.ps1"
 
-$themeFiles = @(
+# Nicht-PHP-Theme-Dateien mit festem Namen (WP-Konvention). PHP-Templates werden separat unten
+# per *.php-Wildcard erfasst (siehe docs/entscheidungen.md), damit neue Top-Level-Templates nach
+# WordPress-Template-Hierarchie (z. B. page-{slug}.php, single-{post-type}.php,
+# category-{slug}.php) automatisch mitgebaut werden, ohne diese Liste pflegen zu muessen.
+$themeStaticFiles = @(
     "style.css",
-    "functions.php",
-    "header.php",
-    "footer.php",
-    "index.php",
-    "page.php",
-    "single.php",
-    "archive.php",
-    "404.php",
-    "search.php",
-    "woocommerce.php",
     "theme.json",
     "screenshot.png",
     "screenshot.jpg"
@@ -49,7 +43,7 @@ finally {
     Pop-Location
 }
 
-foreach ($file in $themeFiles) {
+foreach ($file in $themeStaticFiles) {
     $sourcePath = Join-Path $repoRoot $file
     if (-not (Test-Path -LiteralPath $sourcePath)) {
         continue
@@ -57,6 +51,11 @@ foreach ($file in $themeFiles) {
 
     Copy-Item -LiteralPath $sourcePath -Destination (Join-Path $distPath $file) -Force
     Write-Output "Copied $file"
+}
+
+Get-ChildItem -LiteralPath $repoRoot -Filter "*.php" -File | ForEach-Object {
+    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $distPath $_.Name) -Force
+    Write-Output "Copied $($_.Name)"
 }
 
 foreach ($directory in $themeDirectories) {

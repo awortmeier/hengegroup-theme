@@ -21,6 +21,176 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `build.ps1`/`build.sh`: Top-Level-PHP-Templates per `*.php`-Wildcard statt fester Liste (2026-08-29)
+
+Beide Fassungen kopierten Top-Level-Theme-Dateien bislang ueber eine fest enumerierte Liste
+(`style.css`, `functions.php`, `header.php`, ... `theme.json`, `screenshot.png/jpg`). Ein neues
+Custom-Page-Template nach WordPress-Template-Hierarchie-Konvention (z. B.
+`page-component-showcase-button.php`) landete dadurch beim Build **nicht** in `dist/` — kein
+Deploy-Bug (der Upload selbst laeuft korrekt, `dist/` enthielt die Datei schlicht nie), sondern
+eine Luecke, die in `build.ps1` und `build.sh` gleichermassen bestand.
+
+Fix: `style.css`/`theme.json`/`screenshot.png`/`screenshot.jpg` bleiben eine feste Liste
+(`$themeStaticFiles`/`theme_static_files`, WP-Konvention mit garantiert fixem Namen), aber jede
+Top-Level-`*.php`-Datei im Repo-Root wird jetzt automatisch mitkopiert (`Get-ChildItem -Filter
+"*.php"` bzw. eine `for ... in "$repo_root"/*.php`-Schleife) — deckt damit automatisch die volle
+WordPress-Template-Hierarchie ab (`page-{slug}.php`, `single-{post-type}.php`,
+`category-{slug}.php`, `taxonomy-{slug}.php`, `front-page.php`, ...), ohne dass die Liste bei
+jedem neuen Custom-Template von Hand nachgezogen werden muss. Sicher, weil im Repo-Root
+grundsaetzlich nur echte Theme-Templates als `*.php` liegen (Tooling-Config wie `composer.json`
+ist kein `.php`).
+
+### Bash-Pendants zu allen `scripts/*.ps1` fuer macOS/Linux, ueber `run.mjs` dispatcht (2026-08-28)
+
+Alle zehn `scripts/*.ps1`-Skripte (`build`, `clean`, `deploy`, `deploy-changed`, `i18n-make-pot`,
+`pull-base-updates`, `rename-theme`, `sync-lucide-icons`, `sync-tabler-icons`,
+`sync-theme-tokens`, `sync-theme-version`) waren bislang nur fuer Windows PowerShell geschrieben —
+auf macOS/Linux ohne separat installierte PowerShell Core (`pwsh`) gar nicht lauffaehig. Jedes
+bekommt jetzt ein `scripts/<name>.sh`-Pendant (Bash, kompatibel zu macOS' Standard-`/bin/bash`
+3.2 — keine Bash-4-Features wie `wait -n`/assoziative Arrays), verhaltensgleich zum `.ps1`-Original
+uebersetzt und einzeln end-to-end gegen Kopien/isolierte Test-Repos verifiziert. Beide Fassungen
+bleiben dauerhaft parallel gepflegt (keine Migration auf PowerShell Core als einzige Variante), weil
+das Windows-`.ps1`-Original ohne zusaetzliche Installation lauffaehig bleiben soll und ein
+Nebeneinander zweier Skript-Sprachen im selben Ordner ohnehin schon Konvention dieses Repos ist
+(`.php`-Icon-Scanner neben `.ps1`).
+
+Technische Eckpunkte der Uebersetzung, damit kuenftige Aenderungen an einer Fassung nicht die
+andere unbemerkt auseinanderlaufen lassen:
+
+- **Text-/JSON-lastige Logik (Versions-Sync, Token-Sync, Rename, Manifest-Checks, Deploy-State)
+  delegiert an `node -e`** statt an `sed`/sh-Bordmittel — Node ist ueber `pnpm`/Vite ohnehin
+  bereits harte Voraussetzung, und die Ersetzungs-/Zaehl-Logik laesst sich so nahezu 1:1 aus dem
+  PowerShell-Original uebertragen (String-basiert, kein Regex-Escaping-Aerger). `jq` wurde bewusst
+  nicht als neue Abhaengigkeit eingefuehrt.
+- **`deploy.sh`/`deploy-changed.sh` parallelisieren FTP-Uploads ueber `xargs -P`** statt
+  PowerShells `Start-Job`/`Start-ThreadJob`-Jobsteuerung (kein Bash-4-Aequivalent auf macOS'
+  Standard-Bash verfuegbar). Eine Abweichung bleibt bewusst bestehen: das PowerShell-Original
+  bricht das Nachlegen neuer Uploads beim ersten Fehlschlag ab (laufende Jobs werden noch fertig
+  abgewartet), waehrend `xargs -P` bereits aufgereihte Uploads durchlaufen laesst, bevor mit
+  Exit-Code 1 abgebrochen wird — Ergebnis (Fehlschlag = kein erfolgreiches Deploy) ist gleich, nur
+  der Abbruchzeitpunkt etwas spaeter. Ausfuehrlich im Kopfkommentar von `deploy.sh` begruendet.
+  Beide zeigen ausserdem eine `Write-Progress`-Entsprechung: in einem echten Terminal (TTY) eine
+  sich per `\r`/ANSI-Clear ueberschreibende Fortschrittszeile, ohne TTY (Log-Datei, CI) stattdessen
+  eine Zeile pro Upload, damit das Log kein Steuerzeichen-Wirrwarr wird (2026-08-29, Ergaenzung).
+- **`package.json` "scripts" rufen ab jetzt `node scripts/run.mjs <name> [--flag ...]`** statt
+  direkt `powershell -File scripts/<name>.ps1` — der Dispatcher waehlt anhand von
+  `process.platform` die `.ps1`- oder `.sh`-Fassung und uebersetzt dabei `--kebab-case`-Flags 1:1
+  in PowerShells `-PascalCase`-Parameternamen (die `.sh`-Skripte verwenden konsequent die
+  kebab-case-Form des jeweiligen `.ps1`-Parameternamens, z. B. `-NoGitAdd` <-> `--no-git-add`,
+  `-NewSlug` <-> `--new-slug`). So bleibt jeder `package.json`-Scripts-Eintrag auf beiden
+  Plattformen identisch, statt zwei parallele Skript-Namen pro Aufgabe pflegen zu muessen. Neue
+  `-Parameter`s in einem `.ps1` muessen dieselbe Namenskonvention einhalten, damit der Dispatcher
+  sie ohne Sonderfall uebersetzen kann.
+- **`rename-theme.sh`/`pull-base-updates.sh` bleiben wie ihre `.ps1`-Vorbilder ausserhalb von
+  `package.json`** — beide sind seltene, manuelle Bootstrap-/Update-Schritte mit vielen optionalen
+  Parametern, direkt aufgerufen (`bash scripts/rename-theme.sh --new-slug ...`), kein
+  `pnpm run ...`-Eintrag noetig.
+- `rename-theme.sh`s Ausschlussliste/`--included-extensions` schliesst jetzt auch `.sh` mit ein
+  (analog zu `.ps1`) und schuetzt zusaetzlich zu `scripts/rename-theme.ps1`/
+  `scripts/pull-base-updates.ps1` auch deren `.sh`-Pendants vor versehentlicher Selbst-Umbenennung
+  (gleicher Grund wie im `.ps1`-Kopfkommentar: die `-OldSlug`/`-OldPrefix`-Defaults muessen auf das
+  literale `base-theme`/`base_theme_` zeigen bleiben, sonst laeuft ein spaeterer Aufruf ohne
+  explizite `--old-slug`/`--old-prefix` ins Leere).
+
+### `button.php` gestylt: Variant-Vokabular auf Marken-Farbnamen umbenannt (2026-08-28)
+
+Erste tatsaechlich gestylte Base-Komponente (Phase 2 startet damit inhaltlich, auch wenn
+`CLAUDE.md`s Kopfabschnitt weiterhin "aktuell laeuft Phase 1" sagt -- die Formulierung dort noch
+nicht nachgezogen, da das eine eigene, groessere Aenderung waere). Klassen 1:1 aus shadcns echter
+`buttonVariants()`-cva()-Definition uebernommen (`registry/new-york-v4/ui/button.tsx` auf GitHub,
+live abgerufen 2026-08-28 -- siehe `button.php`-Kopfkommentar), zwei bewusste Abweichungen:
+
+- **Variant-Vokabular umbenannt auf Marken-Farbnamen**, auf expliziten Wunsch: `henge-green` (ersetzt
+  `default`), `henge-blue`, `henge-grey`, `grey-dark` (drei neue Voll-Varianten, vorher nicht
+  vorhanden), `grey-light` (ersetzt `secondary`), `destructive`/`outline`/`ghost`/`link` unveraendert.
+  Das ist eine bewusste Abweichung von `docs/neue-komponente-erstellen.md` Regel 2 ("Vokabular
+  uebernehmen, nicht frei erfinden") -- hier ausdruecklich gewuenscht, weil das Projekt lieber direkt
+  am Markennamen statt an shadcns abstrakter default/secondary-Nomenklatur entlang designen will.
+  `badge.php` hat noch das alte shadcn-Vokabular (`default | secondary | ...`) -- beide
+  Komponenten sind dadurch aktuell inkonsistent zueinander, bis `badge.php` (oder andere
+  Komponenten mit dem gleichen Variant-Enum) denselben Umbau bekommen.
+- **`dark:`-Klassen komplett weggelassen** (shadcns Original hat u. a. `dark:bg-destructive/60`,
+  `dark:border-input`, `dark:hover:bg-accent/50`) -- Dark Mode ist laut `docs/to-do.md` weiterhin
+  offen, ein halb umgesetzter Dark-Mode-Pfad (shadcns literale dark:-Utilities ohne eigene
+  Dark-Tokens dahinter) waere schlechter als gar keiner.
+- **`destructive` nutzt `text-destructive-foreground` statt shadcns hartcodiertem `text-white`** --
+  konsequent aus der grey-light-statt-Weiss-Entscheidung (siehe Eintrag unten) abgeleitet.
+
+Neue Tokens in `assets/css/tokens.css` fuer die drei neuen Voll-Varianten (`--color-henge-blue-
+foreground`, `--color-henge-grey-foreground`, `--color-grey-dark`/`-foreground`,
+`--color-grey-light`/`-foreground`) nach demselben `<name>`/`<name>-foreground`-Schema wie
+`--color-henge-green`/`-foreground`. `--color-grey-dark`/`--color-grey-light` sind bewusst
+zusaetzliche Tokens (sonst gilt "keine eigenen Tokens fuer die Marken-Grautoene", siehe Eintrag
+"Marken-Tokens" unten) -- Ausnahme, weil die Komponenten-API jetzt selbst diese Namen als
+`variant`-Werte erwartet und dafuer eine `bg-grey-dark`/`bg-grey-light`-Tailwind-Klasse braucht.
+
+`assets/css/app.css`s `body`-Regel (vorher leer) bekommt `@apply bg-background text-foreground
+font-primary` -- erste echte Nutzung von `--font-primary`/`--color-background`/`--color-foreground`
+(vorher dokumentiert-aber-ungenutzte Tokens, siehe "Marken-Tokens"-Eintrag unten). `button.php`
+selbst wiederholt Text-/Hintergrundfarbe nur dort, wo eine Variante vom globalen Default abweicht
+(shadcns eigenes Muster) -- kein `font-primary` auf dem Button selbst, das wird vom `body` geerbt.
+
+`class`-Config-Key ist jetzt nicht mehr reines Passthrough, sondern wird HINTER die berechneten
+Base-/Variant-/Size-Klassen angehaengt (String-Konkatenation) -- PHP hat kein `tailwind-merge`/`cn()`-
+Aequivalent, ein per `class` uebergebenes konfligierendes Utility "gewinnt" also nicht garantiert
+gegen die berechnete Variante (anders als bei shadcns `className`-Prop). Dokumentiert im
+`button.php`-Kopfkommentar; fuer rein additive Klassen (Margins, Layout) unproblematisch, fuer
+`bg-*`/`text-*`-Overrides nicht verlaesslich.
+
+**Nicht lokal verifiziert:** `composer lint`/`composer test` liefen in dieser Session nicht (kein
+PHP/Composer in der Umgebung verfuegbar) -- `pnpm exec vite build`, `pnpm exec prettier --check` und
+`pnpm test` (Vitest) liefen und sind gruen; die generierten Klassen (`bg-henge-green`,
+`hover:bg-henge-green/90`, `ring-ring/50`, etc.) wurden im kompilierten CSS stichprobenartig
+verifiziert.
+
+### Semantische Rollen-Farb-Tokens (shadcn-Vokabular) + `--color-accent` -> `--color-henge-green` (2026-08-28)
+
+Phase-2-Vorarbeit fuer das Variant-Vokabular der Base-Komponenten (`button.php`/`badge.php`:
+`default | secondary | destructive | outline | ghost | link`): `assets/css/tokens.css` bekommt das
+volle Set an shadcn-typischen semantischen Rollen-Tokens (`--color-background`/`-foreground`,
+`-card*`, `-popover*`, `-secondary*`, `-muted*`, `-accent*`, `-destructive*`, `-border`, `-input`,
+`-ring`), referenziert wo moeglich Tailwinds eigene Skalen (`var(--color-neutral-*)`,
+`var(--color-red-*)`, `var(--color-white)`) statt Werte zu duplizieren — gleiche Konvention wie das
+bestehende Marken-Grau-Mapping (siehe Eintrag unten).
+
+- **`--color-accent` (bisher henge-green) heisst jetzt `--color-henge-green`.** Grund: der Name
+  "accent" ist in shadcn selbst bereits vergeben — eine eigene, neutrale Hover-/Subtle-Rolle (z. B.
+  `skeleton.php`s eigener Kopfkommentar zitiert shadcns Original-Markup mit `bg-accent` fuer den
+  Placeholder-Hintergrund), keine Marken-Akzentfarbe. Mit henge-green als `--color-accent` waeren
+  spaetere 1:1-uebernommene shadcn-Klassen wie `bg-accent`/`text-accent-foreground` (Regel 2:
+  "Vokabular uebernehmen, nicht frei erfinden") grundfalsch gruen statt dezent grau geworden.
+  `--color-accent`/`--color-accent-foreground` decken jetzt korrekt shadcns eigentliche Rolle ab
+  (gleicher Hintergrund wie `--color-muted`, aber volltonige `-foreground` statt gedaempft, wie im
+  shadcn-Original). Der WP-Editor-Palette-Slug in `theme.json` bleibt bewusst weiterhin `"accent"`
+  (Label bereits `"Henge Green"`) — den nachtraeglich umzubenennen wuerde bereits gespeicherte
+  `has-accent-color`-Blockklassen in Inhalten brechen, waehrend das interne CSS-Token frei umbenennbar
+  war, da es noch nirgends im Markup referenziert wird (Phase 1 hat kein Styling). Kein neues
+  `--color-primary`-Alias fuer henge-green ergaenzt — Variant-Class-Maps referenzieren spaeter direkt
+  `var(--color-henge-green)`, gleiche Namenskonvention wie die bestehenden
+  `--color-henge-blue`/`--color-henge-grey`-Tokens. `scripts/sync-theme-tokens.ps1`s Regex auf die
+  neue Token-Bezeichnung angepasst.
+- **`secondary` bleibt neutral (grey-light/grey-dark), nicht henge-blue** — die Variante ist
+  komponentenuebergreifend (Button, Badge, ...) dieselbe generische Rolle; mit henge-blue haetten
+  `secondary` und `default` gleich prominent/bunt gewirkt, was shadcns eigener Intention (secondary
+  = dezente Alternative) widerspricht. henge-blue/henge-grey bleiben eigene, frei nutzbare
+  Marken-Tokens ausserhalb der generischen Variant-Rollen.
+- **`--color-destructive` ist vorlaeufig Tailwinds Standard-Rot (`red-600`)**, kein Marken-Rotton —
+  im Brand-Guide bislang keiner hinterlegt. Bei Bedarf gezielt austauschen, sobald einer feststeht.
+- **`--color-ring` = henge-green** statt eines neutralen Tons — Fokus-Ringe sollen markenkonsistent
+  bleiben.
+- **"Weisser" Text ist bewusst grey-light (`--color-neutral-100`), nicht reines Weiss (2026-08-28,
+  Ergaenzung):** `--color-henge-green-foreground`/`--color-destructive-foreground` (Text auf
+  henge-green- bzw. destructive-Hintergrund) nutzen `var(--color-neutral-100)` statt
+  `var(--color-white)` — Design-Vorgabe, jede Stelle mit "weissem" Text soll grey-light statt
+  reinem Weiss verwenden. `--color-background`/`-card`/`-popover` (Flaechenfarben, kein Text)
+  bleiben unveraendert reines Weiss.
+- **Kontrast-Hinweis:** grey-light auf henge-green liegt rechnerisch bei ca. 4.0:1, grey-light auf
+  destructive bei ca. 4.4:1 — beide ueber WCAG AA fuer grossen/fetten UI-Text (>= 3:1), unter der
+  4.5:1-Schwelle fuer normalen Fliesstext (mit reinem Weiss waeren es ca. 4.3:1 bzw. 4.8:1 gewesen,
+  siehe vorherige Fassung dieses Eintrags in der Git-Historie). Fuer Button-/Badge-Text (i. d. R.
+  fett, kurze Labels) unkritisch, aber kein Freibrief fuer laengeren Fliesstext in
+  henge-green-/destructive-Vordergrundfarbe anderswo.
+
 ### Marken-Tokens: drei Akzentfarben, Grau-Mapping, zwei Font-Rollen (2026-08-19)
 
 Projekt-Setup (README "Neues Projekt aus dieser Vorlage starten", Schritt 3) fuer die echte

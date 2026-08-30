@@ -11,6 +11,14 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Added
 
+- macOS/Linux-Pendants (`scripts/*.sh`) zu allen zehn `scripts/*.ps1`-Skripten (`build`, `clean`,
+  `deploy`, `deploy-changed`, `i18n-make-pot`, `pull-base-updates`, `rename-theme`,
+  `sync-lucide-icons`, `sync-tabler-icons`, `sync-theme-tokens`, `sync-theme-version`) — bislang
+  ohne separat installierte PowerShell Core auf macOS/Linux nicht lauffaehig. `package.json`
+  "scripts" rufen jetzt `node scripts/run.mjs <name>` auf, das anhand von `process.platform`
+  automatisch die passende Fassung waehlt. `deploy.sh`/`deploy-changed.sh` zeigen dabei in einem
+  echten Terminal eine `Write-Progress`-Entsprechung (sich ueberschreibende Fortschrittszeile).
+  Siehe `docs/entscheidungen.md` fuer Details.
 - Security-Header (`inc/setup/theme-hardening.php`): `X-Content-Type-Options`, `Referrer-Policy`,
   `X-Frame-Options`, `Permissions-Policy` auf jedem Request (Front-End/wp-admin/Login) sowie eine
   bewusst lose Start-Content-Security-Policy nur auf dem Front-End (Direktiven-Geruest zum
@@ -75,6 +83,11 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Fixed
 
+- `build.ps1`/`build.sh` kopierten Top-Level-Theme-Dateien bislang ueber eine fest enumerierte
+  Liste (`style.css`, `functions.php`, ... `theme.json`) — ein neues Custom-Page-Template nach
+  WordPress-Template-Hierarchie (z. B. `page-{slug}.php`) landete dadurch nie in `dist/`. Beide
+  Fassungen kopieren jetzt jede Top-Level-`*.php`-Datei automatisch per Wildcard mit, statt die
+  Liste bei jedem neuen Template von Hand nachzuziehen. Siehe `docs/entscheidungen.md`.
 - Composer-/pnpm-Dependencies aktualisiert (`composer update`/`pnpm update`, u. a. `phpunit` 13.3.0
   -> 13.3.1, `prettier` 3.8.1 -> 3.9.6, `lucide-static` 1.28.0 -> 1.31.0), alles innerhalb der
   bestehenden Versions-Ranges. Lint/Test/Audit danach erneut gruen.
