@@ -102,11 +102,16 @@ if ($items_markup === '') {
     return;
 }
 
-$wrapper_attributes = $attributes;
+// Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own RadioGroup (`grid gap-3`),
+// extended with a horizontal-orientation variant driven by the `data-orientation` this file already
+// sets below (shadcn's own JS-driven RadioGroup has no such variant since it never renders
+// horizontally via plain CSS grid -- this project's own addition to make the existing `orientation`
+// config actually look different, not just carry different ARIA/data hooks).
+$base_classes =
+    'grid gap-3 data-[orientation=horizontal]:grid-flow-col data-[orientation=horizontal]:auto-cols-max';
 
-if ($class_name !== '') {
-    $wrapper_attributes['class'] = $class_name;
-}
+$wrapper_attributes = $attributes;
+$wrapper_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $wrapper_attributes['role'] = 'radiogroup';
 $wrapper_attributes['data-slot'] = 'radio-group';

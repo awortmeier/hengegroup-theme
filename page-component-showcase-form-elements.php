@@ -5,7 +5,7 @@
  *
  * Dev-only page template: renders every form-input base component under
  * `template-parts/base/` (input, textarea, checkbox, radio/radio-group, switch, native-select,
- * select, combobox, input-otp, slider, date-picker, input-group, field) across their documented
+ * select, combobox, slider, date-picker, input-group, field) across their documented
  * states for manual visual/functional review during Phase 2 styling work -- not meant for
  * production content or navigation.
  *
@@ -394,31 +394,6 @@ $combobox_options = [
                     'aria_invalid' => true,
                     'options' => $combobox_options,
                 ],
-            ]);
-            ?>
-        </div>
-    </section>
-
-    <section class="mb-16">
-        <h2 class="mb-6 text-xl font-semibold">
-            Input OTP (<code>template-parts/base/input-otp.php</code>)
-        </h2>
-        <div class="flex flex-col gap-3">
-            <?php
-            get_template_part('template-parts/base/input-otp', null, [
-                'config' => ['label' => '6-stellig (numerisch, Default)'],
-            ]);
-            get_template_part('template-parts/base/input-otp', null, [
-                'config' => ['label' => '4-stellig', 'length' => 4],
-            ]);
-            get_template_part('template-parts/base/input-otp', null, [
-                'config' => ['label' => 'Alphanumerisch', 'length' => 8, 'numeric' => false],
-            ]);
-            get_template_part('template-parts/base/input-otp', null, [
-                'config' => ['label' => 'Disabled', 'disabled' => true],
-            ]);
-            get_template_part('template-parts/base/input-otp', null, [
-                'config' => ['label' => 'Invalid', 'aria_invalid' => true],
             ]);
             ?>
         </div>

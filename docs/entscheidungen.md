@@ -365,8 +365,13 @@ bestehende Marken-Grau-Mapping (siehe Eintrag unten).
   Marken-Tokens ausserhalb der generischen Variant-Rollen.
 - **`--color-destructive` ist vorlaeufig Tailwinds Standard-Rot (`red-600`)**, kein Marken-Rotton —
   im Brand-Guide bislang keiner hinterlegt. Bei Bedarf gezielt austauschen, sobald einer feststeht.
-- **`--color-ring` = henge-green** statt eines neutralen Tons — Fokus-Ringe sollen markenkonsistent
-  bleiben.
+- **`--color-ring` = `blue-500`** (Tailwinds eigener Standard-Blauton), **weder henge-green noch
+  shadcns eigener neutraler Default** (`neutral-400`) (2026-08-30, zweite Korrektur dieses Eintrags
+  -- erst bewusst markenkonsistentes Gruen, dann kurzzeitig shadcns neutraler Default, siehe
+  Git-Historie dieser Datei fuer beide vorherigen Fassungen) — auf expliziten Wunsch Tailwinds
+  eigener, unkonfigurierter Standard-Fokusring-Ton, projektweit fuer alle Komponenten, die
+  `ring-ring`/`border-ring` nutzen (button.php, badge.php, alle Phase-2-gestylten
+  Form-Base-Komponenten unter `template-parts/base/`).
 - **"Weisser" Text ist bewusst grey-light (`--color-neutral-100`), nicht reines Weiss (2026-08-28,
   Ergaenzung):** `--color-henge-green-foreground`/`--color-destructive-foreground` (Text auf
   henge-green- bzw. destructive-Hintergrund) nutzen `var(--color-neutral-100)` statt

@@ -12,6 +12,20 @@ declare(strict_types=1);
 // template-parts/base/label.php (composition instead of duplicating a
 // <label> tag here).
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind. shadcn's own Checkbox draws its checked state
+// via a custom `data-[state=checked]:bg-primary` background plus an SVG checkmark it fully
+// controls (Radix's CheckboxIndicator) -- neither is available on a bare native
+// `<input type="checkbox">` without `appearance-none` + a hand-drawn pseudo-element checkmark,
+// which would trade real native widget rendering for a re-implemented one just to look like
+// shadcn's, the opposite of this file's whole native-first rationale (see file header above).
+// Instead this uses the `accent-color` CSS property (Tailwind's `accent-*` utilities) -- a
+// standards-track property built for exactly this: recoloring a native checkbox/radio/range's own
+// checkmark/dot/thumb while leaving the browser's native rendering (and its focus/touch/OS-theme
+// behaviour) completely intact. `border`/`rounded-[4px]` are kept for browsers/themes that do
+// respect box-model styling on an unstyled checkbox; the focus ring and disabled state (box-shadow/
+// opacity/cursor) render identically regardless of native widget chrome, so those are shadcn's own
+// classes 1:1 (`dark:`-prefixed classes dropped, same reasoning as button.php/badge.php).
+//
 // Supported config:
 //   checked        bool     default false. Native `checked` attribute.
 //   disabled       bool     native `disabled` attribute, plus a mirrored `data-disabled="true"`
@@ -65,11 +79,14 @@ if ($id === '') {
     $id = 'hengegroup-theme-checkbox-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'peer accent-henge-green size-4 shrink-0 rounded-[4px] border border-input shadow-xs ' .
+    'outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] ' .
+    'focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 ' .
+    'disabled:cursor-not-allowed disabled:opacity-50';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['type'] = 'checkbox';
 $element_attributes['data-slot'] = 'checkbox';
@@ -134,7 +151,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<span data-slot="checkbox-field">%1$s%2$s</span>',
+    '<span class="inline-flex items-center gap-2" data-slot="checkbox-field">%1$s%2$s</span>',
     $input_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

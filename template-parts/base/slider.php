@@ -18,6 +18,15 @@ declare(strict_types=1);
 //     than not showing one; wiring that up needs a small JS module, not added unprompted
 //   - `inverted` fill direction -- not exposed here
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind using the `accent-color` property (Tailwind's
+// `accent-*` utility), same rationale as checkbox.php/radio.php -- `accent-color` is built
+// specifically to recolor a native `<input type="range">`'s own track-fill/thumb while leaving the
+// browser's native rendering/dragging/keyboard behaviour untouched. Deliberately NOT using
+// `appearance-none` + hand-drawn `::-webkit-slider-thumb`/`::-moz-range-thumb` pseudo-elements
+// (unlike switch.php's pill/thumb, which has no native equivalent at all) -- `accent-color`
+// already gets the on-brand look shadcn's own Slider has (a colored fill + colored thumb) without
+// giving up any native slider behaviour, so the heavier vendor-prefixed rebuild isn't needed here.
+//
 // Supported config:
 //   min / max / step   string|int   native attributes, only rendered when given (browser
 //                       defaults apply otherwise: min=0, max=100, step=1)
@@ -74,11 +83,13 @@ if ($id === '') {
     $id = 'hengegroup-theme-slider-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'accent-henge-green h-1.5 w-full cursor-pointer rounded-full outline-none ' .
+    'focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 ' .
+    'disabled:cursor-not-allowed disabled:opacity-50';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['type'] = 'range';
 $element_attributes['data-slot'] = 'slider';
@@ -144,7 +155,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<div data-slot="slider-field">%1$s%2$s</div>',
+    '<div class="flex flex-col gap-2" data-slot="slider-field">%1$s%2$s</div>',
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $slider_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

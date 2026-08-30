@@ -40,6 +40,13 @@ declare(strict_types=1);
 // itself -- input.php/textarea.php already set `data-disabled`/`aria-invalid`/`data-invalid` on the
 // control, `:has()` is all project CSS needs (no vocabulary shadcn doesn't have, see CLAUDE.md #1).
 //
+// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own InputGroup (registry/
+// new-york-v4/ui/input-group.tsx), same `dark:`-prefixed-classes-dropped/`rounded-md` ->
+// `rounded-lg` deviations as input.php -- this wrapper now owns the border/background/focus-ring
+// that input.php's own `data_slot === 'input-group-control'` branch deliberately omits, so nesting
+// both doesn't double up a border. The fixed `h-9` is dropped for the same padding-driven-height
+// reason as input.php: the nested control/addon carry the actual `py-3` rhythm instead.
+//
 // Supported config:
 //   content       string   required. Pre-rendered HTML to wrap (caller's responsibility to
 //                          escape/build via input.php/textarea.php + input-group-addon.php)
@@ -60,11 +67,17 @@ if (trim($content) === '') {
     return;
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'border-input bg-background relative flex w-full items-center rounded-lg border ' .
+    'shadow-xs transition-[color,box-shadow] outline-none has-[>textarea]:items-start ' .
+    'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] ' .
+    'has-[[data-slot=input-group-control]:disabled]:pointer-events-none ' .
+    'has-[[data-slot=input-group-control]:disabled]:opacity-50 ' .
+    'has-[[data-slot=input-group-control][aria-invalid=true]]:ring-destructive/20 ' .
+    'has-[[data-slot=input-group-control][aria-invalid=true]]:border-destructive';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'input-group';
 

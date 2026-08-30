@@ -10,6 +10,11 @@ declare(strict_types=1);
 // page parse) and matters once anything -- future client-side validation JS, a form library --
 // starts inserting/updating this element after load.
 //
+// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldError (registry/
+// new-york-v4/ui/field.tsx) -- it renders two shapes depending on message count (a plain div for
+// one message, a div wrapping a `<ul>` for several), each with its own base class, same branching
+// this file already has for `$errors`/`$text`.
+//
 // Supported config:
 //   text     string   a single error message (plain text, escaped)
 //   errors   array    multiple error messages, rendered as a <ul>; takes priority over `text` when
@@ -62,16 +67,16 @@ if ($id === '') {
 }
 
 $element_attributes = $attributes;
-
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
-
 $element_attributes['data-slot'] = 'field-error';
 $element_attributes['id'] = $id;
 $element_attributes['role'] = 'alert';
 
 if (count($errors) > 1) {
+    $base_classes = 'text-destructive flex flex-col gap-1 text-sm font-normal';
+    $element_attributes['class'] = trim(
+        $base_classes . ($class_name !== '' ? ' ' . $class_name : ''),
+    );
+
     $items_markup = '';
 
     foreach ($errors as $error_text) {
@@ -79,13 +84,16 @@ if (count($errors) > 1) {
     }
 
     printf(
-        '<div%1$s><ul>%2$s</ul></div>',
+        '<div%1$s><ul class="ml-4 flex list-disc flex-col gap-1">%2$s</ul></div>',
         hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 
     return;
 }
+
+$base_classes = 'text-destructive text-sm font-normal';
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $message = $errors !== [] ? $errors[0] : $text;
 

@@ -9,6 +9,24 @@ declare(strict_types=1);
 // pattern as checkbox.php's `label` config, just stacked label-before-input instead of
 // input-then-label, matching the usual text-field layout).
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken 1:1 from shadcn's own Input
+// component (registry/new-york-v4/ui/input.tsx) -- except:
+//   - `dark:`-prefixed classes dropped, same reasoning as button.php/badge.php (no dark-mode
+//     strategy yet, see docs/to-do.md).
+//   - fixed `h-9` dropped in favour of padding-driven height (design request 2026-08-30, per this
+//     project's Hengegroup Design-System-Projekt "Bewerbungsformular" reference form: all its text
+//     fields use generous `padding:12px 14px`, not a shadcn-style fixed row height) -- padding
+//     mapped to the nearest real Tailwind steps (`py-3`/`px-3.5` = 12px/14px exactly).
+//   - `rounded-md` swapped for `rounded-lg` -- the reference's `border-radius:10px` sits exactly
+//     between Tailwind's `rounded-lg` (8px) and `rounded-xl` (12px) steps; `rounded-lg` was picked
+//     to keep fields visually distinct from button.php's/badge.php's fully-pill `rounded-full`.
+//   - `selection:bg-primary`/`selection:text-primary-foreground` renamed to this project's
+//     henge-green brand tokens, same substitution button.php's variant vocabulary already made.
+//   - a `data_slot === 'input-group-control'` branch (see `data_slot` doc below) swaps the
+//     standalone field classes for shadcn's separate InputGroupInput treatment (border/background/
+//     radius/ring removed -- input-group.php's own wrapper owns those instead) rather than double-
+//     rendering a border/background inside input-group.php's own bordered box.
+//
 // Deliberately NOT included, to stay faithful to shadcn's actual Input API (don't invent
 // vocabulary shadcn doesn't have, see CLAUDE.md #1):
 //   - an icon slot (leading/trailing icon inside the field) -- stock shadcn Input has none either;
@@ -104,11 +122,26 @@ if ($id === '') {
     $id = 'hengegroup-theme-input-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$is_group_control = $data_slot === 'input-group-control';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$computed_class = $is_group_control
+    ? 'flex-1 min-w-0 rounded-none border-0 bg-transparent px-0 py-3 text-base shadow-none ' .
+        'outline-none focus-visible:ring-0 placeholder:text-muted-foreground ' .
+        'file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent ' .
+        'file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed ' .
+        'disabled:opacity-50 md:text-sm'
+    : 'file:text-foreground placeholder:text-muted-foreground selection:bg-henge-green ' .
+        'selection:text-henge-green-foreground border-input flex w-full min-w-0 rounded-lg ' .
+        'border bg-background px-3.5 py-3 text-base shadow-xs transition-[color,box-shadow] ' .
+        'outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent ' .
+        'file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed ' .
+        'disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 ' .
+        'focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive';
+
+$element_attributes = $attributes;
+$element_attributes['class'] = trim(
+    $computed_class . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $element_attributes['type'] = $type;
 $element_attributes['data-slot'] = $data_slot;
@@ -201,7 +234,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<div data-slot="input-field">%1$s%2$s</div>',
+    '<div class="flex flex-col gap-2" data-slot="input-field">%1$s%2$s</div>',
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $input_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

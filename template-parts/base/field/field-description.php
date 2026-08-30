@@ -7,6 +7,11 @@ declare(strict_types=1);
 // long-line-balancing behaviour shadcn's own docs mention is `text-wrap: balance`, a project-CSS
 // concern (CLAUDE.md #1), not something this file renders.
 //
+// Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own FieldDescription (registry/
+// new-york-v4/ui/field.tsx), trimmed of the `group-has-[[data-orientation=horizontal]]/field:
+// text-balance` clause -- that targets a CSS `@container`/group-scoping setup this simpler markup
+// doesn't opt into (see field.php's header comment on `responsive` for the same limitation).
+//
 // Supported config:
 //   text   string   required. Visible content (plain text, escaped)
 //   for    string   the paired control's id -- when given (and `id` is omitted), the id rendered
@@ -45,11 +50,12 @@ if ($id === '') {
             : 'hengegroup-theme-field-description-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'text-muted-foreground text-sm leading-normal last:mt-0 ' .
+    '[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-henge-green';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'field-description';
 $element_attributes['id'] = $id;

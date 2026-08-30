@@ -112,7 +112,9 @@
 
     --color-border: var(--color-neutral-200); /* = grey-medium */
     --color-input: var(--color-neutral-200);
-    --color-ring: var(--color-henge-green);
+    --color-ring: var(
+        --color-blue-500
+    ); /* Tailwinds eigener Standard-Fokusring-Blauton, siehe docs/entscheidungen.md */
 
     --font-primary:
         "Outfit", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,

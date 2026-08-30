@@ -11,6 +11,12 @@ declare(strict_types=1);
 // Unlike <input>, a <textarea>'s value is its text content, not a `value` attribute -- handled
 // accordingly below (escaped via esc_textarea() and placed between the opening/closing tags).
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken 1:1 from shadcn's own Textarea
+// component (registry/new-york-v4/ui/textarea.tsx), same deviations as input.php (see that file's
+// header for the full rationale): `dark:`-prefixed classes dropped, `rounded-md` -> `rounded-lg`,
+// padding mapped to the Bewerbungsformular reference's `12px 14px` (`py-3`/`px-3.5`), and a
+// `data_slot === 'input-group-control'` branch for input-group.php composition.
+//
 // Supported config:
 //   name / value / placeholder / autocomplete / minlength / maxlength   string   native
 //                    attributes, only rendered when given (`value` becomes the element's text
@@ -74,11 +80,23 @@ if ($id === '') {
     $id = 'hengegroup-theme-textarea-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$is_group_control = $data_slot === 'input-group-control';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$computed_class = $is_group_control
+    ? 'flex-1 min-w-0 field-sizing-content rounded-none border-0 bg-transparent px-0 py-3 ' .
+        'text-base shadow-none outline-none focus-visible:ring-0 ' .
+        'placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ' .
+        'md:text-sm'
+    : 'border-input placeholder:text-muted-foreground flex field-sizing-content min-h-16 ' .
+        'w-full rounded-lg border bg-background px-3.5 py-3 text-base shadow-xs ' .
+        'transition-[color,box-shadow] outline-none disabled:cursor-not-allowed ' .
+        'disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 ' .
+        'focus-visible:ring-[3px] aria-invalid:ring-destructive/20 aria-invalid:border-destructive';
+
+$element_attributes = $attributes;
+$element_attributes['class'] = trim(
+    $computed_class . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $element_attributes['data-slot'] = $data_slot;
 $element_attributes['id'] = $id;
@@ -166,7 +184,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<div data-slot="textarea-field">%1$s%2$s</div>',
+    '<div class="flex flex-col gap-2" data-slot="textarea-field">%1$s%2$s</div>',
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $textarea_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

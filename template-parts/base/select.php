@@ -38,6 +38,21 @@ declare(strict_types=1);
 // No search/type-ahead/virtualized lists in v1 -- deferred extension points, not added
 // speculatively without a concrete need.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, trigger classes taken 1:1 from shadcn's own
+// SelectTrigger (registry/new-york-v4/ui/select.tsx) with the same padding/radius deviations as
+// input.php (see that file's header for the Bewerbungsformular design-reference mapping --
+// `rounded-md` -> `rounded-lg`, `dark:`-prefixed classes dropped); the fixed
+// `data-[size=default]:h-9`/`data-[size=sm]:h-8` pair is replaced by the same padding-driven-height
+// override, applied per `size` below since shadcn's own size axis controls padding here too. The
+// floating listbox (`select-content`)/nested native-select.php get a minimal panel/field-surface
+// treatment for when JS is active; before JS initializes, native-select.php's own styling (see that
+// file) is what's actually visible. `select-content` is `absolute` (its own wrapper `<div
+// data-slot="select">` is the `relative` anchor) rather than a plain in-flow block -- it must float
+// OVER whatever comes after it in the DOM once opened, not push it down. The listbox ITEMS
+// (`select-item`/`select-group`/`select-label`/`select-item-indicator`) are built entirely in JS
+// (assets/js/template-parts/base/select.js, from the native select's own <option>s) and styled
+// there, not here -- this file only renders the empty `<div role="listbox">` shell.
+//
 // Supported config:
 //   options / value / placeholder / name / disabled / required / aria_invalid
 //                    same meaning as native-select.php (passed straight through to the nested
@@ -170,11 +185,25 @@ if ($native_select_markup === '') {
     return;
 }
 
-$trigger_attributes = $attributes;
+$base_classes =
+    'border-input data-[placeholder]:text-muted-foreground flex w-full items-center ' .
+    'justify-between gap-2 rounded-lg border bg-background text-base shadow-xs ' .
+    'transition-[color,box-shadow] outline-none focus-visible:border-ring ' .
+    'focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive ' .
+    'aria-invalid:ring-destructive/20 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ' .
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
-if ($class_name !== '') {
-    $trigger_attributes['class'] = $class_name;
-}
+$size_classes = [
+    'default' => 'px-3.5 py-3',
+    'sm' => 'px-3 py-2 text-sm',
+];
+
+$computed_class = "{$base_classes} {$size_classes[$size]}";
+
+$trigger_attributes = $attributes;
+$trigger_attributes['class'] = trim(
+    $computed_class . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $trigger_attributes['data-slot'] = 'select-trigger';
 $trigger_attributes['data-size'] = $size;
@@ -203,7 +232,7 @@ if ($required) {
 }
 
 // Same visible-label-wins gating as every sibling form component (input.php, textarea.php,
-// checkbox.php, radio.php, switch.php, input-otp.php, combobox.php, native-select.php): setting
+// checkbox.php, radio.php, switch.php, combobox.php, native-select.php): setting
 // aria-label unconditionally would be harmless on its own, but label.php's `for="$id"` here points
 // at the native select (hidden after JS init, not the trigger), so the trigger has no native label
 // association either way -- aria_label is this component's only way to give the trigger an
@@ -232,8 +261,15 @@ $trigger_markup = sprintf(
     $chevron_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
+// `absolute` (not the previous plain in-flow block) + `z-50`: the panel must float OVER whatever
+// comes after it in the document, not push it down -- the wrapper below gets `relative` so this
+// is positioned against it, matching shadcn's own Popper-anchored SelectContent instead of a
+// static block that shifts layout. `max-h-64 overflow-y-auto` caps very long option lists instead
+// of growing the panel (and page) without bound.
 $content_markup = sprintf(
-    '<div data-slot="select-content" id="%1$s" role="listbox" hidden></div>',
+    '<div class="absolute top-full left-0 z-50 mt-2 max-h-64 w-full overflow-y-auto ' .
+        'rounded-lg border border-input bg-background p-1 shadow-md" ' .
+        'data-slot="select-content" id="%1$s" role="listbox" hidden></div>',
     esc_attr($id . '-listbox'),
 );
 
@@ -243,7 +279,7 @@ $indicator_template_markup = sprintf(
 );
 
 $select_markup = sprintf(
-    '<div data-slot="select">%1$s%2$s%3$s%4$s</div>',
+    '<div class="relative" data-slot="select">%1$s%2$s%3$s%4$s</div>',
     $native_select_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $trigger_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -263,7 +299,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<div data-slot="select-field">%1$s%2$s</div>',
+    '<div class="flex flex-col gap-2" data-slot="select-field">%1$s%2$s</div>',
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $select_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

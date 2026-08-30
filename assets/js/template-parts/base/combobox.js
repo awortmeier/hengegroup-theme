@@ -23,6 +23,7 @@ function buildListbox(input, content, options, indicatorTemplate, emptyTemplate,
         if (emptyTemplate) {
             const empty = document.createElement("div");
             empty.setAttribute("data-slot", "combobox-empty");
+            empty.className = "text-muted-foreground py-6 text-center text-sm";
             empty.appendChild(emptyTemplate.content.cloneNode(true));
             content.appendChild(empty);
         }
@@ -48,6 +49,7 @@ function buildListbox(input, content, options, indicatorTemplate, emptyTemplate,
 
                 const groupLabelEl = document.createElement("div");
                 groupLabelEl.setAttribute("data-slot", "combobox-label");
+                groupLabelEl.className = "text-muted-foreground px-2 py-1.5 text-xs";
                 groupLabelEl.textContent = groupLabel;
 
                 group.appendChild(groupLabelEl);
@@ -56,10 +58,19 @@ function buildListbox(input, content, options, indicatorTemplate, emptyTemplate,
             }
         }
 
+        // Classes taken from shadcn's own SelectItem/CommandItem (registry/new-york-v4/ui/
+        // select.tsx, command.tsx) -- same pattern as select.js's own `select-item` (see that
+        // file's comment): `relative`/`pr-8` + the indicator's own `absolute right-2` (below) keeps
+        // the checkmark from taking its own row instead of sitting next to the text inline.
         const item = document.createElement("div");
         item.id = `${input.id}-option-${index}`;
         item.setAttribute("role", "option");
         item.setAttribute("data-slot", "combobox-item");
+        item.className =
+            "relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 " +
+            "pl-2 text-sm outline-hidden select-none data-[active]:bg-accent " +
+            "data-[active]:text-accent-foreground data-[disabled]:pointer-events-none " +
+            "data-[disabled]:opacity-50";
         item.dataset.value = option.dataset.value || option.value;
         item.dataset.text = option.value;
 
@@ -76,8 +87,12 @@ function buildListbox(input, content, options, indicatorTemplate, emptyTemplate,
 
         const indicator = document.createElement("span");
         indicator.setAttribute("data-slot", "combobox-item-indicator");
+        indicator.className = "absolute right-2 flex size-3.5 items-center justify-center";
 
-        if (indicatorTemplate) {
+        // Only populate the indicator for the actually-selected item -- cloning the checkmark
+        // template unconditionally here (the previous bug, same as select.js's own) made it show
+        // on every item regardless of selection.
+        if (indicatorTemplate && isSelected) {
             indicator.appendChild(indicatorTemplate.content.cloneNode(true));
         }
 

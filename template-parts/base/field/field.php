@@ -7,7 +7,7 @@ declare(strict_types=1);
 // just the Label + Control + Description/Error composition every form field needs, generalized
 // beyond the ad-hoc `label` config each individual form component here already offers
 // (input.php/textarea.php/checkbox.php/native-select.php/select.php/radio.php/switch.php/
-// slider.php/input-otp.php/combobox.php). Field is the richer, opt-in layer on top for fields that
+// slider.php/combobox.php). Field is the richer, opt-in layer on top for fields that
 // also need a description and/or error message -- the existing per-component `label` config isn't
 // replaced by it, both remain valid depending on how much a given field needs (CLAUDE.md #1: no JS
 // needed, this is presentational markup only).
@@ -59,6 +59,13 @@ declare(strict_types=1);
 // own "group") -- `field-set.php`'s real `<fieldset>` already exists for actual multi-control
 // grouping, so this file doesn't need to approximate that role itself.
 //
+// Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own Field (registry/
+// new-york-v4/ui/field.tsx), with its per-orientation branches (`vertical`/`horizontal`) expressed
+// as `data-[orientation=...]` selectors against the `data-orientation` this file already sets below
+// instead of a PHP if/else -- same data-attribute-driven styling idiom button.php/badge.php already
+// use for `aria-invalid`. `responsive`'s own shadcn classes need a `@container` on field-group.php,
+// out of scope until that file gets its own Phase-2 pass.
+//
 // Supported config:
 //   content       string   required. Pre-rendered HTML to wrap (see composition example above)
 //   orientation   string   vertical (default) | horizontal | responsive -- shadcn's own Field
@@ -92,11 +99,14 @@ if (!in_array($orientation, $allowed_orientations, true)) {
     $orientation = 'vertical';
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'group/field flex w-full gap-3 data-[invalid=true]:text-destructive ' .
+    'data-[orientation=vertical]:flex-col data-[orientation=horizontal]:flex-row ' .
+    'data-[orientation=horizontal]:items-center ' .
+    'data-[orientation=horizontal]:[&>[data-slot=field-label]]:flex-auto';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'field';
 $element_attributes['data-orientation'] = $orientation;

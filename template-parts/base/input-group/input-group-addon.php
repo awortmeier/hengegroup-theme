@@ -18,6 +18,11 @@ declare(strict_types=1);
 // deferred, documented JS enhancement, not added unprompted (see CLAUDE.md #1/#9); the input stays
 // fully usable by clicking directly on it in the meantime.
 //
+// Phase 2 (CLAUDE.md Regel 1): classes taken from shadcn's own InputGroupAddon (registry/
+// new-york-v4/ui/input-group.tsx), trimmed to the alignments this file actually exposes and
+// re-padded to this project's `px-3.5`/`py-3` field-surface rhythm (same design-reference mapping
+// as input.php) instead of shadcn's own `px-3`/`py-1.5`.
+//
 // Supported config:
 //   content   string   required. Pre-rendered HTML to wrap (an icon.php call, a button.php call,
 //                       an input-group-text.php call, or plain escaped text)
@@ -48,11 +53,19 @@ if (!in_array($align, $allowed_aligns, true)) {
     $align = 'inline-start';
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'text-muted-foreground flex items-center justify-center gap-2 py-3 text-base font-medium ' .
+    "select-none md:text-sm [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none " .
+    'data-[align=inline-start]:order-first data-[align=inline-start]:pl-3.5 ' .
+    'data-[align=inline-end]:order-last data-[align=inline-end]:pr-3.5 ' .
+    'data-[align=block-start]:order-first data-[align=block-start]:w-full ' .
+    'data-[align=block-start]:justify-start data-[align=block-start]:px-3.5 ' .
+    'data-[align=block-start]:pt-3 data-[align=block-end]:order-last ' .
+    'data-[align=block-end]:w-full data-[align=block-end]:justify-start ' .
+    'data-[align=block-end]:px-3.5 data-[align=block-end]:pb-3';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'input-group-addon';
 $element_attributes['data-align'] = $align;

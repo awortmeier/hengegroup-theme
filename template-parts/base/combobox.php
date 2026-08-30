@@ -47,6 +47,16 @@ declare(strict_types=1);
 // icon once into a <template>, cloned per matching item by combobox.js instead of a second,
 // JS-duplicated icon implementation).
 //
+// Phase 2 (CLAUDE.md Regel 1): the input gets the exact same field-surface Tailwind classes as
+// input.php (see that file's header for the Bewerbungsformular design-reference mapping); the
+// floating listbox (`combobox-content`) gets the same `absolute`-panel treatment as select.php's
+// `select-content` (its own wrapper `<div data-slot="combobox">` is the `relative` anchor) for
+// parity between this project's two custom-listbox components -- it must float OVER whatever comes
+// after it in the DOM once opened, not push it down. The listbox ITEMS (`combobox-item`/
+// `combobox-group`/`combobox-label`/`combobox-item-indicator`/`combobox-empty`) are built entirely
+// in JS (assets/js/template-parts/base/combobox.js, from the native `<datalist>`'s own `<option>`s)
+// and styled there, not here -- this file only renders the empty `<div role="listbox">` shell.
+//
 // CSS contract, same shape as select.php's: combobox.js sets `data-js` on the outer
 // <div data-slot="combobox"> once initialized; project CSS gates the custom listbox's visibility
 // on that attribute (`[data-slot="combobox"]:not([data-js]) [data-slot="combobox-content"] {
@@ -164,11 +174,16 @@ if ($id === '') {
     $id = 'hengegroup-theme-combobox-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'placeholder:text-muted-foreground selection:bg-henge-green ' .
+    'selection:text-henge-green-foreground border-input flex w-full min-w-0 rounded-lg border ' .
+    'bg-background px-3.5 py-3 text-base shadow-xs transition-[color,box-shadow] outline-none ' .
+    'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ' .
+    'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ' .
+    'aria-invalid:ring-destructive/20 aria-invalid:border-destructive';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['type'] = 'text';
 $element_attributes['data-slot'] = 'combobox-input';
@@ -228,8 +243,14 @@ $datalist_markup = sprintf(
     $options_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
+// `absolute` (not a plain in-flow block) + `z-50`: the panel must float OVER whatever comes after
+// it in the document once opened, not push it down -- the wrapper below gets `relative` so this is
+// positioned against it, same fix as select.php's own `select-content` (see that file for the full
+// rationale). `max-h-64 overflow-y-auto` caps very long/unfiltered option lists.
 $content_markup = sprintf(
-    '<div data-slot="combobox-content" id="%1$s" role="listbox" hidden></div>',
+    '<div class="absolute top-full left-0 z-50 mt-2 max-h-64 w-full overflow-y-auto ' .
+        'rounded-lg border border-input bg-background p-1 shadow-md" ' .
+        'data-slot="combobox-content" id="%1$s" role="listbox" hidden></div>',
     esc_attr($id . '-listbox'),
 );
 
@@ -244,7 +265,7 @@ $empty_template_markup = sprintf(
 );
 
 $combobox_markup = sprintf(
-    '<div data-slot="combobox">%1$s%2$s%3$s%4$s%5$s</div>',
+    '<div class="relative" data-slot="combobox">%1$s%2$s%3$s%4$s%5$s</div>',
     $input_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $datalist_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -265,7 +286,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<div data-slot="combobox-field">%1$s%2$s</div>',
+    '<div class="flex flex-col gap-2" data-slot="combobox-field">%1$s%2$s</div>',
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $combobox_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

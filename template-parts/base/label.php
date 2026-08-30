@@ -11,6 +11,12 @@ declare(strict_types=1);
 // checkbox.php) because every future form control (radio, switch, input, textarea, select, ...)
 // needs the same pairing -- compose it, don't duplicate a <label> tag per component.
 //
+// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own Label component (registry/
+// new-york-v4/ui/label.tsx) -- since every sibling form component (input.php/textarea.php/
+// checkbox.php/...) nests THIS file for its own `label` convenience config, styling it here once
+// cascades to all of them plus field-label.php's thin wrapper, instead of repeating the same
+// classes in every caller.
+//
 // Supported config:
 //   text / label   string   required. Visible label content (plain text, escaped)
 //   for            string   the associated control's id (native `for` attribute); omit when the
@@ -20,7 +26,9 @@ declare(strict_types=1);
 //                            `data_slot`; field-label.php requests 'field-label' here instead of
 //                            duplicating this file's attribute-building logic.
 //                            Leave unset for standalone use.
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+//   class / attributes / data_attributes   passthrough, as in the other base parts (`class` is
+//                            appended AFTER the computed base classes, same caveat as button.php's
+//                            own `class`)
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -43,11 +51,14 @@ if ($data_slot === '') {
     $data_slot = 'label';
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'flex items-center gap-2 text-sm leading-none font-medium select-none ' .
+    'group-has-[[data-disabled=true]]:pointer-events-none ' .
+    'group-has-[[data-disabled=true]]:opacity-50 peer-disabled:cursor-not-allowed ' .
+    'peer-disabled:opacity-50';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = $data_slot;
 

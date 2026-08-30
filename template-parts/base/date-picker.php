@@ -182,7 +182,20 @@ if ($calendar_markup === '') {
     return;
 }
 
+// Phase 2 (CLAUDE.md Regel 1): the trigger gets the same field-surface Tailwind classes as
+// input.php (see that file's header for the Bewerbungsformular design-reference mapping) plus
+// button.php's own `outline` hover treatment -- matching its own `data-variant="outline"` above --
+// since a <summary> has no native pointer/hover affordance of its own. The panel gets the same
+// minimal floating-panel treatment as select.php's/combobox.php's own content panels.
 $trigger_attributes = [
+    'class' =>
+        'inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border ' .
+        'border-input bg-background px-3.5 py-3 text-base shadow-xs outline-none ' .
+        'transition-[color,box-shadow] hover:bg-grey-light hover:text-grey-light-foreground ' .
+        'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 ' .
+        'aria-disabled:pointer-events-none aria-disabled:opacity-50 md:text-sm ' .
+        '[&::-webkit-details-marker]:hidden [&_svg]:pointer-events-none [&_svg]:shrink-0 ' .
+        "[&_svg:not([class*='size-'])]:size-4",
     'data-slot' => 'date-picker-trigger',
     'data-variant' => 'outline',
     // Not "dialog": that value promises a role="dialog" panel (see dropdown-menu.php's own
@@ -210,7 +223,8 @@ $trigger_markup = sprintf(
 );
 
 $content_markup = sprintf(
-    '<div data-slot="date-picker-content">%s</div>',
+    '<div class="mt-2 rounded-lg border border-input bg-background p-3 shadow-md" ' .
+        'data-slot="date-picker-content">%s</div>',
     $calendar_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 

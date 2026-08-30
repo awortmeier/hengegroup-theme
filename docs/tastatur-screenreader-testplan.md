@@ -156,11 +156,6 @@ fuehren.
   `PageUp`/`PageDown` kommen vom Browser. Nur pruefen, dass `aria-valuenow`/-`valuemin`/-`valuemax`
   korrekt gesetzt sind (SR sollte den aktuellen Wert vorlesen).
 
-### `input-otp.php`
-
-- Einzelnes natives `<input>` mit `autocomplete="one-time-code"` — kein Multi-Feld-Tabbing zu
-  pruefen (bewusst kein shadcn-Box-Nachbau, siehe `docs/neue-komponente-erstellen.md` Regel 2).
-
 ### `toggle.php` / `toggle-group.php`
 
 - `toggle.php`: fokussierbares `<label>` (nicht das versteckte Input) kuendigt sich als

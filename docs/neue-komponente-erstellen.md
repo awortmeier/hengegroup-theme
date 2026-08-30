@@ -43,7 +43,7 @@ Die Config-API jeder Komponente orientiert sich **stark** an der jeweiligen shad
   `aria_invalid`, `required`, `class`/`attributes`/`data_attributes` sollten ueber die ganze
   **Formular-Familie** — kanonisch definiert hier, an anderer Stelle in diesem Dokument nur noch
   referenziert, nicht erneut ausgeschrieben: `input.php`, `textarea.php`, `checkbox.php`,
-  `radio.php`, `native-select.php`, `select.php`, `slider.php`, `input-otp.php`, `switch.php` —
+  `radio.php`, `native-select.php`, `select.php`, `slider.php`, `switch.php` —
   konsistent vorhanden sein. Ein Blick auf shadcn allein deckt das nicht zwingend auf, ein Blick
   auf die eigenen Nachbardateien schon.
 - **Wo wirklich kein natives HTML-Verhalten existiert** (z. B. der Avatar-Fallback jenes headless
@@ -70,9 +70,7 @@ Zur Einordnung, falls eine dieser Dateien angefasst wird: `accordion.php` bildet
 `<optgroup>` (kein Custom-Styling der Options-Liste moeglich, dokumentierter Trade-off — der Name
 ist bewusst nicht `select.php`, das ist die volle JS-Variante); `slider.php` ist ein natives
 `<input type="range">` fuer den Einzelwert-Fall (Mehrfach-Thumb/Range hat keine native
-Entsprechung und ist bewusst nicht Teil der Datei); `input-otp.php` ist ein einzelnes natives
-`<input>` statt shadcn's box-segmentiertem `InputOTP` (hier ist nativ sogar die von
-Browser-Herstellern empfohlene Loesung fuer SMS-Autofill, `autocomplete="one-time-code"`);
+Entsprechung und ist bewusst nicht Teil der Datei);
 `toggle.php`/`tabs.php` nutzen native Checkbox/Radio-Inputs plus gestyltes `<label>` und kuendigen
 dadurch `role="checkbox"`/`"radio"` statt shadcn's `role="button"`/`"tab"` an — diese Luecke wird
 seit `toggle.js`/`tabs.js` per Progressive Enhancement geschlossen (siehe Regel 10), ist also kein

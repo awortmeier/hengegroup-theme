@@ -9,6 +9,8 @@ declare(strict_types=1);
 // styling, not one shared atom) -- an inline <span> here, since this content always sits inline
 // next to a text-field control, unlike button-group-text.php's own <div> choice.
 //
+// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own InputGroupText.
+//
 // Supported config:
 //   text   string   required. Visible content (plain text, escaped)
 //   class / attributes / data_attributes   passthrough, as in the other base parts
@@ -28,11 +30,12 @@ if ($text === '') {
     return;
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'text-muted-foreground flex items-center gap-2 text-base md:text-sm ' .
+    "[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none";
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'input-group-text';
 

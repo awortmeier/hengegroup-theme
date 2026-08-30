@@ -23,6 +23,22 @@ declare(strict_types=1);
 // attribute; it's provided purely so `[data-slot="switch"][data-state="..."]` selectors are
 // available for parity with shadcn's own styling convention.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind. Unlike checkbox.php/radio.php (where
+// `accent-color` recolors the browser's own native widget and no visual re-implementation is
+// needed), a Switch's whole visual point IS the pill-track-plus-sliding-thumb shape -- there is no
+// native `accent-color` (or any other CSS-only) way to make a checkbox LOOK like a pill toggle, so
+// this is the one native-input form control where matching shadcn's actual look requires
+// `appearance-none` plus a hand-drawn presentation, same trade-off toggle.php's own header comment
+// already documents for a different reason. Since this file renders a SINGLE
+// `<input type="checkbox" role="switch">` (no separate Root+Thumb elements like shadcn's real
+// two-element Switch), the sliding thumb is drawn as a `content-['']` pseudo-element via Tailwind's
+// `after:` variant instead -- one native input, one CSS-only pseudo-element, zero JS, same classes
+// shadcn's own Switch uses for track/thumb colors mapped onto `after:`. `size`'s dimensions
+// (default | sm) are the one thing genuinely new here (shadcn's own Switch size axis has no shipped
+// pixel values in its docs at time of writing -- picked to roughly match shadcn's historical
+// h-5/w-9 default scaled down one step for `sm`, consistent with this project's other sm/base/lg
+// size steps elsewhere).
+//
 // Supported config:
 //   checked        bool     default false. Native `checked` attribute.
 //   disabled       bool     native `disabled` attribute, plus a mirrored `data-disabled="true"`
@@ -74,11 +90,37 @@ if ($id === '') {
     $id = 'hengegroup-theme-switch-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'peer relative inline-flex shrink-0 cursor-pointer appearance-none items-center ' .
+    'rounded-full border border-transparent bg-input shadow-xs transition-colors outline-none ' .
+    'after:absolute after:top-1/2 after:left-0 after:-translate-y-1/2 after:rounded-full ' .
+    "after:bg-background after:shadow-sm after:transition-transform after:content-[''] " .
+    'checked:bg-henge-green checked:after:translate-x-3.5 focus-visible:border-ring ' .
+    'focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive ' .
+    'aria-invalid:ring-destructive/20 disabled:cursor-not-allowed disabled:opacity-50';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+// The thumb sits flush against the track's inner (padding-box) edge at rest -- `left-0`, not an
+// extra `left-0.5` on top of that -- so the track's own 1px `border` is what provides its visual
+// inset from the track's true outer edge, the same reference frame shadcn's own (flex-based, not
+// absolutely-positioned) Switch Thumb uses. `checked:after:translate-x-3.5` (14px) is a fixed
+// pixel shift, not shadcn's own thumb-relative `calc(100% - 2px)` -- that formula only cancels out
+// correctly for shadcn's own single w-8/size-4 pair (where track width happens to be exactly 2x
+// the thumb width); it does NOT generalize to this project's smaller `sm` step (w-7/size-3, no
+// longer a clean 2x ratio). 14px is the constant, track-width-independent shift that lands the
+// thumb flush against the opposite inner edge for BOTH sizes here (their track/thumb width
+// difference is the same 16px either way), fixing a real ~2px overshoot the old
+// thumb-relative formula produced when combined with the (now removed) extra `left-0.5`.
+$size_classes = [
+    'default' => 'h-[1.15rem] w-8 after:size-4',
+    'sm' => 'h-4 w-7 after:size-3',
+];
+
+$computed_class = "{$base_classes} {$size_classes[$size]}";
+
+$element_attributes = $attributes;
+$element_attributes['class'] = trim(
+    $computed_class . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $element_attributes['type'] = 'checkbox';
 $element_attributes['role'] = 'switch';
@@ -142,7 +184,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<span data-slot="switch-field">%1$s%2$s</span>',
+    '<span class="inline-flex items-center gap-2" data-slot="switch-field">%1$s%2$s</span>',
     $input_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

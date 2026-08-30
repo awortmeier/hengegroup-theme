@@ -22,6 +22,16 @@ declare(strict_types=1);
 // descriptions) -- native <option> is text-only. If that's needed, use the future JS-driven
 // select.php instead, not this one.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind with the same field-surface treatment as
+// input.php (border/background/radius/padding/typography, see that file's header for the full
+// mapping from the Bewerbungsformular design reference) -- there is no shadcn "NativeSelect" to
+// take classes from 1:1 (see above), so this borrows input.php's own Input classes instead of
+// inventing a third variant, since a native <select> needs the exact same field-surface look as a
+// native <input>. Deliberately NOT adding `appearance-none` + a custom chevron overlay: that would
+// be new markup (an icon element), not a Tailwind class, out of scope for a styling-only pass (see
+// CLAUDE.md #1) -- select.php already covers the custom-chevron/custom-listbox case for callers
+// that need it. The browser's own native dropdown arrow renders inside the padded box as-is.
+//
 // Supported config:
 //   options        array   required, ordered list of:
 //     value / text    string   a plain <option value="..."> entry
@@ -171,11 +181,16 @@ if ($id === '') {
     $id = 'hengegroup-theme-native-select-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'placeholder:text-muted-foreground selection:bg-henge-green ' .
+    'selection:text-henge-green-foreground border-input flex w-full min-w-0 rounded-lg border ' .
+    'bg-background px-3.5 py-3 text-base shadow-xs transition-[color,box-shadow] outline-none ' .
+    'disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ' .
+    'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] ' .
+    'aria-invalid:ring-destructive/20 aria-invalid:border-destructive';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'native-select';
 $element_attributes['id'] = $id;
@@ -235,7 +250,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<div data-slot="native-select-field">%1$s%2$s</div>',
+    '<div class="flex flex-col gap-2" data-slot="native-select-field">%1$s%2$s</div>',
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $select_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

@@ -16,6 +16,13 @@ declare(strict_types=1);
 // nests this file per item and auto-wires the shared `name` + `checked` state from a single
 // `value` config.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, same `accent-color`-based approach as
+// checkbox.php (see that file's header comment for the full rationale) -- shadcn's own
+// RadioGroupItem draws a custom filled dot via its own SVG indicator, unavailable on a bare native
+// `<input type="radio">` without trading real native rendering for a re-implemented one; `accent-*`
+// recolors the browser's own native radio dot instead. Focus ring/disabled state are shadcn's own
+// classes 1:1 (`dark:`-prefixed classes dropped, same reasoning as button.php/badge.php).
+//
 // Supported config:
 //   checked        bool     default false. Native `checked` attribute.
 //   disabled       bool     native `disabled` attribute, plus a mirrored `data-disabled="true"`
@@ -65,11 +72,14 @@ if ($id === '') {
     $id = 'hengegroup-theme-radio-' . wp_unique_id();
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'peer accent-henge-green aspect-square size-4 shrink-0 rounded-full border border-input ' .
+    'shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring ' .
+    'focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive ' .
+    'aria-invalid:ring-destructive/20 disabled:cursor-not-allowed disabled:opacity-50';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['type'] = 'radio';
 $element_attributes['data-slot'] = 'radio';
@@ -130,7 +140,7 @@ get_template_part('template-parts/base/label', null, [
 $label_markup = (string) ob_get_clean();
 
 printf(
-    '<span data-slot="radio-field">%1$s%2$s</span>',
+    '<span class="inline-flex items-center gap-2" data-slot="radio-field">%1$s%2$s</span>',
     $input_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $label_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
