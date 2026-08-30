@@ -164,11 +164,11 @@ if ($title !== '') {
     ob_start();
     get_template_part('template-parts/base/typography', null, [
         'config' => [
-            'variant' => 'body-large',
+            'variant' => 'body-lg',
             'tag' => $title_tag,
             'text' => $title,
             'data_slot' => 'dialog-title',
-            // body-large is font-normal by default (see typography.php) -- a dialog title needs
+            // body-lg is font-normal by default (see typography.php) -- a dialog title needs
             // to stand out from dialog-description below it, hence the added emphasis here.
             'class' => trim('font-semibold ' . ($title_visually_hidden ? 'sr-only' : '')),
             'attributes' => ['id' => $id . '-title'],
@@ -183,7 +183,7 @@ if ($description !== '') {
     ob_start();
     get_template_part('template-parts/base/typography', null, [
         'config' => [
-            'variant' => 'body-small',
+            'variant' => 'body-sm',
             'text' => $description,
             'data_slot' => 'dialog-description',
             'attributes' => ['id' => $id . '-description'],

@@ -21,26 +21,53 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
-### `typography.php`: Variant-Vokabular von shadcns `h1-h4/p/lead/large/small/muted` auf eigenes `headline-1..4`/`body-large/medium/small/tiny` umgestellt (2026-08-30)
+### `button.php`: Font-Size je `size`, Size-Vokabular auf `sm`/`base`/`lg` reduziert (2026-08-30)
+
+Bislang teilten sich alle `size`-Werte dieselbe `text-sm` (14px) aus `$base_classes`, nur `xs`
+wich mit `text-xs` (12px) ab. Auf Basis der Buttons im Claude-Design-Referenzprojekt
+"Hengegroup" (dieselben `.dc.html`-Referenzseiten wie beim Padding/Shape-Eintrag oben) zeigte
+sich, dass die echten Hengegroup-Pill-Buttons unterschiedliche Schriftgroessen je Groesse nutzen
+(Nav-Pill "Kontakt" 16px, Hero-/Section-CTA-Pills 18px). Auf expliziten Wunsch daraus zunaechst 3
+Font-Size-Stufen ueber die bestehenden 4 `size`-Werte (`default`/`xs`/`sm`/`lg`) verteilt, dann in
+einem zweiten Schritt das Size-Vokabular selbst auf 3 Werte reduziert/umbenannt, weil `default`
+und `sm` ohnehin dieselbe Font-Size teilten: `sm` (bislang `xs`), `base` (bislang `sm`), `lg`
+(unveraendert) -- `default`/`icon` (h-9/size-9) entfallen ersatzlos, `base` uebernimmt ihre Rolle
+als Fallback-Wert. Nur echte Tailwind-Scale-Klassen, keine Arbitrary Values (gleiche Konvention
+wie beim `typography.php`-Eintrag oben):
+
+- `sm`/`icon-sm`: `text-sm` (14px)
+- `base`/`icon-base`: `text-base` (16px)
+- `lg`/`icon-lg`: `text-lg` (18px)
+
+`icon-sm`/`icon-base`/`icon-lg` haben keinen sichtbaren Text, spiegeln die Font-Size ihres
+Text-Pendants aber trotzdem (rein kosmetisch/zukunftssicher) -- siehe `button.php`-Kopfkommentar.
+Alle Aufrufer, die bislang `size => 'default'`/`'icon'` hart codiert hatten (`pagination.php`,
+`data-table.php`, `carousel-previous.php`/`carousel-next.php`), sowie `icon-xs`-Aufrufer
+(`page-component-showcase-form-elements.php`) sind auf die neuen Namen (`base`/`icon-base` bzw.
+`icon-sm`) migriert.
+
+---
+
+### `typography.php`: Variant-Vokabular von shadcns `h1-h4/p/lead/large/small/muted` auf eigenes `headline-lg/base/sm/xs`/`body-lg/base/sm/xs` umgestellt (2026-08-30)
 
 Auf expliziten Wunsch komplett eigenes, groessenbasiertes Vokabular statt shadcns Namen zu
 uebernehmen (bewusste Abweichung von `docs/neue-komponente-erstellen.md` Regel 2, gleiche
 Kategorie Entscheidung wie button.php's/badge.php's Marken-Farbnamen, siehe deren Eintraege oben).
-Ausloeser: eine konkrete Ziel-Groessen-Tabelle (`headline-1: 64px` ... `text-tiny: 14px`), gemappt
+Ausloeser: eine konkrete Ziel-Groessen-Tabelle (`headline-lg: 64px` ... `text-tiny: 14px`), gemappt
 auf die naechstliegende(n) echte(n) Tailwind-`text-*`-Klasse(n) -- **keine** eigenen
 Pixel-Arbitrary-Values, nur die eingebaute Skala (`text-6xl`/`text-5xl`/`text-4xl`/`text-3xl`/
 `text-2xl`/`text-lg`/`text-base`/`text-sm`).
 
-- **`headline-3` (42px) faellt komplett weg statt zu kollidieren.** Tailwinds Skala springt fix von
+- **`headline-sm` (42px) faellt komplett weg statt zu kollidieren.** Tailwinds Skala springt fix von
   `text-4xl` (36px) auf `text-5xl` (48px) -- 42px liegt exakt in der Mitte, jede Zuordnung waere
-  optisch identisch mit einer Nachbarstufe (`headline-2`/48px oder dem, was `headline-4` werden
+  optisch identisch mit einer Nachbarstufe (`headline-base`/48px oder dem, was `headline-xs` werden
   sollte/36px) gewesen. Auf expliziten Wunsch deshalb nur 4 Ueberschriften-Stufen statt der
-  urspruenglich geplanten 5 (`headline-1..4` = `text-6xl/5xl/4xl/3xl` = 60/48/36/30px), keine
+  urspruenglich geplanten 5 (`headline-lg/base/sm/xs` = `text-6xl/5xl/4xl/3xl` = 60/48/36/30px), keine
   kuenstlich zusammengelegte Stufe.
 - **`text-large` (22px) -> `text-2xl` (24px) statt `text-xl` (20px).** Ebenfalls eine Luecke in
   Tailwinds Skala (kein Stop bei 22px, `text-xl`/20px und `text-2xl`/24px gleich weit entfernt),
   hier aber unkritisch (keine Kollision mit einer Nachbarstufe) -- `text-2xl` gewaehlt fuer eine
-  gleichmaessigere Stufung zur naechstgroesseren Stufe (`headline-4`/30px) hin.
+  gleichmaessigere Stufung zur naechstgroesseren Stufe (`headline-xs`/30px) hin.
 - **`text-*`-Namenspraefix zu `body-*` umbenannt**, auf meinen Vorschlag: `text-*` kollidiert
   begrifflich mit Tailwinds eigenem generischem `text-`-Praefix (Groesse UND Farbe, z. B.
   `text-red-500`) -- `headline-*`/`body-*` ist zudem ein gaengiges Namenspaar fuer Ueberschrift vs.
@@ -53,17 +80,17 @@ Farbe fest eingebacken; jetzt macht das ausschliesslich die bereits bestehende `
 mehr, `color` ist jetzt die alleinige Farbachse fuer alle acht Varianten.
 
 **Migration der vier Composing-Komponenten**, die die alten Variant-Namen direkt referenzierten
-(sonst waeren sie durch den Fallback auf `body-medium` degradiert, ohne Fehler, aber falsch
+(sonst waeren sie durch den Fallback auf `body-base` degradiert, ohne Fehler, aber falsch
 gestylt):
 
-- `card.php` (Titel: `h3` -> `body-large` + `class: 'font-semibold'`, Beschreibung: `p` ->
-  `body-small`), `dialog.php` (Titel: `h2` -> `body-large` + `class: 'font-semibold'`,
-  Beschreibung: `p` -> `body-small`), `accordion.php` (Trigger-Heading: `h4` -> `body-medium` +
-  `class: 'font-semibold'`) -- `body-large`/`body-medium` sind per Default `font-normal` (siehe
+- `card.php` (Titel: `h3` -> `body-lg` + `class: 'font-semibold'`, Beschreibung: `p` ->
+  `body-sm`), `dialog.php` (Titel: `h2` -> `body-lg` + `class: 'font-semibold'`,
+  Beschreibung: `p` -> `body-sm`), `accordion.php` (Trigger-Heading: `h4` -> `body-base` +
+  `class: 'font-semibold'`) -- `body-lg`/`body-base` sind per Default `font-normal` (siehe
   oben, keine eigene Gewichts-Skala pro Groessen-Stufe angefragt), Titel/Trigger brauchen aber
   sichtbare Betonung gegenueber ihrem Beschreibungstext -- deshalb per additivem `class`-Passthrough
   ergaenzt statt eine eigene "titel"-Variante zu erfinden.
-- `data-table.php` (Pagination-Label: `muted` -> `body-tiny` + `color: 'neutral'`) -- 1:1-Ersatz,
+- `data-table.php` (Pagination-Label: `muted` -> `body-xs` + `color: 'neutral'`) -- 1:1-Ersatz,
   keine Groessenaenderung (beide 14px/`text-sm`).
 
 `page-component-showcase-typography.php` auf das neue Vokabular nachgezogen (Abschnitt "muted"

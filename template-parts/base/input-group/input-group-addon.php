@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 // shadcn/ui's InputGroupAddon: a positioned slot inside input-group.php for icons, buttons or text
 // next to the control (`template-parts/base/input-group/input-group-text.php` for plain text, `button.php`
-// with `size: 'xs'`/`'icon-xs'`, `variant: 'ghost'` for a button -- shadcn's own InputGroupButton
-// default variant/size, both already valid values in button.php's own allow-lists, see CLAUDE.md
-// #1 -- no separate input-group-button.php needed for what button.php already covers).
+// with `size: 'sm'`/`'icon-sm'`, `variant: 'ghost'` for a button -- this project's nearest
+// equivalent to shadcn's own InputGroupButton default variant/size, both already valid values in
+// button.php's own allow-lists (see docs/entscheidungen.md for button.php's sm/base/lg size
+// vocabulary) -- no separate input-group-button.php needed for what button.php already covers).
 // Content-agnostic, same nesting pattern as input-group.php's own `content` and
 // button-group.php/aspect-ratio.php/kbd-group.php elsewhere.
 //

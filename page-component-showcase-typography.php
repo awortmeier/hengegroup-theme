@@ -4,8 +4,8 @@
  * Template Name: Component Showcase - Typography
  *
  * Dev-only page template: renders template-parts/base/typography.php across every documented
- * variant (headline-1 | headline-2 | headline-3 | headline-4 | body-large | body-medium |
- * body-small | body-tiny), color (default | light | neutral) and the variant/tag decoupling for
+ * variant (headline-lg | headline-base | headline-sm | headline-xs | body-lg | body-base |
+ * body-sm | body-xs), color (default | light | neutral) and the variant/tag decoupling for
  * manual visual/functional review during Phase 2 styling work -- not meant for production content
  * or navigation. Analog zu page-component-showcase-button.php/page-component-showcase-badge.php.
  *
@@ -23,14 +23,14 @@
 get_header();
 
 $variants = [
-    'headline-1',
-    'headline-2',
-    'headline-3',
-    'headline-4',
-    'body-large',
-    'body-medium',
-    'body-small',
-    'body-tiny',
+    'headline-lg',
+    'headline-base',
+    'headline-sm',
+    'headline-xs',
+    'body-lg',
+    'body-base',
+    'body-sm',
+    'body-xs',
 ];
 ?>
 
@@ -62,13 +62,13 @@ $variants = [
 
     <section class="mb-16">
         <h2 class="mb-6 text-xl font-semibold">
-            Fließtext im Kontext (<code>body-large</code>/<code>body-small</code>)
+            Fließtext im Kontext (<code>body-lg</code>/<code>body-sm</code>)
         </h2>
         <div class="flex max-w-2xl flex-col gap-6">
             <?php
             get_template_part('template-parts/base/typography', null, [
                 'config' => [
-                    'variant' => 'body-large',
+                    'variant' => 'body-lg',
                     'text' =>
                         'Hier treffen Tradition und Innovation aufeinander. Mit unserem ' .
                         'Engagement für Qualität und nachhaltige Geschäftspraktiken sind wir ' .
@@ -77,7 +77,7 @@ $variants = [
             ]);
             get_template_part('template-parts/base/typography', null, [
                 'config' => [
-                    'variant' => 'body-small',
+                    'variant' => 'body-sm',
                     'text' =>
                         'IMEXCO Minerals GmbH: Die globale Vernetzung von Industrie und Handel ' .
                         'wächst rasant und die Anforderungen an zuverlässige internationale ' .
@@ -100,16 +100,16 @@ $variants = [
         <div class="mb-4 flex flex-col gap-3">
             <?php
             get_template_part('template-parts/base/typography', null, [
-                'config' => ['variant' => 'body-large', 'color' => 'default', 'text' => 'Default'],
+                'config' => ['variant' => 'body-lg', 'color' => 'default', 'text' => 'Default'],
             ]);
             get_template_part('template-parts/base/typography', null, [
-                'config' => ['variant' => 'body-large', 'color' => 'neutral', 'text' => 'Neutral'],
+                'config' => ['variant' => 'body-lg', 'color' => 'neutral', 'text' => 'Neutral'],
             ]);
             ?>
         </div>
         <div class="flex flex-col gap-3 rounded-lg bg-grey-dark p-6">
             <?php get_template_part('template-parts/base/typography', null, [
-                'config' => ['variant' => 'body-large', 'color' => 'light', 'text' => 'Light'],
+                'config' => ['variant' => 'body-lg', 'color' => 'light', 'text' => 'Light'],
             ]); ?>
         </div>
     </section>
@@ -119,30 +119,30 @@ $variants = [
             Optik ≠ Semantik (<code>variant</code>/<code>tag</code> entkoppelt)
         </h2>
         <p class="mb-4 text-sm text-neutral-500">
-            Gleiche Optik (<code>variant: headline-2</code>), unterschiedliche Dokumentebene
+            Gleiche Optik (<code>variant: headline-base</code>), unterschiedliche Dokumentebene
             (<code>tag</code>) — und umgekehrt.
         </p>
         <div class="flex flex-col gap-6">
             <?php
             get_template_part('template-parts/base/typography', null, [
                 'config' => [
-                    'variant' => 'headline-2',
+                    'variant' => 'headline-base',
                     'tag' => 'h2',
-                    'text' => 'headline-2-Optik als <h2>',
+                    'text' => 'headline-base-Optik als <h2>',
                 ],
             ]);
             get_template_part('template-parts/base/typography', null, [
                 'config' => [
-                    'variant' => 'headline-2',
+                    'variant' => 'headline-base',
                     'tag' => 'h4',
-                    'text' => 'headline-2-Optik als <h4> (Box-Titel, kleinere Gliederungsebene)',
+                    'text' => 'headline-base-Optik als <h4> (Box-Titel, kleinere Gliederungsebene)',
                 ],
             ]);
             get_template_part('template-parts/base/typography', null, [
                 'config' => [
-                    'variant' => 'headline-4',
+                    'variant' => 'headline-xs',
                     'tag' => 'h2',
-                    'text' => 'headline-4-Optik als <h2> (schlanke Sektionsüberschrift)',
+                    'text' => 'headline-xs-Optik als <h2> (schlanke Sektionsüberschrift)',
                 ],
             ]);
             ?>
@@ -155,7 +155,7 @@ $variants = [
         </h2>
         <?php get_template_part('template-parts/base/typography', null, [
             'config' => [
-                'variant' => 'headline-2',
+                'variant' => 'headline-base',
                 'text' => 'Willkommen bei der HENGEGROUP',
                 'accent_words' => ['HENGEGROUP'],
             ],
@@ -166,7 +166,7 @@ $variants = [
         <h2 class="mb-6 text-xl font-semibold">Custom class (Passthrough)</h2>
         <?php get_template_part('template-parts/base/typography', null, [
             'config' => [
-                'variant' => 'body-small',
+                'variant' => 'body-sm',
                 'text' => 'Mit zusätzlichem Abstand',
                 'class' => 'mt-4',
             ],

@@ -5,12 +5,17 @@ declare(strict_types=1);
 // API modeled on shadcn/ui's Button (variant/size vocabulary, icon slot, loading state,
 // polymorphic root element). Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken
 // 1:1 from shadcn's own buttonVariants() cva() definition (registry/new-york-v4/ui/button.tsx,
-// live-checked 2026-08-28) with two deliberate deviations:
+// live-checked 2026-08-28) with three deliberate deviations:
 //   - variant vocabulary renamed to this project's own brand-color names (see `variant` below)
 //     instead of shadcn's default/secondary -- see docs/entscheidungen.md for why.
 //   - all `dark:`-prefixed classes dropped -- this theme has no dark-mode strategy yet (see
 //     docs/to-do.md), shipping half a dark-mode path (shadcn's literal dark: utilities without
 //     this project's own tokens following suit) would be worse than shipping none.
+//   - size vocabulary renamed/reduced to sm | base | lg (+ icon-sm | icon-base | icon-lg) instead
+//     of shadcn's default | xs | sm | lg (+ icon | icon-xs | icon-sm | icon-lg) -- shadcn's
+//     `default`/`icon` dropped entirely rather than kept as a 4th step, `sm` renamed `base`
+//     (it's the new middle/most-used step) and `xs` renamed `sm` (now the smallest step) -- see
+//     docs/entscheidungen.md for why.
 // variant/size still double as data-attributes (data-variant/data-size), same hooks as before,
 // now additionally driving the actual Tailwind classes instead of being purely a future hook.
 //
@@ -22,11 +27,9 @@ declare(strict_types=1);
 //                           vocabulary instead of shadcn's default/secondary (henge-green replaces
 //                           default, grey-light replaces secondary; henge-blue/henge-grey/grey-dark
 //                           are new solid-fill options), destructive/outline/ghost/link unchanged
-//   size           string   default | xs | sm | lg | icon | icon-xs | icon-sm | icon-lg (matches
-//                           shadcn's current Button size scale as of its Base UI/React
-//                           Aria/Radix UI multi-backend rewrite -- `xs` and the combined
-//                           `icon-*` sizes used to not exist in shadcn's stock vocabulary, they
-//                           do now, so nothing here is a project addition anymore)
+//   size           string   sm | base | lg | icon-sm | icon-base | icon-lg -- project-specific
+//                           rename/reduction of shadcn's current Button size scale (default | xs |
+//                           sm | lg | icon | icon-xs | icon-sm | icon-lg), see file header above
 //   type           string   button | submit | reset (ignored when href is set)
 //   full_width     bool     stretches the button to 100% of its parent's width (adds `w-full`) --
 //                           combinable with every variant/size, on explicit request
@@ -60,7 +63,7 @@ $config = $args['config'];
 $text = trim((string) ($config['text'] ?? ($config['label'] ?? '')));
 $href = trim((string) ($config['href'] ?? ''));
 $variant = trim((string) ($config['variant'] ?? 'henge-green'));
-$size = trim((string) ($config['size'] ?? 'default'));
+$size = trim((string) ($config['size'] ?? 'base'));
 $type = trim((string) ($config['type'] ?? 'button'));
 $full_width = !empty($config['full_width']);
 $disabled = !empty($config['disabled']);
@@ -96,14 +99,14 @@ $allowed_variants = [
     'ghost',
     'link',
 ];
-$allowed_sizes = ['default', 'xs', 'sm', 'lg', 'icon', 'icon-xs', 'icon-sm', 'icon-lg'];
+$allowed_sizes = ['sm', 'base', 'lg', 'icon-sm', 'icon-base', 'icon-lg'];
 
 if (!in_array($variant, $allowed_variants, true)) {
     $variant = 'henge-green';
 }
 
 if (!in_array($size, $allowed_sizes, true)) {
-    $size = 'default';
+    $size = 'base';
 }
 
 // Base/variant/size classes taken 1:1 from shadcn's buttonVariants() cva() call (see file header
@@ -113,15 +116,21 @@ if (!in_array($size, $allowed_sizes, true)) {
 //     outline's border also switched from --color-input to --color-grey-dark for the same reason.
 //   - shape/padding (design request 2026-08-30, per-size hengegroup.com pill-button reference):
 //     rounded-md swapped for a fully rounded pill (rounded-full) everywhere, horizontal padding
-//     widened per size (default now matches the reference nav pill's 10px/20px exactly, lg matches
+//     widened per size (`base` matches the reference nav pill's 10px/20px exactly, `lg` matches
 //     the reference hero CTA's 28px horizontal exactly) -- vertical padding stays governed by each
-//     size's fixed h-* like before, only default already carried an explicit py-* (bumped
+//     size's fixed h-* like before, only `base` already carried an explicit py-* (bumped
 //     proportionally, same as its px-*).
+//   - per-size font-size (design request 2026-08-30, same hengegroup.com reference pages): moved
+//     out of the shared base text-sm into $size_classes below, one step per size instead of
+//     shadcn's single shared size -- sm/icon-sm text-sm (14px), base/icon-base text-base (16px),
+//     lg/icon-lg text-lg (18px). Real Tailwind scale steps only, no arbitrary px value (see
+//     docs/entscheidungen.md for the source pixel values this was mapped from, and for why the
+//     size vocabulary itself was renamed/reduced from shadcn's default | xs | sm | lg).
 // font-family/text-color are NOT repeated here -- inherited from the site-wide `body` rule
 // (assets/css/app.css), same "only declare what deviates from the global default" pattern shadcn
 // itself uses.
 $base_classes =
-    'inline-flex shrink-0 items-center justify-center gap-2 rounded-full text-sm font-medium ' .
+    'inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-medium ' .
     'whitespace-nowrap transition-all outline-none focus-visible:border-ring ' .
     'focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none ' .
     'disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 ' .
@@ -142,15 +151,13 @@ $variant_classes = [
 ];
 
 $size_classes = [
-    'default' => 'h-9 px-5 py-2.5 has-[>svg]:px-4',
-    'xs' =>
-        "h-6 gap-1 rounded-full px-2.5 text-xs has-[>svg]:px-2 [&_svg:not([class*='size-'])]:size-3",
-    'sm' => 'h-8 gap-1.5 rounded-full px-4 has-[>svg]:px-3',
-    'lg' => 'h-10 rounded-full px-7 has-[>svg]:px-5',
-    'icon' => 'size-9',
-    'icon-xs' => "size-6 rounded-full [&_svg:not([class*='size-'])]:size-3",
-    'icon-sm' => 'size-8',
-    'icon-lg' => 'size-10',
+    'sm' =>
+        "h-6 gap-1 rounded-full px-2.5 text-sm has-[>svg]:px-2 [&_svg:not([class*='size-'])]:size-3",
+    'base' => 'h-8 gap-1.5 rounded-full px-4 text-base has-[>svg]:px-3',
+    'lg' => 'h-10 rounded-full px-7 text-lg has-[>svg]:px-5',
+    'icon-sm' => "size-6 rounded-full text-sm [&_svg:not([class*='size-'])]:size-3",
+    'icon-base' => 'size-8 text-base',
+    'icon-lg' => 'size-10 text-lg',
 ];
 
 $computed_class = "{$base_classes} {$variant_classes[$variant]} {$size_classes[$size]}";

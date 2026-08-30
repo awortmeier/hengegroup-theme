@@ -348,7 +348,7 @@ if ($pagination_config !== null) {
             'config' => [
                 'href' => esc_url(add_query_arg($page_var, $target_page)),
                 'variant' => 'outline',
-                'size' => 'icon',
+                'size' => 'icon-base',
                 'icon' => ['name' => $icon_name, 'set' => 'lucide'],
                 'aria_label' => $aria_label,
                 'disabled' => $disabled,
@@ -361,7 +361,7 @@ if ($pagination_config !== null) {
     ob_start();
     get_template_part('template-parts/base/typography', null, [
         'config' => [
-            'variant' => 'body-tiny',
+            'variant' => 'body-xs',
             'color' => 'neutral',
             'data_slot' => 'data-table-pagination-label',
             'text' => sprintf(

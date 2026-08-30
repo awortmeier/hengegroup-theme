@@ -538,7 +538,7 @@ $combobox_options = [
             get_template_part('template-parts/base/button', null, [
                 'config' => [
                     'variant' => 'ghost',
-                    'size' => 'icon-xs',
+                    'size' => 'icon-sm',
                     'icon' => ['name' => 'eye', 'set' => 'lucide'],
                     'aria_label' => 'Passwort anzeigen',
                 ],

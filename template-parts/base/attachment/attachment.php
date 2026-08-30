@@ -15,8 +15,9 @@ declare(strict_types=1);
 // template-parts/base/image.php depending on `media.variant` -- shadcn's own AttachmentMedia is
 // just an icon-or-image switch, nothing more. `actions` is caller-provided, pre-rendered HTML (same
 // convention as tooltip.php's `trigger`) -- shadcn's own AttachmentAction "inherits all Button
-// props, defaults to size=icon-xs", both already valid button.php values (`size: 'icon-xs'`,
-// `variant: 'ghost'`), so no separate attachment-action.php is needed, same reasoning as
+// props, defaults to size=icon-xs" (this project's nearest equivalent is `size: 'icon-sm'`, see
+// docs/entscheidungen.md for button.php's sm/base/lg size vocabulary), `variant: 'ghost'` for a
+// button, so no separate attachment-action.php is needed, same reasoning as
 // input-group.php not needing an input-group-button.php. Several attachment.php calls are grouped
 // via template-parts/base/attachment/attachment-group.php, which nests scroll-area.php rather than
 // reimplementing horizontal scrolling (see that file's header comment).

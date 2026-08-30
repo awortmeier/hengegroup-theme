@@ -5,7 +5,7 @@
  *
  * Dev-only page template: renders template-parts/base/button.php across every documented variant
  * (henge-green | henge-blue | henge-grey | grey-dark | grey-light | destructive | outline | ghost |
- * link), size (default | xs | sm | lg | icon | icon-xs | icon-sm | icon-lg) and state (disabled,
+ * link), size (sm | base | lg | icon-sm | icon-base | icon-lg) and state (disabled,
  * loading, icon-only, icon start/end, href/link, custom class passthrough) for manual visual/
  * functional review during Phase 2 styling work -- not meant for production content or navigation.
  *
@@ -32,8 +32,8 @@ $variants = [
     'ghost',
     'link',
 ];
-$text_sizes = ['xs', 'sm', 'default', 'lg'];
-$icon_sizes = ['icon-xs', 'icon-sm', 'icon', 'icon-lg'];
+$text_sizes = ['sm', 'base', 'lg'];
+$icon_sizes = ['icon-sm', 'icon-base', 'icon-lg'];
 ?>
 
 <div class="mx-auto max-w-5xl px-6 py-12">

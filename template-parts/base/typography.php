@@ -5,14 +5,14 @@ declare(strict_types=1);
 // Headings and body text share ONE continuous variant scale instead of two separate size systems,
 // each stop has a fixed default HTML tag -- same structural idea as shadcn/ui's classic Typography
 // scale, but as of 2026-08-30 (on explicit request) this project's OWN size-only vocabulary
-// (`headline-1..4`/`body-large/medium/small/tiny`) instead of shadcn's own h1-h4/p/lead/large/
+// (`headline-lg/base/sm/xs`/`body-lg/base/sm/xs`) instead of shadcn's own h1-h4/p/lead/large/
 // small/muted naming -- see docs/entscheidungen.md for why the switch (Tailwind's fixed size
 // scale has a gap between `text-4xl`/36px and `text-5xl`/48px that made two of shadcn's five
 // heading-ish stops collide once mapped to real Tailwind classes, so the scale itself was
 // redesigned around four heading + four body stops instead of patching around that gap).
 //
 // IMPORTANT: `variant` (visual appearance) and `tag` (semantic HTML element) are independent axes
-// on purpose, on explicit request -- a `headline-2`-sized heading can render as a `<h4>` (or any
+// on purpose, on explicit request -- a `headline-base`-sized heading can render as a `<h4>` (or any
 // allowed tag) when the semantic outline requires a different level than the desired visual
 // weight, and vice versa. Never assume `variant` implies a fixed tag beyond the DEFAULT `tag`
 // shown below when none is given; always pass `tag` explicitly when the semantic level and the
@@ -25,8 +25,8 @@ declare(strict_types=1);
 //
 // Supported config:
 //   text / content   string   visible content (required, nothing renders without it)
-//   variant          string   headline-1 | headline-2 | headline-3 | headline-4 | body-large |
-//                              body-medium | body-small | body-tiny (default: body-medium) --
+//   variant          string   headline-lg | headline-base | headline-sm | headline-xs | body-lg |
+//                              body-base | body-sm | body-xs (default: body-base) --
 //                              this project's own size-only vocabulary (see file header), NOT
 //                              shadcn's h1-h4/p/lead/large/small/muted naming
 //   tag              string   optional tag override, validated against an allow-list; falls back
@@ -65,7 +65,7 @@ if (!isset($args['config']) || !is_array($args['config'])) {
 $config = $args['config'];
 
 $text = trim((string) ($config['text'] ?? ($config['content'] ?? '')));
-$variant = trim((string) ($config['variant'] ?? 'body-medium'));
+$variant = trim((string) ($config['variant'] ?? 'body-base'));
 $tag = strtolower(trim((string) ($config['tag'] ?? '')));
 $color = trim((string) ($config['color'] ?? 'default'));
 $data_slot = trim((string) ($config['data_slot'] ?? ''));
@@ -83,18 +83,18 @@ if ($data_slot === '') {
 }
 
 $variant_default_tags = [
-    'headline-1' => 'h1',
-    'headline-2' => 'h2',
-    'headline-3' => 'h3',
-    'headline-4' => 'h4',
-    'body-large' => 'p',
-    'body-medium' => 'p',
-    'body-small' => 'p',
-    'body-tiny' => 'small',
+    'headline-lg' => 'h1',
+    'headline-base' => 'h2',
+    'headline-sm' => 'h3',
+    'headline-xs' => 'h4',
+    'body-lg' => 'p',
+    'body-base' => 'p',
+    'body-sm' => 'p',
+    'body-xs' => 'small',
 ];
 
 if (!array_key_exists($variant, $variant_default_tags)) {
-    $variant = 'body-medium';
+    $variant = 'body-base';
 }
 
 $allowed_tags = ['p', 'span', 'div', 'strong', 'em', 'small', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
@@ -110,23 +110,23 @@ if (!in_array($color, $allowed_colors, true)) {
 }
 
 // Fixed size-only scale (no fluid/clamp() step, see file header), explicit request 2026-08-30:
-// four heading stops (`headline-1..4`) at Tailwind's own `text-6xl/5xl/4xl/3xl`, four body stops
-// (`body-large/medium/small/tiny`) at `text-2xl/lg/base/sm` -- see docs/entscheidungen.md for the
+// four heading stops (`headline-lg/base/sm/xs`) at Tailwind's own `text-6xl/5xl/4xl/3xl`, four body stops
+// (`body-lg/base/sm/xs`) at `text-2xl/lg/base/sm` -- see docs/entscheidungen.md for the
 // full size derivation (incl. why `text-xl`/22px isn't used: Tailwind's scale has no stop there
-// either, `text-2xl`/24px was chosen for a smoother step down from `headline-4`/30px). Headings
+// either, `text-2xl`/24px was chosen for a smoother step down from `headline-xs`/30px). Headings
 // share one weight/leading (`font-semibold leading-tight`); body stops stay at the browser/
 // Tailwind default weight (400) with `leading-normal` -- neither was part of the explicit size
 // request, kept deliberately uniform rather than guessing a per-stop weight scale that wasn't
 // asked for.
 $variant_classes = [
-    'headline-1' => 'text-6xl font-semibold leading-tight',
-    'headline-2' => 'text-5xl font-semibold leading-tight',
-    'headline-3' => 'text-4xl font-semibold leading-tight',
-    'headline-4' => 'text-3xl font-semibold leading-tight',
-    'body-large' => 'text-2xl leading-normal',
-    'body-medium' => 'text-lg leading-normal',
-    'body-small' => 'text-base leading-normal',
-    'body-tiny' => 'text-sm leading-normal',
+    'headline-lg' => 'text-6xl font-semibold leading-tight',
+    'headline-base' => 'text-5xl font-semibold leading-tight',
+    'headline-sm' => 'text-4xl font-semibold leading-tight',
+    'headline-xs' => 'text-3xl font-semibold leading-tight',
+    'body-lg' => 'text-2xl leading-normal',
+    'body-base' => 'text-lg leading-normal',
+    'body-sm' => 'text-base leading-normal',
+    'body-xs' => 'text-sm leading-normal',
 ];
 
 $color_classes = [

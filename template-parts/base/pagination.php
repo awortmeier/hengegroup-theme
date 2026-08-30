@@ -152,7 +152,7 @@ foreach ($items_config as $item_config) {
         $inner_markup = $render_button([
             'href' => trim((string) ($item_config['href'] ?? '')),
             'variant' => 'ghost',
-            'size' => $size !== '' ? $size : 'default',
+            'size' => $size !== '' ? $size : 'base',
             'text' => $text !== '' ? $text : $default_text,
             'icon' => $icon_config ?? $default_icon,
             'icon_position' => $icon_position,
@@ -180,7 +180,7 @@ foreach ($items_config as $item_config) {
         $inner_markup = $render_button([
             'href' => trim((string) ($item_config['href'] ?? '')),
             'variant' => $is_active ? 'outline' : 'ghost',
-            'size' => $size !== '' ? $size : 'icon',
+            'size' => $size !== '' ? $size : 'icon-base',
             'text' => $text,
             'disabled' => !empty($item_config['disabled']),
             'attributes' => $link_attributes,

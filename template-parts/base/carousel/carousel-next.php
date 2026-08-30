@@ -38,7 +38,7 @@ $data_attributes['carousel-nav'] = 'next';
 get_template_part('template-parts/base/button', null, [
     'config' => [
         'variant' => 'outline',
-        'size' => 'icon',
+        'size' => 'icon-base',
         'icon' => $icon_config,
         'aria_label' => $aria_label,
         'disabled' => $disabled,
