@@ -1,9 +1,11 @@
 <#
 .SYNOPSIS
-    Spiegelt die Marken-Akzentfarbe aus assets/css/tokens.css (--color-accent) in theme.json
-    (settings.color.palette "accent"-Eintrag + styles.elements.link.color.text). tokens.css ist die
-    Single Source of Truth (siehe deren Kopfkommentar) — theme.json kann sie nicht importieren
-    (reines JSON, kein CSS-Pipeline-Zugriff), daher dieser Sync per Skript statt von Hand.
+    Spiegelt die Marken-Akzentfarbe aus assets/css/tokens.css (--color-henge-green) in theme.json
+    (settings.color.palette "accent"-Eintrag, Label "Henge Green" + styles.elements.link.color.text).
+    tokens.css ist die Single Source of Truth (siehe deren Kopfkommentar) — theme.json kann sie nicht
+    importieren (reines JSON, kein CSS-Pipeline-Zugriff), daher dieser Sync per Skript statt von Hand.
+    Der WP-Palette-Slug bleibt bewusst "accent" (siehe tokens.css-Kopfkommentar), auch wenn das
+    CSS-Token selbst --color-henge-green heisst.
 
 .DESCRIPTION
     Reine Text-/Regex-Ersetzung auf beiden Dateien, kein JSON-Parse/Reserialize-Roundtrip — das
@@ -11,8 +13,8 @@
     Einrueckung, Escaping). Nach dem Schreiben wird das Ergebnis trotzdem als JSON geparst, um
     sicherzustellen, dass theme.json dabei nicht kaputt geht.
 
-    Manuell auszufuehren, nachdem --color-accent in tokens.css geaendert wurde (z. B. Schritt 5 von
-    README "Neues Projekt aus dieser Vorlage starten" bzw. setup.md).
+    Manuell auszufuehren, nachdem --color-henge-green in tokens.css geaendert wurde (z. B. Schritt 5
+    von README "Neues Projekt aus dieser Vorlage starten" bzw. setup.md).
 
 .EXAMPLE
     powershell -File scripts/sync-theme-tokens.ps1
@@ -36,9 +38,9 @@ if (-not (Test-Path -LiteralPath $themeJsonPath)) {
 
 $tokensCss = [System.IO.File]::ReadAllText($tokensPath, [System.Text.Encoding]::UTF8)
 
-$accentMatch = [regex]::Match($tokensCss, '--color-accent:\s*([^;]+?)\s*;')
+$accentMatch = [regex]::Match($tokensCss, '--color-henge-green:\s*([^;]+?)\s*;')
 if (-not $accentMatch.Success) {
-    throw "Kein '--color-accent:'-Eintrag in tokens.css gefunden."
+    throw "Kein '--color-henge-green:'-Eintrag in tokens.css gefunden."
 }
 $accentColor = $accentMatch.Groups[1].Value
 

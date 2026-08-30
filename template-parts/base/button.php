@@ -3,14 +3,25 @@
 declare(strict_types=1);
 
 // API modeled on shadcn/ui's Button (variant/size vocabulary, icon slot, loading state,
-// polymorphic root element) but intentionally unstyled: no Tailwind/utility classes are
-// applied here. variant/size are exposed only as data-attributes so a project's own CSS
-// can target e.g. [data-slot="button"][data-variant="destructive"][data-size="lg"].
+// polymorphic root element). Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken
+// 1:1 from shadcn's own buttonVariants() cva() definition (registry/new-york-v4/ui/button.tsx,
+// live-checked 2026-08-28) with two deliberate deviations:
+//   - variant vocabulary renamed to this project's own brand-color names (see `variant` below)
+//     instead of shadcn's default/secondary -- see docs/entscheidungen.md for why.
+//   - all `dark:`-prefixed classes dropped -- this theme has no dark-mode strategy yet (see
+//     docs/to-do.md), shipping half a dark-mode path (shadcn's literal dark: utilities without
+//     this project's own tokens following suit) would be worse than shipping none.
+// variant/size still double as data-attributes (data-variant/data-size), same hooks as before,
+// now additionally driving the actual Tailwind classes instead of being purely a future hook.
 //
 // Supported config:
 //   text / label   string   visible label (omit for an icon-only button)
 //   href           string   renders <a> instead of <button> (shadcn's asChild/Slot analog)
-//   variant        string   default | secondary | destructive | outline | ghost | link
+//   variant        string   henge-green | henge-blue | henge-grey | grey-dark | grey-light |
+//                           destructive | outline | ghost | link -- project-specific brand-color
+//                           vocabulary instead of shadcn's default/secondary (henge-green replaces
+//                           default, grey-light replaces secondary; henge-blue/henge-grey/grey-dark
+//                           are new solid-fill options), destructive/outline/ghost/link unchanged
 //   size           string   default | xs | sm | lg | icon | icon-xs | icon-sm | icon-lg (matches
 //                           shadcn's current Button size scale as of its Base UI/React
 //                           Aria/Radix UI multi-backend rewrite -- `xs` and the combined
@@ -31,7 +42,12 @@ declare(strict_types=1);
 //                           missing value doesn't hard-fail the render, but triggers
 //                           a WP_DEBUG-only _doing_it_wrong() hint, see
 //                           hengegroup_theme_warn_missing_aria_label()
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+//   class          string   appended AFTER the computed base/variant/size classes (plain string
+//                           concat, no tailwind-merge/cn() equivalent available in PHP) -- a
+//                           conflicting utility here is not guaranteed to win over the computed
+//                           ones, unlike shadcn's own className prop. Fine for additive classes
+//                           (margins, layout), not for overriding e.g. bg-*/text-* from `variant`
+//   attributes / data_attributes   passthrough, as in the other base parts
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -41,7 +57,7 @@ $config = $args['config'];
 
 $text = trim((string) ($config['text'] ?? ($config['label'] ?? '')));
 $href = trim((string) ($config['href'] ?? ''));
-$variant = trim((string) ($config['variant'] ?? 'default'));
+$variant = trim((string) ($config['variant'] ?? 'henge-green'));
 $size = trim((string) ($config['size'] ?? 'default'));
 $type = trim((string) ($config['type'] ?? 'button'));
 $disabled = !empty($config['disabled']);
@@ -66,16 +82,65 @@ if ($loading) {
     $disabled = true;
 }
 
-$allowed_variants = ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'];
+$allowed_variants = [
+    'henge-green',
+    'henge-blue',
+    'henge-grey',
+    'grey-dark',
+    'grey-light',
+    'destructive',
+    'outline',
+    'ghost',
+    'link',
+];
 $allowed_sizes = ['default', 'xs', 'sm', 'lg', 'icon', 'icon-xs', 'icon-sm', 'icon-lg'];
 
 if (!in_array($variant, $allowed_variants, true)) {
-    $variant = 'default';
+    $variant = 'henge-green';
 }
 
 if (!in_array($size, $allowed_sizes, true)) {
     $size = 'default';
 }
+
+// Base/variant/size classes taken 1:1 from shadcn's buttonVariants() cva() call (see file header
+// for source/deviations). font-family/text-color are NOT repeated here -- inherited from the
+// site-wide `body` rule (assets/css/app.css), same "only declare what deviates from the global
+// default" pattern shadcn itself uses.
+$base_classes =
+    'inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium ' .
+    'whitespace-nowrap transition-all outline-none focus-visible:border-ring ' .
+    'focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none ' .
+    'disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 ' .
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
+
+$variant_classes = [
+    'henge-green' => 'bg-henge-green text-henge-green-foreground hover:bg-henge-green/90',
+    'henge-blue' => 'bg-henge-blue text-henge-blue-foreground hover:bg-henge-blue/90',
+    'henge-grey' => 'bg-henge-grey text-henge-grey-foreground hover:bg-henge-grey/90',
+    'grey-dark' => 'bg-grey-dark text-grey-dark-foreground hover:bg-grey-dark/90',
+    'grey-light' => 'bg-grey-light text-grey-light-foreground hover:bg-grey-light/80',
+    'destructive' =>
+        'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive/20',
+    'outline' =>
+        'border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground',
+    'ghost' => 'hover:bg-accent hover:text-accent-foreground',
+    'link' => 'text-henge-green underline-offset-4 hover:underline',
+];
+
+$size_classes = [
+    'default' => 'h-9 px-4 py-2 has-[>svg]:px-3',
+    'xs' =>
+        "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
+    'sm' => 'h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5',
+    'lg' => 'h-10 rounded-md px-6 has-[>svg]:px-4',
+    'icon' => 'size-9',
+    'icon-xs' => "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
+    'icon-sm' => 'size-8',
+    'icon-lg' => 'size-10',
+];
+
+$computed_class = "{$base_classes} {$variant_classes[$variant]} {$size_classes[$size]}";
 
 if ($icon_position !== 'end') {
     $icon_position = 'start';
@@ -116,10 +181,9 @@ if ($is_icon_only) {
 }
 
 $element_attributes = $attributes;
-
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes['class'] = trim(
+    $computed_class . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $element_attributes['data-slot'] = 'button';
 $element_attributes['data-variant'] = $variant;

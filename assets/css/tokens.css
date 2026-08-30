@@ -5,19 +5,27 @@
  * eigene neutral-Skala verwendet (z. B. "neutral-800", ueber theme(--color-neutral-800)
  * in Roh-CSS oder direkt als Utility-Klasse) statt eigener Alias-Tokens. Die drei
  * projektspezifischen Marken-Grautoene (Design-Vorgabe: grey-light #EFEFEF, grey-medium #E5E3DF,
- * grey-dark #222222) liegen nah genug an bestehenden neutral-*-Stufen, dass bewusst KEINE eigenen
- * Tokens dafuer angelegt wurden — haelt die obige Konvention statt sie fuer drei Werte aufzuweichen:
+ * grey-dark #222222) liegen nah genug an bestehenden neutral-*-Stufen, dass dafuer bewusst KEINE
+ * eigenen Tokens angelegt wurden, ausser wo eine Komponenten-API selbst den Markennamen als Wert
+ * erwartet (siehe --color-grey-dark/--color-grey-light unten, Button-Variant-Vokabular) — haelt die
+ * obige Konvention fuer alles andere statt sie pauschal aufzuweichen:
  *
  *   - grey-light  #EFEFEF -> neutral-100 (#F5F5F5), Differenz ~6/Kanal.
  *   - grey-medium #E5E3DF -> neutral-200 (#E5E5E5), Differenz ~2-6/Kanal — Naeherung: grey-medium
  *     hat einen warmen/beigen Unterton (R>G>B), den die reine neutral-Skala nicht abbildet. Falls
  *     ein Anwendungsfall den exakten Markenwert 1:1 braucht, dafuer gezielt ein eigenes Token
- *     ergaenzen statt neutral-200 zu nutzen.
+ *     ergaenzen statt neutral-200 zu nutzen. Kein eigenes --color-grey-medium-Token, da bislang
+ *     keine Komponenten-API "grey-medium" als Wert erwartet.
  *   - grey-dark   #222222 -> neutral-800 (#262626), Differenz ~4/Kanal.
  *
- * --color-accent (henge-green) ist die primaere Marken-Akzentfarbe — der einzige Farbwert, der
- * automatisiert per `pnpm run sync-theme-tokens` nach theme.json uebernommen wird (siehe
- * scripts/sync-theme-tokens.ps1: sync't settings.color.palette "accent" + styles.elements.link).
+ * --color-henge-green ist die primaere Marken-Akzentfarbe — der einzige Farbwert, der automatisiert
+ * per `pnpm run sync-theme-tokens` nach theme.json uebernommen wird (siehe
+ * scripts/sync-theme-tokens.ps1: sync't settings.color.palette "accent"-Eintrag/Label "Henge Green"
+ * + styles.elements.link). Der WP-Editor-Palette-Slug bleibt bewusst "accent" (aendert bereits
+ * gespeicherte `has-accent-color`-Blockklassen sonst rueckwirkend) -- nur das CSS-Token selbst heisst
+ * seit 2026-08-28 nicht mehr --color-accent (siehe docs/entscheidungen.md): der Name "accent" ist
+ * shadcns eigene neutrale Hover-/Subtle-Rolle (z. B. skeleton.php's `bg-accent`), keine Marken-
+ * Akzentfarbe -- --color-accent unten deckt jetzt tatsaechlich diese shadcn-Rolle ab.
  * --color-henge-blue/--color-henge-grey sind sekundaere Marken-Akzentfarben, manuell zusaetzlich in
  * theme.json (settings.color.palette) gepflegt, da das Sync-Skript bewusst nur den einen
  * automatisiert kritischen Wert (Link-Farbe/Editor-Default) abdeckt.
@@ -30,18 +38,81 @@
  * das laut CLAUDE.md Regel 1 erst Phase 2 gehoert. --font-primary erzeugt trotzdem schon jetzt die
  * Utility-Klasse .font-primary (ungenutzt, bis Phase 2 sie tatsaechlich einsetzt); --font-accent ist
  * dagegen bereits jetzt aktiv im Einsatz, weil das eine dokumentierte funktionale API ist (Akzent-
- * Woerter hervorheben), keine pauschale Optik-Entscheidung.
+ * Woerter hervorheben), keine pauschale Optik-Entscheidung. (--font-accent ist reine Typografie und
+ * bleibt von der --color-accent-Umbenennung oben unberuehrt -- kein Namenskonflikt, "accent" heisst
+ * hier "Akzent-Schriftrolle", nicht die Marken-Akzentfarbe.)
  *
  * Self-Hosting/@font-face siehe assets/css/fonts.css, erwartete Font-Dateien siehe
  * assets/fonts/README.md.
  *
  * Wird von app.css und login.css importiert, damit die Variablen in beiden
  * (unabhaengigen) Vite-Entrypoints zur Laufzeit zur Verfuegung stehen.
+ *
+ * Semantische Rollen-Tokens (--color-background/-foreground/-card/-popover/-secondary/-muted/
+ * -accent/-destructive/-border/-input/-ring): Phase-2-Vorbereitung fuer das Variant-Vokabular der
+ * Base-Komponenten (button.php/badge.php: default | secondary | destructive | outline | ghost |
+ * link — siehe docs/entscheidungen.md fuer die Rollen-Zuordnung/Begruendung jedes einzelnen Werts,
+ * u. a. warum --color-destructive vorlaeufig Tailwinds Standard-Rot statt eines Marken-Rottons ist.
+ * Referenzieren wo moeglich Tailwinds eigene Skalen (var(--color-neutral-*), var(--color-red-*),
+ * var(--color-white)) statt Werte zu duplizieren, gleiche Konvention wie oben fuer die
+ * Marken-Grautoene.
  */
 @theme static {
-    --color-accent: #3b875e; /* henge-green — primaere Marken-Akzentfarbe */
+    /* Marken-Akzentfarben + Marken-Grautoene, jede mit eigenem -foreground-Pendant (Text auf
+       dieser Farbe) -- selbe 1:1 Namenskonvention wie shadcns primary/primary-foreground, nur mit
+       Marken-Namen statt "primary". Button-Varianten-Vokabular seit 2026-08-28 (siehe
+       docs/entscheidungen.md): henge-green/henge-blue/henge-grey/grey-dark/grey-light statt
+       shadcns default/secondary. "weisser" Text ist projektweit bewusst grey-light
+       (var(--color-neutral-100)) statt reinem Weiss (Design-Vorgabe), ausser bei grey-light selbst
+       als Hintergrund -- dort grey-dark als Text, sonst kein Kontrast. */
+    --color-henge-green: #3b875e; /* primaere Marken-Akzentfarbe (= shadcns "primary"-Rolle) */
+    --color-henge-green-foreground: var(--color-neutral-100);
     --color-henge-blue: #075f8f;
+    --color-henge-blue-foreground: var(--color-neutral-100);
     --color-henge-grey: #646a6c;
+    --color-henge-grey-foreground: var(--color-neutral-100);
+    --color-grey-dark: var(--color-neutral-800);
+    --color-grey-dark-foreground: var(--color-neutral-100);
+    --color-grey-light: var(--color-neutral-100);
+    --color-grey-light-foreground: var(
+        --color-neutral-800
+    ); /* dunkler Text, da Hintergrund hell ist */
+
+    --color-background: var(--color-white);
+    --color-foreground: var(--color-neutral-800); /* = Marken-Grauton grey-dark, siehe oben */
+
+    --color-card: var(--color-white);
+    --color-card-foreground: var(--color-neutral-800);
+    --color-popover: var(--color-white);
+    --color-popover-foreground: var(--color-neutral-800);
+
+    --color-secondary: var(
+        --color-neutral-100
+    ); /* = grey-light, bewusst neutral statt henge-blue */
+    --color-secondary-foreground: var(--color-neutral-800);
+
+    /* shadcns eigene "accent"-Rolle: dezenter Hover-/Subtle-Hintergrund (z. B. skeleton.php's
+       bg-accent, ghost-/outline-Hover), KEINE Marken-Akzentfarbe -- siehe henge-green oben. Gleicher
+       Hintergrund-Wert wie --color-muted (wie in shadcns eigenem Default-Theme), aber
+       -foreground bleibt volltonig lesbar (= --color-foreground) statt gedaempft. */
+    --color-accent: var(--color-neutral-100);
+    --color-accent-foreground: var(--color-neutral-800);
+
+    --color-muted: var(--color-neutral-100);
+    --color-muted-foreground: var(
+        --color-neutral-500
+    ); /* gedaempfter als -foreground, z. B. Platzhalter/Description-Text */
+
+    --color-destructive: var(
+        --color-red-600
+    ); /* vorlaeufig Tailwind-Standard, kein Marken-Rotton hinterlegt */
+    --color-destructive-foreground: var(
+        --color-neutral-100
+    ); /* "weisser" Text -- bewusst grey-light, siehe henge-green-foreground oben */
+
+    --color-border: var(--color-neutral-200); /* = grey-medium */
+    --color-input: var(--color-neutral-200);
+    --color-ring: var(--color-henge-green);
 
     --font-primary:
         "Outfit", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,

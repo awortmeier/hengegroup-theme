@@ -3,7 +3,12 @@
 @import "./fonts.css";
 
 @layer components {
+    /* Erste echte Phase-2-Nutzung von --font-primary/--color-background/--color-foreground (siehe
+       tokens.css-Kopfkommentar) -- shadcns eigenes Muster: Komponenten (z. B. button.php) setzen
+       Text-/Hintergrundfarbe nur, wo sie vom globalen Default abweichen (z. B. bg-henge-green),
+       und verlassen sich sonst auf diese globale Vorgabe statt sie pro Komponente zu wiederholen. */
     body {
+        @apply bg-background text-foreground font-primary;
     }
 
     .wrapper {
