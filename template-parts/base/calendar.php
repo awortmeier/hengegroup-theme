@@ -94,6 +94,46 @@ declare(strict_types=1);
 // CSS can use the attribute to opt into e.g. a fade transition between months that would look
 // broken without JS driving it.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind against a "Termine" date-picker reference design
+// (single-month, single-selection card -- shadcn's own Calendar has no shipped visual spec of its
+// own to take classes 1:1 from, unlike button.php/input.php). Mapping decisions:
+//   - the whole wrapper IS the card (bg-card/border-border/rounded-2xl/p-6/shadow-sm) rather than a
+//     bare grid that expects an external card to wrap it -- the reference renders one self-contained
+//     white rounded surface, not a grid needing outside chrome. This meant reducing
+//     date-picker.php's own popover-content div to a plain `absolute`-positioned wrapper (mt-2, no
+//     more of its own competing border/bg/padding/shadow -- see that file's own comment) instead of
+//     double-carding when this component sits inside that popover panel; that positioning div was
+//     also missing `absolute` entirely before this change (a real, pre-existing bug -- its panel
+//     pushed following content down instead of floating, unlike select.php's/combobox.php's already-
+//     fixed panels), fixed alongside this since both live in the same file.
+//   - the reference's accent color (a solid-fill selected day + a "Gewählt: <date>" summary line
+//     below the grid) maps to henge-green -- tokens.css documents it as this project's shadcn-
+//     "primary" equivalent, and button.php already uses it as the default/primary action color.
+//     The summary line itself is NOT reproduced here: it's caller-owned demo chrome reflecting a
+//     picked value back as text, not part of the grid this component renders -- the same boundary
+//     already drawn for the reference's date-range/booking-flow screens (out of scope, see above);
+//     date-picker.php's own trigger `<span data-slot="date-picker-value">` already fills that role
+//     for this component's real, documented composition.
+//   - day-cell sizing (h-10/rounded-xl/w-full-per-column via `table-fixed`) and nav-button sizing
+//     (size-9/rounded-xl) are taken directly from the reference's own pixel values (40px/12px radius,
+//     36px), all of which happen to land exactly on real Tailwind steps, no arbitrary values needed.
+//   - a day's SELECTED look must react live to a click with zero JS (native radio/checkbox has no
+//     reload in between) -- per toggle.php's own documented CSS contract, that means styling off the
+//     checkbox's live `:checked`/`:disabled` state via Tailwind's `peer`/`peer-checked:`/
+//     `peer-disabled:`, not a render-time boolean class. This is why toggle.php's checkbox itself now
+//     renders `class="peer sr-only"` unconditionally (see that file's header comment) -- a small,
+//     colour-free prerequisite pulled forward from toggle.php's own still-unstyled Phase 2, not
+//     something this file could route around via its own `class` config (toggle.php's `class`/
+//     `attributes`/`data_attributes` passthrough only ever reaches the visible label, by design, see
+//     that file's header -- never the checkbox). "Today" (a render-time-only fact, it can't change
+//     without a full page view) stays a plain conditional `ring-1 ring-border` class instead, no
+//     `peer-*` needed.
+//   - calendar.js's own buildDayCell()/renderMonth() (client-side month navigation, no PHP re-render)
+//     mirror every one of these classes verbatim on the elements they create, the same
+//     "reimplemented formula-for-formula" duplication that file's header comment already documents
+//     for the grid-math side of the same problem -- a navigated-to month would otherwise render
+//     completely unstyled after the first client-side rebuild.
+//
 // Supported config:
 //   mode              string   single | multiple (default: single) -- selection mode, mirrors
 //                              toggle-group.php's own `type` naming for the same distinction
@@ -209,7 +249,9 @@ $weekday_headers = '';
 for ($offset = 0; $offset < 7; $offset++) {
     $weekday_date = $reference_sunday->modify(sprintf('+%d days', ($week_starts_on + $offset) % 7));
     $weekday_headers .= sprintf(
-        '<th scope="col" data-slot="calendar-head-cell" abbr="%1$s">%2$s</th>',
+        '<th scope="col" data-slot="calendar-head-cell" ' .
+            'class="py-1 text-center text-xs font-semibold tracking-wide text-muted-foreground" ' .
+            'abbr="%1$s">%2$s</th>',
         esc_attr(date_i18n('l', $weekday_date->getTimestamp())),
         esc_html(date_i18n('D', $weekday_date->getTimestamp())),
     );
@@ -238,10 +280,11 @@ foreach ($cells as $cell) {
     if ($cell['outside']) {
         $week_markup .= $show_outside_days
             ? sprintf(
-                '<td data-slot="calendar-cell" data-outside="true">%d</td>',
+                '<td data-slot="calendar-cell" data-outside="true" ' .
+                    'class="h-10 p-0 text-center align-middle text-base text-muted-foreground">%d</td>',
                 (int) $cell['day'],
             )
-            : '<td data-slot="calendar-cell" data-outside="true"></td>';
+            : '<td data-slot="calendar-cell" data-outside="true" class="h-10 p-0"></td>';
 
         $column++;
     } else {
@@ -256,6 +299,25 @@ foreach ($cells as $cell) {
 
         $day_timestamp = mktime(0, 0, 0, $month, $day, $year);
 
+        // Selected/disabled MUST react live to the native checkbox/radio's own `:checked`/`:disabled`
+        // state (`peer-*`, see header comment) -- a render-time boolean class here would go stale the
+        // instant a user picks a different day without a page reload. "Today" has no such live
+        // concern (it can't change mid-view), so it's the one plain conditional class below.
+        $day_classes =
+            'peer-focus-visible:border-ring peer-focus-visible:ring-[3px] ' .
+            'peer-focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:outline-none ' .
+            'focus-visible:ring-[3px] focus-visible:ring-ring/50 flex h-10 w-full cursor-pointer ' .
+            'items-center justify-center rounded-xl border border-transparent text-base font-normal ' .
+            'text-foreground transition-colors hover:bg-muted peer-checked:border-henge-green ' .
+            'peer-checked:bg-henge-green peer-checked:font-semibold ' .
+            'peer-checked:text-henge-green-foreground peer-checked:hover:bg-henge-green/90 ' .
+            'peer-disabled:pointer-events-none peer-disabled:cursor-not-allowed ' .
+            'peer-disabled:opacity-50';
+
+        if ($is_today) {
+            $day_classes .= ' ring-1 ring-border';
+        }
+
         ob_start();
         get_template_part('template-parts/base/toggle/toggle', null, [
             'config' => [
@@ -266,12 +328,16 @@ foreach ($cells as $cell) {
                 'disabled' => $is_disabled,
                 'text' => (string) $day,
                 'aria_label' => date_i18n('l, F j, Y', $day_timestamp),
+                'class' => $day_classes,
                 'data_attributes' => $is_today ? ['today' => 'true'] : [],
             ],
         ]);
         $day_markup = (string) ob_get_clean();
 
-        $week_markup .= sprintf('<td data-slot="calendar-cell">%s</td>', $day_markup); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        $week_markup .= sprintf(
+            '<td data-slot="calendar-cell" class="p-0 text-center align-middle">%s</td>',
+            $day_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        );
         $column++;
     }
 
@@ -293,12 +359,32 @@ if ($navigation) {
     $prev_url = esc_url(add_query_arg($nav_name, sprintf('%04d-%02d', $prev_year, $prev_month)));
     $next_url = esc_url(add_query_arg($nav_name, sprintf('%04d-%02d', $next_year, $next_month)));
 
-    $prev_icon = hengegroup_theme_render_icon(['name' => 'chevron-left', 'set' => 'lucide']);
-    $next_icon = hengegroup_theme_render_icon(['name' => 'chevron-right', 'set' => 'lucide']);
+    $prev_icon = hengegroup_theme_render_icon([
+        'name' => 'chevron-left',
+        'set' => 'lucide',
+        'class' => 'size-4',
+    ]);
+    $next_icon = hengegroup_theme_render_icon([
+        'name' => 'chevron-right',
+        'set' => 'lucide',
+        'class' => 'size-4',
+    ]);
+
+    $nav_button_classes =
+        'inline-flex size-9 items-center justify-center rounded-xl border border-border ' .
+        'bg-background text-foreground transition-colors hover:bg-muted focus-visible:border-ring ' .
+        'focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
     $nav_markup = sprintf(
-        '<div data-slot="calendar-nav"><a href="%1$s" data-slot="calendar-nav-button" data-nav="prev" aria-label="%2$s">%3$s</a><span data-slot="calendar-caption">%4$s</span><a href="%5$s" data-slot="calendar-nav-button" data-nav="next" aria-label="%6$s">%7$s</a></div>',
+        '<div data-slot="calendar-nav" class="mb-3.5 flex items-center justify-between">' .
+            '<a href="%1$s" data-slot="calendar-nav-button" data-nav="prev" class="%2$s" ' .
+            'aria-label="%3$s">%4$s</a>' .
+            '<span data-slot="calendar-caption" class="text-base font-semibold text-foreground">%5$s</span>' .
+            '<a href="%6$s" data-slot="calendar-nav-button" data-nav="next" class="%2$s" ' .
+            'aria-label="%7$s">%8$s</a>' .
+            '</div>',
         $prev_url,
+        esc_attr($nav_button_classes),
         esc_attr__('Previous month', 'hengegroup-theme'),
         $prev_icon, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         esc_html(date_i18n('F Y', $first_of_month->getTimestamp())),
@@ -310,6 +396,7 @@ if ($navigation) {
 
 $table_attributes = [
     'data-slot' => 'calendar-grid',
+    'class' => 'w-full table-fixed border-separate border-spacing-1',
     'data-month' => (string) $month,
     'data-year' => (string) $year,
 ];
@@ -327,12 +414,13 @@ $table_markup = sprintf(
     $body_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
+// Phase 2 (CLAUDE.md Regel 1): the whole wrapper IS the card -- see header comment for why this
+// component owns the full bg/border/radius/shadow/padding treatment instead of expecting a caller
+// to supply it (unlike e.g. select.php's/combobox.php's bare floating panels).
+$card_classes = 'rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-sm';
+
 $wrapper_attributes = $attributes;
-
-if ($class_name !== '') {
-    $wrapper_attributes['class'] = $class_name;
-}
-
+$wrapper_attributes['class'] = trim($card_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 $wrapper_attributes['data-slot'] = 'calendar';
 $wrapper_attributes['id'] = $id;
 

@@ -61,6 +61,18 @@ declare(strict_types=1);
 //     only) -- toggle.js moves real focus onto the label itself, which also carries `data-js` */ }
 //   [data-slot="toggle-input"]:disabled + [data-slot="toggle"] { /* disabled styles */ }
 //
+// The checkbox's own `peer sr-only` classes below are the Tailwind-only implementation of the first
+// line of that contract (Regel 1 forbids a hand-written `[data-slot="toggle-input"]` CSS rule for
+// this): `sr-only` is Tailwind's built-in visually-hidden-but-focusable utility, and `peer` is what
+// lets a CONSUMER's own classes on the paired label react to this input's live `:checked`/`:disabled`
+// state via `peer-checked:`/`peer-disabled:` (Tailwind's own name for the adjacent-sibling-selector
+// trick the contract above describes). This is a deliberately narrow, colour/variant-free pull-
+// forward of that one structural piece of toggle.php's own future Phase-2 styling -- pulled forward
+// specifically because template-parts/base/calendar.php's day cells (nesting this file) need the
+// checkbox invisible and the state reactive to look and behave right (see that file's header
+// comment); the rest of toggle.php (variant/size colors on the label) is still unstyled Phase 1,
+// unaffected by and independent of this addition.
+//
 // Supported config:
 //   pressed          bool     default false. Native `checked` on the underlying input (shadcn's own
 //                              prop name for this is `pressed`/`defaultPressed`, kept here for
@@ -189,6 +201,7 @@ if ($id === '') {
 
 $checkbox_attributes = [
     'type' => $type,
+    'class' => 'peer sr-only',
     'data-slot' => 'toggle-input',
     'id' => $id,
 ];

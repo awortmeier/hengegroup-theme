@@ -185,8 +185,14 @@ if ($calendar_markup === '') {
 // Phase 2 (CLAUDE.md Regel 1): the trigger gets the same field-surface Tailwind classes as
 // input.php (see that file's header for the Bewerbungsformular design-reference mapping) plus
 // button.php's own `outline` hover treatment -- matching its own `data-variant="outline"` above --
-// since a <summary> has no native pointer/hover affordance of its own. The panel gets the same
-// minimal floating-panel treatment as select.php's/combobox.php's own content panels.
+// since a <summary> has no native pointer/hover affordance of its own. The panel itself is now just
+// an `absolute`-positioned offset (same floating-panel technique as select.php's/combobox.php's own
+// content panels, which this one was missing until now -- a real, pre-existing bug, not a deliberate
+// simplification: this panel pushed following page content down instead of floating over it,
+// unlike those two's already-`absolute` panels); it carries no border/background/padding/shadow of
+// its own anymore because the nested calendar.php now renders that entire card surface itself (see
+// that file's own header comment) -- keeping both would double-card a bordered/shadowed box inside
+// another one.
 $trigger_attributes = [
     'class' =>
         'inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border ' .
@@ -223,17 +229,14 @@ $trigger_markup = sprintf(
 );
 
 $content_markup = sprintf(
-    '<div class="mt-2 rounded-lg border border-input bg-background p-3 shadow-md" ' .
-        'data-slot="date-picker-content">%s</div>',
+    '<div class="absolute top-full left-0 z-50 mt-2" data-slot="date-picker-content">%s</div>',
     $calendar_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
+// `relative` anchors the content panel's `absolute` positioning above -- same root-is-the-anchor
+// pattern as select.php's/combobox.php's own wrappers.
 $wrapper_attributes = $attributes;
-
-if ($class_name !== '') {
-    $wrapper_attributes['class'] = $class_name;
-}
-
+$wrapper_attributes['class'] = trim('relative' . ($class_name !== '' ? ' ' . $class_name : ''));
 $wrapper_attributes['data-slot'] = 'date-picker';
 $wrapper_attributes['data-mode'] = $mode;
 $wrapper_attributes['data-placeholder'] = $placeholder;

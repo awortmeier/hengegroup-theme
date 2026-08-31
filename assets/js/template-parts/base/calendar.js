@@ -11,7 +11,32 @@
 // through that sweep. enhanceToggle() is called on every freshly created cell below so navigated-to
 // months announce "button, pressed" just like the initial month does (the established
 // ARIA-gap-closing rule), not raw "checkbox"/"radio button" after the first month switch.
+//
+// The Tailwind classes below (input/label/outside-cell) mirror calendar.php's own render-time
+// classes verbatim -- see that file's header comment on why (same "reimplemented formula-for-
+// formula" duplication already documented there for the date-grid math itself, just for CSS classes
+// this time). Keep both in sync by hand; there is no shared source for either.
 import { enhanceToggle } from "./toggle.js";
+
+const TOGGLE_INPUT_CLASSES = "peer sr-only";
+
+const DAY_LABEL_CLASSES =
+    "peer-focus-visible:border-ring peer-focus-visible:ring-[3px] " +
+    "peer-focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:outline-none " +
+    "focus-visible:ring-[3px] focus-visible:ring-ring/50 flex h-10 w-full cursor-pointer " +
+    "items-center justify-center rounded-xl border border-transparent text-base font-normal " +
+    "text-foreground transition-colors hover:bg-muted peer-checked:border-henge-green " +
+    "peer-checked:bg-henge-green peer-checked:font-semibold " +
+    "peer-checked:text-henge-green-foreground peer-checked:hover:bg-henge-green/90 " +
+    "peer-disabled:pointer-events-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50";
+
+const DAY_TODAY_CLASSES = "ring-1 ring-border";
+
+const OUTSIDE_CELL_CLASSES = "h-10 p-0 text-center align-middle text-base text-muted-foreground";
+
+const OUTSIDE_CELL_EMPTY_CLASSES = "h-10 p-0";
+
+const INTERACTIVE_CELL_CLASSES = "p-0 text-center align-middle";
 
 function parseJsonAttribute(el, name, fallback) {
     const raw = el.getAttribute(name);
@@ -82,9 +107,11 @@ function buildDayCell(config, year, month1, day, uidPrefix, uidCounter) {
 
     const td = document.createElement("td");
     td.setAttribute("data-slot", "calendar-cell");
+    td.className = INTERACTIVE_CELL_CLASSES;
 
     const input = document.createElement("input");
     input.type = inputType;
+    input.className = TOGGLE_INPUT_CLASSES;
     input.setAttribute("data-slot", "toggle-input");
     input.id = id;
     input.name = inputName;
@@ -102,6 +129,7 @@ function buildDayCell(config, year, month1, day, uidPrefix, uidCounter) {
     input.setAttribute("aria-label", config.dateFormatter.format(new Date(year, month1 - 1, day)));
 
     const label = document.createElement("label");
+    label.className = isToday ? `${DAY_LABEL_CLASSES} ${DAY_TODAY_CLASSES}` : DAY_LABEL_CLASSES;
     label.setAttribute("data-slot", "toggle");
     label.setAttribute("data-variant", "default");
     label.setAttribute("data-size", "default");
@@ -161,6 +189,9 @@ function renderMonth(wrapper, table, config, year, month1) {
             td = document.createElement("td");
             td.setAttribute("data-slot", "calendar-cell");
             td.setAttribute("data-outside", "true");
+            td.className = config.showOutsideDays
+                ? OUTSIDE_CELL_CLASSES
+                : OUTSIDE_CELL_EMPTY_CLASSES;
             td.textContent = config.showOutsideDays ? String(cell.day) : "";
         } else {
             uidCounter += 1;
