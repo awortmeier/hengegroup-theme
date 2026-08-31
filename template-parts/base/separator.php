@@ -11,6 +11,14 @@ declare(strict_types=1);
 // the horizontal + always-semantic case, so a plain <div> (matching that primitive's own choice)
 // is used here to support both orientations and the decorative toggle faithfully (see CLAUDE.md #1).
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken 1:1 from shadcn's own Separator
+// (registry/new-york-v4/ui/separator.tsx, live-checked 2026-08-30) -- no deviations, this one has
+// no `dark:`-prefixed classes to drop and no size/radius scale that this project's other
+// deviations (rounded-full vs. rounded-lg, brand-color renames) touch. `bg-border` reads the
+// generic --color-border role from assets/css/tokens.css unchanged (project's own brand-grey names
+// like grey-dark/grey-light only apply where a component's variant vocabulary itself expects them,
+// e.g. button.php/badge.php -- a plain divider is exactly shadcn's own neutral role).
+//
 // Supported config:
 //   orientation   string   horizontal | vertical (default: horizontal)
 //   decorative    bool     default true. true -> role="none" (purely visual, hidden from
@@ -36,11 +44,13 @@ if (!in_array($orientation, $allowed_orientations, true)) {
     $orientation = 'horizontal';
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'bg-border shrink-0 data-[orientation=horizontal]:h-px ' .
+    'data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full ' .
+    'data-[orientation=vertical]:w-px';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'separator';
 $element_attributes['data-orientation'] = $orientation;

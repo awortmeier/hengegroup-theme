@@ -8,10 +8,15 @@ declare(strict_types=1);
 // a FieldLegend visually match FieldLabel's smaller sizing (e.g. a fieldset used inside a compact
 // field-group.php) while staying a real <legend> underneath -- a styling axis, not a tag change.
 //
+// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldLegend (registry/
+// new-york-v4/ui/field.tsx, live-checked 2026-08-30) -- the `variant` sizing is expressed as
+// `data-[variant=...]` selectors against the `data-variant` this file already sets below, same
+// data-attribute-driven idiom as field.php's own `data-orientation` selectors, instead of a PHP
+// variant-class map.
+//
 // Supported config:
 //   text      string   required. Visible content (plain text, escaped)
-//   variant   string   legend (default) | label -- sets data-variant only, sizing is project-CSS
-//                       (CLAUDE.md #1)
+//   variant   string   legend (default) | label -- sets data-variant, drives the text-size classes
 //   class / attributes / data_attributes   passthrough, as in the other base parts
 
 if (!isset($args['config']) || !is_array($args['config'])) {
@@ -36,11 +41,10 @@ if (!in_array($variant, $allowed_variants, true)) {
     $variant = 'legend';
 }
 
-$element_attributes = $attributes;
+$base_classes = 'mb-3 font-medium data-[variant=legend]:text-base data-[variant=label]:text-sm';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'field-legend';
 $element_attributes['data-variant'] = $variant;

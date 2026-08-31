@@ -2,21 +2,29 @@
 
 declare(strict_types=1);
 
-// Direct translation of shadcn/ui's ButtonGroup: a content-agnostic wrapper, entirely CSS-driven,
-// no JS. shadcn's own implementation is just `role="group"` + adjacent-sibling CSS selectors
+// Direct translation of shadcn/ui's ButtonGroup: a content-agnostic wrapper. shadcn's own
+// implementation is just `role="group"` + adjacent-sibling CSS selectors
 // (`:not(:first-child)`/`:not(:last-child)`) that strip border-radius/border off touching
 // children so multiple buttons visually merge into one connected bar ("segmented control"/
-// split-button look) -- a project-CSS concern, not baked in here (see CLAUDE.md #1).
+// split-button look) -- no JS, entirely CSS-driven (Phase 2 below).
 //
 // Same nesting pattern as aspect-ratio.php/kbd/kbd-group.php: buffer the inner
 // button.php/separator.php/button-group-text.php output(s) and pass the combined HTML string as
 // `content`. shadcn's own ButtonGroupSeparator is nothing but their Separator with
-// orientation="vertical" -- that's exactly template-parts/base/separator.php, reused unchanged,
-// not a new component.
+// orientation="vertical" plus a few extra override classes (self-stretch/no margin/--color-input
+// instead of --color-border, so it fills the group's full height and doesn't add its own gap) --
+// no new component for that here either: reuse template-parts/base/separator.php unchanged and
+// pass those overrides through its own `class` config at the call site, e.g.
+// `['orientation' => 'vertical', 'class' => 'bg-input m-0! self-stretch data-[orientation=vertical]:h-auto']`.
 //
 //   ob_start();
 //   get_template_part('template-parts/base/button', null, ['config' => ['text' => 'Left']]);
-//   get_template_part('template-parts/base/separator', null, ['config' => ['orientation' => 'vertical']]);
+//   get_template_part('template-parts/base/separator', null, [
+//       'config' => [
+//           'orientation' => 'vertical',
+//           'class' => 'bg-input m-0! self-stretch data-[orientation=vertical]:h-auto',
+//       ],
+//   ]);
 //   get_template_part('template-parts/base/button', null, ['config' => ['text' => 'Right']]);
 //   $group_markup = (string) ob_get_clean();
 //
@@ -24,10 +32,22 @@ declare(strict_types=1);
 //       'config' => ['content' => $group_markup],
 //   ]);
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken 1:1 from shadcn's own
+// buttonGroupVariants() cva() definition (registry/new-york-v4/ui/button-group.tsx, live-checked
+// 2026-08-30), with one deviation: the `has-[select[aria-hidden=true]:last-child]:
+// [&>[data-slot=select-trigger]:last-of-type]:rounded-r-md` edge case (a trailing native <select>
+// fallback keeping a rounded outer corner) uses `rounded-r-lg` instead -- this project's
+// established field-surface radius (input.php/input-group.php/native-select.php's own
+// rounded-md -> rounded-lg swap, see those files' headers) rather than shadcn's stock rounded-md.
+// Kept even though no component in this theme emits `data-slot="select-trigger"` yet -- that's the
+// data-slot the planned JS-driven select.php (see native-select.php's header) will use, so this
+// selector is forward-compatible with it rather than dead weight.
+//
 // Supported config:
 //   content       string   required. Pre-rendered HTML to wrap (caller's responsibility to
 //                          escape/build, e.g. via template-parts/base/button.php)
-//   orientation   string   horizontal (default) | vertical -- sets data-orientation
+//   orientation   string   horizontal (default) | vertical -- sets data-orientation and switches
+//                          the merge direction (rounds/borders stripped left/right vs. top/bottom)
 //   class / attributes / data_attributes   passthrough, as in the other base parts
 
 if (!isset($args['config']) || !is_array($args['config'])) {
@@ -52,11 +72,27 @@ if (!in_array($orientation, $allowed_orientations, true)) {
     $orientation = 'horizontal';
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'flex w-fit items-stretch has-[>[data-slot=button-group]]:gap-2 ' .
+    '[&>*]:focus-visible:relative [&>*]:focus-visible:z-10 ' .
+    'has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-lg ' .
+    "[&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1";
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$orientation_classes = [
+    'horizontal' =>
+        '[&>*:not(:first-child)]:rounded-l-none [&>*:not(:first-child)]:border-l-0 ' .
+        '[&>*:not(:last-child)]:rounded-r-none',
+    'vertical' =>
+        'flex-col [&>*:not(:first-child)]:rounded-t-none [&>*:not(:first-child)]:border-t-0 ' .
+        '[&>*:not(:last-child)]:rounded-b-none',
+];
+
+$computed_class = "{$base_classes} {$orientation_classes[$orientation]}";
+
+$element_attributes = $attributes;
+$element_attributes['class'] = trim(
+    $computed_class . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $element_attributes['role'] = 'group';
 $element_attributes['data-slot'] = 'button-group';

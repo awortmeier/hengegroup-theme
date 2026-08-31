@@ -60,18 +60,23 @@ declare(strict_types=1);
 // grouping, so this file doesn't need to approximate that role itself.
 //
 // Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own Field (registry/
-// new-york-v4/ui/field.tsx), with its per-orientation branches (`vertical`/`horizontal`) expressed
-// as `data-[orientation=...]` selectors against the `data-orientation` this file already sets below
-// instead of a PHP if/else -- same data-attribute-driven styling idiom button.php/badge.php already
-// use for `aria-invalid`. `responsive`'s own shadcn classes need a `@container` on field-group.php,
-// out of scope until that file gets its own Phase-2 pass.
+// new-york-v4/ui/field.tsx, live-checked 2026-08-30), with its per-orientation branches
+// (`vertical`/`horizontal`/`responsive`) expressed as `data-[orientation=...]`-prefixed selectors
+// against the `data-orientation` this file already sets below instead of a PHP if/else -- same
+// data-attribute-driven styling idiom button.php/badge.php already use for `aria-invalid`.
+// `responsive`'s own shadcn classes use `@md/field-group:`-prefixed container-query variants (no
+// media query -- reacts to the nearest ancestor's actual width, not the viewport's) that only mean
+// something inside the named container field-group.php now provides
+// (`@container/field-group`, see that file's own Phase-2 header) -- a bare field.php outside a
+// field-group.php simply never matches the `@md/field-group:` variant and stays at its narrow
+// (flex-col) layout, same graceful fallback shadcn's own version has.
 //
 // Supported config:
 //   content       string   required. Pre-rendered HTML to wrap (see composition example above)
 //   orientation   string   vertical (default) | horizontal | responsive -- shadcn's own Field
-//                          orientation axis, sets data-orientation only; `responsive` needs a
-//                          container query on the parent field-group.php to mean anything, see
-//                          that file's header comment (project-CSS concern, CLAUDE.md #1)
+//                          orientation axis, sets data-orientation, which then drives the actual
+//                          layout classes above; `responsive` only takes effect while nested inside
+//                          a field-group.php (its `@container/field-group`, see that file's header)
 //   invalid       bool     default false. Sets data-invalid="true" (styling hook only, see above)
 //   class / attributes / data_attributes   passthrough onto the outer
 //                          <div data-slot="field"> wrapper (no role, see above)
@@ -101,9 +106,26 @@ if (!in_array($orientation, $allowed_orientations, true)) {
 
 $base_classes =
     'group/field flex w-full gap-3 data-[invalid=true]:text-destructive ' .
-    'data-[orientation=vertical]:flex-col data-[orientation=horizontal]:flex-row ' .
-    'data-[orientation=horizontal]:items-center ' .
-    'data-[orientation=horizontal]:[&>[data-slot=field-label]]:flex-auto';
+    // vertical (default): every child stretches full-width, except a visually-hidden .sr-only one
+    'data-[orientation=vertical]:flex-col data-[orientation=vertical]:[&>*]:w-full ' .
+    'data-[orientation=vertical]:[&>.sr-only]:w-auto ' .
+    // horizontal: label sits beside the control; a nested field-content.php's checkbox/radio stays
+    // top-aligned with the first line of its label instead of vertically centering
+    'data-[orientation=horizontal]:flex-row data-[orientation=horizontal]:items-center ' .
+    'data-[orientation=horizontal]:[&>[data-slot=field-label]]:flex-auto ' .
+    'data-[orientation=horizontal]:has-[>[data-slot=field-content]]:items-start ' .
+    'data-[orientation=horizontal]:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px ' .
+    // responsive: same as vertical below the field-group.php container's breakpoint, same as
+    // horizontal at/above it -- see file header for the @container wiring
+    'data-[orientation=responsive]:flex-col data-[orientation=responsive]:[&>*]:w-full ' .
+    'data-[orientation=responsive]:[&>.sr-only]:w-auto ' .
+    'data-[orientation=responsive]:@md/field-group:flex-row ' .
+    'data-[orientation=responsive]:@md/field-group:items-center ' .
+    'data-[orientation=responsive]:@md/field-group:[&>*]:w-auto ' .
+    'data-[orientation=responsive]:@md/field-group:[&>[data-slot=field-label]]:flex-auto ' .
+    'data-[orientation=responsive]:@md/field-group:has-[>[data-slot=field-content]]:items-start ' .
+    'data-[orientation=responsive]:@md/field-group:has-[>[data-slot=field-content]]:' .
+    '[&>[role=checkbox],[role=radio]]:mt-px';
 
 $element_attributes = $attributes;
 $element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));

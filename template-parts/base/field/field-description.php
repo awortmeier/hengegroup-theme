@@ -8,9 +8,11 @@ declare(strict_types=1);
 // concern (CLAUDE.md #1), not something this file renders.
 //
 // Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own FieldDescription (registry/
-// new-york-v4/ui/field.tsx), trimmed of the `group-has-[[data-orientation=horizontal]]/field:
-// text-balance` clause -- that targets a CSS `@container`/group-scoping setup this simpler markup
-// doesn't opt into (see field.php's header comment on `responsive` for the same limitation).
+// new-york-v4/ui/field.tsx, live-checked 2026-08-30). `nth-last-2:-mt-1`/
+// `[[data-variant=legend]+&]:-mt-1.5` are spacing nudges for two specific adjacency cases (this is
+// the second-to-last child in its field/field-set, or it directly follows a field-legend.php) --
+// kept 1:1 even without a demonstrated caller yet, same forward-compatible-selector reasoning as
+// button-group.php's `[data-slot=select-trigger]` clause.
 //
 // Supported config:
 //   text   string   required. Visible content (plain text, escaped)
@@ -51,8 +53,10 @@ if ($id === '') {
 }
 
 $base_classes =
-    'text-muted-foreground text-sm leading-normal last:mt-0 ' .
-    '[&>a]:underline [&>a]:underline-offset-4 [&>a:hover]:text-henge-green';
+    'text-muted-foreground text-sm leading-normal font-normal last:mt-0 nth-last-2:-mt-1 ' .
+    'group-has-[[data-orientation=horizontal]]/field:text-balance ' .
+    '[[data-variant=legend]+&]:-mt-1.5 [&>a]:underline [&>a]:underline-offset-4 ' .
+    '[&>a:hover]:text-henge-green';
 
 $element_attributes = $attributes;
 $element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));

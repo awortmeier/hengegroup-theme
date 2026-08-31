@@ -8,6 +8,12 @@ declare(strict_types=1);
 // pattern as field-group.php/button-group.php: buffer the control +
 // field-description.php/field-error.php output(s) and pass the combined HTML as `content`.
 //
+// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldContent (registry/
+// new-york-v4/ui/field.tsx, live-checked 2026-08-30). The `group/field-content` marker is what
+// field.php's own horizontal-orientation classes key off of
+// (`has-[>[data-slot=field-content]]:items-start`) to keep a checkbox/radio control top-aligned
+// with the first line of a multi-line label instead of vertically centering it.
+//
 // Supported config:
 //   content   string   required. Pre-rendered HTML to wrap
 //   class / attributes / data_attributes   passthrough onto the outer
@@ -28,11 +34,10 @@ if (trim($content) === '') {
     return;
 }
 
-$element_attributes = $attributes;
+$base_classes = 'group/field-content flex flex-1 flex-col gap-1.5 leading-snug';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'field-content';
 

@@ -9,6 +9,13 @@ declare(strict_types=1);
 // field-legend.php call, an optional field-description.php call, and a field-group.php call, then
 // pass the combined HTML as `content`.
 //
+// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldSet (registry/
+// new-york-v4/ui/field.tsx, live-checked 2026-08-30). The `has-[>[data-slot=radio-group]]` clause
+// is already live against this theme's own template-parts/base/radio/radio-group.php (same
+// data-slot); `has-[>[data-slot=checkbox-group]]` has no matching component yet (this theme only
+// has a single checkbox.php so far, no group variant) -- kept anyway as forward-compatible dead
+// weight, same reasoning as button-group.php's `[data-slot=select-trigger]` selector.
+//
 // Supported config:
 //   content   string   required. Pre-rendered HTML to wrap (typically field-legend.php +
 //                       field-description.php + field-group.php, in that order)
@@ -30,11 +37,12 @@ if (trim($content) === '') {
     return;
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'flex flex-col gap-6 has-[>[data-slot=checkbox-group]]:gap-3 ' .
+    'has-[>[data-slot=radio-group]]:gap-3';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'field-set';
 

@@ -12,6 +12,21 @@ declare(strict_types=1);
 // snake_case equivalent is `tag` -- same escape-hatch shape as aspect-ratio.php's own `tag`
 // config, rather than the render-prop-style `asChild` itself, which has no direct PHP analog.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken 1:1 from shadcn's own
+// ButtonGroupText (registry/new-york-v4/ui/button-group.tsx, live-checked 2026-08-30), with two
+// deviations:
+//   - `rounded-md` swapped for `rounded-lg`, same field-surface radius convention as button-group.php's
+//     own rounded-r-md -> rounded-r-lg swap (see that file's header) and input.php/input-group.php/
+//     native-select.php before it -- this text segment reads as a field-adjacent label, not a
+//     button, so it stays out of button.php's fully-pill rounded-full family.
+//   - a bare `border` gained an explicit `border-border` alongside it: shadcn's own source relies on
+//     their global `@layer base { * { border-color: var(--border); } }` Preflight override (shipped
+//     in every shadcn project's globals.css) to give unqualified `border` the right color -- this
+//     theme doesn't carry that global reset (same reasoning as button.php's variant classes always
+//     pairing `border` with an explicit color utility, e.g. `border-input`/`border-grey-dark`), so
+//     the color has to be spelled out here instead of silently falling back to Tailwind's own
+//     `currentColor` default.
+//
 // Supported config:
 //   text   string   required. Visible content (plain text, escaped)
 //   tag    string   div (default) | span | label -- shadcn's `asChild` equivalent for rendering as
@@ -41,11 +56,12 @@ if (!in_array($tag, $allowed_tags, true)) {
     $tag = 'div';
 }
 
-$element_attributes = $attributes;
+$base_classes =
+    'flex items-center gap-2 rounded-lg border border-border bg-muted px-4 text-sm font-medium ' .
+    "shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4";
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'button-group-text';
 
