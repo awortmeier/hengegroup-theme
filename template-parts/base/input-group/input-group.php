@@ -47,6 +47,22 @@ declare(strict_types=1);
 // both doesn't double up a border. The fixed `h-9` is dropped for the same padding-driven-height
 // reason as input.php: the nested control/addon carry the actual `py-3` rhythm instead.
 //
+// The `has-[>[data-align=...]]:[&>input]:p{l,r,b,t}-*` rules mirror shadcn's own addon-to-input
+// spacing compensation 1:1: the nested `<input>` keeps its normal standalone `px-3.5` by default
+// (see input.php's `data_slot === 'input-group-control'` branch) so a side WITHOUT an addon still
+// gets the field's usual edge padding; these `has-[]` rules only fire on a side that actually has
+// an addon, overriding that side's padding down to the smaller `pl-2`/`pr-2` (the higher-specificity
+// `:has()` selector beats the input's own `px-3.5`, same mechanism as any other Tailwind
+// specificity override) -- the addon's own `pl-3.5`/`pr-3.5` (input-group-addon.php) already
+// supplies the outer breathing room on that side, so the input only needs the smaller inner gap
+// next to it. The block-start/block-end variants reflow the wrapper to `flex-col` so
+// `input-group-addon.php`'s own block-start/block-end
+// alignment options actually stack instead of staying in a row. `role="group"` mirrors shadcn's own
+// semantic role (functional a11y attribute, not styling -- see CLAUDE.md #1). Focus state is keyed
+// off the control's own `:focus-visible`, not a broader `focus-within`, so the box doesn't light up
+// when e.g. an addon's own button (the password-toggle example below) receives focus instead of the
+// actual field.
+//
 // Supported config:
 //   content       string   required. Pre-rendered HTML to wrap (caller's responsibility to
 //                          escape/build via input.php/textarea.php + input-group-addon.php)
@@ -68,9 +84,14 @@ if (trim($content) === '') {
 }
 
 $base_classes =
-    'border-input bg-background relative flex w-full items-center rounded-lg border ' .
+    'border-input bg-background relative flex w-full min-w-0 items-center rounded-lg border ' .
     'shadow-xs transition-[color,box-shadow] outline-none has-[>textarea]:items-start ' .
-    'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] ' .
+    'has-[>[data-align=inline-start]]:[&>input]:pl-2 has-[>[data-align=inline-end]]:[&>input]:pr-2 ' .
+    'has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3 ' .
+    'has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3 ' .
+    'has-[[data-slot=input-group-control]:focus-visible]:border-ring ' .
+    'has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 ' .
+    'has-[[data-slot=input-group-control]:focus-visible]:ring-[3px] ' .
     'has-[[data-slot=input-group-control]:disabled]:pointer-events-none ' .
     'has-[[data-slot=input-group-control]:disabled]:opacity-50 ' .
     'has-[[data-slot=input-group-control][aria-invalid=true]]:ring-destructive/20 ' .
@@ -80,6 +101,7 @@ $element_attributes = $attributes;
 $element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'input-group';
+$element_attributes['role'] = 'group';
 
 foreach ($data_attributes as $attribute_key => $attribute_value) {
     $data_name = trim((string) $attribute_key);

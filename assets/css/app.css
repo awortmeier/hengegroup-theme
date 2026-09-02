@@ -16,4 +16,34 @@
 
     .wrapper-small {
     }
+
+    /* template-parts/base/accordion.php: open/close height transition for its native <details>
+       content panel -- documented Regel-1 raw-CSS exception, see that file's own header comment
+       for why this can't cleanly be Tailwind utilities. `interpolate-size: allow-keywords` lives
+       on the `<details>` itself so `height` can transition to/from its `auto` value;
+       `::details-content` is the UA-generated box wrapping everything in a `<details>` except its
+       `<summary>` (Baseline since ~2025) -- animating that box instead of a hand-rolled wrapper
+       div keeps this a zero-JS, zero-extra-markup technique. `content-visibility` rides along in
+       the same transition with `allow-discrete` so content stays visible/painted for the full
+       closing animation instead of vanishing the instant `[open]` is removed (the CSS Working
+       Group's own textbook example for this exact `<details>` pattern). Scoped to
+       [data-slot="accordion-item"] specifically, NOT a bare `details` selector -- dropdown-menu.php
+       also builds on native <details>, but its content floats (position: absolute) and isn't meant
+       to animate a height, so this must not reach it. No fallback needed: browsers without
+       `::details-content` support simply keep the native instant open/close snap. */
+    [data-slot="accordion-item"] {
+        interpolate-size: allow-keywords;
+    }
+
+    [data-slot="accordion-item"]::details-content {
+        height: 0;
+        overflow: clip;
+        transition:
+            content-visibility 0.2s allow-discrete,
+            height 0.2s ease-out;
+    }
+
+    [data-slot="accordion-item"][open]::details-content {
+        height: auto;
+    }
 }

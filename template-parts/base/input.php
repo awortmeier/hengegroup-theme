@@ -125,7 +125,7 @@ if ($id === '') {
 $is_group_control = $data_slot === 'input-group-control';
 
 $computed_class = $is_group_control
-    ? 'flex-1 min-w-0 rounded-none border-0 bg-transparent px-0 py-3 text-base shadow-none ' .
+    ? 'flex-1 min-w-0 rounded-none border-0 bg-transparent px-3.5 py-3 text-base shadow-none ' .
         'outline-none focus-visible:ring-0 placeholder:text-muted-foreground ' .
         'file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent ' .
         'file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed ' .

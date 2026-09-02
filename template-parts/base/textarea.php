@@ -83,7 +83,7 @@ if ($id === '') {
 $is_group_control = $data_slot === 'input-group-control';
 
 $computed_class = $is_group_control
-    ? 'flex-1 min-w-0 field-sizing-content rounded-none border-0 bg-transparent px-0 py-3 ' .
+    ? 'flex-1 min-w-0 field-sizing-content rounded-none border-0 bg-transparent px-3.5 py-3 ' .
         'text-base shadow-none outline-none focus-visible:ring-0 ' .
         'placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ' .
         'md:text-sm'

@@ -21,7 +21,18 @@ declare(strict_types=1);
 // Phase 2 (CLAUDE.md Regel 1): classes taken from shadcn's own InputGroupAddon (registry/
 // new-york-v4/ui/input-group.tsx), trimmed to the alignments this file actually exposes and
 // re-padded to this project's `px-3.5`/`py-3` field-surface rhythm (same design-reference mapping
-// as input.php) instead of shadcn's own `px-3`/`py-1.5`.
+// as input.php) instead of shadcn's own `px-3`/`py-1.5`. The `has-[>button]:m{l,r}-*` negative-
+// margin rules mirror shadcn's own button-child compensation (its `-0.45rem` was tuned against
+// their `px-3`; scaled proportionally to this project's `px-3.5` and rounded to the nearest real
+// Tailwind step, same "real steps only" convention as button.php's size-class comment) -- without
+// it a button addon (the password-visibility-toggle example below) sits with extra padding around
+// it instead of visually hugging the group's edge like a plain icon/text addon does. `role="group"`
+// mirrors shadcn's own semantic role, same as input-group.php.
+//
+// Not reproduced: shadcn's own `has-[>kbd]:m{l,r}-[-0.35rem]` (no addon+kbd-group.php composition
+// exercised by any consumer yet) and its block-start/block-end `[.border-b]:pb-3`/`[.border-t]:pt-3`
+// fine-tuning (needs a border-carrying sibling convention this project doesn't have yet) -- add
+// both once an actual composition needs them, rather than guessing untested magic numbers now.
 //
 // Supported config:
 //   content   string   required. Pre-rendered HTML to wrap (an icon.php call, a button.php call,
@@ -57,7 +68,9 @@ $base_classes =
     'text-muted-foreground flex items-center justify-center gap-2 py-3 text-base font-medium ' .
     "select-none md:text-sm [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none " .
     'data-[align=inline-start]:order-first data-[align=inline-start]:pl-3.5 ' .
+    'data-[align=inline-start]:has-[>button]:-ml-2 ' .
     'data-[align=inline-end]:order-last data-[align=inline-end]:pr-3.5 ' .
+    'data-[align=inline-end]:has-[>button]:-mr-2 ' .
     'data-[align=block-start]:order-first data-[align=block-start]:w-full ' .
     'data-[align=block-start]:justify-start data-[align=block-start]:px-3.5 ' .
     'data-[align=block-start]:pt-3 data-[align=block-end]:order-last ' .
@@ -69,6 +82,7 @@ $element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . 
 
 $element_attributes['data-slot'] = 'input-group-addon';
 $element_attributes['data-align'] = $align;
+$element_attributes['role'] = 'group';
 
 foreach ($data_attributes as $attribute_key => $attribute_value) {
     $data_name = trim((string) $attribute_key);
