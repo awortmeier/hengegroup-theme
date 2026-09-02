@@ -46,4 +46,55 @@
     [data-slot="accordion-item"][open]::details-content {
         height: auto;
     }
+
+    /* template-parts/base/attachment/attachment-group.php: hidden scrollbar + edge fade for its
+       horizontal-scroll row of attachment.php cards -- documented Regel-1 raw-CSS exception, see
+       that file's own header comment for why (no stock Tailwind utility for `scrollbar-width` or a
+       `mask-image` edge fade; shadcn's own `scrollbar-none`/`scroll-fade-x` are its own custom
+       utilities, not built into Tailwind itself). `mask-image` fades the actual scrolling content
+       to transparent at both edges -- works on any background, unlike a fake gradient-to-a-
+       hardcoded-color overlay div. Always-on (no scroll-position tracking without JS), so it also
+       dims the first/last card when nothing is actually cut off -- accepted, documented tradeoff,
+       not a bug. */
+    [data-slot="attachment-group"] {
+        scrollbar-width: none;
+        mask-image: linear-gradient(
+            to right,
+            transparent,
+            black 24px,
+            black calc(100% - 24px),
+            transparent
+        );
+    }
+
+    [data-slot="attachment-group"]::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* template-parts/base/progress/progress.php: `striped: true`'s animated diagonal stripe fill --
+       documented Regel-1 raw-CSS exception, see that file's own `striped` header note for why (no
+       stock Tailwind utility for a repeating-linear-gradient background + animated
+       background-position sweep, unlike `animate-pulse`/`animate-spin`). Built on `currentColor`
+       (progress.php sets `color` via its `variant`, same value the solid non-striped fill already
+       reads via `bg-current`) so this one block covers every variant instead of needing one per
+       color. */
+    [data-slot="progress"][data-striped="true"]::-webkit-progress-value,
+    [data-slot="progress"][data-striped="true"]::-moz-progress-bar {
+        background-image: repeating-linear-gradient(
+            115deg,
+            currentColor 0 8px,
+            color-mix(in oklab, currentColor 65%, transparent) 8px 16px
+        );
+        background-size: 28px 28px;
+        animation: hg-progress-stripes 0.9s linear infinite;
+    }
+
+    @keyframes hg-progress-stripes {
+        from {
+            background-position: 0 0;
+        }
+        to {
+            background-position: 28px 0;
+        }
+    }
 }
