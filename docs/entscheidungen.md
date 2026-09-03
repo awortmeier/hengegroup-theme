@@ -45,6 +45,44 @@ hier) -- dieser Eintrag haelt nur die Entscheidungen fest, die nicht schon aus d
   mit eigenem Markup (button-group.php + button-group-text.php, toggle.php + toggle-group.php, ...),
   nicht fuer Styling-Varianten eines einzelnen Elements.
 
+---
+
+### `pagination.php` gestylt, `pagination-compact.php` neu, Umzug in `pagination/`-Ordner (2026-09-03)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup" (dieselben `.dc.html`-
+Referenzseiten wie beim `kbd.php`-Eintrag oben). Details/Klassen-Herleitung stehen direkt in
+`pagination.php`s/`pagination-compact.php`s eigenen Kopfkommentaren (Regel 12: kein Doppel-Text
+hier) -- dieser Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **Die Referenz-Formen (eckige ~9px-Radius-Buttons, 30/38/46px Hoehen) wurden NICHT 1:1
+  uebernommen.** `pagination.php` nested `button.php` fuer jedes Item (bestehende
+  Architektur-Entscheidung, siehe Kopfkommentar); `button.php` ist bereits Phase-2-gestylt (Pill-
+  Form, henge-green, eigene `sm`/`base`/`lg`-Skala) und bleibt laut eigenem Kopfkommentar die
+  einzige Quelle dafuer, wie "ein Button" in diesem Theme aussieht. Die Referenz-Formen 1:1
+  nachzubauen haette Pagination optisch aus dem Rest des Themes herausfallen lassen (oder verlangt,
+  button.php selbst mitzuaendern -- ausserhalb dieses Auftrags). Aus der Referenz uebernommen wurde
+  stattdessen nur, was button.php nicht schon mitbringt: der 6px-Item-Abstand (`gap-1.5` statt
+  shadcns eigenem `gap-1`) und die Ellipsis-Optik (`size-8`, `text-muted-foreground`).
+- **Aktive Seite: `henge-green`-Variante statt shadcns eigenem `outline`** (Design-Wunsch,
+  2026-09-03) -- ein gefuellter Marken-Farb-Pill statt eines nur umrandeten, matcht die Referenz'
+  eigenen "Gefüllt"-Look fuer die aktive Seite. Einzige Variant-Abweichung von shadcns
+  PaginationLink; `ghost` fuer inaktive Seiten sowie Vor/Zurueck bleibt unveraendert.
+- **Kein Dark-Abschnitt** (Referenz: "Auf dunklem Grund"), aus demselben Grund wie beim
+  `kbd.php`-Eintrag oben -- kein Alleingang ohne projektweite Dark-Strategie.
+- **`pagination-compact.php` ist eine neue, zweite Datei statt eines neuen `pagination.php`-Config-
+  Werts**, weil die Referenz-Sektion "Kompakt" strukturell etwas anderes ist (Karten-Leiste mit
+  Status-Label + optionaler Eintraege-pro-Seite-Auswahl) als die bestehende items-array-API, naeher
+  an `data-table.php`s eigenem, page-count-getriebenen Pagination-Footer als an `pagination.php`
+  selbst -- siehe `pagination-compact.php`-Kopfkommentar fuer die volle Herleitung/API. Kein
+  shadcn-Vorbild dafuer (`pagination.php`s Kopfkommentar deckt shadcns eigentliche Pagination
+  bereits vollstaendig ab); ausdruecklich als Implementierungs-Erweiterung gekennzeichnet, gleiche
+  Kategorie wie `tabs.php`s Badge-Slot.
+- **Umzug nach `template-parts/base/pagination/`** (Regel 4: sobald eine Komponente aus mehr als
+  einer Datei besteht, bekommt sie einen eigenen Ordner) -- `pagination.php` hatte noch keine
+  Aufrufer ausserhalb der neuen Showcase-Seite, daher kein weiterer Migrationsaufwand.
+
+---
+
 ### `button.php`: Font-Size je `size`, Size-Vokabular auf `sm`/`base`/`lg` reduziert (2026-08-30)
 
 Bislang teilten sich alle `size`-Werte dieselbe `text-sm` (14px) aus `$base_classes`, nur `xs`

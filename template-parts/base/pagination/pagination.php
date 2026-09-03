@@ -12,12 +12,14 @@ declare(strict_types=1);
 // for no benefit.
 //
 // Nests template-parts/base/button.php for every interactive item -- shadcn's own
-// PaginationLink literally renders buttonVariants({ variant: isActive ? "outline" : "ghost", size
-// }) on an <a>, so button.php's href-renders-as-<a> mode (its asChild/Slot analog) is a 1:1 match,
-// including its `disabled` handling (drops href, sets aria-disabled) for boundary controls -- same
-// idiom as data-table.php's own (structurally different, page-count-driven rather than
-// items-array-driven) pagination footer. `previous`/`next` items reuse button.php's icon+text
-// slot (`icon`/`icon_position`) for the chevron instead of hand-rolling icon-plus-label markup.
+// PaginationLink renders buttonVariants({ variant: isActive ? "outline" : "ghost", size }) on an
+// <a>, so button.php's href-renders-as-<a> mode (its asChild/Slot analog) is a 1:1 structural
+// match (see Phase 2 note below for the one variant deviation: active uses `henge-green`, not
+// shadcn's own `outline`), including its `disabled` handling (drops href, sets aria-disabled) for
+// boundary controls -- same idiom as data-table.php's own (structurally different,
+// page-count-driven rather than items-array-driven) pagination footer. `previous`/`next` items
+// reuse button.php's icon+text slot (`icon`/`icon_position`) for the chevron instead of
+// hand-rolling icon-plus-label markup.
 // Deliberately does NOT try to rename the nested button's `data-slot="button"` to
 // `"pagination-link"` the way shadcn's own DOM does -- this codebase protects `data-slot` as a
 // structural attribute nested components own, and carousel-previous.php/carousel-next.php already
@@ -27,6 +29,35 @@ declare(strict_types=1);
 // component-specific meaning is layered on top via other attributes instead of a renamed
 // data-slot. The ellipsis item nests template-parts/base/icon.php via hengegroup_theme_render_icon(),
 // same default Lucide `ellipsis` glyph as breadcrumb.php's own ellipsis item.
+//
+// Moved into its own template-parts/base/pagination/ folder alongside the new
+// pagination-compact.php (Rule 4: a folder appears once a component becomes more than one file;
+// this file's own name is unchanged, get_template_part() callers now need the doubled
+// 'template-parts/base/pagination/pagination' path, same as kbd/button-group/etc.).
+//
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
+// "Hengegroup" (same `.dc.html` reference workflow as button.php's/kbd.php's own entries in
+// docs/entscheidungen.md -- see that file for this component's entry). Per-item look (pill shape,
+// henge-green active fill, hover/disabled states, all four button.php sizes) is intentionally NOT
+// reproduced here from the reference's own arbitrary ~9px-radius/38px-height squares -- it already
+// comes for free from the nested button.php (already Phase-2-styled, see this file's own "single
+// source of truth for what a button looks like" note above), so copying the reference's shapes
+// here would just fork button.php's design language for this one component. What this file DOES
+// add on top, all reference-driven:
+//   - the active page item's nested button.php `variant` is `henge-green` (design request
+//     2026-09-03), not shadcn's own `outline` -- a filled brand-color pill instead of a bordered
+//     one, matching the reference's own "Gefüllt" active look. See `is_active` below.
+//   - `<ul data-slot="pagination-content">` item gap: `gap-1.5` (6px) instead of shadcn's own
+//     stock `gap-1` (4px) -- the reference's every section (Basis/Auslassung/Interaktiv/Dunkel)
+//     consistently spaces items 6px apart, a real Tailwind scale step, no arbitrary value.
+//   - the ellipsis item gets real layout/color: `flex size-8 items-center justify-center
+//     text-muted-foreground`, `size-8` matching the nested buttons' own `icon-base` footprint
+//     (button.php's default page-item size) so the ellipsis lines up with its neighbours; the
+//     rendered icon defaults to `size-4` (button.php's own default icon size) unless a caller's
+//     `icon` override already sets its own size class.
+//   - the reference's "Auf dunklem Grund" section was deliberately NOT carried over -- this theme
+//     has no dark-mode/dark-surface strategy yet, same reasoning button.php/badge.php/kbd.php
+//     already documented for dropping shadcn's own `dark:` classes (see docs/entscheidungen.md).
 //
 // Supported config:
 //   items       array   required, ordered list of item configs. `type`:
@@ -39,8 +70,9 @@ declare(strict_types=1);
 //                                real-navigation case always supplies it
 //       is_active     bool     default false. Current-page indicator (shadcn's `isActive`) --
 //                                sets aria-current="page" + data-active="true" and switches the
-//                                nested button.php's variant to 'outline' (else 'ghost'), matching
-//                                shadcn's PaginationLink exactly
+//                                nested button.php's variant to 'henge-green' (else 'ghost') --
+//                                shadcn's own PaginationLink uses 'outline' here instead, see
+//                                the Phase 2 note above for this deliberate deviation
 //       disabled      bool     default false. Passed to the nested button.php (drops href, sets
 //                                aria-disabled)
 //       size          string   button.php size override (default 'icon', matching shadcn's own
@@ -126,8 +158,14 @@ foreach ($items_config as $item_config) {
             ? $item_config['icon']
             : ['name' => 'ellipsis', 'set' => 'lucide'];
 
+        $icon_class = trim((string) ($icon_config['class'] ?? ''));
+
+        if (!str_contains($icon_class, 'size-')) {
+            $icon_config['class'] = trim($icon_class . ' size-4');
+        }
+
         $inner_markup = sprintf(
-            '<span data-slot="pagination-ellipsis" aria-hidden="true">%1$s<span class="sr-only">%2$s</span></span>',
+            '<span data-slot="pagination-ellipsis" class="flex size-8 items-center justify-center text-muted-foreground" aria-hidden="true">%1$s<span class="sr-only">%2$s</span></span>',
             hengegroup_theme_render_icon($icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             esc_html__('More pages', 'hengegroup-theme'),
         );
@@ -179,7 +217,7 @@ foreach ($items_config as $item_config) {
 
         $inner_markup = $render_button([
             'href' => trim((string) ($item_config['href'] ?? '')),
-            'variant' => $is_active ? 'outline' : 'ghost',
+            'variant' => $is_active ? 'henge-green' : 'ghost',
             'size' => $size !== '' ? $size : 'icon-base',
             'text' => $text,
             'disabled' => !empty($item_config['disabled']),
@@ -198,11 +236,12 @@ if ($list_items_markup === '') {
     return;
 }
 
+// Base classes taken 1:1 from shadcn's own Pagination/PaginationContent (registry/new-york-v4/
+// ui/pagination.tsx), except the content list's item gap -- see file header for that deviation.
 $wrapper_attributes = $attributes;
-
-if ($class_name !== '') {
-    $wrapper_attributes['class'] = $class_name;
-}
+$wrapper_attributes['class'] = trim(
+    'mx-auto flex w-full justify-center' . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $wrapper_attributes['data-slot'] = 'pagination';
 $wrapper_attributes['aria-label'] = $aria_label;
@@ -218,7 +257,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 }
 
 printf(
-    '<nav%1$s><ul data-slot="pagination-content">%2$s</ul></nav>',
+    '<nav%1$s><ul data-slot="pagination-content" class="flex flex-row items-center gap-1.5">%2$s</ul></nav>',
     hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $list_items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
