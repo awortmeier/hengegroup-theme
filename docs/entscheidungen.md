@@ -21,6 +21,30 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `kbd.php`/`kbd-group.php`: Keycap-Styling, `size`-Skala + `pressed`-State, kein Dark-Abschnitt, keine Datei-pro-Variante (2026-09-03)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup" (dieselben `.dc.html`-
+Referenzseiten wie beim `button.php`-Padding/Shape-Eintrag oben). Details/Klassen-Herleitung
+stehen direkt in `kbd.php`s/`kbd-group.php`s eigenen Kopfkommentaren (Regel 12: kein Doppel-Text
+hier) -- dieser Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **`size` (sm/default/lg) und `pressed` sind eine bewusste Erweiterung ueber shadcns eigenes Kbd
+  hinaus** (das kennt weder das eine noch das andere, siehe `kbd.php`-Kopfkommentar). Gerechtfertigt
+  durch die Referenz selbst, dieselbe Kategorie Abweichung wie button.php's/badge.php's
+  Marken-Vokabular -- keine Erfindung ohne Anlass.
+- **Der Referenz-Abschnitt "Auf dunklem Grund" wurde NICHT uebernommen.** Dieses Theme hat noch
+  keine Dark-Mode-/Dark-Surface-Strategie (siehe `docs/to-do.md`); button.php/badge.php droppen aus
+  demselben Grund bereits shadcns eigene `dark:`-Klassen. Ein Kbd-spezifischer "auf dunklem
+  Hintergrund"-Modus waere ein Alleingang ohne den Rest der Komponenten-Familie -- wird nachgezogen,
+  sobald es eine projektweite Dark-Strategie gibt, nicht isoliert vorgezogen.
+- **Kein Datei-pro-Variante-Split.** `kbd/` ist bereits ein eigener Ordner (kbd.php + kbd-group.php,
+  seit Phase 1); die `size`-Werte sind reine Klassen-Varianten innerhalb EINER Datei, ueber ein
+  `$size_classes`-Array -- exakt dasselbe Muster wie button.php's `variant`/`size` oder badge.php's
+  `variant` (siehe deren Dateien). Diese Komponenten haben trotz mehrerer Werte nie eine Datei pro
+  Wert bekommen; ein Ordner-Split lohnt sich in diesem Theme bislang nur fuer echte Sub-Komponenten
+  mit eigenem Markup (button-group.php + button-group-text.php, toggle.php + toggle-group.php, ...),
+  nicht fuer Styling-Varianten eines einzelnen Elements.
+
 ### `button.php`: Font-Size je `size`, Size-Vokabular auf `sm`/`base`/`lg` reduziert (2026-08-30)
 
 Bislang teilten sich alle `size`-Werte dieselbe `text-sm` (14px) aus `$base_classes`, nur `xs`
