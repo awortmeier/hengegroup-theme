@@ -21,6 +21,41 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `tabs.php` gestylt, Panel-Switching-Bugfix, kein Datei-pro-Variante-Split (2026-09-04)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"'s "Basis"/"Segmentiert"/
+"Vertikal"-Abschnitte (dieselben `.dc.html`-Referenzseiten wie bei den `kbd.php`-/`table/*.php`-
+Eintraegen oben). Details/Klassen-Herleitung stehen direkt in `tabs.php`s eigenem Kopfkommentar
+(Regel 12: kein Doppel-Text hier) -- dieser Eintrag haelt nur die Entscheidungen fest, die nicht
+schon aus dem Diff folgen:
+
+- **Kein Datei-pro-Variante-Split, kein neuer Ordner.** Die Referenz zeigt zwei optisch sehr
+  unterschiedliche Looks ("Basis" = Underline-Reiter auf einer Hairline, "Segmentiert" = Pill in
+  einer Karte), die aber exakt auf `tabs.php`s bereits seit Phase 1 bestehende
+  `variant: 'default' | 'line'`-Config passen -- identische Markup-/Render-Schleife, nur andere
+  Tailwind-Klassen je `$variant` (plus `$orientation`, ebenfalls rein PHP-seitig verzweigt statt
+  ueber `data-[orientation=...]`-Selektoren, da beide Werte zur Renderzeit feststehen). Gleiches
+  Ein-Datei-`$variant_classes`-Muster wie button.php/badge.php/kbd.php, gleiche Begruendung wie
+  beim `kbd.php`-Eintrag oben (Nutzer-Entscheidung, siehe AskUserQuestion-Antwort dieser Session) --
+  ein Ordner-Split lohnt sich in diesem Theme bislang nur fuer echte Sub-Komponenten mit eigenem
+  Markup, nicht fuer Styling-Varianten eines einzelnen Elements. `tabs.php` bleibt entsprechend
+  direkt unter `template-parts/base/` statt in einen eigenen Unterordner zu ziehen.
+- **Bugfix: Panel-Switching war nie verdrahtet.** `tabs.php`s eigener Kopfkommentar spezifizierte
+  das `:has()` + positionelle `:nth-child()`-CSS-Kontrakt fuer die Panel-Sichtbarkeit bereits seit
+  Phase 1, es existierte aber nirgends in `assets/css/app.css` -- alle Panels waren gleichzeitig
+  sichtbar. Jetzt als dokumentierte Regel-1-Rohcss-Ausnahme in `app.css` ergaenzt (generiert bis 16
+  Tabs, siehe dortiger Kommentar fuer die Begruendung/wie man die Grenze anhebt).
+- **Das Referenz-"Auf dunklem Grund"-Beispiel wurde NICHT uebernommen**, aus demselben Grund wie bei
+  jedem bisherigen Phase-2-Eintrag -- kein Alleingang ohne projektweite Dark-Strategie.
+- **`page-component-showcase-tabs.php` neu angelegt** (analog zu den bestehenden
+  Showcase-Seiten), inkl. drei bislang fehlender Lucide-Icons nachsynchronisiert (`truck`,
+  `flask-conical`, `archive`, als String-Literale direkt vom statischen `find-lucide-icons.php`-
+  Scanner gefunden, kein `scripts/lucide-icons.json`-Eintrag noetig -- anders als beim
+  `table/*.php`-Eintrag oben, wo die Icon-Namen ueber eine PHP-Variable liefen) fuers "Icon, Badge &
+  deaktiviert"-Beispiel, per `sync-lucide-icons.sh` aus `node_modules/lucide-static` kopiert.
+
+---
+
 ### `spinner.php` gestylt: Umstieg von `icon.php`-Delegation auf eigenes Zwei-Kreis-SVG, `size`-/
 
 `color`-Vokabular, `button.php`s `loading`-Spinner darauf umgestellt (2026-09-04)

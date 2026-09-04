@@ -97,4 +97,144 @@
             background-position: 28px 0;
         }
     }
+
+    /* template-parts/base/tabs.php: panel-switching, documented Regel-1 raw-CSS exception -- see
+       that file's own header comment for the full rationale (CSS can't cross-reference two
+       elements' attribute VALUES, only their position, so a `:has()` + positional `:nth-child()`
+       pair is the only generic way to reveal the Nth panel when the Nth trigger's radio is
+       checked; Tailwind's static class scanner can't generate one rule per position for an
+       unbounded `items` array either). Generated up to 16 tabs -- comfortably above any real tab
+       bar this theme renders; raise the bound by copying the last block and bumping both
+       `:nth-child()` indices by one if a project ever needs more. */
+    [data-slot="tabs-content"] {
+        display: none;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(1) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(1) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(2) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(2) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(3) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(3) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(4) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(4) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(5) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(5) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(6) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(6) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(7) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(7) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(8) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(8) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(9) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(9) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(10) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(10) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(11) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(11) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(12) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(12) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(13) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(13) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(14) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(14) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(15) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(15) {
+        display: block;
+    }
+
+    [data-slot="tabs"]:has(
+            [data-slot="tabs-list"] > :nth-child(16) [data-slot="tabs-trigger-input"]:checked
+        )
+        [data-slot="tabs-panels"]
+        > :nth-child(16) {
+        display: block;
+    }
 }

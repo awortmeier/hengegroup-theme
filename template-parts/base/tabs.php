@@ -84,6 +84,42 @@ declare(strict_types=1);
 // `[data-slot="tabs-list"]` -- the actual line-vs-pill visuals are Phase 2 Tailwind work, same
 // "hook now, style later" split as every other data-variant/data-size in this theme.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
+// "Hengegroup"'s "Basis" (variant: line, horizontal) / "Segmentiert" (variant: default, horizontal)
+// / "Vertikal" (variant: line, orientation: vertical) sections (same `.dc.html`-reference workflow
+// as separator.php's/kbd.php's own entries, see docs/entscheidungen.md for this component's entry).
+// The reference's "Auf dunklem Grund" section was NOT ported, same reason as every other
+// component's Phase-2 entry so far -- this theme has no dark-mode/dark-surface strategy yet.
+//
+// No file-per-variant split (CLAUDE.md Regel 4 keeps a folder/split reserved for structurally
+// different sub-components, not styling variants of one element -- see docs/entscheidungen.md):
+// `variant`'s two looks are pure Tailwind class swaps on the exact markup this file already
+// renders, the same `$variant_classes` lookup, one-file pattern button.php/badge.php/kbd.php use
+// for their own multi-value `variant`/`size`. `orientation` is resolved the same way (a plain PHP
+// branch, not a `data-[orientation=...]` CSS selector) since both are config values already known
+// at render time, not live client-side state -- unlike the `:checked`/focus/`:disabled` state below,
+// which genuinely can change without a new render.
+//
+// The hidden radio (`peer sr-only`, same visually-hidden-but-focusable technique as toggle.php's/
+// checkbox.php's/radio.php's own hidden-input+label pairs) drives the trigger label's live state via
+// Tailwind's `peer-*` variants -- the Tailwind-only implementation of the CSS contract already
+// spec'd above: `peer-checked:` for the active look, `peer-focus-visible:` for the no-JS focus ring
+// (real focus lives on the input), `peer-disabled:` for the disabled look. Plain `focus-visible:`
+// (no `peer-` prefix) covers the JS-enhanced case from that same contract -- tabs.js moves real
+// focus onto the label itself once `data-js="tabs"` is set, so the two rules never fire at once.
+// `peer-checked:hover:` pairs re-assert the active colour under hover (same fix calendar.php's own
+// peer-checked day cells already needed for `hover:bg-muted` vs `peer-checked:bg-henge-green`) --
+// without it, a plain `hover:` utility could win the cascade over `peer-checked:` on an
+// active-and-hovered trigger, since Tailwind gives both the same specificity.
+//
+// Panel switching (Bugfix, 2026-09-04): the `:has()` + positional `:nth-child()` CSS contract this
+// header already spec'd above was never actually wired into assets/css/app.css -- every panel
+// rendered simultaneously visible (no `display: none` default existed anywhere). Implemented there
+// now as a documented Regel-1 raw-CSS exception (Tailwind's static class scanner can't generate one
+// rule per tab position for an unbounded `items` array, same "dynamically composed name" gap
+// find-lucide-icons.php's own header documents), generated up to a practical max tab count -- see
+// app.css's own comment on that block for the exact bound and how to raise it.
+//
 // Supported config:
 //   items         array    required, ordered list of:
 //     value          string   required. This item's native radio `value` (also the CSS `data-value`
@@ -154,6 +190,57 @@ $allowed_variants = ['default', 'line'];
 if (!in_array($variant, $allowed_variants, true)) {
     $variant = 'default';
 }
+
+// Phase-2 Tailwind classes for the root/list/trigger, derived once from `$variant`/`$orientation`
+// (both already resolved above) -- see this file's own header comment for the reasoning behind
+// picking these in PHP rather than via `data-[orientation=...]` CSS selectors.
+$root_classes =
+    'flex flex-col gap-4 data-[orientation=vertical]:flex-row ' .
+    'data-[orientation=vertical]:items-start data-[orientation=vertical]:gap-8';
+
+$is_vertical = $orientation === 'vertical';
+
+if ($variant === 'line') {
+    $list_variant_classes = $is_vertical
+        ? 'w-fit flex-col items-start gap-1 self-stretch border-l border-border'
+        : 'w-full items-center gap-6 border-b border-border';
+} else {
+    $list_variant_classes = $is_vertical
+        ? 'w-fit flex-col items-stretch gap-1 rounded-xl border border-border bg-card p-1 shadow-xs'
+        : 'w-fit items-center gap-1 rounded-xl border border-border bg-card p-1 shadow-xs';
+}
+
+$list_classes = 'inline-flex ' . $list_variant_classes;
+
+// `peer-checked:hover:` re-asserts the active look under hover -- see header comment for why (same
+// fix calendar.php's own peer-checked day cells already needed).
+$trigger_base_classes =
+    'relative inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap ' .
+    'text-sm font-medium text-muted-foreground outline-none transition-colors select-none ' .
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 " .
+    'peer-focus-visible:border-ring peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50 ' .
+    'focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px] ' .
+    'focus-visible:ring-ring/50 peer-disabled:pointer-events-none ' .
+    'peer-disabled:cursor-not-allowed peer-disabled:opacity-50 hover:text-foreground';
+
+if ($variant === 'line') {
+    $trigger_variant_classes = $is_vertical
+        ? 'justify-start border-l-2 border-transparent -ml-px px-4 py-2'
+        : 'border-b-2 border-transparent -mb-px px-1 py-3';
+
+    $trigger_variant_classes .=
+        ' peer-checked:border-henge-green peer-checked:font-semibold ' .
+        'peer-checked:text-foreground peer-checked:hover:text-foreground';
+} else {
+    $trigger_variant_classes =
+        'rounded-lg px-3 py-1.5 peer-checked:bg-grey-dark peer-checked:font-semibold ' .
+        'peer-checked:text-grey-dark-foreground peer-checked:shadow-xs ' .
+        'peer-checked:hover:bg-grey-dark peer-checked:hover:text-grey-dark-foreground';
+}
+
+$trigger_classes = trim($trigger_base_classes . ' ' . $trigger_variant_classes);
+
+$panels_classes = $is_vertical ? 'min-w-0 flex-1' : '';
 
 // Normalize + filter items; value and content are required, trigger is required unless the item
 // is icon-only -- invalid items are silently skipped (fail-soft, consistent with the rest of the
@@ -258,6 +345,7 @@ foreach ($items as $item) {
 
     $input_attributes = [
         'type' => 'radio',
+        'class' => 'peer sr-only',
         'data-slot' => 'tabs-trigger-input',
         'id' => $trigger_id,
         'name' => $name,
@@ -273,11 +361,9 @@ foreach ($items as $item) {
         $input_attributes['data-disabled'] = 'true';
     }
 
-    $label_attributes = [];
-
-    if ($item['class'] !== '') {
-        $label_attributes['class'] = $item['class'];
-    }
+    $label_attributes = [
+        'class' => trim($trigger_classes . ($item['class'] !== '' ? ' ' . $item['class'] : '')),
+    ];
 
     $label_attributes['data-slot'] = 'tabs-trigger';
     $label_attributes['data-value'] = $item['value'];
@@ -316,6 +402,7 @@ foreach ($items as $item) {
 
 $list_attributes = [
     'role' => 'radiogroup',
+    'class' => $list_classes,
     'data-slot' => 'tabs-list',
     'data-orientation' => $orientation,
     'aria-orientation' => $orientation,
@@ -331,11 +418,7 @@ if ($aria_label !== '') {
 }
 
 $wrapper_attributes = $attributes;
-
-if ($class_name !== '') {
-    $wrapper_attributes['class'] = $class_name;
-}
-
+$wrapper_attributes['class'] = trim($root_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 $wrapper_attributes['data-slot'] = 'tabs';
 $wrapper_attributes['data-orientation'] = $orientation;
 
@@ -349,10 +432,17 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
     $wrapper_attributes['data-' . $data_name] = $attribute_value;
 }
 
+$panels_attributes = ['data-slot' => 'tabs-panels'];
+
+if ($panels_classes !== '') {
+    $panels_attributes['class'] = $panels_classes;
+}
+
 printf(
-    '<div%1$s><div%2$s>%3$s</div><div data-slot="tabs-panels">%4$s</div></div>',
+    '<div%1$s><div%2$s>%3$s</div><div%4$s>%5$s</div></div>',
     hengegroup_theme_render_attributes($wrapper_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     hengegroup_theme_render_attributes($list_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $triggers_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    hengegroup_theme_render_attributes($panels_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $panels_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
