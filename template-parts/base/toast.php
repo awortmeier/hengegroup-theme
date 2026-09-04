@@ -62,15 +62,91 @@ declare(strict_types=1);
 //     equivalent to "a function that returns markup", so this theme's `toast.custom()` instead
 //     takes a pre-rendered HTML string (same convention as tooltip.php's `trigger`)
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
+// "Hengegroup" (same `.dc.html` reference workflow as separator.php's/pagination.php's own entries,
+// see docs/entscheidungen.md for this component's entry). No per-`type` file split was made even
+// though the reference organizes its "Varianten" section by type (success/info/error/neutral) --
+// every other multi-state base component in this theme (button.php's `variant`, badge.php's
+// `variant`, separator.php's `weight`/`style`, progress.php's `variant`) is one config-driven file
+// with a small type-to-classes map, not one file per state; a `type`-per-file split here would be
+// the only component in the theme to break that convention for a difference that IS just a couple
+// of classes, not divergent markup/behaviour. Because it stayed one file, it also did NOT move into
+// a `template-parts/base/toast/` folder (Regel 4 only applies once a component is more than one
+// PHP file).
+//
+// What carried over from the reference, and what didn't:
+//   - "Nur Fehler bekommt eine getönte Karte" (only the error state tints the whole card) is the
+//     reference's own explicit rule, applied literally below: every OTHER type only colors its
+//     icon (and, when `duration` renders a life bar, that bar) via a `text-{accent}` class on the
+//     `<li>` itself, read by the icon's inherited `currentColor` and the life bar's `bg-current` --
+//     title/description/close stay neutral. `error` additionally tints title/description/close via
+//     `--color-destructive` (this project's existing error token, already used by every form
+//     component's `aria-invalid` state) instead of the reference's own bespoke rust-red hex --
+//     introducing a second, differently-sourced "error color" alongside the theme's established
+//     `destructive` role would fragment that vocabulary for a difference few users would ever
+//     A/B side-by-side.
+//   - reference RGB values for `info`/`neutral` (`rgb(7,95,143)`/`rgb(100,106,108)`) turned out to
+//     be EXACT matches for this theme's existing `--color-henge-blue`/`--color-henge-grey` tokens
+//     (verified byte-for-byte) -- used directly rather than re-declared. `success`/the reference's
+//     default demo accent maps to `--color-henge-green` (this project's primary brand accent,
+//     the reference's own themeable `accentColor` prop default). `warning` has no reference example
+//     at all -- given Tailwind's own `amber-600` (tokens.css's own documented convention: reference
+//     Tailwind's stock scales directly when no project token exists yet), not invented from scratch.
+//   - `loading`'s default icon composes spinner.php (this component's own Phase-2 ring, see that
+//     file's header) instead of the old static `loader-circle` lucide icon -- same
+//     already-established substitution button.php's own `loading` state made
+//     (`docs/entscheidungen.md`), reused here rather than re-solving "what does a spinner look like"
+//     a third time. A caller-supplied `icons.loading`/per-toast `icon` override still renders via
+//     icon.php as before (see `$loading_icon_is_default` below) -- only the THEME's own default
+//     changed, the override contract didn't.
+//   - the reference's "Verhalten" section's auto-dismiss "Laufleiste" (a countdown bar along the
+//     card's bottom edge) is reproduced as `[data-slot="toast-life"]`, only rendered when this
+//     toast's resolved `duration` is > 0 (an infinite/pending toast, e.g. `toast.promise()`'s
+//     "loading" state, correctly gets none, same as the reference's own always-on countdown only
+//     applying to toasts that actually auto-dismiss). Its animation duration is the one genuinely
+//     PER-TOAST-DYNAMIC value here -- Tailwind's build-time class scanner can only generate CSS for
+//     class strings that appear literally in source (same gap find-lucide-icons.php's header
+//     documents for icon names assembled from a variable), so a literal `duration`-derived class
+//     name is a dead end. Solved the same way progress-circle.php's own truly-dynamic `--pc-value`
+//     is: an inline `style="--toast-duration: …ms"` custom property (Regel-1 raw-CSS exception,
+//     scoped to exactly this one value) feeding a STATIC `animate-[hg-toast-life_var(--toast-duration)_linear_forwards]`
+//     utility -- the class string itself never changes per toast, only the custom property it reads
+//     does, so Tailwind's scanner sees one literal class regardless of how many different durations
+//     actually render. `hg-toast-life`'s `@keyframes` (plus `hg-toast-in`/`hg-toast-in-top` for the
+//     entrance animation) live in assets/css/app.css next to this theme's other documented
+//     Regel-1 keyframe exceptions (progress.php's `hg-progress-stripes`, same reasoning: no stock
+//     Tailwind utility composes a named, reusable keyframe set). toast.js mirrors this same life-bar
+//     markup/custom-property for imperatively created toasts, plus pausing its
+//     `animation-play-state` in step with the existing hover-pause timer logic.
+//   - fixed positioning (all six `position` values) is now real, `data-[position=...]:` Tailwind
+//     variants on `[data-slot="toaster"]` -- Phase 1 deliberately left this as "a project concern"
+//     (see the `position` config doc below), this IS that follow-up. `pointer-events-none` on the
+//     viewport + `pointer-events-auto` on each toast keeps the empty part of the fixed stack from
+//     blocking clicks on whatever page content sits underneath it.
+//   - `expand`/`rich_colors`/`visible_toasts` stay exactly what Phase 1 already made them: real
+//     bootstrap data (`data-expand`/`data-rich-colors`/`data-visible-toasts`) with no visual effect
+//     yet. The reference has no "collapsed stack that fans out" or "solid rich-colors background"
+//     example to style against (its own "Verhalten" section already shows every visible toast at
+//     full size, uncollapsed) -- inventing that look from nothing would be exactly the kind of
+//     un-requested, un-validated vocabulary docs/neue-komponente-erstellen.md #2 warns against for
+//     shadcn's OWN vocabulary; left as a config hook for a future pass that has a reference to build
+//     against, same "not silently dropped, just out of v1 scope" framing already used above for
+//     `hotkey`/`offset`/`gap`.
+//   - the reference's "Auf dunklem Grund" section was NOT ported, same reason as every other
+//     component's Phase-2 entry so far (separator.php/kbd.php/pagination.php/table/*.php) -- this
+//     theme has no dark-mode/dark-surface strategy yet, see docs/entscheidungen.md.
+//
 // Supported config:
 //   position         string   top-left | top-center | top-right | bottom-left | bottom-center |
-//                              bottom-right (default: bottom-right, sonner's own default) -- sets
-//                              data-position, actual fixed-positioning CSS is a project concern
+//                              bottom-right (default: bottom-right, sonner's own default). Sets
+//                              data-position AND drives the viewport's real fixed positioning
+//                              (Tailwind `data-[position=...]:` variants, see file header above)
 //   expand           bool     default false. Sets data-expand="true" when true -- sonner's own
-//                              default keeps a collapsed stack that expands on hover; whether that
-//                              actually happens is project-CSS/JS, this is only the config hook
+//                              default keeps a collapsed stack that expands on hover; the fan/
+//                              collapse visual itself is not implemented yet, see file header above
 //   rich_colors      bool     default false. Sets data-rich-colors="true" when true -- sonner's own
-//                              styling hook for stronger per-type background colors (project-CSS)
+//                              styling hook for stronger per-type background colors; not
+//                              implemented yet, see file header above
 //   visible_toasts   int      default 3 (sonner's own default). Always rendered as
 //                              data-visible-toasts on the viewport -- bootstrap data for toast.js
 //                              to decide when older toasts collapse into the stack
@@ -80,13 +156,17 @@ declare(strict_types=1);
 //                              the same default to imperatively created toasts
 //   duration         int      default 4000ms (sonner's own toastOptions.duration default) --
 //                              toaster-wide default auto-dismiss delay once JS is active; a
-//                              per-toast `duration` below overrides this
+//                              per-toast `duration` below overrides this. Also drives whether a
+//                              toast renders a `[data-slot="toast-life"]` countdown bar (only when
+//                              the resolved duration is > 0, see file header above)
 //   icons            array|false   default null (built-in icons for success/error/warning/info/
 //                              loading, none for default -- sonner's own visual signature). Array:
 //                              per-type icon.php config overrides, e.g. ['success' => [...]] or
-//                              ['success' => false] to disable just that one type. `false`: disable
-//                              all built-in type icons theme-wide (a per-toast `icon` config can
-//                              still add one back explicitly, see below)
+//                              ['success' => false] to disable just that one type; overriding
+//                              `loading` this way also opts it out of the spinner.php default (see
+//                              file header above). `false`: disable all built-in type icons
+//                              theme-wide (a per-toast `icon` config can still add one back
+//                              explicitly, see below)
 //   toasts           array    optional, pre-rendered flash toasts shown immediately on page load,
 //                              each:
 //     message          string   required (or description required if message omitted) -- sonner's
@@ -148,9 +228,24 @@ if ($default_duration < 0) {
 
 $allowed_types = ['default', 'success', 'error', 'warning', 'info', 'loading'];
 
+// Read by the icon (inherited `currentColor`) and, when a toast renders a life bar, that bar's
+// `bg-current` -- title/description/close stay neutral for every type except `error`, which tints
+// them separately below ("nur Fehler bekommt eine getönte Karte", see file header above).
+$type_accent_classes = [
+    'default' => 'text-muted-foreground',
+    'success' => 'text-henge-green',
+    'error' => 'text-destructive',
+    'warning' => 'text-amber-600',
+    'info' => 'text-henge-blue',
+    'loading' => 'text-muted-foreground',
+];
+
 $icons_disabled = array_key_exists('icons', $config) && $config['icons'] === false;
 $icons_override = !$icons_disabled && is_array($config['icons'] ?? null) ? $config['icons'] : [];
 
+// 'spinner' is a sentinel, not an icon.php config -- resolved to spinner.php's own markup below
+// instead of icon.php's, see file header above. array_merge lets a caller's own `icons.loading`
+// override replace it with a real icon.php config (or `false` to disable) same as every other type.
 $default_type_icons = $icons_disabled
     ? []
     : array_merge(
@@ -159,12 +254,34 @@ $default_type_icons = $icons_disabled
             'error' => ['name' => 'circle-x', 'set' => 'lucide'],
             'warning' => ['name' => 'triangle-alert', 'set' => 'lucide'],
             'info' => ['name' => 'info', 'set' => 'lucide'],
-            'loading' => ['name' => 'loader-circle', 'set' => 'lucide'],
+            'loading' => 'spinner',
         ],
         $icons_override,
     );
 
 $close_icon_markup = hengegroup_theme_render_icon(['name' => 'x', 'set' => 'lucide']);
+
+// Phase 2 Tailwind classes, shared between the pre-rendered `toasts` loop below and toast.js's own
+// imperative show() -- keep both in sync when changing either, same "className duplicated between
+// PHP and its JS-enhancement layer" idiom select.js/combobox.js/calendar.js already use for the
+// options/cells they build client-side.
+$icon_wrap_classes = "mt-0.5 shrink-0 [&_svg:not([class*='size-'])]:size-5";
+$content_classes = 'flex min-w-0 flex-1 flex-col gap-1';
+$title_classes = 'text-base leading-[1.3] font-semibold';
+$description_classes = 'text-sm leading-[1.45] text-pretty';
+$actions_classes = 'flex shrink-0 items-center gap-2 self-center';
+$action_classes =
+    'inline-flex items-center justify-center rounded-lg border border-foreground/16 px-3.5 py-1.5 ' .
+    'text-sm font-semibold text-foreground transition-colors hover:border-henge-green hover:text-henge-green';
+$cancel_classes =
+    'inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium ' .
+    'text-muted-foreground transition-colors hover:bg-foreground/6 hover:text-foreground';
+$close_classes =
+    '-mt-1 -mr-1.5 ml-1 flex size-7 shrink-0 self-center items-center justify-center rounded-lg ' .
+    "transition-colors [&_svg:not([class*='size-'])]:size-4";
+$life_classes =
+    'absolute inset-x-0 bottom-0 h-0.5 origin-left bg-current opacity-50 ' .
+    'animate-[hg-toast-life_var(--toast-duration)_linear_forwards]';
 
 $toasts_markup = '';
 
@@ -186,6 +303,8 @@ foreach ($toasts_config as $toast_config) {
         $type = 'default';
     }
 
+    $is_error = $type === 'error';
+
     $duration = array_key_exists('duration', $toast_config)
         ? (int) $toast_config['duration']
         : $default_duration;
@@ -204,28 +323,51 @@ foreach ($toasts_config as $toast_config) {
         ? $toast_config['icon']
         : $default_type_icons[$type] ?? null;
 
-    $icon_markup = is_array($icon_config)
-        ? sprintf(
-            '<div data-slot="toast-icon">%s</div>',
+    if ($icon_config === 'spinner') {
+        ob_start();
+        get_template_part('template-parts/base/spinner', null, [
+            'config' => ['size' => 'sm', 'color' => 'inherit', 'decorative' => true],
+        ]);
+        $spinner_markup = (string) ob_get_clean();
+
+        $icon_markup = sprintf(
+            '<div data-slot="toast-icon" class="%s">%s</div>',
+            esc_attr($icon_wrap_classes),
+            $spinner_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        );
+    } elseif (is_array($icon_config)) {
+        $icon_markup = sprintf(
+            '<div data-slot="toast-icon" class="%s">%s</div>',
+            esc_attr($icon_wrap_classes),
             hengegroup_theme_render_icon($icon_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-        )
-        : '';
+        );
+    } else {
+        $icon_markup = '';
+    }
 
     $text_markup = '';
 
     if ($message !== '') {
-        $text_markup .= sprintf('<div data-slot="toast-title">%s</div>', esc_html($message));
+        $text_markup .= sprintf(
+            '<div data-slot="toast-title" class="%1$s %2$s">%3$s</div>',
+            esc_attr($title_classes),
+            esc_attr($is_error ? 'text-destructive' : 'text-foreground'),
+            esc_html($message),
+        );
     }
 
     if ($description !== '') {
         $text_markup .= sprintf(
-            '<div data-slot="toast-description">%s</div>',
+            '<div data-slot="toast-description" class="%1$s %2$s">%3$s</div>',
+            esc_attr($description_classes),
+            esc_attr($is_error ? 'text-destructive/80' : 'text-muted-foreground'),
             esc_html($description),
         );
     }
 
     $content_markup = sprintf(
-        '<div data-slot="toast-content">%s</div>',
+        '<div data-slot="toast-content" class="%1$s">%2$s</div>',
+        esc_attr($content_classes),
         $text_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 
@@ -236,7 +378,7 @@ foreach ($toasts_config as $toast_config) {
         $action_href = trim((string) ($toast_config['action']['href'] ?? ''));
 
         if ($action_label !== '') {
-            $action_attributes = ['data-slot' => 'toast-action'];
+            $action_attributes = ['data-slot' => 'toast-action', 'class' => $action_classes];
 
             if ($action_href !== '') {
                 $action_attributes['href'] = $action_href;
@@ -260,7 +402,8 @@ foreach ($toasts_config as $toast_config) {
         }
 
         $cancel_markup = sprintf(
-            '<button type="button" data-slot="toast-cancel">%s</button>',
+            '<button type="button" data-slot="toast-cancel" class="%1$s">%2$s</button>',
+            esc_attr($cancel_classes),
             esc_html($cancel_label),
         );
     }
@@ -269,7 +412,8 @@ foreach ($toasts_config as $toast_config) {
 
     if ($action_markup !== '' || $cancel_markup !== '') {
         $actions_markup = sprintf(
-            '<div data-slot="toast-actions">%1$s%2$s</div>',
+            '<div data-slot="toast-actions" class="%1$s">%2$s%3$s</div>',
+            esc_attr($actions_classes),
             $action_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             $cancel_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         );
@@ -278,36 +422,78 @@ foreach ($toasts_config as $toast_config) {
     $close_markup = '';
 
     if ($close_button) {
+        $close_color_classes = $is_error
+            ? 'text-destructive/60 hover:bg-destructive/10 hover:text-destructive'
+            : 'text-foreground/45 hover:bg-foreground/6 hover:text-foreground';
+
         $close_markup = sprintf(
-            '<button type="button" data-slot="toast-close" aria-label="%1$s">%2$s</button>',
+            '<button type="button" data-slot="toast-close" class="%1$s %2$s" aria-label="%3$s">%4$s</button>',
+            esc_attr($close_classes),
+            esc_attr($close_color_classes),
             esc_attr__('Close', 'hengegroup-theme'),
             $close_icon_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         );
     }
 
+    $life_markup = '';
+
+    if ($duration > 0) {
+        $life_markup = sprintf(
+            '<span data-slot="toast-life" class="%s"></span>',
+            esc_attr($life_classes),
+        );
+    }
+
+    $card_classes =
+        'pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-2xl ' .
+        'border px-4 py-4 shadow-lg animate-[hg-toast-in_0.28s_cubic-bezier(0.2,0.9,0.3,1)] ' .
+        ($is_error ? 'border-destructive/25 bg-destructive/6' : 'border-foreground/8 bg-card') .
+        ' ' .
+        $type_accent_classes[$type];
+
     $toasts_markup .= sprintf(
-        '<li data-slot="toast" data-type="%1$s" id="%2$s" data-duration="%3$s">' .
-            '%4$s%5$s%6$s%7$s' .
+        '<li data-slot="toast" data-type="%1$s" id="%2$s" data-duration="%3$s" class="%4$s" style="--toast-duration: %3$sms">' .
+            '%5$s%6$s%7$s%8$s%9$s' .
             '</li>',
         esc_attr($type),
         esc_attr($toast_id),
         esc_attr((string) $duration),
+        esc_attr($card_classes),
         $icon_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $actions_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $close_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        $life_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
 }
 
 // Cloned by toast.js: the close icon (for any imperatively created toast's close button) plus one
 // icon per built-in type, so JS-created toasts stay visually identical to server-rendered ones
-// instead of JS falling back to a second, duplicated icon implementation.
+// instead of JS falling back to a second, duplicated icon implementation. `loading`'s template
+// carries spinner.php's markup whenever it's still the theme default (see file header above); a
+// caller override renders through icon.php like every other type.
 $templates_markup = sprintf(
     '<template data-slot="toast-close-icon-template">%s</template>',
     $close_icon_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
 foreach ($default_type_icons as $icon_type => $icon_config) {
+    if ($icon_config === 'spinner') {
+        ob_start();
+        get_template_part('template-parts/base/spinner', null, [
+            'config' => ['size' => 'sm', 'color' => 'inherit', 'decorative' => true],
+        ]);
+        $spinner_markup = (string) ob_get_clean();
+
+        $templates_markup .= sprintf(
+            '<template data-slot="toast-icon-template" data-type="%1$s">%2$s</template>',
+            esc_attr($icon_type),
+            $spinner_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        );
+
+        continue;
+    }
+
     if (!is_array($icon_config)) {
         continue;
     }
@@ -319,11 +505,26 @@ foreach ($default_type_icons as $icon_type => $icon_config) {
     );
 }
 
+$viewport_base_classes =
+    'pointer-events-none fixed z-50 m-0 flex w-[calc(100%-2rem)] max-w-[380px] list-none flex-col gap-3 p-0 ' .
+    'data-[position=bottom-right]:right-4 data-[position=bottom-right]:bottom-4 ' .
+    'data-[position=bottom-right]:items-end data-[position=bottom-left]:bottom-4 ' .
+    'data-[position=bottom-left]:left-4 data-[position=bottom-left]:items-start ' .
+    'data-[position=bottom-center]:bottom-4 data-[position=bottom-center]:left-1/2 ' .
+    'data-[position=bottom-center]:-translate-x-1/2 data-[position=bottom-center]:items-center ' .
+    'data-[position=top-right]:top-4 data-[position=top-right]:right-4 ' .
+    'data-[position=top-right]:flex-col-reverse data-[position=top-right]:items-end ' .
+    'data-[position=top-left]:top-4 data-[position=top-left]:left-4 ' .
+    'data-[position=top-left]:flex-col-reverse data-[position=top-left]:items-start ' .
+    'data-[position=top-center]:top-4 data-[position=top-center]:left-1/2 ' .
+    'data-[position=top-center]:-translate-x-1/2 data-[position=top-center]:flex-col-reverse ' .
+    'data-[position=top-center]:items-center';
+
 $viewport_attributes = $attributes;
 
-if ($class_name !== '') {
-    $viewport_attributes['class'] = $class_name;
-}
+$viewport_attributes['class'] = trim(
+    $viewport_base_classes . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $viewport_attributes['data-slot'] = 'toaster';
 $viewport_attributes['data-position'] = $position;

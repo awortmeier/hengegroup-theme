@@ -237,4 +237,53 @@
         > :nth-child(16) {
         display: block;
     }
+
+    /* template-parts/base/toast.php: entrance animation + auto-dismiss countdown bar, documented
+       Regel-1 raw-CSS exceptions -- see that file's own header comment for the full rationale (no
+       stock Tailwind utility composes a named, reusable keyframe set, same reasoning as
+       progress.php's own `hg-progress-stripes` below). `hg-toast-in`/`hg-toast-in-top` are two
+       separate keyframes (not one parameterized by a CSS variable) because the property that
+       differs -- `translateY`'s sign -- can't be swapped via a custom property inside a `transform`
+       function the way `hg-toast-life`'s duration can; toast.php's `[data-slot="toast"]` always
+       renders the bottom-anchored `hg-toast-in` utility, this selector swaps just the
+       `animation-name` (not the whole shorthand, so duration/timing-function are untouched) for
+       toasts inside a top-anchored viewport. `hg-toast-life`'s animation-duration is the one
+       genuinely per-toast value (toast.php's/toast.js's own `--toast-duration` custom property, set
+       inline per toast) -- see toast.php's header for why that couldn't be a static utility either. */
+    [data-slot="toaster"][data-position="top-left"] [data-slot="toast"],
+    [data-slot="toaster"][data-position="top-center"] [data-slot="toast"],
+    [data-slot="toaster"][data-position="top-right"] [data-slot="toast"] {
+        animation-name: hg-toast-in-top;
+    }
+
+    @keyframes hg-toast-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.97);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes hg-toast-in-top {
+        from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.97);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @keyframes hg-toast-life {
+        from {
+            transform: scaleX(1);
+        }
+        to {
+            transform: scaleX(0);
+        }
+    }
 }

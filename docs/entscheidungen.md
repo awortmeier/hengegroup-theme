@@ -21,6 +21,58 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `toast.php` gestylt, kein Datei-pro-Typ-Split, kein Ordner-Umzug (2026-09-04)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/4955236e-3bbd-4520-913c-795cfb92c5c6). Details/Klassen-Herleitung
+stehen direkt in `toast.php`s eigenem Kopfkommentar (Regel 12: kein Doppel-Text hier) -- dieser
+Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **Kein Datei-pro-Typ-Split, kein neuer `toast/`-Ordner.** Die Referenz gliedert ihre "Varianten"
+  nach `type` (success/info/error/neutral), das ist aber exakt derselbe Fall wie beim
+  `tabs.php`-Eintrag oben: ein `type`-zu-Klassen-Mapping innerhalb EINER Datei
+  (`$type_accent_classes`), gleiches Muster wie button.php/badge.php/separator.php/progress.php,
+  keine strukturell unterschiedliche Komposition wie z. B. separator.php + separator-label.php.
+  Regel 4 (Ordner nur ab mehr als einer Datei) greift entsprechend nicht -- `toast.php` bleibt
+  direkt unter `template-parts/base/`.
+- **`error` tintet als einziger Typ die ganze Karte** ("nur Fehler bekommt eine getönte Karte",
+  wörtliches Zitat der Referenz), ueber dieses Projekts bestehendes `--color-destructive`-Token
+  statt der Referenz eigenem, abweichendem Rostrot-Hex -- Konsistenz mit jeder anderen
+  `aria-invalid`/Error-Faerbung im Theme (button.php/input.php/select.php/...) wog hoeher als eine
+  pixelgenaue Hex-Kopie der Referenz fuer eine Farbe, die sonst nirgends im Theme vorkommt.
+  `info`/`neutral` trafen dagegen exakt (Byte-fuer-Byte) auf die bestehenden
+  `--color-henge-blue`/`--color-henge-grey`-Werte -- keine Neuerfindung noetig. `warning` hat kein
+  Referenzbeispiel, bekam Tailwinds eigenes `amber-600` (`tokens.css`s eigene dokumentierte
+  Konvention: Tailwind-Skalen referenzieren statt neu erfinden, wenn noch kein Projekt-Token
+  existiert).
+- **`loading`s Default-Icon nutzt jetzt spinner.php statt des alten statischen `loader-circle`
+  Lucide-Icons** -- dieselbe Umstellung, die button.php's `loading`-State im `spinner.php`-Eintrag
+  oben bereits vollzogen hat, hier fuer denselben Zweck wiederverwendet statt ein zweites Mal
+  gelöst. Ein Caller-Override (`icons.loading`/toast-eigenes `icon`) rendert weiterhin ueber
+  icon.php, siehe `toast.php`s Kopfkommentar fuer den Sentinel-Mechanismus (`'loading' =>
+'spinner'`). `loader-circle.svg` wurde dadurch zum letzten verbliebenen Referenzierer ohne
+  verbleibenden Aufrufer -- `pnpm build`s Icon-Sync-Schritt (`find-lucide-icons.php`) hat die Datei
+  entsprechend automatisch entfernt, kein manueller Eingriff.
+- **Auto-Dismiss-Laufleiste (`[data-slot="toast-life"]`)** uebernommen, mit derselben
+  `style="--custom-property: ...ms"`-plus-statischer-`animate-[...]`-Technik wie
+  progress-circle.php's eigenes `--pc-value` (dokumentierte Regel-1-Ausnahme fuer den einen
+  wirklich pro-Toast-dynamischen Wert) -- Details/Begruendung in `toast.php`s Kopfkommentar.
+  toast.js spiegelt Markup und Custom Property fuer JS-erzeugte Toasts, inkl. Pausieren via
+  `animation-play-state` im bestehenden Hover-Pause-Timer.
+- **Fixe Positionierung fuer alle sechs `position`-Werte** ist jetzt echt (`data-[position=...]`-
+  Varianten auf `[data-slot="toaster"]`) -- Phase 1 hatte das bewusst als "project concern"
+  zurueckgestellt, das ist die faellige Nachlieferung.
+- **`expand`/`rich_colors`/kollabierender Stack bleiben bewusst ohne visuelle Umsetzung** -- die
+  Referenz zeigt dafuer kein Beispiel (ihr eigener "Verhalten"-Abschnitt stellt jeden sichtbaren
+  Toast bereits in voller Groesse dar), ein Look ohne Referenz waere erfundenes Vokabular
+  (dieselbe Zurueckhaltung wie in `docs/neue-komponente-erstellen.md` #2 fuer shadcns eigenes
+  Vokabular beschrieben). Bleibt reiner Config-Hook fuer einen spaeteren Pass mit eigener Referenz.
+- **Das Referenz-"Auf dunklem Grund"-Beispiel wurde NICHT uebernommen**, aus demselben Grund wie
+  bei jedem bisherigen Phase-2-Eintrag -- kein Alleingang ohne projektweite Dark-Strategie.
+- **`page-component-showcase-toast.php` neu angelegt** (analog zu den bestehenden Showcase-Seiten).
+
+---
+
 ### `tabs.php` gestylt, Panel-Switching-Bugfix, kein Datei-pro-Variante-Split (2026-09-04)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"'s "Basis"/"Segmentiert"/
