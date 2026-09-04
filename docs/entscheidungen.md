@@ -21,6 +21,80 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `tooltip.php` gestylt, `align`-Config neu, kein Datei-Split/Ordner-Umzug (2026-09-04)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/ee1a05dc-6403-4338-85f2-9e7531331931). Details/Klassen-Herleitung
+stehen direkt in `tooltip.php`s eigenem Kopfkommentar (Regel 12: kein Doppel-Text hier) -- dieser
+Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **Zwei echte Positionierungs-Bugs**, per manueller Nachpruefung (statisches Test-HTML mit dem
+  echten gebauten CSS/JS, `getBoundingClientRect()`/`getComputedStyle()`-Vergleich) gefunden und in
+  `utils/floating-position.js` behoben, weil beide dort und nicht in `tooltip.php` selbst sitzen
+  (betrifft daher auch `hover-card.php`, sobald das sein eigenes Phase-2-Styling bekommt):
+  einerseits liess `positionFloatingElement()` nach dem Setzen von `position:fixed`/`top`/`left`
+  die Klassen-seitig weiterhin aktiven `bottom`/`right`/`transform`-Werte (aus den `side`-Klassen)
+  stehen -- ein stehengebliebenes `top`+`bottom` bei `height:auto` STRECKT eine absolut/fixed
+  positionierte Box statt sie am Inhalt auszurichten (CSS 2.1 10.6.4), ein stehengebliebenes
+  `transform` verschiebt sie zusaetzlich; andererseits setzt Tailwind v4 `-translate-x-1/2`/
+  `-translate-y-1/2` (fuer die Ruhe-Zentrierung) ueber die eigenstaendige CSS-`translate`-Property,
+  NICHT ueber `transform` (CSS Individual Transform Properties -- `translate`/`rotate`/`scale`
+  komponieren zusaetzlich zu `transform`, sind kein Alias dafuer) -- ein reines
+  `style.transform = "none"` liess dieses `translate` unbemerkt weiterlaufen und verschob die
+  bereits korrekt berechnete Position um genau die halbe Content-Breite/-Hoehe. Beide Faelle jetzt
+  explizit ueberschrieben (`right`/`bottom`: `"auto"`, `transform`/`translate`: `"none"`), mit
+  Begruendung direkt im Code.
+- **`tooltip-trigger`/`hover-card-trigger`-Spans bekommen `inline-flex`** (funktionale, keine
+  optische Klasse -- Regel 1 erlaubt das ausdruecklich): ein unstylter `<span>` um ein
+  Inline-Block-Kind (z. B. einen button.php-Button) uebernimmt sonst die umgebende Zeilenbox-
+  Baseline/Line-Height-"Geisterluecke", wodurch `getBoundingClientRect()` auf genau dem Element,
+  das die JS-Positionsmathematik als Trigger misst, ein paar Pixel zu hoch zurueckkommt.
+- **`tooltip.js`'s `GAP` war 8, nicht die Referenz-eigenen 10px** (die die CSS-Ruheklassen
+  `calc(100%+10px)` bereits korrekt hatten) -- jetzt konsistent 10.
+
+- **Kein Datei-pro-Variante-Split, kein neuer `tooltip/`-Ordner.** Der Auftrag bat explizit darum,
+  das bei Bedarf zu pruefen. Jede in der Referenz gezeigte "Variante" (vier `side`-Werte, ein
+  `align`-Beispiel, ein reiner Icon-Trigger, ein gepunktet unterstrichener "Hilfe"-Trigger in einer
+  Tabellenzeile) ist Markup/Config, die die bestehende Einzeldatei entweder schon abbildet oder mit
+  einer kleinen Ergaenzung (`align`, siehe unten) abbildet -- keine strukturell andere Komposition
+  wie z. B. separator.php + separator-label.php. Regel 4 greift entsprechend nicht.
+- **Farben: `rgb(30,29,28)`/`rgb(250,249,245)` der Referenz sind naeher an Tailwinds eigenem
+  `neutral-900`/`neutral-50` als an diesem Projekts bestehenden `--color-foreground`/`-grey-dark`**
+  (beide auf `neutral-800` gepinnt) -- direkt referenziert (`bg-neutral-900 text-neutral-50`) statt
+  ein neues Token anzulegen, dieselbe "Tailwinds Skalen referenzieren, wenn noch kein Projekt-Token
+  passt"-Konvention wie tokens.css sie fuer toast.php's `warning` (amber-600) bereits dokumentiert.
+  Bewusst NICHT shadcns eigene `bg-primary text-primary-foreground`-Stock-Klassen fuer
+  TooltipContent -- `primary` ist in diesem Projekt die henge-green Markenfarbe, die Referenz zeigt
+  auf jedem einzelnen Beispiel unzweideutig eine neutrale Nahezu-Schwarz-Karte, nie gruen.
+- **`align` (start | center | end) ist eine neue Config, kam in Phase 1 nicht vor.** Die Referenz
+  zeigt mit ihrem Tabellenzeilen-Beispiel echtes `align="start"` (Tooltip startet buendig an der
+  linken Trigger-Kante statt zu zentrieren) -- echtes shadcn/Radix-TooltipContent-Vokabular, das
+  diese Datei bisher schlicht nicht implementiert hatte (Phase 1 deckte nur das funktionale
+  Minimum ab), kein erfundenes Vokabular. hover-card.php hat exakt dasselbe start/center/end-
+  Vokabular bereits, jetzt ueber denselben gemeinsamen `utils/floating-position.js`-`align`-Parameter
+  verdrahtet -- tooltip.js reicht `align` jetzt genauso durch wie hover-card.js es bereits tut.
+- **Fixe `width:250px`/`240px`** der Referenz-Langtext-Beispiele (Tabellenzeile, Dunkel-Abschnitt)
+  wurde zu `max-w-xs` (320px) + `text-pretty` verallgemeinert statt eine der beiden Zahlen zu
+  kopieren -- ein Wert, der erst bei tatsaechlich langem Inhalt greift, bedient sowohl die kurzen
+  als auch das lange Beispiel mit einer Regel, statt jeden Tooltip auf eine fuer eine bestimmte
+  Demo-Zeichenkette passende Breite festzunageln.
+- **Pfeil (`[data-slot="tooltip-arrow"]`) neu**, ein 8px-Quadrat mit `rotate-45 bg-inherit` (erbt
+  die Kartenfarbe statt sie ein zweites Mal zu setzen, dieselbe Wiederverwendung wie toast.php's
+  `text-current`/`bg-current`). `side` steuert seine Position vollstaendig per CSS
+  (`group-data-[side=...]:`); `align` NUR beim Pfeil zusaetzlich per CSS (fixer 16px-Versatz von der
+  Karten-Kante, exakt die Referenz' eigener `left:16px`-Wert) -- bei der Karte selbst bleibt
+  `align`s Kreuzachsen-Verschiebung reines JS (`positionFloatingElement()` kennt die echte
+  Trigger-Geometrie bereits fuer `side`s Flip-Logik; eine parallele _statische_ CSS-Verschiebung
+  pro `align`-Wert würde nur den ohnehin unsichtbaren Vor-JS-Ruhezustand betreffen und den
+  kombinatorischen Klassen-Umfang unnoetig aufblaehen).
+- **Das Referenz-"Auf dunklem Grund"-Beispiel wurde NICHT uebernommen**, aus demselben Grund wie
+  bei jedem bisherigen Phase-2-Eintrag -- kein Alleingang ohne projektweite Dark-Strategie.
+- **`page-component-showcase-tooltip.php` neu angelegt** (analog zu den bestehenden
+  Showcase-Seiten), inkl. eines eigenen `align`-Abschnitts, da diese Config in Phase 1 noch nicht
+  existierte.
+
+---
+
 ### `toast.php` gestylt, kein Datei-pro-Typ-Split, kein Ordner-Umzug (2026-09-04)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"

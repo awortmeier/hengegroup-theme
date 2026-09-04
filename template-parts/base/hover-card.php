@@ -156,8 +156,12 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
     $wrapper_attributes['data-' . $data_name] = $attribute_value;
 }
 
+// `inline-flex` here is a functional fix, not styling -- see tooltip.php's identical
+// `tooltip-trigger` span for why an unstyled inline wrapper throws off the shared
+// utils/floating-position.js measurement (its own getBoundingClientRect() picks up the
+// surrounding line box's baseline/line-height "ghost space" otherwise).
 $trigger_markup = sprintf(
-    '<span data-slot="hover-card-trigger">%s</span>',
+    '<span class="inline-flex" data-slot="hover-card-trigger">%s</span>',
     $trigger, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 

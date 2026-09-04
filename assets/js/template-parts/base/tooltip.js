@@ -1,13 +1,15 @@
 // Progressive-enhancement layer for template-parts/base/tooltip.php: enhances the native
 // `title`-attribute fallback into a styled, positioned floating panel. Shows on hover/focus after
 // a delay, hides on mouseleave/blur/Escape, repositions on scroll/resize while open. Positioning
-// math (single-axis flip, viewport clamp) lives in utils/floating-position.js -- shared with
-// hover-card.js, which needs the exact same anchored-panel placement (see that util's header
-// comment).
+// math (single-axis flip, viewport clamp, `align` cross-axis placement) lives in
+// utils/floating-position.js -- shared with hover-card.js, which needs the exact same
+// anchored-panel placement (see that util's header comment).
 
 import { positionFloatingElement } from "../../utils/floating-position.js";
 
-const GAP = 8;
+// 10px, matching the Hengegroup reference's own gap (and tooltip.php's `calc(100%+10px)` resting
+// classes) -- was 8 before Phase 2 gave this a real reference value to match.
+const GAP = 10;
 
 function setupTooltip(wrapper) {
     const trigger = wrapper.querySelector('[data-slot="tooltip-trigger"]');
@@ -18,11 +20,15 @@ function setupTooltip(wrapper) {
     }
 
     const side = wrapper.dataset.side || "top";
+    const align = wrapper.dataset.align || "center";
     const delay = Number(wrapper.dataset.delay) || 700;
     let showTimer = null;
 
     const reposition = () => {
-        wrapper.dataset.side = positionFloatingElement(trigger, content, side, { gap: GAP });
+        wrapper.dataset.side = positionFloatingElement(trigger, content, side, {
+            gap: GAP,
+            align,
+        });
     };
 
     const open = () => {
