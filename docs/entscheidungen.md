@@ -21,6 +21,60 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `spinner.php` gestylt: Umstieg von `icon.php`-Delegation auf eigenes Zwei-Kreis-SVG, `size`-/
+
+`color`-Vokabular, `button.php`s `loading`-Spinner darauf umgestellt (2026-09-04)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/795f39d7-99e9-4211-9b9a-c15dabacc6ab). Details/Klassen-Herleitung
+stehen direkt in `spinner.php`s eigenem Kopfkommentar (Regel 12: kein Doppel-Text hier) -- dieser
+Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **Kein einzelnes Lucide-Icon bildet die Referenz-Form ab** (Ring-Track + kurzer rotierender
+  Viertelkreis-Akzent) -- `loader-circle` ist ein einzelner ~270-Grad-Pfad ohne separaten Track.
+  `spinner.php` rendert deshalb ab jetzt sein eigenes inline `<svg>` (zwei konzentrische `<circle>`s
+  in einer gemeinsamen 24er-`viewBox`) statt ueber `hengegroup_theme_render_icon()` zu delegieren --
+  gleiche "die Referenz braucht eine Form, die shadcn/lucide nicht mitbringt"-Situation wie bei
+  `progress-circle.php`. `icon`/`set`-Config ersatzlos entfernt (kein Aufrufer nutzte etwas
+  ausserhalb des Defaults, siehe `grep -rn "base/spinner"` vor dieser Aenderung).
+- **Die Strichstaerke bekommt KEINEN eigenen Wert pro `size`** -- Track/Arc teilen sich fuer jede
+  Groesse dieselbe `viewBox="0 0 24 24"` und dasselbe `stroke-width="2"`; die tatsaechliche
+  Pixel-Staerke ergibt sich automatisch aus der gerenderten Box-Groesse (Tailwinds `size-*`-Klasse).
+  Deckt die Referenz-Vorgabe ("Die Strichstärke wächst mit dem Durchmesser") ohne zusaetzliche
+  Fallunterscheidung ab.
+- **`color`-Vokabular `default | muted | inherit` statt des sonst ueblichen `default | light`
+  ("welche Oberflaeche") von accordion.php/typography.php/progress-steps.php.** Die Referenz zeigt
+  drei tatsaechlich unterschiedliche Betonungsstufen fuer den Akzent-Arc (Marken-Gruen standalone/
+  in Liste/Karte, gedaempftes Grau im sekundaeren Button-Beispiel, und -- im `button.php`-Abschnitt
+  unten -- eine dritte, die von der jeweiligen Button-Textfarbe abhaengt), keinen Hell/Dunkel-
+  Oberflaechen-Schalter. `inherit` setzt bewusst KEINE eigene Farbklasse (statt `currentColor` per
+  `class`-Override zu erzwingen), weil ein `class`-Override gegen eine bereits gesetzte
+  `text-*`-Utility bei gleicher CSS-Spezifitaet nicht zuverlaessig gewinnt (button.php's eigener
+  Kopfkommentar dokumentiert genau diese Einschraenkung bereits allgemein).
+- **Referenz-Abschnitt "Auf dunklem Grund" NICHT uebernommen**, aus demselben Grund wie beim
+  `kbd.php`-/`pagination.php`-/`table/*.php`-/`separator.php`-Eintrag -- kein Alleingang ohne
+  projektweite Dark-Strategie.
+- **`page-component-showcase-attachment.php`s bestehendes "Verarbeitung laeuft"-Beispiel** (bislang
+  `class => 'size-4 text-henge-grey'`) auf `size => 'base', color => 'muted'` migriert -- der
+  einzige real existierende Aufrufer von `spinner.php` vor dieser Aenderung.
+- **`button.php`s `loading`-Zustand rendert jetzt `spinner.php` statt eines eigenen
+  `spinner_icon`-Configs ueber `hengegroup_theme_render_icon()`.** Die Referenz zeigt den neuen
+  Ring-Spinner explizit als Teil ihres eigenen "In Buttons"-Abschnitts -- ohne diese Umstellung
+  wuerde jeder ladende Button weiterhin die alte Lucide-Form zeigen, sichtbar inkonsistent zum
+  Rest der Komponente. `spinner_icon` (Config-Key) umbenannt zu `spinner` (kein Icon mehr, das
+  Config sind jetzt spinner.php-Overrides), Groesse aus der Button-`size` abgeleitet
+  (`sm/base/lg` 1:1, `icon-*` auf ihr Text-Pendant), `color: 'inherit'` (siehe oben) statt eines
+  festen Werts, weil kein einzelner Farbwert fuer JEDE Button-`variant`
+  (henge-green/henge-blue/.../outline/ghost) passt. Kein weiterer Aufrufer betroffen (`grep -rn
+"spinner_icon"` zeigte nur `button.php` selbst).
+- **Kein Datei-pro-Variante-Split, kein Umzug in einen eigenen Ordner** -- `size`/`color` sind reine
+  Klassen-Varianten innerhalb EINER Datei (gleiches Muster wie button.php's/kbd.php's eigenes
+  `variant`/`size`, siehe `kbd.php`-Eintrag oben, "keine Datei-pro-Variante"); nichts in der
+  Referenz verlangt eine strukturell andere Spinner-Komposition. `template-parts/base/spinner.php`
+  bleibt eine einzelne flache Datei (Regel 4 greift erst ab mehr als einer Datei).
+
+---
+
 ### `separator.php`: Bugfix fuer unsichtbaren vertikalen Separator (`h-full` -> `self-stretch`/`h-auto`), neuer `style: 'gradient'` (henge-blue – henge-green – henge-grey) (2026-09-04)
 
 Follow-up zum `separator.php`/`separator-label.php`-Eintrag direkt unterhalb, auf Nutzer-Meldung

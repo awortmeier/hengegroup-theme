@@ -41,8 +41,14 @@ declare(strict_types=1);
 //                           `icon_position`, unless the button is icon-only (nothing to be
 //                           "inline" relative to there)
 //   icon_position  string   start | end (ignored for icon-only buttons)
-//   spinner_icon   array    icon.php config override for the loading spinner
-//                           (default: ['name' => 'loader-circle', 'set' => 'lucide'])
+//   spinner        array    spinner.php config overrides for the loading spinner, merged onto the
+//                           computed default (size mapped from this button's own `size`,
+//                           color: 'inherit' so the spinner takes on whichever text color `variant`
+//                           already set instead of its own default brand color -- see spinner.php's
+//                           own header for why `inherit` exists --, decorative: true since
+//                           aria-busy + the button's own text/aria-label already announce the
+//                           loading state, a second role="status" from the spinner itself would be
+//                           redundant)
 //   aria_label     string   required for icon-only buttons (no visible text to name them) -- a
 //                           missing value doesn't hard-fail the render, but triggers
 //                           a WP_DEBUG-only _doing_it_wrong() hint, see
@@ -70,9 +76,7 @@ $disabled = !empty($config['disabled']);
 $loading = !empty($config['loading']);
 $icon_config = is_array($config['icon'] ?? null) ? $config['icon'] : null;
 $icon_position = trim((string) ($config['icon_position'] ?? 'start'));
-$spinner_icon_config = is_array($config['spinner_icon'] ?? null)
-    ? $config['spinner_icon']
-    : ['name' => 'loader-circle', 'set' => 'lucide'];
+$spinner_config_override = is_array($config['spinner'] ?? null) ? $config['spinner'] : [];
 $aria_label = trim((string) ($config['aria_label'] ?? ''));
 $class_name = trim((string) ($config['class'] ?? ''));
 $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : [];
@@ -173,22 +177,46 @@ if ($icon_position !== 'end') {
 $is_icon_only = $text === '' && ($has_icon || $loading);
 
 if ($loading) {
-    $active_icon_config = $spinner_icon_config;
-} elseif ($has_icon) {
-    $active_icon_config = $icon_config;
-} else {
-    $active_icon_config = null;
-}
+    // Button size -> spinner size: sm/base/lg map 1:1, icon-* variants reuse their text
+    // counterpart's step (spinner.php has no icon-* concept of its own, it's never icon-shaped).
+    $spinner_size_map = [
+        'sm' => 'sm',
+        'base' => 'base',
+        'lg' => 'lg',
+        'icon-sm' => 'sm',
+        'icon-base' => 'base',
+        'icon-lg' => 'lg',
+    ];
 
-if ($active_icon_config !== null) {
+    $spinner_config = array_merge(
+        [
+            'size' => $spinner_size_map[$size] ?? 'base',
+            'color' => 'inherit',
+            'decorative' => true,
+        ],
+        $spinner_config_override,
+    );
+
     if (!$is_icon_only) {
-        $active_icon_config['data_attributes'] = array_merge(
-            is_array($active_icon_config['data_attributes'] ?? null)
-                ? $active_icon_config['data_attributes']
+        $spinner_config['data_attributes'] = array_merge(
+            is_array($spinner_config['data_attributes'] ?? null)
+                ? $spinner_config['data_attributes']
                 : [],
             ['icon' => $icon_position === 'end' ? 'inline-end' : 'inline-start'],
         );
     }
+
+    ob_start();
+    get_template_part('template-parts/base/spinner', null, ['config' => $spinner_config]);
+    $icon_markup = (string) ob_get_clean();
+} elseif ($has_icon) {
+    $active_icon_config = $icon_config;
+    $active_icon_config['data_attributes'] = array_merge(
+        is_array($active_icon_config['data_attributes'] ?? null)
+            ? $active_icon_config['data_attributes']
+            : [],
+        $is_icon_only ? [] : ['icon' => $icon_position === 'end' ? 'inline-end' : 'inline-start'],
+    );
 
     $icon_markup = hengegroup_theme_render_icon($active_icon_config);
 } else {

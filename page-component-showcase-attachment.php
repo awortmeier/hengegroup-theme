@@ -195,7 +195,8 @@ $view_remove_actions = static function (): string {
                         ob_start();
                         get_template_part('template-parts/base/spinner', null, [
                             'config' => [
-                                'class' => 'size-4 text-henge-grey',
+                                'size' => 'base',
+                                'color' => 'muted',
                                 'aria_label' => 'Verarbeitung läuft',
                             ],
                         ]);
