@@ -12,6 +12,17 @@ declare(strict_types=1);
 // like TanStack Table's row-selection state -- exposed here as `selected`, same
 // config-key-instead-of-manual-data-attribute convention as toggle.php's `pressed`.
 //
+// Phase 2 (CLAUDE.md Regel 1): base classes taken 1:1 from shadcn's own TableRow
+// (registry/new-york-v4/ui/table.tsx, live-checked 2026-09-03) -- `border-b transition-colors
+// hover:bg-muted/50 has-aria-expanded:bg-muted/50` -- with one deliberate deviation on the
+// strength of the Claude-Design reference "Hengegroup" (same `.dc.html` reference workflow as
+// pagination.php's own entry, see docs/entscheidungen.md): the selected-row tint is
+// `data-[state=selected]:bg-henge-green/5` instead of shadcn's own flat `bg-muted` -- a brand-color
+// wash instead of a neutral one, matching the reference's own selected-row look (`rgba(27,110,70,
+// 0.06)`, i.e. henge-green at ~6% -- `/5` is the nearest real Tailwind opacity step, same
+// nearest-real-scale-step convention as button.php's font-size mapping) and the same henge-green-
+// for-"current/selected" precedent pagination.php's own active-page item already established.
+//
 // Supported config:
 //   content    string   required. Pre-rendered HTML to wrap (buffered table-head.php/
 //                        table-cell.php calls)
@@ -37,11 +48,10 @@ if (trim($content) === '') {
 }
 
 $element_attributes = $attributes;
-
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
-
+$element_attributes['class'] = trim(
+    'border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-henge-green/5' .
+        ($class_name !== '' ? ' ' . $class_name : ''),
+);
 $element_attributes['data-slot'] = 'table-row';
 
 if ($selected) {

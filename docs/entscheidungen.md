@@ -21,6 +21,126 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `data-table.php`: Architektur-Wechsel auf vollstaendig client-seitiges Sortieren/Suchen/Filtern/Blaettern per JS, Toolbar (Suche/Kategorie-Filter/Spalten-Toggles) nachgezogen, Pagination via `pagination-compact.php` (2026-09-04)
+
+Auf expliziten Wunsch (Nutzer-Prompt: "Die Data Table soll mit JS funktionieren, also alle
+Eintraege laden und nur via js weiterblaettern... koennen wir nicht die pagination dafuer
+verwenden? ... oben fehlen das Suchfeld usw. das soll auch via JS funktionieren"): kehrt v1's
+eigene, einen Tag zuvor bewusst getroffene Entscheidung um ("sorting and pagination become real
+`<a href>` navigation links... genuinely functional with zero JS, not a fake/inert control"). Das
+ist kein Widerspruch zu CLAUDE.md, sondern genau deren Kernhaltung angewendet: es gibt keine
+kategorische Zero-JS-Praeferenz, UX/DX entscheiden pro Fall (siehe CLAUDE.md "Kernhaltung") -- hier
+eben neu, weil der Nutzer es explizit so will, nicht weil zero-JS grundsaetzlich falsch gewesen
+waere. Details/Klassen-/API-Herleitung stehen direkt in `data-table.php`s eigenem Kopfkommentar
+(Regel 12: kein Doppel-Text hier) -- dieser Eintrag haelt nur die Entscheidungen fest, die nicht
+schon aus dem Diff folgen:
+
+- **`rows` ist jetzt IMMER der komplette Datensatz**, nicht mehr nur eine Seite -- PHP rendert
+  alles auf einmal, `assets/js/template-parts/base/data-table.js` blendet Zeilen rein ueber
+  `hidden` ein/aus (Suche/Filter/Pagination) und ordnet sie fuers Sortieren im DOM um. Kein Fetch,
+  kein neuer PHP-Endpunkt, keine `add_query_arg()`-Navigation mehr fuer Sortierung/Pagination.
+- **Ohne JS: alle Zeilen sichtbar, unsortiert/ungefiltert, Toolbar-Controls inert** -- eine bewusst
+  akzeptierte Regression gegenueber v1's eigener "genuinely functional without JS"-Haltung, nicht
+  uebersehen. Es gibt dafuer auch keine sinnvolle Zero-JS-Alternative mehr: sobald ALLE Zeilen
+  serverseitig im DOM stehen, waere ein "Seite 2"-Link ohne JS nur ein No-Op-Reload derselben
+  Seite -- anders als bei `pagination.php`/`pagination-compact.php` (echte Server-Paginierung mit
+  jeweils nur einer Teilmenge der Daten pro Request), wo ein echter Reload weiterhin einen echten
+  Sinn hat und deshalb dort NICHT angetastet wurde.
+- **`pagination-compact.php` wird 1:1 unveraendert genested statt eines dritten
+  Hand-gebauten Prev/Next-Streifens** (Nutzer-Wunsch: "koennen wir nicht die pagination dafuer
+  verwenden?"). Einzige Aenderung an `pagination-compact.php` selbst: ein neues
+  `data-action="previous"|"next"`-Hook auf dessen Vor/Zurueck-Buttons (via deren bereits
+  bestehenden `data_attributes`-Passthrough) -- rein additiv, keine visuelle Aenderung, keine
+  Aenderung an dessen eigener (weiterhin echt server-seitiger) Nutzung anderswo. `pagination.php`
+  (nummerierte Seiten mit Ellipsis) wurde bewusst NICHT gewaehlt: nach jeder Filteraenderung
+  aendert sich die Gesamtseitenzahl, `pagination-compact.php`s "Seite X von Y"-Label braucht dafuer
+  nur einen Text-Update, waehrend `pagination.php`s Ellipsis-Fenster-Logik (aktuell reines PHP)
+  komplett im Browser nachgebaut werden muesste.
+- **Sortierung/Filterung/Suche brauchen echte (nicht aus dem gerenderten HTML ableitbare)
+  Rohwerte** -- geloest ueber serverseitig berechnete `data-search`/`data-filter`/
+  `data-sort-<key>`-Attribute pro Zeile (`wp_strip_all_tags()` auf die Zell-HTML als Default,
+  `sort_values`/`search` als neue optionale Rich-Row-Overrides fuer Faelle, wo der sichtbare Text
+  falsch sortiert/durchsucht wird -- z. B. eine "42 t"-Zelle mit Status-Badge braucht
+  `sort_values: ['bestand' => 42]` fuer numerische statt lexikografische Sortierung). Kein
+  serverseitiges Escaping-Risiko: die Rohwerte sind bereits vom Aufrufer gelieferter Text, nicht
+  neu von aussen eingespeist.
+- **Alle State-Wechsel im JS toggeln ausschliesslich `data-state`/`aria-*`/`hidden`-Attribute,
+  nie Klassenlisten** -- die eigentliche Optik steckt als statische `data-[state=active]:...`-
+  Tailwind-Variante bereits im PHP-gerenderten Klassenstring (gleiches Muster wie
+  `table-row.php`s eigenes `data-[state=selected]:bg-henge-green/5`). Vermeidet das
+  "Tailwind-Klassen-Strings von Hand in JS duplizieren"-Problem, das z. B. `calendar.js` bewusst
+  eingeht (dort mangels Alternative, hier vermeidbar, weil dieses File die Klassen ohnehin selbst
+  first-party rendert) -- einzige Ausnahme: der Sortier-Pfeil selbst (drei vorgerenderte SVGs,
+  `hidden` togglet zwischen ihnen, weil CSS ein SVG-Icon nicht in ein anderes morphen kann) und das
+  Vor/Zurueck-`href`/`aria-disabled`-Paar (strukturelle, keine Optik-Attribute).
+- **`filter_column` ist bewusst eine einzelne Spalte, keine Mehrfachfilter-API** -- deckt exakt die
+  Referenz ab ("Kategorie"), keine spekulative Erweiterung ohne konkreten Anwendungsfall (gleiche
+  Kategorie Entscheidung wie native-select.php's `multiple`).
+- **Spalten-Toggle/Checkbox-Mehrfachauswahl bleiben bewusst getrennte Themen**: Spalten-Sichtbarkeit
+  wurde jetzt gebaut (Nutzer-Wunsch), Zeilen-Auswahl (Checkboxen + Bulk-Aktionen) weiterhin nicht --
+  nicht angefragt, weiterhin ohne konkreten Konsumenten (siehe `data-table.php`s Kopfkommentar).
+
+---
+
+### `table/*.php` gestylt, `data-table.php` nach `table/` verschoben, kein Datei-pro-Variante-Split (2026-09-03)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup" (dieselben `.dc.html`-
+Referenzseiten wie beim `pagination.php`-Eintrag oben). Details/Klassen-Herleitung stehen direkt in
+den jeweiligen Kopfkommentaren (Regel 12: kein Doppel-Text hier) -- dieser Eintrag haelt nur die
+Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **`data-table.php` zieht nach `template-parts/base/table/`**, statt einen eigenen Ordner zu
+  bekommen (Nutzer-Entscheidung, siehe AskUserQuestion-Antwort dieser Session) -- shadcn's eigene
+  Data-Table-Doku eroeffnet selbst mit "This is not a data-table component", sondern einem Muster,
+  das komplett auf `Table` aufbaut (siehe `data-table.php`s eigener Kopfkommentar); fachlich also
+  dieselbe Komponenten-Familie, nicht zwei getrennte. Kein Umbenennen von `table.php`/`table-*.php`
+  noetig, `data-table.php` bekommt schlicht erstmals einen Ordner, als Geschwisterdatei ohne
+  `table-`-Praefix (Regel 4 verlangt nur den gemeinsamen Ordner, kein gemeinsames Datei-Praefix).
+  Kein anderer Aufrufer referenzierte den alten `template-parts/base/data-table`-Pfad (per
+  `grep` verifiziert), daher kein weiterer Migrationsaufwand.
+- **Kein Datei-pro-Variante-Split fuer die Referenz-Abschnitte "Gestreift"/"Kompakt, ohne
+  Rahmen"** (anders als `pagination.php`/`pagination-compact.php`, wo die Kompakt-Variante eine
+  strukturell andere Config-API brauchte). Hier reichen zwei einfache Bool-Konfigs auf `table.php`
+  selbst: `striped` (ein `[&_tbody>tr:nth-child(even)]:...`-Hook, kein neues Markup) und `card`
+  (default `true`, schaltet den Card-Look des AEUSSEREN scroll-area.php-Containers komplett ab/an).
+  `card` musste ein dedizierter Konfig werden statt ueber `table.php`s bestehendes
+  `class`-Passthrough zu laufen: dieses erreicht nachweislich nur das INNERE `<table>`-Element
+  (shadcns eigene Aufteilung, siehe Kopfkommentar), der Card-Look sitzt aber eine Ebene hoeher auf
+  dem scroll-area.php-Container -- keine Kombination aus `class`/`attributes` haette ihn je erreicht;
+  ein frueherer Entwurf dieses Eintrags/der Datei ging faelschlich davon aus, "Kompakt, ohne Rahmen"
+  liesse sich per `class: 'border-0 bg-transparent shadow-none'` erreichen, was aber nur auf dem
+  falschen Element gelandet waere. "Kompakt, ohne Rahmen" kombiniert `card: false` mit
+  `table-head.php`s bereits seit Phase 1 vorhandenem `scope: 'row'` fuer die linke Label-Spalte --
+  siehe `table.php`s Kopfkommentar sowie `page-component-showcase-table.php`s "Kompakt"-Beispiel.
+  Kein neuer shadcn-fremder Zustand, keine neue Datei noetig, gleiche Kein-Split-Begruendung wie beim
+  `kbd.php`-Eintrag oben, nur diesmal weil "nur zwei Konfig-Varianten" statt "nur eine
+  Config-Werte-Variante" zutrifft.
+- **`data-[state=selected]` auf `table-row.php`: `henge-green/5` statt shadcns eigenem `bg-muted`**
+  (Design-Referenz zeigt einen brand-farbenen statt neutralen Tint fuer ausgewaehlte Zeilen) --
+  gleiches Henge-Green-fuer-"aktiv/ausgewaehlt"-Prinzip wie `pagination.php`s eigene aktive-Seite-
+  Variante.
+- **`table-head.php`s Header-Zellen-Optik (uppercase/tracking-widest/muted-foreground) ersetzt
+  shadcns eigenes `font-medium text-foreground`** komplett, nicht nur ergaenzt -- die Referenz zeigt
+  diesen Look in JEDEM Abschnitt konsistent (Basis/Varianten/Data Table), keine Mischung aus beidem.
+- **`align` (start/center/end) wird auf `table-head.php`/`table-cell.php` first-class Config statt
+  weiterhin nur `data-align`-Attribut** -- `data-table.php`s eigener Kopfkommentar dokumentierte das
+  bislang explizit als "for project CSS"-Luecke, die nie geschlossen wurde (kein
+  `[data-align="end"]`-Regelwerk existierte irgendwo im Theme). Jetzt echte Tailwind-Klassen
+  (`text-left`/`text-center`/`text-right`), `data-align` bleibt zusaetzlich als Hook erhalten.
+- **Das Referenz-"Auf dunklem Grund"-Beispiel wurde NICHT uebernommen**, aus demselben Grund wie
+  beim `kbd.php`-/`pagination.php`-Eintrag oben -- kein Alleingang ohne projektweite Dark-Strategie.
+- **Vier bislang fehlende Lucide-Icons nachsynchronisiert** (`chevron-up`, `chevrons-up-down`,
+  `chevrons-left`, `chevrons-right`, ueber `scripts/lucide-icons.json` + `sync-lucide-icons.sh`) --
+  `data-table.php`s Sortier-/Erste-Letzte-Seite-Icons wurden nur ueber eine PHP-Variable an
+  `icon.php` durchgereicht (`['name' => $icon_name, ...]`), nicht als String-Literal, daher vom
+  statischen Scanner (`find-lucide-icons.php`) nie gefunden -- ein bereits vor diesem Auftrag
+  bestehender, stiller Luecken-Fall (die Icons fehlten schlicht als Datei, `icon.php` gibt dann
+  bewusst nichts aus statt fataler zu werden), der beim Styling dieser Komponente aufgefallen ist;
+  `scripts/lucide-icons.json` ist genau fuer diesen "dynamisch zusammengesetzter Name"-Fall gedacht
+  (siehe `find-lucide-icons.php`s eigener Kopfkommentar).
+
+---
+
 ### `kbd.php`/`kbd-group.php`: Keycap-Styling, `size`-Skala + `pressed`-State, kein Dark-Abschnitt, keine Datei-pro-Variante (2026-09-03)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup" (dieselben `.dc.html`-

@@ -29,6 +29,13 @@ declare(strict_types=1);
 // look again comes from the nested button.php, not reproduced here (see pagination.php's own Phase
 // 2 note for why).
 //
+// The Previous/Next buttons carry a `data-action="previous"|"next"` data attribute (via button.php's
+// own `data_attributes`) -- not used by this file, a stable hook for a JS enhancement layer to find
+// them without depending on DOM position. First consumer: data-table.php/data-table.js reuses this
+// whole component for its own pagination bar and manages `href`/`aria-disabled` on these two
+// buttons client-side once all rows are known up front (see that file's own header comment) --
+// still real `<a href>` navigation without JS, same zero-JS-first idiom as everywhere else.
+//
 // Supported config:
 //   current_page      int      default 1, clamped to >= 1
 //   total_pages       int      default 1, clamped to >= 1
@@ -109,6 +116,7 @@ $nav_button = static function (
     string $text,
     string $icon_position,
     bool $disabled,
+    string $action,
 ) use ($page_var): string {
     ob_start();
     get_template_part('template-parts/base/button', null, [
@@ -120,6 +128,11 @@ $nav_button = static function (
             'icon' => ['name' => $icon_name, 'set' => 'lucide'],
             'icon_position' => $icon_position,
             'disabled' => $disabled,
+            // `data-action="previous"|"next"` -- not used by this file itself, a stable hook for a
+            // JS enhancement layer (this project's own or a project's) to find these two specific
+            // buttons without depending on their DOM position; see data-table.js for the first
+            // consumer.
+            'data_attributes' => ['action' => $action],
         ],
     ]);
 
@@ -132,6 +145,7 @@ $previous_markup = $nav_button(
     __('Previous', 'hengegroup-theme'),
     'start',
     !$has_previous,
+    'previous',
 );
 
 $next_markup = $nav_button(
@@ -140,6 +154,7 @@ $next_markup = $nav_button(
     __('Next', 'hengegroup-theme'),
     'end',
     !$has_next,
+    'next',
 );
 
 if ($status_text === '') {

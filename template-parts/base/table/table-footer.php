@@ -9,6 +9,12 @@ declare(strict_types=1);
 // table-row.php calls (each built from table-cell.php cells) and pass the combined HTML as
 // `content`.
 //
+// Phase 2 (CLAUDE.md Regel 1): base classes taken 1:1 from shadcn's own TableFooter
+// (registry/new-york-v4/ui/table.tsx, live-checked 2026-09-03): `border-t bg-muted/50 font-medium
+// [&>tr]:last:border-b-0` -- matches the Claude-Design reference "Hengegroup"'s own Basis-section
+// totals row (a tinted, bold "Gesamt" row) closely enough that no reference-driven deviation was
+// needed, see docs/entscheidungen.md.
+//
 // Supported config:
 //   content   string   required. Pre-rendered HTML to wrap (buffered table-row.php calls)
 //   class / attributes / data_attributes   passthrough onto the outer
@@ -30,11 +36,10 @@ if (trim($content) === '') {
 }
 
 $element_attributes = $attributes;
-
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
-
+$element_attributes['class'] = trim(
+    'border-t bg-muted/50 font-medium [&>tr]:last:border-b-0' .
+        ($class_name !== '' ? ' ' . $class_name : ''),
+);
 $element_attributes['data-slot'] = 'table-footer';
 
 foreach ($data_attributes as $attribute_key => $attribute_value) {

@@ -1,182 +1,319 @@
-// Unit tests for initDataTable() (see data-table.js's header comment: it fetches the real
-// add_query_arg() sort/pagination hrefs template-parts/base/data-table.php already renders and
-// swaps in only the matching [data-slot="data-table"] subtree, falling back to a real navigation
-// whenever that fetch/swap can't be trusted). Builds that wrapper + sort-link + pagination markup
-// directly in jsdom instead of importing the PHP template -- rendering real PHP output isn't
-// available in this JS-only test runner, see docs/to-do.md Abschnitt 1 for where
-// a WP-backed integration suite would close that gap.
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+// Unit tests for initDataTable() (see data-table.js's own header comment: it purely
+// searches/sorts/filters/paginates already-server-rendered `<tr>` elements client-side --
+// no fetch, no navigation). Builds the wrapper/toolbar/table/pagination markup directly in jsdom,
+// matching the shape template-parts/base/table/data-table.php actually renders, instead of
+// importing the PHP template -- rendering real PHP output isn't available in this JS-only test
+// runner, see docs/to-do.md Abschnitt 1 for where a WP-backed integration suite would close that
+// gap.
+import { beforeEach, describe, expect, it } from "vitest";
 import { initDataTable } from "./data-table.js";
 
-function click(el, options = {}) {
-    el.dispatchEvent(
-        new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...options })
-    );
+function click(el) {
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 }));
 }
 
-function renderDataTable({ id = "table-1" } = {}) {
+function sortIcons(direction) {
+    return `<span data-sort-icon="asc" ${direction === "asc" ? "" : "hidden"}>asc</span><span data-sort-icon="desc" ${direction === "desc" ? "" : "hidden"}>desc</span><span data-sort-icon="none" ${direction === "" ? "" : "hidden"}>none</span>`;
+}
+
+function row({ name, category, stock, selected = false }) {
+    const selectedAttr = selected ? ' data-state="selected"' : "";
+
+    return `
+        <tr${selectedAttr} data-search="${name.toLowerCase()} ${category.toLowerCase()}" data-filter="${category}" data-sort-name="${name}" data-sort-stock="${stock}">
+            <td data-column="category">${category}</td>
+            <td>${name}</td>
+            <td>${stock}</td>
+        </tr>
+    `;
+}
+
+function renderDataTable({ perPage = 2, rows: rowConfigs, includePagination = true } = {}) {
+    const defaultRows = [
+        { name: "Alpha", category: "A", stock: 5 },
+        { name: "Bravo", category: "B", stock: 20 },
+        { name: "Charlie", category: "A", stock: 1 },
+        { name: "Delta", category: "B", stock: 12 },
+    ];
+    const rows = (rowConfigs ?? defaultRows).map(row).join("");
+    const totalPages = Math.max(1, Math.ceil((rowConfigs ?? defaultRows).length / perPage));
+
+    const pagination = includePagination
+        ? `
+        <nav data-slot="pagination-compact">
+            <div data-slot="pagination-compact-bar">
+                <a href="?paged=0" data-action="previous" aria-disabled="true">Previous</a>
+                <span data-slot="pagination-compact-status">Page 1 of ${totalPages}</span>
+                <a href="?paged=2" data-action="next">Next</a>
+            </div>
+        </nav>
+    `
+        : "";
+
     document.body.innerHTML = `
-        <div data-slot="data-table" id="${id}">
+        <div data-slot="data-table" data-per-page="${perPage}">
+            <div data-slot="data-table-toolbar">
+                <input type="search" placeholder="Search..." />
+                <div data-slot="data-table-filter">
+                    <button type="button" data-slot="data-table-filter-option" data-filter-value="" data-state="active">All</button>
+                    <button type="button" data-slot="data-table-filter-option" data-filter-value="A" data-state="inactive">A</button>
+                    <button type="button" data-slot="data-table-filter-option" data-filter-value="B" data-state="inactive">B</button>
+                </div>
+                <div data-slot="data-table-columns">
+                    <button type="button" data-slot="data-table-column-toggle" data-column="category" data-state="active" aria-pressed="true">Category</button>
+                </div>
+            </div>
             <table>
-                <tbody><tr><td>Old</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th data-column="category">Category</th>
+                        <th><button type="button" data-slot="data-table-sort" data-sort-key="name" data-state="inactive">Name${sortIcons("")}</button></th>
+                        <th><button type="button" data-slot="data-table-sort" data-sort-key="stock" data-state="inactive">Stock${sortIcons("")}</button></th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
             </table>
-            <a href="/products/?orderby=name&order=asc" data-slot="data-table-sort">Name</a>
-            <nav data-slot="data-table-pagination">
-                <a href="/products/?paged=2">2</a>
-            </nav>
+            <p data-slot="data-table-empty-state" hidden>No results.</p>
+            ${pagination}
         </div>
     `;
 
-    return document.querySelector('[data-slot="data-table"]');
-}
-
-function mockFetchResolving(html) {
-    global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        text: () => Promise.resolve(html),
-    });
+    return {
+        wrapper: document.querySelector('[data-slot="data-table"]'),
+        rows: () => Array.from(document.querySelectorAll("tbody > tr")),
+        searchInput: document.querySelector('input[type="search"]'),
+    };
 }
 
 beforeEach(() => {
     document.body.innerHTML = "";
 });
 
-afterEach(() => {
-    vi.restoreAllMocks();
-    delete global.fetch;
-});
-
 describe("initDataTable", () => {
     it("does nothing when the page has no data tables", () => {
-        global.fetch = vi.fn();
-
-        initDataTable();
-        window.dispatchEvent(new Event("popstate"));
-
-        expect(fetch).not.toHaveBeenCalled();
+        expect(() => initDataTable()).not.toThrow();
     });
 
-    it("intercepts a plain left click on a sort link and swaps in the fetched table", async () => {
-        const wrapper = renderDataTable();
-        const link = wrapper.querySelector('[data-slot="data-table-sort"]');
-        mockFetchResolving(
-            '<div data-slot="data-table" id="table-1"><table><tbody><tr><td>New</td></tr></tbody></table></div>'
+    it("does nothing for a table with no body rows (the server-rendered empty state)", () => {
+        document.body.innerHTML = `
+            <div data-slot="data-table">
+                <table><tbody></tbody></table>
+            </div>
+        `;
+
+        expect(() => initDataTable()).not.toThrow();
+    });
+
+    it("shows only the first page of rows on init", () => {
+        const { rows } = renderDataTable({ perPage: 2 });
+
+        initDataTable();
+
+        const visible = rows().filter((tr) => !tr.hidden);
+        expect(visible.map((tr) => tr.dataset.search)).toEqual(["alpha a", "bravo b"]);
+    });
+
+    it("marks the last VISIBLE row (not the true last DOM row) for table-body.php's border hook", () => {
+        const { rows } = renderDataTable({ perPage: 2 });
+        initDataTable();
+
+        const marked = rows().filter((tr) => tr.hasAttribute("data-last-visible"));
+        expect(marked).toHaveLength(1);
+        expect(marked[0].dataset.search).toBe("bravo b");
+        expect(rows()[rows().length - 1].hasAttribute("data-last-visible")).toBe(false);
+
+        click(document.querySelector('[data-action="next"]'));
+
+        const markedAfterPaging = rows().filter((tr) => tr.hasAttribute("data-last-visible"));
+        expect(markedAfterPaging).toHaveLength(1);
+        expect(markedAfterPaging[0].dataset.search).toBe("delta b");
+    });
+
+    it("filters rows by search text and resets to page 1", () => {
+        const { rows, searchInput } = renderDataTable({ perPage: 2 });
+        initDataTable();
+
+        searchInput.value = "charlie";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        const visible = rows().filter((tr) => !tr.hidden);
+        expect(visible).toHaveLength(1);
+        expect(visible[0].dataset.search).toBe("charlie a");
+    });
+
+    it("shows the empty-state message when the search matches nothing", () => {
+        const { searchInput } = renderDataTable({ perPage: 2 });
+        initDataTable();
+
+        searchInput.value = "no such row";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        expect(document.querySelector('[data-slot="data-table-empty-state"]').hidden).toBe(false);
+    });
+
+    it("filters rows by category pill and marks it active", () => {
+        const { rows } = renderDataTable({ perPage: 10 });
+        initDataTable();
+
+        click(document.querySelector('[data-filter-value="A"]'));
+
+        const visible = rows().filter((tr) => !tr.hidden);
+        expect(visible.map((tr) => tr.dataset.filter)).toEqual(["A", "A"]);
+        expect(document.querySelector('[data-filter-value="A"]').dataset.state).toBe("active");
+        expect(document.querySelector('[data-filter-value=""]').dataset.state).toBe("inactive");
+    });
+
+    it("clears the category filter via the All pill", () => {
+        const { rows } = renderDataTable({ perPage: 10 });
+        initDataTable();
+
+        click(document.querySelector('[data-filter-value="A"]'));
+        click(document.querySelector('[data-filter-value=""]'));
+
+        expect(rows().filter((tr) => !tr.hidden)).toHaveLength(4);
+    });
+
+    it("sorts rows numerically by a sortable column and updates aria-sort/icon state", () => {
+        const { rows } = renderDataTable({ perPage: 10 });
+        initDataTable();
+
+        const stockButton = Array.from(
+            document.querySelectorAll('[data-slot="data-table-sort"]')
+        ).find((button) => button.dataset.sortKey === "stock");
+        click(stockButton);
+
+        const order = rows().map(
+            (tr) => tr.dataset.sortStock ?? tr.getAttribute("data-sort-stock")
         );
-        const pushStateSpy = vi.spyOn(history, "pushState").mockImplementation(() => {});
+        expect(order).toEqual(["1", "5", "12", "20"]);
+        expect(stockButton.dataset.state).toBe("active");
+        expect(stockButton.closest("th").getAttribute("aria-sort")).toBe("ascending");
+        expect(stockButton.querySelector('[data-sort-icon="asc"]').hidden).toBe(false);
+        expect(stockButton.querySelector('[data-sort-icon="none"]').hidden).toBe(true);
+    });
 
+    it("reverses sort direction on a second click of the same column", () => {
+        const { rows } = renderDataTable({ perPage: 10 });
         initDataTable();
-        click(link);
 
-        // navigate() sets aria-busy synchronously, before the fetch promise settles
-        expect(wrapper.getAttribute("aria-busy")).toBe("true");
+        const stockButton = Array.from(
+            document.querySelectorAll('[data-slot="data-table-sort"]')
+        ).find((button) => button.dataset.sortKey === "stock");
+        click(stockButton);
+        click(stockButton);
 
-        await vi.waitFor(() => {
-            expect(wrapper.textContent).toContain("New");
+        const order = rows().map((tr) => tr.getAttribute("data-sort-stock"));
+        expect(order).toEqual(["20", "12", "5", "1"]);
+        expect(stockButton.closest("th").getAttribute("aria-sort")).toBe("descending");
+    });
+
+    it("deactivates the previously active sort column when a different one is clicked", () => {
+        renderDataTable({ perPage: 10 });
+        initDataTable();
+
+        const buttons = Array.from(document.querySelectorAll('[data-slot="data-table-sort"]'));
+        const nameButton = buttons.find((button) => button.dataset.sortKey === "name");
+        const stockButton = buttons.find((button) => button.dataset.sortKey === "stock");
+
+        click(nameButton);
+        click(stockButton);
+
+        expect(nameButton.dataset.state).toBe("inactive");
+        expect(nameButton.closest("th").hasAttribute("aria-sort")).toBe(false);
+        expect(stockButton.dataset.state).toBe("active");
+    });
+
+    it("toggles column visibility on every cell sharing that column key", () => {
+        renderDataTable({ perPage: 10 });
+        initDataTable();
+
+        const toggle = document.querySelector('[data-slot="data-table-column-toggle"]');
+        click(toggle);
+
+        expect(toggle.dataset.state).toBe("inactive");
+        expect(toggle.getAttribute("aria-pressed")).toBe("false");
+        document.querySelectorAll('[data-column="category"]').forEach((cell) => {
+            expect(cell.hidden).toBe(true);
         });
 
-        expect(fetch).toHaveBeenCalledWith(expect.stringContaining("orderby=name"));
-        expect(wrapper.hasAttribute("aria-busy")).toBe(false);
-        expect(pushStateSpy).toHaveBeenCalled();
-        expect(document.activeElement).toBe(wrapper);
-    });
-
-    // window.location.assign/.reload are non-configurable, non-writable own properties on jsdom's
-    // Location object (unlike a plain method), so vi.spyOn() can't intercept them here -- the
-    // fallback tests below instead assert the *absence* of the success path (no history entry, no
-    // content swap) as the observable proof that navigate()'s catch branch ran.
-    it("falls back to a real navigation when the fetch fails", async () => {
-        const wrapper = renderDataTable();
-        const link = wrapper.querySelector('[data-slot="data-table-sort"]');
-        global.fetch = vi.fn().mockRejectedValue(new Error("network error"));
-        const pushStateSpy = vi.spyOn(history, "pushState").mockImplementation(() => {});
-
-        initDataTable();
-        click(link);
-
-        await vi.waitFor(() => {
-            expect(fetch).toHaveBeenCalledWith(expect.stringContaining("orderby=name"));
+        click(toggle);
+        document.querySelectorAll('[data-column="category"]').forEach((cell) => {
+            expect(cell.hidden).toBe(false);
         });
-        expect(pushStateSpy).not.toHaveBeenCalled();
-        expect(wrapper.textContent).toContain("Old");
     });
 
-    it("falls back to a real navigation when the response has fewer tables than expected", async () => {
-        const wrapper = renderDataTable();
-        const link = wrapper.querySelector('[data-slot="data-table-sort"]');
-        mockFetchResolving("<p>no tables in this response</p>");
-        const pushStateSpy = vi.spyOn(history, "pushState").mockImplementation(() => {});
-
+    it("advances to the next page via the reused pagination-compact bar and updates its state", () => {
+        const { rows } = renderDataTable({ perPage: 2 });
         initDataTable();
-        click(link);
 
-        await vi.waitFor(() => {
-            expect(fetch).toHaveBeenCalledWith(expect.stringContaining("orderby=name"));
-        });
-        expect(pushStateSpy).not.toHaveBeenCalled();
-        expect(wrapper.textContent).toContain("Old");
-    });
+        const nextButton = document.querySelector('[data-action="next"]');
+        click(nextButton);
 
-    it("ignores clicks with a modifier key", () => {
-        const wrapper = renderDataTable();
-        const link = wrapper.querySelector('[data-slot="data-table-sort"]');
-        global.fetch = vi.fn();
-
-        initDataTable();
-        const event = new MouseEvent("click", {
-            bubbles: true,
-            cancelable: true,
-            button: 0,
-            ctrlKey: true,
-        });
-        link.dispatchEvent(event);
-
-        expect(event.defaultPrevented).toBe(false);
-        expect(fetch).not.toHaveBeenCalled();
-    });
-
-    it("ignores cross-origin links", () => {
-        const wrapper = renderDataTable();
-        const link = wrapper.querySelector('[data-slot="data-table-pagination"] a');
-        link.href = "https://example.com/other";
-        global.fetch = vi.fn();
-
-        initDataTable();
-        const event = new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 });
-        link.dispatchEvent(event);
-
-        expect(event.defaultPrevented).toBe(false);
-        expect(fetch).not.toHaveBeenCalled();
-    });
-
-    it("re-fetches the current URL and re-applies every table on the page on popstate", async () => {
-        const wrapper = renderDataTable();
-        mockFetchResolving(
-            '<div data-slot="data-table" id="table-1"><table><tbody><tr><td>Back</td></tr></tbody></table></div>'
+        const visible = rows().filter((tr) => !tr.hidden);
+        expect(visible.map((tr) => tr.dataset.search)).toEqual(["charlie a", "delta b"]);
+        expect(document.querySelector('[data-slot="pagination-compact-status"]').textContent).toBe(
+            "Page 2 of 2"
         );
+        expect(nextButton.hasAttribute("href")).toBe(false);
+        expect(nextButton.getAttribute("aria-disabled")).toBe("true");
 
-        initDataTable();
-        window.dispatchEvent(new PopStateEvent("popstate"));
-
-        await vi.waitFor(() => {
-            expect(wrapper.textContent).toContain("Back");
-        });
-        expect(fetch).toHaveBeenCalledWith(window.location.href);
+        const previousButton = document.querySelector('[data-action="previous"]');
+        expect(previousButton.hasAttribute("aria-disabled")).toBe(false);
+        expect(previousButton.getAttribute("href")).toBe("?paged=0");
     });
 
-    it("falls back to reloading the page if the popstate re-fetch itself fails", async () => {
-        const wrapper = renderDataTable();
-        global.fetch = vi.fn().mockRejectedValue(new Error("offline"));
+    it("does not advance past the last page", () => {
+        renderDataTable({ perPage: 2 });
+        initDataTable();
+
+        const nextButton = document.querySelector('[data-action="next"]');
+        click(nextButton);
+        click(nextButton);
+
+        expect(document.querySelector('[data-slot="pagination-compact-status"]').textContent).toBe(
+            "Page 2 of 2"
+        );
+    });
+
+    it("resets to page 1 when a search narrows the result set", () => {
+        const { rows, searchInput } = renderDataTable({ perPage: 2 });
+        initDataTable();
+
+        click(document.querySelector('[data-action="next"]'));
+        searchInput.value = "a";
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+        expect(document.querySelector('[data-slot="pagination-compact-status"]').textContent).toBe(
+            "Page 1 of 2"
+        );
+        expect(rows().filter((tr) => !tr.hidden)).toHaveLength(2);
+    });
+
+    it("works without a pagination bar (per_page disabled)", () => {
+        const { rows } = renderDataTable({ perPage: 0, includePagination: false });
+        document.querySelector('[data-slot="data-table"]').removeAttribute("data-per-page");
 
         initDataTable();
-        window.dispatchEvent(new PopStateEvent("popstate"));
 
-        // window.location.reload() is called unconditionally in the .catch() handler here -- see
-        // the comment above on why it can't be spied on directly in jsdom. Fetch having run against
-        // the current URL, with the table content left untouched, is the observable proof this
-        // branch (rather than a silent no-op) executed.
-        await vi.waitFor(() => {
-            expect(fetch).toHaveBeenCalledWith(window.location.href);
+        expect(rows().filter((tr) => !tr.hidden)).toHaveLength(4);
+    });
+
+    it("preserves the selected-row data-state through sorting/filtering", () => {
+        renderDataTable({
+            perPage: 10,
+            rows: [
+                { name: "Alpha", category: "A", stock: 5, selected: true },
+                { name: "Bravo", category: "B", stock: 20 },
+            ],
         });
-        expect(wrapper.textContent).toContain("Old");
+        initDataTable();
+
+        const stockButton = Array.from(
+            document.querySelectorAll('[data-slot="data-table-sort"]')
+        ).find((button) => button.dataset.sortKey === "stock");
+        click(stockButton);
+
+        const selectedRow = document.querySelector('tr[data-state="selected"]');
+        expect(selectedRow.dataset.search).toBe("alpha a");
     });
 });

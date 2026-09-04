@@ -9,6 +9,11 @@ declare(strict_types=1);
 // caption is near-universally a short line of text, and per the HTML spec it must be the FIRST
 // child of <table> -- see table.php's header comment for the composition order this implies.
 //
+// Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own TableCaption (registry/
+// new-york-v4/ui/table.tsx, live-checked 2026-09-03): `mt-4 text-sm text-muted-foreground` --
+// close enough to the Claude-Design reference "Hengegroup"'s own footnote-style text under its
+// Basis table that no reference-driven deviation was needed, see docs/entscheidungen.md.
+//
 // Supported config:
 //   text   string   required. Visible caption text, escaped
 //   class / attributes / data_attributes   passthrough, as in the other base parts
@@ -29,11 +34,9 @@ if ($text === '') {
 }
 
 $element_attributes = $attributes;
-
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
-
+$element_attributes['class'] = trim(
+    'mt-4 text-sm text-muted-foreground' . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 $element_attributes['data-slot'] = 'table-caption';
 
 foreach ($data_attributes as $attribute_key => $attribute_value) {

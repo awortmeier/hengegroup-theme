@@ -7,6 +7,13 @@ declare(strict_types=1);
 // table.php/button-group.php: buffer one or more table-row.php calls (each built
 // from table-head.php cells) and pass the combined HTML as `content`.
 //
+// Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own TableHeader
+// (registry/new-york-v4/ui/table.tsx, live-checked 2026-09-03): `[&_tr]:border-b` -- an
+// arbitrary-variant selector that puts the divider on the header's own <tr> rather than the
+// <thead> element itself (native table sectioning elements can't carry a visible border the way a
+// row can). No reference-driven deviation here; see table-head.php for the reference's own header-
+// cell look.
+//
 // Supported config:
 //   content   string   required. Pre-rendered HTML to wrap (buffered table-row.php calls)
 //   class / attributes / data_attributes   passthrough onto the outer
@@ -28,11 +35,9 @@ if (trim($content) === '') {
 }
 
 $element_attributes = $attributes;
-
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
-
+$element_attributes['class'] = trim(
+    '[&_tr]:border-b' . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 $element_attributes['data-slot'] = 'table-header';
 
 foreach ($data_attributes as $attribute_key => $attribute_value) {
