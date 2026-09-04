@@ -11,18 +11,20 @@ declare(strict_types=1);
 // Same nesting pattern as aspect-ratio.php/kbd/kbd-group.php: buffer the inner
 // button.php/separator.php/button-group-text.php output(s) and pass the combined HTML string as
 // `content`. shadcn's own ButtonGroupSeparator is nothing but their Separator with
-// orientation="vertical" plus a few extra override classes (self-stretch/no margin/--color-input
-// instead of --color-border, so it fills the group's full height and doesn't add its own gap) --
-// no new component for that here either: reuse template-parts/base/separator.php unchanged and
-// pass those overrides through its own `class` config at the call site, e.g.
-// `['orientation' => 'vertical', 'class' => 'bg-input m-0! self-stretch data-[orientation=vertical]:h-auto']`.
+// orientation="vertical" plus a couple of extra override classes (no margin/--color-input instead
+// of --color-border, so it fills the group's full height and doesn't add its own gap; the
+// full-height fill itself is separator.php's own `orientation: 'vertical'` default now, see that
+// file's Bugfix note) -- no new component for that here either: reuse
+// template-parts/base/separator/separator.php unchanged and pass those two remaining overrides
+// through its own `class` config at the call site, e.g.
+// `['orientation' => 'vertical', 'class' => 'bg-input m-0!']`.
 //
 //   ob_start();
 //   get_template_part('template-parts/base/button', null, ['config' => ['text' => 'Left']]);
-//   get_template_part('template-parts/base/separator', null, [
+//   get_template_part('template-parts/base/separator/separator', null, [
 //       'config' => [
 //           'orientation' => 'vertical',
-//           'class' => 'bg-input m-0! self-stretch data-[orientation=vertical]:h-auto',
+//           'class' => 'bg-input m-0!',
 //       ],
 //   ]);
 //   get_template_part('template-parts/base/button', null, ['config' => ['text' => 'Right']]);

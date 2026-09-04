@@ -31,7 +31,7 @@ declare(strict_types=1);
 // Composition: `trigger`/`content` are caller-provided, pre-rendered HTML (same
 // convention as tooltip.php's `trigger`/aspect-ratio.php's `content`), built from
 // dropdown-menu-item.php/-checkbox-item.php/-radio-group.php/-label.php/-group.php calls plus
-// template-parts/base/separator.php reused UNCHANGED for dividers (exactly like
+// template-parts/base/separator/separator.php reused UNCHANGED for dividers (exactly like
 // button-group.php reuses separator.php) and template-parts/base/kbd/kbd.php/kbd-group.php for
 // shortcut hints (shadcn's own DropdownMenuShortcut is just styled text -- kbd.php already covers
 // that, no new atom needed). IMPORTANT: `trigger` must NOT itself be (or contain) a focusable

@@ -8,9 +8,9 @@ declare(strict_types=1);
 // comment assumed -- shadcn nests their own Separator component (horizontal, absolutely positioned
 // and vertically centered) inside a positioning wrapper, plus a `bg-background` span sitting on top
 // of that line to visually "erase" it behind the text. Ported here the same way: this file nests
-// template-parts/base/separator.php unchanged (same reuse pattern button-group.php's own header
-// documents for its vertical divider) instead of re-implementing a line via raw border/pseudo-
-// element CSS.
+// template-parts/base/separator/separator.php unchanged (same reuse pattern button-group.php's own
+// header documents for its vertical divider) instead of re-implementing a line via raw
+// border/pseudo-element CSS.
 //
 // Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldSeparator (registry/
 // new-york-v4/ui/field.tsx, live-checked 2026-08-30). `group-data-[variant=outline]/field-group`
@@ -54,7 +54,7 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
 }
 
 ob_start();
-get_template_part('template-parts/base/separator', null, [
+get_template_part('template-parts/base/separator/separator', null, [
     'config' => ['class' => 'absolute inset-0 top-1/2'],
 ]);
 $separator_markup = (string) ob_get_clean();

@@ -4,7 +4,7 @@
  * Template Name: Component Showcase - Button Group
  *
  * Dev-only page template: renders template-parts/base/button-group/button-group.php +
- * button-group-text.php (plus the reused template-parts/base/separator.php and button.php as
+ * button-group-text.php (plus the reused template-parts/base/separator/separator.php and button.php as
  * nested content) across orientation, size, icon-only, separator, text-segment and nested-group
  * composition for manual visual/functional review during Phase 2 styling work -- not meant for
  * production content or navigation. Analog zur page-component-showcase-button.php/-badge.php, mit
@@ -31,7 +31,7 @@ $render = static function (string $template_part, array $config): string {
     return (string) ob_get_clean();
 };
 
-$vertical_separator_class = 'bg-input m-0! self-stretch data-[orientation=vertical]:h-auto';
+$vertical_separator_class = 'bg-input m-0!';
 ?>
 
 <div class="mx-auto max-w-5xl px-6 py-12">
@@ -170,7 +170,7 @@ $vertical_separator_class = 'bg-input m-0! self-stretch data-[orientation=vertic
                 'text' => 'Speichern',
                 'variant' => 'henge-green',
             ]) .
-            $render('template-parts/base/separator', [
+            $render('template-parts/base/separator/separator', [
                 'orientation' => 'vertical',
                 'class' => $vertical_separator_class,
             ]) .

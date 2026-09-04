@@ -21,6 +21,108 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `separator.php`: Bugfix fuer unsichtbaren vertikalen Separator (`h-full` -> `self-stretch`/`h-auto`), neuer `style: 'gradient'` (henge-blue – henge-green – henge-grey) (2026-09-04)
+
+Follow-up zum `separator.php`/`separator-label.php`-Eintrag direkt unterhalb, auf Nutzer-Meldung
+("der vertikale separator funktioniert nicht") sowie expliziten Wunsch nach einem dritten,
+dreifarbigen Verlauf. Details stehen direkt in `separator.php`s eigenem Kopfkommentar (Regel 12:
+kein Doppel-Text hier) -- dieser Eintrag haelt nur fest, was nicht schon aus dem Diff folgt:
+
+- **Root Cause verifiziert, nicht nur vermutet**: ein Chrome-Headless-Screenshot (`--headless=new
+--screenshot=...`) einer statischen Test-Seite mit den tatsaechlich kompilierten Klassen zeigte,
+  dass `data-[orientation=vertical]:h-full` (shadcns eigene, unveraendert uebernommene Technik) in
+  DREI Kontexten unsichtbar blieb: `items-center` UND `items-stretch`-Flex-Reihen sowie standalone
+  -- nicht nur der erwartete `items-center`-Fall. Prozentuale Hoehen loesen sich gegen eine
+  unbestimmte Containerhoehe nicht wie erwartet ueber `align-items: stretch` auf (anders als eine
+  reine "auto"-Kreuzachsengroesse). Derselbe Screenshot-Beweis wurde nach dem Fix erneut gefahren,
+  um `self-stretch`+`h-auto` zu verifizieren, statt sich auf Spezifikations-Lektuere allein zu
+  verlassen.
+- **`self-stretch`/`h-auto` ist jetzt der DEFAULT statt eines Call-Site-Overrides.**
+  `button-group.php`s vertikaler Trenner hatte genau dieses Paar bereits von Hand als `class`-Config
+  gesetzt (einziger bislang bekannter funktionierender Workaround) -- jetzt redundant und entfernt,
+  `button-group.php`/`page-component-showcase-button-group.php` behalten nur noch die tatsaechlich
+  weiterhin noetigen Overrides (`bg-input m-0!`).
+- **`page-component-showcase-separator.php`s eigene `class: 'h-4.5'`/`'h-4'`/`'h-3.5'`-Overrides an
+  allen vier vertikalen Beispielen entfernt** -- waren der Autorin bereits beim ersten Bauen als
+  Workaround fuer genau dieses Problem aufgefallen (nicht dokumentiert, da zu dem Zeitpunkt als
+  Nebenaspekt behandelt), jetzt ueberfluessig, seit der Default selbst greift.
+- **`style: 'gradient'` (fix: henge-blue -> henge-green -> henge-grey, Richtung folgt
+  `orientation`) ist ein eigener, benannter `style`-Wert statt (wie die einfarbigen "Verlauf"-
+  Beispiele der Referenz) nur ueber `class` erreichbar** -- explizit als wiederverwendbarer,
+  benennbarer Look angefragt, nicht als Einzelfall-Farbarbeit; siehe `separator.php`s
+  Kopfkommentar fuer die volle Abgrenzung zu den weiterhin nur per `class` erreichbaren
+  Referenz-Gradienten. Per Headless-Screenshot verifiziert (blau -> gruen -> grau, korrekte
+  Reihenfolge/Farben).
+- **Kein `weight`-Ausschluss fuer `gradient`** (anders als `dashed`): `gradient` respektiert
+  `weight`s Dicke/Rundung wie `accent` bereits, kein Grund fuer eine Sonderregel.
+
+---
+
+### `separator.php` gestylt, `separator-label.php` neu, Umzug in `separator/`-Ordner (2026-09-04)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup" (dieselben `.dc.html`-
+Referenzseiten wie beim `table/*.php`-Eintrag unten). Details/Klassen-Herleitung stehen direkt in
+`separator.php`s/`separator-label.php`s eigenen Kopfkommentaren (Regel 12: kein Doppel-Text hier)
+-- dieser Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **`bg-border` (shadcns eigene, immer 100 % deckende `--color-border`-Rolle) durch
+  `bg-foreground` in abgestufter Opazitaet ersetzt**, gesteuert ueber eine neue `weight`-Achse
+  (thin/default/thick/section = 1px@8%/1px@12%/1px@24%/3px@16%+`rounded-full`) -- die Referenz'
+  eigene "Stärken"-Sektion zeigt genau diese 4 benannten Stufen als halbtransparente dunkle Linien,
+  nicht einen flachen Token. Gleiches "Tailwind-Opacity-Modifier auf bestehender Rolle"-Prinzip wie
+  `kbd.php`s `border-foreground/15`.
+- **Neue `style`-Achse (solid/dashed/accent)** deckt nur die zwei der Referenz-"Stile", die eine
+  andere CSS-Technik bzw. eine feste Farbe brauchen: `dashed` (echter `border-*-dashed` statt
+  `background-color`-Fuellung, ignoriert `weight`, immer Hairline) und `accent` (feste
+  `bg-henge-green`-Fuellung -- **keine** konfigurierbare Farbe, gleiche feste-Marken-Farbe-
+  Entscheidung wie `pagination.php`s aktive-Seite-Fuellung). `accent` als eigener `style`-Wert statt
+  ueber `class` erreichbar, weil ein per `class` angehaengtes `bg-henge-green` gegen die `weight`-
+  eigene `bg-foreground/*`-Klasse um dieselbe CSS-Spezifitaet konkurrieren wuerde (exakt die
+  Ueberschreib-Unzuverlaessigkeit, die `kbd-group.php`s eigener Kopfkommentar fuer `class` bereits
+  allgemein dokumentiert) -- ein dedizierter `style`-Wert umgeht dieses Risiko fuer den haeufigen
+  Fall komplett.
+- **Die drei restlichen Referenz-"Stile" (ein Verlauf, zwei mehrfarbige Farbverlaeufe) haben
+  bewusst KEINE eigene Config bekommen.** `background-image`-Gradients (`bg-gradient-to-r`/
+  `from-*`/`to-*`) malen ueber `background-color`, kollidieren also nicht mit der `weight`-eigenen
+  Fuell-Klasse und sind bereits ueber das bestehende `class`-Passthrough erreichbar (gleiches
+  "fuer Einzelfall-Farbarbeit auf `class` setzen"-Prinzip wie `button-group.php`s eigener
+  Kopfkommentar fuer dessen vertikalen Trenner) -- kein mehrstufiges Gradient-Vokabular existiert
+  sonst irgendwo im Theme, aus dem sich eine dedizierte Config ableiten liesse (gleiche
+  "keine spekulative Erweiterung" Begruendung wie `data-table.php`s einzelnes `filter_column`).
+- **Bugfix waehrend der Umsetzung: `bg-foreground/<opacity>` darf NICHT per String-Konkatenation
+  (`'bg-foreground/' . $opacity`) zusammengesetzt werden** -- Tailwinds Build-Scanner findet nur
+  Klassennamen, die irgendwo als vollstaendiger Literal-String im Quelltext stehen, exakt dieselbe
+  Luecke, die `find-lucide-icons.php`s eigener Kopfkommentar fuer dynamisch zusammengesetzte
+  Icon-Namen dokumentiert (siehe `table/*.php`-Eintrag unten). Ein erster Entwurf dieser Datei ging
+  faelschlich davon aus, das waere unproblematisch; ein `pnpm run build:theme` +
+  Kompilat-Grep verifizierte, dass `bg-foreground/8|12|24|16` ohne die Literal-String-Korrektur
+  komplett im finalen CSS fehlten. `$weight_map` haelt die vier vollstaendigen Klassennamen deshalb
+  jetzt als Literal-Strings.
+- **`separator-label.php` ist eine neue, zweite Datei statt eines neuen `separator.php`-Config-
+  Werts**, weil die Referenz-Sektion "Mit Beschriftung" strukturell etwas anderes ist (zwei
+  `flex-1`-Linien plus ein Label-/Punkt-Element dazwischen) als das bestehende Ein-Element-Markup --
+  gleiche Kein-Config-Wert-reicht-nicht-Begruendung wie beim `pagination-compact.php`-Eintrag unten.
+  Kein shadcn-Vorbild dafuer (shadcns eigenes Separator kennt kein Label), ausdruecklich als
+  Implementierungs-Erweiterung gekennzeichnet -- **nicht** dieselbe Technik wie
+  `field-separator.php`s bereits bestehendem gelabelten Trenner (shadcns FieldSeparator:
+  eine absolut positionierte Linie hinter einem hintergrundfarbenen "Erase"-Label), die an
+  `field-group.php`s eigenen Layout-Kontext gebunden bleibt -- `separator-label.php` funktioniert
+  eigenstaendig vor jedem Hintergrund, siehe dessen Kopfkommentar fuer die volle Abgrenzung.
+- **Der Label-Text der `start`-Position nutzt exakt `table-head.php`s eigene Eyebrow-Klassen**
+  (`text-xs font-semibold tracking-widest text-muted-foreground uppercase`) -- beide leiten sich
+  vom selben Referenzwert (`letter-spacing:0.1em`) ab, ein gemeinsamer Look statt zwei unabhaengig
+  hergeleiteter.
+- **Kein Dark-Abschnitt** (Referenz: "Auf dunklem Grund"), aus demselben Grund wie beim
+  `kbd.php`-/`pagination.php`-/`table/*.php`-Eintrag -- kein Alleingang ohne projektweite
+  Dark-Strategie.
+- **Umzug nach `template-parts/base/separator/`** (Regel 4: sobald eine Komponente aus mehr als
+  einer Datei besteht, bekommt sie einen eigenen Ordner) -- alle bestehenden Aufrufer
+  (`field-separator.php`, `dropdown-menu.php`, `button-group.php`,
+  `page-component-showcase-button-group.php`) per `grep -rn "base/separator"` gefunden und auf den
+  neuen Pfad `template-parts/base/separator/separator` umgestellt.
+
+---
+
 ### `data-table.php`: Architektur-Wechsel auf vollstaendig client-seitiges Sortieren/Suchen/Filtern/Blaettern per JS, Toolbar (Suche/Kategorie-Filter/Spalten-Toggles) nachgezogen, Pagination via `pagination-compact.php` (2026-09-04)
 
 Auf expliziten Wunsch (Nutzer-Prompt: "Die Data Table soll mit JS funktionieren, also alle
