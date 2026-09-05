@@ -21,6 +21,52 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `card.php` gestylt, `media_badge`/`footer_divider`/`href` neu, kein Datei-Split (2026-09-05)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/c2fdca5b-79fc-47b7-92c8-e861966ac106)'s "Basis"/"Mit Bild"/
+"Kompakt"-Abschnitte ("Auf dunklem Grund" bewusst nicht uebernommen, siehe unten). Klassen-
+Herleitung/Deviationen stehen direkt in `card.php`s eigenem Kopfkommentar (Regel 12: kein
+Doppel-Text hier) -- dieser Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff
+folgen:
+
+- **Kein Datei-pro-Variante-Split, kein `card/`-Ordner-Umzug** (die Aufgabenstellung hat das explizit
+  zur Pruefung freigestellt, dieselbe Formulierung wie popover.phps eigener Eintrag). Alle vier
+  Referenz-Varianten (Datenliste+Footer-Buttons, Formularkarte, klickbare Bild-Karte,
+  Kennzahlen-Karte) sind Markup/Config, das die bestehende Ein-Datei-Komponente schon abbildet --
+  keine strukturell andere Komposition, die einen eigenen Sub-Ordner (wie `toggle/`/`radio/`)
+  rechtfertigen wuerde.
+- **Drei neue, eng geschnittene Config-Keys statt puren Klassen** -- als einzige echte
+  API-Erweiterung dieser Phase-2-Runde, jeweils weil reine Tailwind-Klassen auf bestehenden Slots
+  die Referenz nicht abbilden konnten:
+    - `href` (macht die ganze Karte zum `<a>`-Klickziel) -- selbes asChild/Slot-Idiom wie button.phps/
+      badge.phps eigenes `href`, nicht neu erfunden.
+    - `media_badge` (Overlay-Label auf dem Bild) -- einziger Weg, ein zweites Element neben `image`
+      in denselben `card-media`-Wrapper zu bekommen, ohne image.php selbst zweckzuentfremden (siehe
+      dessen eigenen Kopfkommentar: bleibt reine `<img>`-Plumbing).
+    - `footer_divider` (bool) -- PHP hat kein `cn()`/tailwind-merge, um shadcns eigenen
+      `[.border-t]:pt-6`-Trick (Trenner erkennen, den der Aufrufer selbst an sein Footer-`className`
+      haengt) auf einen vom Aufrufer nicht kontrollierten Wrapper-`<div>` anzuwenden -- als expliziter
+      Bool stattdessen, gleiche visuelle Wirkung, tatsaechlich erreichbar.
+- **`size: 'sm'` jetzt real gestylt** (Gap/Padding einen Tailwind-Schritt kleiner als `default`) --
+  shadcns eigene aktuelle Docs-Prosa erwaehnt diesen Prop plus eine `--card-spacing`-CSS-Variable,
+  die live-geprüfte Quelldatei (`registry/new-york-v4/ui/card.tsx`, Stand 2026-09-05) zeigt aber
+  keins von beidem. Statt einen unbestaetigten Mechanismus zu raten: eigener, einfacher
+  Spacing-Schritt nach unten, trifft die dokumentierte Absicht ("uses smaller spacing").
+- **Radius `rounded-2xl` statt shadcns Stock-`rounded-xl`**, **`border-border`/`bg-card`/
+  `text-card-foreground`** statt impliziter Browser-Randfarbe -- dieselbe Standardisierung auf die
+  bereits etablierten Karten-/Floating-Radien/-Tokens wie popover.php/toast.php/calendar.php, nicht
+  die Referenz-eigenen 20px woertlich uebernommen.
+- **Titel/Beschreibung bleiben bei `body-lg`/`body-sm`** (typography.phps eigene Groessen-Vokabel,
+  aus Phase 1 uebernommen) statt shadcns tatsaechlich unsized `CardTitle`/`text-sm`
+  `CardDescription` -- Phase-1-Entscheidung, hier nicht revidiert (ausserhalb des Auftrags,
+  typography.php selbst wird nicht angefasst); lediglich `leading-none` (Titel) und `color: 'neutral'`
+  (Beschreibung, = shadcns `text-muted-foreground`) ergaenzt.
+- **Referenz-Abschnitt "Auf dunklem Grund" NICHT uebernommen**, gleicher Grund wie bei jedem bisherigen
+  Phase-2-Eintrag (popover.php/toast.php/tooltip.php/etc.) -- dieses Theme hat noch keine
+  Dark-Mode-/Dark-Surface-Strategie, siehe `docs/to-do.md`.
+- `page-component-showcase-card.php` neu, analog zu den anderen Showcase-Seiten.
+
 ### `toggle.php`/`toggle-group.php` gestylt, drittes `variant` (`accent`), `!important`-Fix in `calendar.php` (2026-09-05)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
