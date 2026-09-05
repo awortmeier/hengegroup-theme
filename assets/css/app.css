@@ -304,4 +304,38 @@
             transform: translateY(0) scale(1);
         }
     }
+
+    /* template-parts/base/dialog.php: entrance animation for the content box AND (via the
+       `[&::backdrop]` arbitrary variant) the native `::backdrop` pseudo-element, documented Regel-1
+       raw-CSS exception -- see that file's own header comment for the full rationale (no stock
+       Tailwind utility composes a named, reusable keyframe set, same reasoning as popover.php's/
+       toast.php's own entries above). Runs unconditionally on `[data-slot="dialog-content"]`/its
+       `::backdrop` -- native `<dialog>` is `display: none` while closed (`dialog:not([open])`, UA
+       stylesheet), so every `showModal()`/`show()` call re-inserts it into the render tree and
+       re-triggers both animations for free, same "no JS-toggled state class needed" reasoning as
+       popover.php's own `hg-popover-in`. `hg-dialog-in` has no `translateY` axis (unlike
+       `hg-popover-in`) -- a dialog is centered via the UA stylesheet's own `margin: auto`, not
+       anchored to a trigger element the way a popover is, so a pure opacity+scale zoom (shadcn's own
+       real `DialogContent` animation shape, just without its `data-[state]`/tailwindcss-animate
+       plumbing since native `<dialog>` needs no open/closed state class to begin with) is the
+       correct shape here, not a borrowed floating-element axis. */
+    @keyframes hg-dialog-in {
+        from {
+            opacity: 0;
+            transform: scale(0.96);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes hg-dialog-overlay-in {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
 }

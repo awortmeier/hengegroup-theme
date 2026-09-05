@@ -21,6 +21,76 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `dialog.php` gestylt, kein Datei-Split, kein Ordner-Umzug (2026-09-05)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/51dedf08-71e3-4deb-9e68-19256e4cfb39). Klassen-Herleitung/
+Deviationen stehen direkt in `dialog.php`s eigenem Kopfkommentar (Regel 12: kein Doppel-Text hier)
+-- dieser Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **Kein Datei-pro-Variante-Split, kein `dialog/`-Ordner-Umzug** (die Aufgabenstellung hat beides
+  explizit an "sinnvoll oder notwendig" geknuepft) -- die Referenz zeigt genau einen Look (ein
+  Kopf/Inhalt/Fusszeile-Beispiel plus eine Prosa-Anatomie-Anmerkung), keine Matrix strukturell
+  unterschiedlicher Dialoge -- dieselbe Schlussfolgerung wie popover.phps/hover-card.phps eigene,
+  fast identisch geformte Phase-2-Eintraege.
+- **`m-auto` musste explizit ergaenzt werden**, obwohl das native `<dialog>` selbst schon
+  `margin: auto`-Zentrierung mitbringt -- Tailwinds Preflight setzt `margin`/`padding` auf JEDEM
+  Element (inkl. `<dialog>` und `::backdrop`) auf 0 zurueck, was die UA-Stylesheet-eigene
+  Zentrierung sonst kommentarlos aufheben wuerde. Ein echter, nicht offensichtlicher Stolperstein
+  beim Kombinieren von nativem `<dialog>` mit Tailwind, keine Stiloption -- `max-height`/`overflow`
+  brauchten dagegen KEINE Ergaenzung, da Preflight beide Eigenschaften nie anfasst und die
+  UA-eigene `dialog:modal { max-height: calc(100% - 6px - 2em); overflow: auto; }` unveraendert
+  greift. Siehe `dialog.php`s eigenen Kopfkommentar fuer die volle Herleitung.
+- **Bugfix (nach dem Deploy ueber https://dev.hengegroup.com/dialog-showcase/ live beobachtet:
+  Dialoge verschwanden nicht vollstaendig, einige waren initial direkt sichtbar):** `flex` stand
+  zunaechst bedingungslos auf `[data-slot="dialog-content"]` -- derselbe "Author schlaegt UA,
+  unabhaengig von Spezifitaet"-Mechanismus wie beim `m-auto`-Punkt oben, nur diesmal bei `display`
+  statt `margin`: ein bedingungsloses `flex` ist eine
+  Autoren-Deklaration und schlaegt damit IMMER die UA-Stylesheet-eigene
+  `dialog:not([open]) { display: none; }`, unabhaengig von Selektor-Spezifitaet -- jeder Dialog auf
+  der Seite blieb dadurch dauerhaft sichtbar, offen oder nicht (genau das gemeldete "Dialoge
+  verschwinden nicht vollstaendig"/"initial werden welche direkt geladen"). Fix: `open:flex` statt
+  `flex` (Tailwinds `&[open]`-Variante) -- deklariert `display` nur, wenn `[open]` tatsaechlich
+  gesetzt ist, laesst die UA-eigene `display: none` im geschlossenen Zustand also komplett
+  unangetastet. `flex-col`/`gap-6`/etc. brauchten keine gleiche Behandlung -- die wirken erst,
+  sobald `display` ueberhaupt `flex` ist, auf einem `display: none`-Element haben sie keinen
+  Effekt.
+- **Radius `rounded-2xl` (16&nbsp;px) statt der Referenz-eigenen literalen 18&nbsp;px**, gleiche
+  Standardisierung wie bei popover.php/hover-card.php/toast.php/calendar.php. **Padding `p-8`
+  (32&nbsp;px) dagegen 1:1 aus der Referenz uebernommen** -- trifft Tailwinds Skala exakt, kein
+  Zielkonflikt zwischen literalem Referenzwert und System-Schritt wie beim Radius.
+- **`bg-background`/`text-foreground` statt `bg-card`/`bg-popover`** -- shadcns eigene reale
+  Stock-`DialogContent`-Klassen (live gegen aktuelle Docs geprueft); alle drei Tokens loesen aktuell
+  auf denselben Literalwert auf, also eine "shadcns eigenes Vokabular treffen"-Entscheidung, kein
+  sichtbarer Unterschied.
+- **Kein `border-border`** (anders als popover.php/hover-card.php) -- die Referenz zeigt gegen ihren
+  dunklen Demo-Rahmen keine sichtbare Kante, nur einen Schatten; bewusst nicht ergaenzt, obwohl
+  shadcns eigenes reales `DialogContent` eine Border traegt, weil das gegen diese konkrete Referenz
+  erfunden waere.
+- **Eingebauter Schliessen-Button ist neues, eigenes Projekt-CSS** (`border-border`/`rounded-lg`/
+  `size-9`), nicht shadcns randloser Ghost-Icon-Button -- die Referenz zeichnet explizit ein
+  umrandetes, abgerundetes Quadrat; naeher an toast.phps eigenem `toast-close` (`rounded-lg`,
+  `size-7`) als an einem randlosen Ghost-Icon, Border aus der Referenz uebernommen statt
+  toast-closes randlosem Look, da die Referenz eindeutig eine zeigt.
+- **Eintritts-Animation `hg-dialog-in`/`hg-dialog-overlay-in`** (Opacity+Scale ohne `translateY`-
+  Achse, anders als `hg-popover-in`) -- ein Dialog wird nativ zentriert (`margin: auto`), nicht an
+  ein Ankerelement positioniert wie ein Popover, daher passt ein reiner Zoom besser. Laeuft
+  bedingungslos (kein JS-getoggelter State), da natives `<dialog>` bei `display: none` ist,
+  waehrend es geschlossen ist -- dieselbe Begruendung wie popover.phps eigenes `hg-popover-in`.
+- **Referenz-Abschnitt mit dunklem Demo-Rahmen fuer die Anatomie NICHT als echtes `::backdrop`
+  nachgebaut** -- die "Aufbau"-Sektion der Showcase-Seite rendert stattdessen einen bewusst
+  nicht-modalen (`modal: false`), statisch offenen (`open: true`) Dialog in einer eigenen,
+  dekorativen dunklen Box (reines Showcase-Markup, keine dialog.php-eigene Funktion) -- dieselbe
+  "device frame"-Konvention wie die Referenz selbst.
+- **`page-component-showcase-dialog.php`s eigener `modal: false`-Abschnitt rendert `open: true`
+  direkt statt ueber einen `command="show-modal"`-Ausloeser** -- dieser native Befehlswert ruft
+  immer `showModal()` auf, unabhaengig von der Konfiguration des Ziel-Dialogs (echtes
+  Plattformverhalten der HTML Invoker Commands API, keine Design-Entscheidung dieses Themes); ein
+  `modal: false`-Dialog hat keinen passenden nativen Befehlswert zum Oeffnen.
+- `page-component-showcase-dialog.php` neu, analog zu den anderen Showcase-Seiten.
+
+---
+
 ### `hover-card.php` gestylt, kein Datei-Split, kein Ordner-Umzug (2026-09-05)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"

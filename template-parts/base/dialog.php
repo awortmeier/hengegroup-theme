@@ -83,6 +83,88 @@ declare(strict_types=1);
 // `attributes: ['command' => 'close', 'commandfor' => $dialog_id]` before buffering it into
 // `footer`.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
+// "Hengegroup" (https://claude.ai/code/artifact/51dedf08-71e3-4deb-9e68-19256e4cfb39), same
+// `.dc.html` reference workflow as popover.php's/hover-card.php's own entries, see
+// docs/entscheidungen.md for this component's entry). The reference itself is short -- one worked
+// example ("Lieferform ändern": header, a caller-built option list, footer with two actions) plus a
+// prose anatomy callout ("Kopf mit Titel und Beschreibung, Inhalt, Fußzeile mit bis zu zwei
+// Aktionen. 32 px Innenabstand, 18 px Radius") -- not a matrix of structurally different dialogs.
+//
+// What carried over from the reference, and what didn't:
+//   - **No file-per-variant split, no `dialog/` folder move** (the task explicitly asked to check,
+//     same phrasing as hover-card.php's/popover.php's own tasks) -- the reference shows exactly one
+//     look; `title`/`description`/`content`/`footer`/`show_close_button` already model every part of
+//     it via config/composition, same conclusion popover.php's/hover-card.php's/tabs.php's own
+//     Phase 2 entries already reached for an almost identical shape.
+//   - radius: the reference's own literal 18px was NOT copied -- standardized on `rounded-2xl`
+//     (16px), matching this project's other Phase-2 floating/card surfaces (popover.php's/
+//     hover-card.php's/toast.php's/calendar.php's own `rounded-2xl`) rather than a one-off number,
+//     same reasoning as popover.php's own radius entry.
+//   - padding: the reference's own literal 32px WAS kept as `p-8` -- unlike the radius above, this
+//     one maps exactly onto Tailwind's real scale (`p-8` = 32px), so there was no "one-off pixel
+//     value vs. a systematic step" conflict to resolve.
+//   - background/text color: `bg-background`/`text-foreground` -- shadcn's own real stock
+//     `DialogContent` classes (checked live against current docs), not `bg-card`/`bg-popover` (this
+//     project's other two neutral-surface tokens); all three tokens currently resolve to the same
+//     literal color, so this is a "match shadcn's own vocabulary" choice, not a visible difference.
+//   - no border: the reference's card has no visible edge against its dark demo frame, only a
+//     shadow -- kept borderless (unlike popover.php's/hover-card.php's own `border-border` hairline)
+//     rather than adding one shadcn's real stock `DialogContent` does carry, because it would be
+//     purely invented against this specific reference's own visual evidence.
+//   - shadow (`shadow-[0_12px_32px_rgba(0,0,0,0.14)]`) reuses popover.php's own literal value
+//     (extracted from ITS reference) rather than the reference's own value for this component (which
+//     was not measurable from a flat demo frame) -- same "this project's own floating-surface shadow
+//     convention" reasoning as hover-card.php's own entry, not a fresh number invented from nothing.
+//   - width: `w-full max-w-[calc(100%-2rem)] sm:max-w-lg` is shadcn's own real stock
+//     `DialogContent` sizing (checked live against current docs) -- close enough to the reference's
+//     own ~520px example box that reproducing shadcn's actual vocabulary was preferred over pinning
+//     one demo's specific pixel width, same "generalize instead of over-fitting to one demo string"
+//     reasoning as popover.php's own width entry. Native `<dialog>` needs no
+//     `fixed top-1/2 left-1/2 translate-x-[-50%] translate-y-[-50%]` centering hack the way a plain
+//     `<div>`-based Dialog needs (see this file's own Phase 1 header comment) -- the UA stylesheet's
+//     own `dialog:modal { position: fixed; inset: 0; }` already does that; only `m-auto` had to be
+//     re-added explicitly (Tailwind's Preflight zeroes `margin`/`padding` on every element including
+//     `<dialog>`, which would otherwise silently cancel the UA stylesheet's own `margin: auto`
+//     centering -- a real, non-obvious gotcha of pairing native `<dialog>` with Tailwind, not a
+//     stylistic choice). `max-height`/`overflow: auto` for oversized content are NOT re-added --
+//     Preflight never touches either property, so the UA stylesheet's own
+//     `dialog:modal { max-height: calc(100% - 6px - 2em); overflow: auto; }` survives untouched,
+//     same "native already gives this for free" principle as the rest of this file.
+//   - entrance animation: `hg-dialog-in` (opacity + scale, content) and `hg-dialog-overlay-in`
+//     (opacity, `::backdrop` via the `[&::backdrop]:` arbitrary variant -- Preflight's own reset
+//     explicitly targets `::backdrop` too, see `assets/css/app.css`'s own header comment for that
+//     keyframe pair), two new named `@keyframes` in assets/css/app.css (documented Regel-1 raw-CSS
+//     exception, same reasoning as that file's other `hg-*-in` entries -- no stock Tailwind utility
+//     composes a named keyframe set). Both run unconditionally, same "no JS-toggled state class
+//     needed" reasoning as popover.php's own `hg-popover-in` -- see that keyframe's own comment in
+//     app.css for why native `<dialog>` gives this the same way native `<details>` does. `::backdrop`
+//     only ever exists for a `:modal` dialog (the `modal: false` config path renders no backdrop at
+//     all, native platform behaviour, not a v1 limitation), and `bg-black/50` is shadcn's own real
+//     stock `DialogOverlay` color.
+//   - header (`gap-2` between title/description, shadcn's own real stock `DialogHeader` gap) and
+//     footer (`gap-3`, matching card.php's own default `footer_gap` rather than shadcn's stock
+//     `gap-2`, for consistency with this project's other header/content/footer composed surfaces)
+//     both stay simple `flex flex-col`/`flex flex-wrap items-center justify-end` -- shadcn's own
+//     stock `DialogFooter` additionally reverses stacking order on narrow viewports
+//     (`flex-col-reverse ... sm:flex-row`) so the primary action stays reachable first on mobile;
+//     NOT reproduced here since the reference shows no mobile/narrow layout to validate that against,
+//     same "not silently dropped, just out of v1 scope" framing used elsewhere in this codebase.
+//     Outer `gap-6` matches card.php's own default `outer_gap`.
+//   - the built-in close button (`dialog-close`) is new project CSS, not carried from shadcn's stock
+//     borderless ghost icon button -- the reference explicitly draws a bordered, rounded square
+//     (`border-border`/`rounded-lg`/`size-9`), closer in spirit to toast.php's own `toast-close`
+//     (`rounded-lg`, `size-7`) than to a plain ghost icon; kept the reference's own border rather
+//     than toast-close's borderless look since the reference shows one clearly and a dialog's close
+//     control has more visual weight to carry (no adjacent auto-dismiss affordance the way a toast
+//     has). Positioned `top-8 right-8` -- the same 32px inset as the content box's own `p-8`, so it
+//     sits flush with the header text's own padding edge rather than a separate, smaller inset.
+//   - `description` gets `color: 'neutral'`/`class: 'text-pretty'` (typography.php), same convention
+//     as card.php's own `card-description` -- the reference's description text is visibly muted
+//     relative to the title, matching `text-muted-foreground` rather than typography.php's default
+//     full-strength text color.
+//   - `page-component-showcase-dialog.php` new, analog to the other showcase pages.
+//
 // Supported config:
 //   title                     string   recommended (required for accessibility unless
 //                                       `aria_label` is given -- shadcn's own DialogTitle is
@@ -186,6 +268,11 @@ if ($description !== '') {
             'variant' => 'body-sm',
             'text' => $description,
             'data_slot' => 'dialog-description',
+            // shadcn's own DialogDescription is `text-muted-foreground` -- typography.php's `color`
+            // axis already models this exact role (see card.php's own `card-description` for the
+            // identical convention).
+            'color' => 'neutral',
+            'class' => 'text-pretty',
             'attributes' => ['id' => $id . '-description'],
         ],
     ]);
@@ -196,7 +283,7 @@ $header_markup = '';
 
 if ($title_markup !== '' || $description_markup !== '') {
     $header_markup = sprintf(
-        '<div data-slot="dialog-header">%1$s%2$s</div>',
+        '<div class="flex flex-col gap-2 pr-8" data-slot="dialog-header">%1$s%2$s</div>',
         $title_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         $description_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     );
@@ -204,14 +291,25 @@ if ($title_markup !== '' || $description_markup !== '') {
 
 $footer_markup =
     trim($footer) !== ''
-        ? sprintf('<div data-slot="dialog-footer">%s</div>', $footer) // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        ? sprintf(
+            '<div class="flex flex-wrap items-center justify-end gap-3" data-slot="dialog-footer">%s</div>',
+            $footer, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        )
         : '';
 
 $close_button_markup = '';
 
 if ($show_close_button) {
+    $close_button_classes =
+        'absolute top-8 right-8 flex size-9 items-center justify-center rounded-lg border ' .
+        'border-border text-muted-foreground outline-none transition-colors hover:bg-accent ' .
+        'hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-[3px] ' .
+        "focus-visible:ring-ring/50 [&_svg:not([class*='size-'])]:size-4";
+
     $close_button_markup = sprintf(
-        '<button type="button" data-slot="dialog-close" command="close" commandfor="%1$s" aria-label="%2$s">%3$s</button>',
+        '<button type="button" class="%1$s" data-slot="dialog-close" command="close" ' .
+            'commandfor="%2$s" aria-label="%3$s">%4$s</button>',
+        esc_attr($close_button_classes),
         esc_attr($id),
         esc_attr__('Close', 'hengegroup-theme'),
         hengegroup_theme_render_icon(['name' => 'x', 'set' => 'lucide']), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -224,11 +322,28 @@ if (trim($inner_html) === '') {
     return;
 }
 
+// See the Phase 2 file header for the full derivation of every class below, in particular why
+// `m-auto` has to be re-added explicitly (Preflight zeroes the UA stylesheet's own centering
+// `margin: auto`) while `max-height`/`overflow` don't (Preflight never touches either). `flex` is
+// gated behind the `open:` variant (`&[open]`), NOT applied bare -- a bare `flex` is an author-origin
+// declaration, which beats the UA stylesheet's own `dialog:not([open]) { display: none }`
+// REGARDLESS of selector specificity (author always wins over user-agent for two normal, i.e.
+// non-`!important`, declarations). An unconditional `flex` would therefore force every dialog
+// permanently visible -- open or not -- the exact bug this file shipped with initially. Scoping it
+// to `open:flex` only ever declares `display` while `[open]` is actually present, leaving the UA
+// stylesheet's own `display: none` completely untouched (and therefore still in effect) the rest
+// of the time.
+$content_classes =
+    'open:flex m-auto w-full max-w-[calc(100%-2rem)] flex-col gap-6 rounded-2xl bg-background p-8 ' .
+    'text-foreground shadow-[0_12px_32px_rgba(0,0,0,0.14)] outline-hidden sm:max-w-lg ' .
+    'animate-[hg-dialog-in_180ms_ease-out] ' .
+    '[&::backdrop]:bg-black/50 [&::backdrop]:animate-[hg-dialog-overlay-in_180ms_ease-out]';
+
 $element_attributes = $attributes;
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes['class'] = trim(
+    $content_classes . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $element_attributes['data-slot'] = 'dialog-content';
 
