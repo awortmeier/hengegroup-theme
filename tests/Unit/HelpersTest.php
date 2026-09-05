@@ -6,6 +6,7 @@ namespace BaseTheme\Tests\Unit;
 
 use BaseTheme\Tests\TestCase;
 use Brain\Monkey\Functions;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Unit tests for the pure-logic helpers in inc/template-parts/helpers.php. Only
@@ -209,5 +210,86 @@ final class HelpersTest extends TestCase
         hengegroup_theme_warn_missing_aria_label('button.php', false, '');
 
         $this->assertTrue(true);
+    }
+
+    public static function floatingPositionProvider(): array
+    {
+        return [
+            'bottom/center default' => [
+                'bottom',
+                'center',
+                10,
+                'top-[calc(100%+10px)] left-1/2 -translate-x-1/2',
+            ],
+            'bottom/start' => ['bottom', 'start', 10, 'top-[calc(100%+10px)] left-0'],
+            'bottom/end' => ['bottom', 'end', 10, 'top-[calc(100%+10px)] right-0'],
+            'top/center' => [
+                'top',
+                'center',
+                10,
+                'bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2',
+            ],
+            'top/start' => ['top', 'start', 10, 'bottom-[calc(100%+10px)] left-0'],
+            'top/end' => ['top', 'end', 10, 'bottom-[calc(100%+10px)] right-0'],
+            'left/center' => [
+                'left',
+                'center',
+                10,
+                'right-[calc(100%+10px)] top-1/2 -translate-y-1/2',
+            ],
+            'left/start' => ['left', 'start', 10, 'right-[calc(100%+10px)] top-0'],
+            'left/end' => ['left', 'end', 10, 'right-[calc(100%+10px)] bottom-0'],
+            'right/center' => [
+                'right',
+                'center',
+                10,
+                'left-[calc(100%+10px)] top-1/2 -translate-y-1/2',
+            ],
+            'right/start' => ['right', 'start', 10, 'left-[calc(100%+10px)] top-0'],
+            'right/end' => ['right', 'end', 10, 'left-[calc(100%+10px)] bottom-0'],
+            'custom gap' => [
+                'bottom',
+                'center',
+                8,
+                'top-[calc(100%+8px)] left-1/2 -translate-x-1/2',
+            ],
+        ];
+    }
+
+    #[DataProvider('floatingPositionProvider')]
+    public function test_floating_position_classes_covers_every_side_align_combination(
+        string $side,
+        string $align,
+        int $gapPx,
+        string $expected,
+    ): void {
+        $this->assertSame(
+            $expected,
+            hengegroup_theme_floating_position_classes($side, $align, $gapPx),
+        );
+    }
+
+    public function test_floating_position_classes_falls_back_to_bottom_for_unknown_side(): void
+    {
+        $this->assertSame(
+            hengegroup_theme_floating_position_classes('bottom', 'center'),
+            hengegroup_theme_floating_position_classes('diagonal', 'center'),
+        );
+    }
+
+    public function test_floating_position_classes_falls_back_to_center_for_unknown_align(): void
+    {
+        $this->assertSame(
+            hengegroup_theme_floating_position_classes('bottom', 'center'),
+            hengegroup_theme_floating_position_classes('bottom', 'sideways'),
+        );
+    }
+
+    public function test_floating_position_classes_defaults_align_to_center_and_gap_to_10(): void
+    {
+        $this->assertSame(
+            'top-[calc(100%+10px)] left-1/2 -translate-x-1/2',
+            hengegroup_theme_floating_position_classes('bottom'),
+        );
     }
 }

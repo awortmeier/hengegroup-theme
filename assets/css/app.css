@@ -286,4 +286,22 @@
             transform: scaleX(0);
         }
     }
+
+    /* template-parts/base/popover.php: entrance animation, documented Regel-1 raw-CSS exception --
+       see that file's own header comment for the full rationale (no stock Tailwind utility
+       composes a named, reusable keyframe set, same reasoning as toast.php's/progress.php's own
+       entries above). Runs unconditionally on `[data-slot="popover-content"]` -- native
+       `<details>` already keeps this element out of the render tree while closed, so every open
+       re-triggers the animation for free, no JS-toggled state class needed the way toast.php's
+       always-in-DOM card would need one. */
+    @keyframes hg-popover-in {
+        from {
+            opacity: 0;
+            transform: translateY(-4px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
 }

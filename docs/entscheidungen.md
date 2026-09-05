@@ -21,6 +21,108 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `hengegroup_theme_floating_position_classes()`: geteilte Side/Align-Positionierungslogik aus popover.php extrahiert, in tooltip.php eingesetzt (2026-09-05)
+
+popover.php's eigene `side`/`align` -> Tailwind-Klassen-Lookup (siehe dessen Eintrag direkt
+unterhalb) und tooltip.php's Content-Box brauchten am Ende exakt dieselbe Logik -- ausgelagert nach
+`inc/template-parts/helpers.php` als `hengegroup_theme_floating_position_classes(string $side,
+string $align = 'center', int $gap_px = 10): string`, mit PHPUnit-Tests in
+`tests/Unit/HelpersTest.php` (reine Logik, keine WP-Funktionsaufrufe, keine Brain-Monkey-Stubs
+noetig). Details/Begruendung stehen im Helper's eigenen Doc-Kommentar sowie in popover.php's/
+tooltip.php's eigenen Kopfkommentaren (Regel 12: kein Doppel-Text hier) -- dieser Eintrag haelt nur
+fest, was nicht schon aus dem Diff folgt:
+
+- **Nur die CONTENT-Box, nicht der Pfeil.** Ein Pfeil braucht andersartige, nicht nur andere
+  Klassen (Border-Seiten, Overlap-Margins) und ist bei tooltip.php zusaetzlich zur Laufzeit reaktiv
+  (tooltip.js flippt `data-side` nach einer Viewport-Kollision, der Pfeil bekommt dafuer KEIN
+  JS-Override, muss also weiterhin per `group-data-[side=...]` live reagieren) -- popover.php hat
+  ueberhaupt keinen Flip. Der Helper deckt bewusst nur die Content-Box ab; jede Komponente behaelt
+  ihre eigene Pfeil-Logik.
+- **Bei tooltip.php ist das jetzt nachweislich korrekt, nicht nur "genauso gut wie vorher":**
+  `positionFloatingElement()` (utils/floating-position.js) ueberschreibt die Content-Box-Position
+  IMMER per Inline-Style, sobald ein Tooltip tatsaechlich oeffnet (`top`/`left`/`right`/`bottom`/
+  `transform`/`translate` werden alle explizit gesetzt, nicht nur `top`/`left`) -- die statischen
+  Klassen zaehlen nur fuer den Resting-/Vor-JS-Zustand, und dafuer ist ausschliesslich die
+  KONFIGURIERTE `side`/`align`-Kombination relevant, nie eine andere. Die alte
+  `group-data-[side=...]`-Matrix deckte trotzdem alle vier Seiten ab -- unnoetig, exakt dieselbe
+  Erkenntnis, die zur Vereinfachung von popover.php's eigener Logik gefuehrt hat (siehe dessen
+  Eintrag). Nebeneffekt: die alten statischen Klassen ignorierten `align` komplett (dokumentiert als
+  "JS-only") -- der Resting-Zustand beruecksichtigt `align` jetzt korrekt mit, ohne Mehraufwand,
+  weil der Helper beide Werte ohnehin nimmt.
+- **hover-card.php/dropdown-menu.php bewusst NICHT angefasst.** Beide haben zwar dieselbe
+  `side`/`align`-Config, aber noch KEIN Phase-2-Styling ueberhaupt (hover-card.php: komplett
+  Phase 1; dropdown-menu.php: nur `data-side`/`data-align`-Hooks, "actual floating placement is
+  project-CSS" steht dort noch als offener Punkt im eigenen Kopfkommentar) -- fuer beide gibt es
+  aktuell keine bestehende Positionierungslogik zum Ersetzen. Sobald sie ihr eigenes Phase-2-Styling
+  bekommen, ist dieser Helper der Startpunkt statt eine dritte eigene Lookup-Tabelle.
+
+---
+
+### `popover.php` gestylt, `side`/`align` jetzt echtes Positionierungs-CSS, kein Datei-Split/Ordner-Umzug (2026-09-04)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/527a7d35-e7c6-43b4-ab6f-9f85baf2b43c). Details/Klassen-Herleitung
+stehen direkt in `popover.php`s eigenem Kopfkommentar (Regel 12: kein Doppel-Text hier) -- dieser
+Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **`side`/`align` sind jetzt echtes Positionierungs-CSS, nicht mehr nur `data-*`-Hooks.** Anders
+  als tooltip.php/hover-card.php haengt popover.php an keinem JS-Flip-Modul
+  (`utils/floating-position.js`) -- die Referenz zeigt auch keinen Flip, nur vier feste `side`s --
+  also reine `data-[side=...]`/`data-[align=...]`-Attribut-Selektor-Klassen direkt auf
+  `popover-content`, genau das Rezept, das dropdown-menu.php's eigener (noch Phase-1-)
+  Kopfkommentar bereits skizziert hatte ("actual floating placement is project-CSS"). Betrifft
+  NICHT dropdown-menu.php selbst -- das bleibt eigenes, noch offenes Phase-2-Ticket.
+- **Farben/Radius/Schatten reuse `--color-popover`/`-foreground`/`--color-border`** (tokens.css hat
+  diese Rolle bereits vorbereitet) statt der Referenz-Literalwerte -- anders als tooltip.php, das
+  mangels passendem Projekt-Token auf Tailwinds neutral-Skala auswich. `rounded-2xl` vereinheitlicht
+  die Referenz' eigene Inkonsistenz (14px meiste Karten, 12px eine Demo-Karte) auf denselben Wert,
+  den toast.php/calendar.php bereits fuer Karten-Oberflaechen nutzen.
+- **`w-72`/`p-4`/`outline-hidden` sind shadcns eigene reale `PopoverContent`-Stock-Defaults**,
+  bewusst statt einer der Referenz-eigenen Pro-Demo-Breiten/-Paddings (200-300px/16-18px) gewaehlt --
+  kein erfundenes Vokabular, dieselbe "Generalisieren statt eine Demo-Zeichenkette
+  festnageln"-Logik wie tooltip.php's `max-w-xs`.
+- **Der Referenz-"Sortierung"/"Standort waehlen"-Look (8px-Padding, Vollbild-Hover-Zeilen) wurde
+  NICHT als zweite Optik nachgebaut.** v1 hat nur einen festen Content-Padding-Wert (`p-4`); ein
+  menuefoermiger Popover-Inhalt ist dropdown-menu.php's eigenes Item-Styling, verschachtelt als
+  `content`-String hier -- keine eigene Popover-Variante. Dieselbe Grenze hat shadcns echtes
+  Popover auch. Bewusst zurueckgestellt, nicht stillschweigend fallengelassen.
+- **Pfeil (`[data-slot="popover-arrow"]`) neu**, 8px (nicht der Referenz eigene 10px -- gleiche
+  Groesse wie tooltip.php's/hover-card.php's Pfeil, projektweite Konsistenz). Border-Paar pro `side`
+  aus der Rotations-Geometrie hergeleitet (welche zwei der vier Vor-Rotation-Kanten nach
+  `rotate-45` die sichtbare Spitze bilden) statt, wie die Referenz es tut, denselben
+  `border-left`+`border-top`-Wert auf allen vier Seiten hart zu kodieren (dort nur auf der einen
+  `side="bottom"`-Beispielkarte tatsaechlich korrekt) -- kostet nichts extra, sieht auf jeder Seite
+  richtig aus statt nur einer. `align`s 16px-Pfeil-Versatz reused tooltip.php's exakten Wert/Technik.
+- **Kein Datei-pro-Variante-Split, kein neuer `popover/`-Ordner.** Der Auftrag bat explizit darum,
+  das bei Bedarf zu pruefen. Jede in der Referenz gezeigte "Variante" (Formular-Popup, Info-Popup,
+  vier `side`s, rechtsbuendiger Filter via `align="end"`) ist Markup/Config, die die bestehende
+  Einzeldatei ueber `content`/`side`/`align` bereits abbildet -- keine strukturell andere
+  Komposition wie z. B. separator.php + separator-label.php, dieselbe Schlussfolgerung wie
+  tooltip.php's eigener, fast identisch geformter Phase-2-Eintrag.
+- **Das Referenz-"Auf dunklem Grund"-Beispiel wurde NICHT uebernommen**, aus demselben Grund wie
+  bei jedem bisherigen Phase-2-Eintrag -- kein Alleingang ohne projektweite Dark-Strategie.
+- **`page-component-showcase-popover.php` neu angelegt** (analog zu den bestehenden
+  Showcase-Seiten).
+- **Nachtrag (2026-09-05): echter Bug in der Showcase-Seite gefunden und behoben, nicht in
+  popover.php selbst.** Jeder Trigger dort wurde per `get_template_part('template-parts/base/
+button', ...)` gebaut -- button.php rendert aber immer ein echtes interaktives `<button>`/`<a>`,
+  und das landete verschachtelt IN `popover.php`s eigenem `<summary>`, das laut popover.php's/
+  dropdown-menu.php's eigenem Kopfkommentar bereits das eine interaktive Element sein muss
+  ("trigger must not itself be/contain a focusable element"). Interaktiver Inhalt in interaktivem
+  Inhalt ist ungueltiges HTML -- Chrome oeffnet ein `<details>` mit einem echten `<button>` in
+  seinem `<summary>` dadurch gar nicht mehr per Klick, kein Styling-Problem, sondern ein
+  Funktions-Totalausfall. Per Vorher/Nachher-Repro (statisches HTML mit dem echten gebauten CSS,
+  reales Chrome, kein Artifact-Preview) verifiziert: identisches Markup nur mit `<span>` statt
+  `<button>` im Trigger oeffnet klaglos. Fix bleibt in der Showcase-Datei: eine kleine lokale
+  Closure (`$render_popover_trigger_look`) rendert button.php normal (wiederverwendet dessen
+  Variant-/Size-Klassen-Logik unveraendert, keine duplizierten Tailwind-Strings) und tauscht danach
+  nur das aeussere `<button>`-Tag gegen ein inertes `<span>`. Kein Aenderungsbedarf an popover.php
+  selbst -- dessen eigener API-Vertrag (`trigger` = escaped Text/Icon, kein verschachteltes
+  interaktives Element) war schon immer korrekt dokumentiert, nur beim Bauen der Demo-Seite nicht
+  befolgt.
+
+---
+
 ### `tooltip.php` gestylt, `align`-Config neu, kein Datei-Split/Ordner-Umzug (2026-09-04)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"

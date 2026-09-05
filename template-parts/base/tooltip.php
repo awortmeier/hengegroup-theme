@@ -72,16 +72,25 @@ declare(strict_types=1);
 //     start/center/end vocabulary for the same reason, wired through the same shared
 //     utils/floating-position.js `align` option, so tooltip.js now passes `align` through to it
 //     exactly like hover-card.js already does.
-//   - `align`'s Tailwind side is JS-only (no static CSS shift for it), same documented scope limit
-//     as `side`'s own flip: `positionFloatingElement()` computes the trigger-relative
-//     `left`/`top` pixel offset for start/center/end directly (it already needs the trigger's
-//     real geometry for `side`'s flip math), so a parallel *static* CSS position per align value
-//     would only matter for the always-invisible pre-JS resting frame -- not worth the combinatorial
-//     class surface. The **arrow**, unlike the content box, gets NO JS positioning at all (same as
-//     the reference, which hardcodes each example's arrow inline rather than computing it), so its
-//     align shift IS real static CSS: a fixed 16px inset from the content's start/end edge,
-//     matching the reference's own literal `left:16px` value for its one shifted example, rather
-//     than trying to re-derive the trigger's exact center in pure CSS.
+//   - the content box's OWN static `side`/`align` classes (its resting, pre-JS paint) come from the
+//     shared hengegroup_theme_floating_position_classes() helper (inc/template-parts/helpers.php,
+//     added 2026-09-05, extracted from popover.php's own Phase 2 pass) rather than a bespoke
+//     `group-data-[side=...]` matrix -- correct because `positionFloatingElement()` always
+//     overrides the content box's position via inline styles the moment a tooltip actually opens
+//     (see tooltip.js's own comment on why `top`/`left`/`right`/`bottom`/`transform`/`translate`
+//     all get explicitly cleared, not just `top`/`left` set), so only the ONE configured side/align
+//     combination is ever worth rendering as a class, not a reactive set covering every value
+//     `wrapper.dataset.side` could take on after a runtime flip. This incidentally also fixed a
+//     small pre-existing gap: the old static classes always centered regardless of `align`
+//     (documented as "JS-only" below) -- the resting paint now honours it too, for free, since the
+//     shared helper always takes both. The **arrow**, unlike the content box, gets NO JS
+//     positioning at all (same as the reference, which hardcodes each example's arrow inline rather
+//     than computing it) -- ITS classes therefore still need to react live to `wrapper.dataset.side`
+//     changing after a flip, so its own `group-data-[side=...]` matrix (unlike the content box's)
+//     was intentionally kept, not moved onto the shared helper. Its `align` shift is real static CSS
+//     for the same reason as before: a fixed 16px inset from the content's start/end edge, matching
+//     the reference's own literal `left:16px` value for its one shifted example, rather than trying
+//     to re-derive the trigger's exact center in pure CSS.
 //   - the reference's "Auf dunklem Grund" section was NOT ported, same reason as every other
 //     component's Phase-2 entry so far (separator.php/kbd.php/pagination.php/table/*.php/toast.php)
 //     -- this theme has no dark-mode/dark-surface strategy yet, see docs/entscheidungen.md.
@@ -199,21 +208,23 @@ $trigger_markup = sprintf(
 
 // Card look (bg-neutral-900/text-neutral-50, radius, shadow, gap-to-trigger per side) plus the
 // open/closed opacity transition -- see the Phase 2 file header for where each value comes from.
-// `align`'s own cross-axis shift is intentionally NOT part of this static class list -- it's
-// computed by the JS (utils/floating-position.js, same as `side`'s flip), see the header comment.
+// Position (the `hengegroup_theme_floating_position_classes()` call, inc/template-parts/helpers.php)
+// only ever matters for the resting/pre-JS paint: tooltip.js's `positionFloatingElement()` always
+// overrides it via inline styles the moment a tooltip actually opens (see that JS file's own
+// comment on why `top`/`left`/`right`/`bottom`/`transform`/`translate` all get explicitly
+// overridden, not just `top`/`left` set), so there is exactly one side/align combination worth
+// rendering here -- the configured one -- not a `group-data-[side=...]` matrix reacting to
+// tooltip.js's own runtime flip. That flip still happens (`wrapper.dataset.side` changes after a
+// viewport collision), it just no longer needs a matching CSS rule for the CONTENT box the way the
+// arrow below still does (no JS override there, see its own comment). This also fixes a pre-existing
+// gap: the old static classes always centered regardless of `align` (documented as JS-only), the
+// resting paint now honours `align` too, for free, from the same helper popover.php uses.
 $content_classes =
     'absolute z-50 max-w-xs rounded-lg bg-neutral-900 px-[11px] py-[7px] text-[13px] ' .
     'leading-[1.4] text-neutral-50 text-pretty shadow-[0_6px_18px_rgba(0,0,0,0.18)] ' .
     'opacity-0 pointer-events-none transition-opacity duration-[140ms] ease-out ' .
     'group-data-[state=open]:pointer-events-auto group-data-[state=open]:opacity-100 ' .
-    'group-data-[side=top]:bottom-[calc(100%+10px)] group-data-[side=top]:left-1/2 ' .
-    'group-data-[side=top]:-translate-x-1/2 ' .
-    'group-data-[side=bottom]:top-[calc(100%+10px)] group-data-[side=bottom]:left-1/2 ' .
-    'group-data-[side=bottom]:-translate-x-1/2 ' .
-    'group-data-[side=left]:top-1/2 group-data-[side=left]:right-[calc(100%+10px)] ' .
-    'group-data-[side=left]:-translate-y-1/2 ' .
-    'group-data-[side=right]:top-1/2 group-data-[side=right]:left-[calc(100%+10px)] ' .
-    'group-data-[side=right]:-translate-y-1/2';
+    hengegroup_theme_floating_position_classes($side, $align);
 
 // The 8px diamond arrow -- `bg-inherit` takes the card's own `bg-neutral-900` instead of repeating
 // it (see the Phase 2 file header). Centered on the trigger's cross axis by default; `align`

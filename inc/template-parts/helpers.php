@@ -206,3 +206,61 @@ function hengegroup_theme_warn_missing_aria_label(
         'hengegroup-theme 1.0.0',
     );
 }
+
+/**
+ * Computes the static Tailwind position classes for a panel floating next to a trigger element on
+ * one of four sides, with an optional cross-axis alignment -- e.g. `side: 'bottom', align: 'start'`
+ * -> 'top-[calc(100%+10px)] left-0'. Extracted from popover.php's own Phase 2 styling (see
+ * docs/entscheidungen.md's popover.php entry) once tooltip.php turned out to need the exact same
+ * side/align -> class lookup for its own resting/pre-JS position -- shared here instead of
+ * duplicated per component, same "cross-cutting logic belongs in this file" convention as
+ * hengegroup_theme_render_attributes() above.
+ *
+ * $side/$align are expected to already be validated/defaulted by the caller (same "trust the
+ * caller" contract as hengegroup_theme_render_attributes()) -- an unrecognised value here quietly
+ * falls back to the same bottom/center default every caller already uses for an invalid `side`/
+ * `align` config value, it does not throw.
+ *
+ * Only covers the CONTENT box's own position -- NOT a floating panel's arrow, which (where one
+ * exists, e.g. popover.php's/tooltip.php's own `*-arrow` element) has its own, per-component logic:
+ * an arrow's classes differ in kind, not just value (border sides, a `-mt-1`-style overlap margin,
+ * ...), and tooltip.php's arrow additionally has to stay reactive to `data-side` changing at
+ * runtime (tooltip.js flips `side` after the initial render on a viewport collision -- see that
+ * file's own header comment) in a way this content-box helper deliberately does not: the CONTENT
+ * box's own position becomes irrelevant the moment tooltip.js's positionFloatingElement() takes
+ * over (it always overrides via inline styles, whichever specific classes were rendered here), so
+ * there is exactly one side/align combination worth emitting for it -- the configured one -- same
+ * reasoning popover.php's own header comment already spelled out for why IT never needed the full
+ * `group-data-[side=...]` combinatorial matrix in the first place, popover.php just has no JS flip
+ * at all to begin with.
+ */
+function hengegroup_theme_floating_position_classes(
+    string $side,
+    string $align = 'center',
+    int $gap_px = 10,
+): string {
+    if (!in_array($side, ['top', 'right', 'bottom', 'left'], true)) {
+        $side = 'bottom';
+    }
+
+    $primary_axis_class = match ($side) {
+        'top' => "bottom-[calc(100%+{$gap_px}px)]",
+        'left' => "right-[calc(100%+{$gap_px}px)]",
+        'right' => "left-[calc(100%+{$gap_px}px)]",
+        default => "top-[calc(100%+{$gap_px}px)]", // 'bottom'
+    };
+
+    $cross_axis_class = in_array($side, ['top', 'bottom'], true)
+        ? match ($align) {
+            'start' => 'left-0',
+            'end' => 'right-0',
+            default => 'left-1/2 -translate-x-1/2', // 'center'
+        }
+        : match ($align) {
+            'start' => 'top-0',
+            'end' => 'bottom-0',
+            default => 'top-1/2 -translate-y-1/2', // 'center'
+        };
+
+    return $primary_axis_class . ' ' . $cross_axis_class;
+}
