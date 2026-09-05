@@ -122,11 +122,15 @@ declare(strict_types=1);
 //     checkbox's live `:checked`/`:disabled` state via Tailwind's `peer`/`peer-checked:`/
 //     `peer-disabled:`, not a render-time boolean class. This is why toggle.php's checkbox itself now
 //     renders `class="peer sr-only"` unconditionally (see that file's header comment) -- a small,
-//     colour-free prerequisite pulled forward from toggle.php's own still-unstyled Phase 2, not
-//     something this file could route around via its own `class` config (toggle.php's `class`/
-//     `attributes`/`data_attributes` passthrough only ever reaches the visible label, by design, see
-//     that file's header -- never the checkbox). "Today" (a render-time-only fact, it can't change
-//     without a full page view) stays a plain conditional `ring-1 ring-border` class instead, no
+//     colour-free prerequisite pulled forward from toggle.php's own Phase 2 before that file had any
+//     other styling of its own, not something this file could route around via its own `class`
+//     config (toggle.php's `class`/`attributes`/`data_attributes` passthrough only ever reaches the
+//     visible label, by design, see that file's header -- never the checkbox). Now that toggle.php's
+//     own Phase 2 computes real default-variant classes too, several collide with this grid's own
+//     ones on the same CSS property -- `$day_classes` below marks its own intentionally-overriding
+//     utilities `!important` for that reason, see the comment right above its definition. "Today"
+//     (a render-time-only fact, it can't change without a full page view) stays a plain conditional
+//     `ring-1 ring-border` class instead, no
 //     `peer-*` needed.
 //   - calendar.js's own buildDayCell()/renderMonth() (client-side month navigation, no PHP re-render)
 //     mirror every one of these classes verbatim on the elements they create, the same
@@ -303,14 +307,28 @@ foreach ($cells as $cell) {
         // state (`peer-*`, see header comment) -- a render-time boolean class here would go stale the
         // instant a user picks a different day without a page reload. "Today" has no such live
         // concern (it can't change mid-view), so it's the one plain conditional class below.
+        //
+        // `!`-prefixed (Tailwind's own important-modifier, e.g. `!rounded-xl`) on every utility that
+        // now collides with toggle.php's OWN Phase-2 default-variant classes (rounded-full vs this
+        // grid's rounded-xl, h-9.5 vs h-10, font-medium vs font-normal, text-muted-foreground vs
+        // text-foreground, peer-checked:bg-grey-dark vs peer-checked:bg-henge-green, its added
+        // peer-checked:shadow-xs, and -- since `peer-checked:hover:` carries higher specificity than
+        // plain `peer-checked:`, see toggle.php's own header comment -- its
+        // peer-checked:hover:text-grey-dark-foreground too) -- toggle.php's header comment documents
+        // why this pre-existing nesting needed this once that file started computing its own classes:
+        // PHP has no `tailwind-merge`/`cn()` to resolve the collision any other way (plain string
+        // concatenation, see docs/entscheidungen.md), so `!important` is what keeps this calendar
+        // grid's own look deterministic regardless of which file Tailwind's class scanner happens to
+        // encounter first.
         $day_classes =
             'peer-focus-visible:border-ring peer-focus-visible:ring-[3px] ' .
             'peer-focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:outline-none ' .
-            'focus-visible:ring-[3px] focus-visible:ring-ring/50 flex h-10 w-full cursor-pointer ' .
-            'items-center justify-center rounded-xl border border-transparent text-base font-normal ' .
-            'text-foreground transition-colors hover:bg-muted peer-checked:border-henge-green ' .
-            'peer-checked:bg-henge-green peer-checked:font-semibold ' .
-            'peer-checked:text-henge-green-foreground peer-checked:hover:bg-henge-green/90 ' .
+            'focus-visible:ring-[3px] focus-visible:ring-ring/50 flex !h-10 w-full cursor-pointer ' .
+            'items-center justify-center !rounded-xl border border-transparent text-base ' .
+            '!font-normal !text-foreground transition-colors hover:bg-muted ' .
+            'peer-checked:border-henge-green peer-checked:!bg-henge-green peer-checked:font-semibold ' .
+            'peer-checked:!text-henge-green-foreground peer-checked:!shadow-none ' .
+            'peer-checked:hover:!bg-henge-green/90 peer-checked:hover:!text-henge-green-foreground ' .
             'peer-disabled:pointer-events-none peer-disabled:cursor-not-allowed ' .
             'peer-disabled:opacity-50';
 

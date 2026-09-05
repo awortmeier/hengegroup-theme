@@ -73,6 +73,67 @@ declare(strict_types=1);
 // comment); the rest of toggle.php (variant/size colors on the label) is still unstyled Phase 1,
 // unaffected by and independent of this addition.
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
+// "Hengegroup" (https://claude.ai/code/artifact/120c0655-89f0-4c42-b99b-bb5227b96ccc)'s "Basis"/
+// "Varianten"/"Größen" sections (same `.dc.html`-reference workflow as tabs.php's/kbd.php's own
+// entries, see docs/entscheidungen.md for this component's entry). No file-per-variant split, no
+// further folder move (CLAUDE.md Regel 4 reserves a folder/split for structurally different
+// sub-components, not styling variants of one element -- toggle/ already IS such a folder, split
+// from toggle-group.php since Phase 1, see docs/entscheidungen.md's `kbd.php` entry for the general
+// rule): `variant`/`size` are pure Tailwind class-lookup swaps on the exact markup this file already
+// renders, the same `$variant_classes`/`$size_classes` one-file pattern as button.php/badge.php/
+// tabs.php.
+//
+// The hidden checkbox/radio (`peer sr-only`, unconditional since Phase 1, see above) drives the
+// label's live look via Tailwind's `peer-*` variants -- the CSS contract already spec'd above,
+// Tailwind-only: `peer-checked:` for the pressed look, `peer-focus-visible:`/`focus-visible:` for
+// the no-JS/JS-enhanced focus ring (same split as tabs.php's own trigger), `peer-disabled:` for
+// disabled, `peer-aria-invalid:` for the error state. `peer-checked:hover:` pairs re-assert the
+// pressed colour under hover (same fix tabs.php's/calendar.php's own peer-checked elements already
+// needed -- a plain `hover:` utility carries the same specificity as `peer-checked:` alone and could
+// otherwise win on a pressed-and-hovered toggle).
+//
+// `variant` gained a third value, `accent` -- the reference's "Akzent" row ("primäre Auswahl",
+// a solid henge-green pressed fill) alongside its existing "Ohne Kante" (`default`, never bordered)
+// and "Mit Kante" (`outline`, bordered even unpressed) rows. Named `accent` rather than a brand-
+// color name (unlike button.php's full brand-color variant vocabulary) because this project already
+// uses "accent" as the generic name for "this element's one emphasis state maps to the brand green"
+// (see separator.php's `style: 'accent'`, badge.php's `font: 'accent'`) -- `default`/`outline`
+// stay shadcn's own Toggle vocabulary (kept for parity, see the config table below), `accent` is the
+// one deliberate addition, justified by the reference itself, not invented without cause.
+// `default`'s pressed fill is this project's `grey-dark` brand-grey (not shadcn's own neutral
+// `bg-accent`) -- same brand-token swap as tabs.php's segmented-variant `peer-checked:bg-grey-dark`,
+// which this component's reference visually matches almost exactly (a solid anthracite pill).
+// `outline`'s border uses this project's `grey-dark` brand-grey (design request 2026-09-05, after
+// the initial `border-input` pick rendered invisible against the page background in the real
+// build -- see the `$variant_classes` comment below for why that happened) -- same brand-grey
+// border override as button.php's/badge.php's own `outline`, not shadcn's stock `border-input` role.
+//
+// Sizes (`sm`/`default`/`lg`) target the reference's own labelled heights (30px/38px/46px) via
+// Tailwind's fractional spacing scale (`h-7.5`/`h-9.5`/`h-11.5` = 1.875rem/2.375rem/2.875rem --
+// real scale steps, same half-step convention as badge.php's own `py-0.75`, not an arbitrary bracket
+// value). Font-size scales per size the same way button.php's own `sm`/`base`/`lg` does
+// (text-sm/text-base/text-lg) -- the reference visibly grows the label text from `sm` to `lg`, same
+// category of deviation from shadcn's single-size Toggle text as button.php's own per-size
+// font-size entry documents. `min-w-*` (matching each size's own height) is shadcn's own icon-only-
+// squaring trick, carried over unverified against a reference (`icon`-only toggles aren't in this
+// reference) -- consistent with the rest of this file's icon/text-agnostic sizing, not a new
+// invention.
+//
+// Cross-file impact: calendar.php's day-cell nesting of this file (`variant`/`size` left at their
+// defaults, everything else driven by its own full `class` override, see that file's header comment)
+// pre-dates this component ever computing its own classes -- its `class` was written to be the ONLY
+// classes the rendered label carries. Now that `default`/`size: 'default'` compute their own shape/
+// color classes too, several of calendar.php's own utilities collide on the same CSS property
+// (`rounded-xl` vs this file's `rounded-full`, `h-10` vs `h-9.5`, `font-normal` vs `font-medium`,
+// `text-foreground` vs `text-muted-foreground`, `peer-checked:bg-henge-green` vs
+// `peer-checked:bg-grey-dark`, ...). Since PHP has no `tailwind-merge`/`cn()` to resolve that (see
+// docs/entscheidungen.md), calendar.php's own `$day_classes` now marks every one of its intentionally-
+// overriding utilities `!important` (Tailwind's own `!`-prefix modifier, e.g. `!rounded-xl`,
+// `peer-checked:!bg-henge-green`) so its calendar-grid look keeps winning regardless of which file
+// Tailwind's class scanner happens to encounter first -- see that file's own comment at its
+// `$day_classes` definition for the full, itemized list.
+//
 // Supported config:
 //   pressed          bool     default false. Native `checked` on the underlying input (shadcn's own
 //                              prop name for this is `pressed`/`defaultPressed`, kept here for
@@ -86,7 +147,7 @@ declare(strict_types=1);
 //                              button.php's convention) reflecting `icon_position`, unless the toggle
 //                              is icon-only
 //   icon_position    string   start | end (ignored for icon-only toggles)
-//   variant          string   default | outline (default: default)
+//   variant          string   default | outline | accent (default: default) -- see Phase 2 note above
 //   size             string   default | sm | lg (default: default)
 //   disabled         bool     native `disabled` on the checkbox, plus a mirrored
 //                              data-disabled="true" CSS hook on both the checkbox and the label
@@ -148,7 +209,7 @@ if ($text === '' && !$has_icon) {
 }
 
 $allowed_types = ['checkbox', 'radio'];
-$allowed_variants = ['default', 'outline'];
+$allowed_variants = ['default', 'outline', 'accent'];
 $allowed_sizes = ['default', 'sm', 'lg'];
 
 if (!in_array($type, $allowed_types, true)) {
@@ -162,6 +223,50 @@ if (!in_array($variant, $allowed_variants, true)) {
 if (!in_array($size, $allowed_sizes, true)) {
     $size = 'default';
 }
+
+// Phase 2 (CLAUDE.md Regel 1) Tailwind classes for the visible <label> -- see this file's own
+// header comment for the reference/reasoning behind `$variant_classes`/`$size_classes` and the
+// `peer-*` state wiring below.
+$base_classes =
+    'peer-focus-visible:border-ring peer-focus-visible:ring-[3px] ' .
+    'peer-focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px] ' .
+    'focus-visible:ring-ring/50 peer-aria-invalid:border-destructive ' .
+    'peer-aria-invalid:ring-destructive/20 peer-disabled:pointer-events-none ' .
+    'peer-disabled:cursor-not-allowed peer-disabled:opacity-50 inline-flex shrink-0 ' .
+    'cursor-pointer items-center justify-center rounded-full border ' .
+    'font-medium whitespace-nowrap text-muted-foreground outline-none transition-colors ' .
+    'select-none hover:bg-muted hover:text-foreground peer-checked:font-semibold ' .
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
+
+// `border-{color}` (never bare `border-transparent`/`border-grey-dark` shared across variants in
+// $base_classes above) so each rendered element only ever carries ONE border-color utility --
+// `border-transparent` and a variant's own border color are the same CSS property at equal
+// specificity, and Tailwind's generated stylesheet order (not the order classes appear in the
+// `class` attribute) decides same-specificity ties; keeping both on one element left the visible
+// border a coin flip depending on which utility the project-wide scanner happened to register
+// first. One border-color class per variant sidesteps that entirely.
+$variant_classes = [
+    'default' =>
+        'border-transparent peer-checked:bg-grey-dark peer-checked:text-grey-dark-foreground ' .
+        'peer-checked:shadow-xs peer-checked:hover:bg-grey-dark ' .
+        'peer-checked:hover:text-grey-dark-foreground',
+    'outline' =>
+        'border-grey-dark bg-background shadow-xs peer-checked:bg-grey-dark ' .
+        'peer-checked:text-grey-dark-foreground peer-checked:hover:bg-grey-dark ' .
+        'peer-checked:hover:text-grey-dark-foreground',
+    'accent' =>
+        'border-transparent peer-checked:bg-henge-green peer-checked:text-henge-green-foreground ' .
+        'peer-checked:shadow-xs peer-checked:hover:bg-henge-green/90 ' .
+        'peer-checked:hover:text-henge-green-foreground',
+];
+
+$size_classes = [
+    'sm' => "h-7.5 min-w-7.5 gap-1 px-2 text-sm [&_svg:not([class*='size-'])]:size-3",
+    'default' => 'h-9.5 min-w-9.5 gap-1.5 px-2.5 text-base',
+    'lg' => 'h-11.5 min-w-11.5 gap-2 px-3.5 text-lg',
+];
+
+$computed_class = "{$base_classes} {$variant_classes[$variant]} {$size_classes[$size]}";
 
 if ($icon_position !== 'end') {
     $icon_position = 'start';
@@ -241,10 +346,7 @@ hengegroup_theme_warn_missing_aria_label('toggle.php', $is_icon_only, $aria_labe
 $checkbox_markup = '<input' . hengegroup_theme_render_attributes($checkbox_attributes) . '>';
 
 $label_attributes = $attributes;
-
-if ($class_name !== '') {
-    $label_attributes['class'] = $class_name;
-}
+$label_attributes['class'] = trim($computed_class . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $label_attributes['data-slot'] = 'toggle';
 $label_attributes['data-variant'] = $variant;

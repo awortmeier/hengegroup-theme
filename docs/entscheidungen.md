@@ -21,6 +21,85 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `toggle.php`/`toggle-group.php` gestylt, drittes `variant` (`accent`), `!important`-Fix in `calendar.php` (2026-09-05)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/120c0655-89f0-4c42-b99b-bb5227b96ccc)'s "Basis"/"Varianten"/
+"Größen"-Abschnitte. Details/Klassen-Herleitung stehen direkt in `toggle.php`s/`toggle-group.php`s
+eigenen Kopfkommentaren (Regel 12: kein Doppel-Text hier) -- dieser Eintrag haelt nur die
+Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **Kein Datei-pro-Variante-Split, kein weiterer Ordner-Umzug.** `toggle/` ist bereits seit Phase 1
+  ein eigener Ordner (`toggle.php` + `toggle-group.php`, echte Sub-Komponenten mit eigenem Markup,
+  siehe `kbd.php`-Eintrag weiter unten) -- `variant`/`size` bleiben reine Klassen-Varianten
+  innerhalb je einer Datei, ueber `$variant_classes`/`$size_classes`-Arrays, dasselbe Ein-Datei-
+  Muster wie button.php/badge.php/tabs.php.
+- **Drittes `variant`: `accent`.** Die Referenz zeigt neben "Ohne Kante" (`default`, nie umrandet)
+  und "Mit Kante" (`outline`, auch ungedrueckt umrandet) eine dritte Reihe "Akzent" ("primäre
+  Auswahl", volltoniger henge-green-Fill gedrueckt). Benannt `accent` statt eines Marken-Farbnamens
+  (anders als button.php's volles Marken-Farbvokabular) -- dieses Projekt nutzt "accent" bereits als
+  generischen Namen fuer "dieses Element bekommt seine eine Betonungsstufe in Marken-Gruen"
+  (separator.php's `style: 'accent'`, badge.php's `font: 'accent'`); `default`/`outline` bleiben
+  shadcns eigenes Toggle-Vokabular. `default`s gedrueckter Fill ist `grey-dark` (nicht shadcns
+  neutrales `bg-accent`) -- exakt dieselbe Marken-Grau-Uebernahme wie tabs.php's segmentierte
+  `peer-checked:bg-grey-dark`-Variante, die dieser Referenz optisch fast 1:1 entspricht (volltonige
+  anthrazitfarbene Pille). `outline`s Rahmen ist **`grey-dark`** (Nutzer-Korrektur nach dem ersten
+  Review-Durchlauf, siehe Bugfix-Punkt weiter unten) -- nicht der urspruenglich gewaehlte, shadcn-
+  eigene `border-input`, der im echten Build unsichtbar blieb; damit jetzt dieselbe Marken-Grau-
+  Rahmenfarbe wie button.php/badge.php's eigenes `outline`.
+- **Bugfix: `border-transparent` aus `$base_classes` entfernt, jede `$variant_classes`-Zeile setzt
+  ihre eigene Randfarbe (`default`/`accent`: `border-transparent`, `outline`: `border-grey-dark`).**
+  Vorher trugen `outline`-Toggles GLEICHZEITIG `$base_classes`s unbedingtes `border-transparent` UND
+  ihre eigene Randfarbe (erst `border-input`, s.o.) auf demselben Element -- beides dieselbe
+  CSS-Property bei gleicher Spezifitaet, Tailwinds generierte Stylesheet-Reihenfolge (nicht die
+  Reihenfolge im `class`-Attribut) entscheidet dann den Gleichstand. Im echten, projektweiten Build
+  gewann `border-transparent` (im isolierten Test-Compile dieser Session zunaechst nicht
+  reproduzierbar, siehe Bugfix-Eintrag zum `!important`-Fix oben fuer denselben Mechanismus) --
+  der Rahmen blieb unsichtbar. Jetzt traegt jedes Element genau eine Randfarben-Klasse, kein
+  Gleichstand mehr moeglich, unabhaengig von Tailwinds Scan-Reihenfolge.
+- **Groessen (`sm`/`default`/`lg`) treffen die Referenz-Hoehen (30px/38px/46px) exakt ueber
+  Tailwinds fraktionale Spacing-Skala** (`h-7.5`/`h-9.5`/`h-11.5` = 1.875rem/2.375rem/2.875rem --
+  echte Skalenstufen, derselbe Halbschritt wie badge.php's eigenes `py-0.75`, keine Arbitrary-
+  Bracket-Werte). Schriftgroesse skaliert pro Groesse wie button.php's eigenes `sm`/`base`/`lg`
+  (text-sm/text-base/text-lg) -- die Referenz zeigt sichtbar wachsenden Labeltext.
+- **Bugfix: `toggle-group.php` wrappt jedes Item jetzt in einen eigenen
+  `<span data-slot="toggle-group-item">`.** Ohne diesen Wrapper reihte die `foreach`-Schleife alle
+  Item-`<input><label>`-Paare flach als direkte Geschwister im selben Wrapper-`<div>` aneinander --
+  harmlos in Phase 1 (toggle.php hatte noch keine `peer-checked:`-Klassen), aber ein echter
+  Phase-2-Bug: Tailwinds `peer-checked:`/`peer-disabled:`/`peer-focus-visible:` kompilieren zu einem
+  GESCHWISTER-Selektor (`.peer:checked ~ *`, nicht nur das direkt folgende Element), der ohne
+  Container ALLE spaeteren Items einer Gruppe mitfaerbte, sobald irgendein frueheres Item geprueft
+  war -- gefunden, indem diese Datei gegen einen echten `@tailwindcss/node`-Compile-Lauf gerendert
+  wurde (kein `wp-env` in diesem Projekt, siehe Test-Tooling-Eintrag unten, deshalb ein
+  Wegwerf-PHP-Harness mit gestubbten `esc_attr()`/`get_template_part()`/etc. fuer diese eine
+  Verifikation). Gleiche Loesung wie tabs.php's eigener `data-slot="tabs-trigger-item"`-Wrapper
+  (siehe dessen Kopfkommentar) und calendar.php's eigene Pro-Tag-`<td>`-Isolation -- beide bereits
+  bestehende Beispiele fuer denselben "ein Container pro wiederholtem Peer/Label-Paar"-Regel, jetzt
+  auch hier angewandt.
+- **`!important`-Fix in `calendar.php`s Tag-Zellen (Bugfix/Kompatibilitaet).** `calendar.php`
+  verschachtelt `toggle.php` fuer seine Tag-Zellen mit einem vollstaendig eigenen `class`-Override
+  (siehe dessen Kopfkommentar) -- geschrieben, als `toggle.php` selbst noch keine eigenen Klassen
+  berechnete. Jetzt, wo `default`/`size: 'default'` eigene Form-/Farbklassen mitbringen, kollidieren
+  mehrere davon mit `calendar.php`s eigenen auf derselben CSS-Property (`rounded-xl` vs. `rounded-
+full`, `h-10` vs. `h-9.5`, `font-normal` vs. `font-medium`, `text-foreground` vs.
+  `text-muted-foreground`, `peer-checked:bg-henge-green` vs. `peer-checked:bg-grey-dark`, dazu
+  `toggle.php`s neuer `peer-checked:shadow-xs` und -- weil `peer-checked:hover:` hoehere Spezifitaet
+  als blosses `peer-checked:` traegt (siehe `tabs.php`s eigene Begruendung dazu) -- auch
+  `peer-checked:hover:text-grey-dark-foreground`). PHP hat kein `tailwind-merge`/`cn()`, um das
+  aufzuloesen (reine String-Konkatenation, siehe Eintrag weiter unten); `calendar.php`s eigene
+  `$day_classes` markieren ihre bewusst ueberschreibenden Utilities deshalb jetzt `!important`
+  (Tailwinds eigener `!`-Praefix, z. B. `!rounded-xl`), empirisch gegen einen echten
+  `@tailwindcss/node`-Compile-Lauf verifiziert (`!`-Praefix erzeugt zuverlaessig `!important`,
+  unabhaengig von der Reihenfolge, in der Tailwinds Klassen-Scanner beide Dateien antrifft).
+  `calendar.js`s `DAY_LABEL_CLASSES` (dieselbe "Formel-fuer-Formel"-Duplizierung wie beim
+  Grid-Mathe selbst, siehe `calendar.php`s eigener Kommentar) wurde identisch nachgezogen.
+- **`page-component-showcase-toggle.php` neu angelegt** (analog zu den bestehenden
+  Showcase-Seiten), inkl. drei bislang fehlender Lucide-Icons nachsynchronisiert (`bold`, `italic`,
+  `underline`, per `sync-lucide-icons.sh`/`icons:lucide`-Skript aus `node_modules/lucide-static`
+  kopiert) fuers "Icon, Mehrfachauswahl & deaktiviert"-Beispiel.
+
+---
+
 ### `hengegroup_theme_floating_position_classes()`: geteilte Side/Align-Positionierungslogik aus popover.php extrahiert, in tooltip.php eingesetzt (2026-09-05)
 
 popover.php's eigene `side`/`align` -> Tailwind-Klassen-Lookup (siehe dessen Eintrag direkt

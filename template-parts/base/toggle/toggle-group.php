@@ -61,6 +61,14 @@ declare(strict_types=1);
 // Tab/Space (and, for `single`, native radio arrow-key) behaviour is DOM-order-based regardless of
 // visual layout; not a functional gap worth solving with JS for the common case (see CLAUDE.md #1).
 //
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
+// "Hengegroup" (https://claude.ai/code/artifact/120c0655-89f0-4c42-b99b-bb5227b96ccc)'s "Basis"
+// section -- see toggle.php's own header comment for the full reference/variant/size writeup, this
+// wrapper only needs a row/column layout (`gap`, `flex-col` for `vertical`), every fill/border/color
+// already lives on each nested toggle.php item. `variant` gained the same third `accent` value
+// toggle.php's own header documents -- propagated here unchanged, no group-specific reasoning beyond
+// "same vocabulary as the item it wraps".
+//
 // Supported config:
 //   type          string   single | multiple (default: single) -- selection mode, see above
 //   items         array    required, ordered list of:
@@ -78,7 +86,7 @@ declare(strict_types=1);
 //                          item whose `value` is in the array gets `pressed`). Matches shadcn's own
 //                          `value` prop, which is likewise a string for `single` and a string[] for
 //                          `multiple`.
-//   variant       string   default | outline (default: default) -- shared default for every item,
+//   variant       string   default | outline | accent (default: default) -- shared default for every item,
 //                          same vocabulary as toggle.php, propagated like shadcn's context provider
 //   size          string   default | sm | lg (default: default) -- same propagation as `variant`
 //   disabled      bool     disables every item in the group; also sets `data-disabled="true"` on
@@ -123,7 +131,7 @@ $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : 
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
 
 $allowed_types = ['single', 'multiple'];
-$allowed_variants = ['default', 'outline'];
+$allowed_variants = ['default', 'outline', 'accent'];
 $allowed_sizes = ['default', 'sm', 'lg'];
 $allowed_orientations = ['horizontal', 'vertical'];
 
@@ -202,18 +210,35 @@ foreach ($items_config as $item_config) {
             'id' => trim((string) ($item_config['id'] ?? '')),
         ],
     ]);
-    $items_markup .= (string) ob_get_clean();
+    $item_markup = (string) ob_get_clean();
+
+    // Wrapped per item (same reason tabs.php wraps each of its own trigger pairs in a
+    // `data-slot="tabs-trigger-item"` <span>, see that file's header comment): Tailwind's
+    // `peer-checked:`/`peer-disabled:`/`peer-focus-visible:` compile to a GENERAL sibling selector
+    // (`.peer:checked ~ *`), which -- without a per-item container -- would match every LATER
+    // item's label too, not just the checked item's own paired label, the moment one item in the
+    // group is checked (a Phase 1 non-issue, since toggle.php had no `peer-checked:`-styled classes
+    // of its own yet; a real Phase 2 bug otherwise, caught by rendering this file with real
+    // multi-item input against the actual compiled Tailwind output).
+    $items_markup .= '<span data-slot="toggle-group-item">' . $item_markup . '</span>';
 }
 
 if ($items_markup === '') {
     return;
 }
 
-$wrapper_attributes = $attributes;
+// Phase 2 (CLAUDE.md Regel 1): layout only -- the reference's "Ohne Kante" row shows a set of
+// independent pills with a small gap between them, NOT a shared card/border container like
+// tabs.php's own segmented `variant: 'default'` (see that file's own header comment) -- every visual
+// (fill/border/color) already lives on each nested toggle.php item, this wrapper only needs to lay
+// them out in a row (or column for `vertical`), see this file's own header comment for the
+// reference link.
+$root_classes =
+    'inline-flex flex-wrap items-center gap-1 data-[orientation=vertical]:flex-col ' .
+    'data-[orientation=vertical]:items-start';
 
-if ($class_name !== '') {
-    $wrapper_attributes['class'] = $class_name;
-}
+$wrapper_attributes = $attributes;
+$wrapper_attributes['class'] = trim($root_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $wrapper_attributes['role'] = $is_single ? 'radiogroup' : 'group';
 $wrapper_attributes['data-slot'] = 'toggle-group';

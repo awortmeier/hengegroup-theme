@@ -20,14 +20,17 @@ import { enhanceToggle } from "./toggle.js";
 
 const TOGGLE_INPUT_CLASSES = "peer sr-only";
 
+// `!`-prefixed utilities guard against toggle.php's own Phase-2 default-variant classes, which this
+// markup also nests -- see calendar.php's own $day_classes comment for the full itemized reasoning.
 const DAY_LABEL_CLASSES =
     "peer-focus-visible:border-ring peer-focus-visible:ring-[3px] " +
     "peer-focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:outline-none " +
-    "focus-visible:ring-[3px] focus-visible:ring-ring/50 flex h-10 w-full cursor-pointer " +
-    "items-center justify-center rounded-xl border border-transparent text-base font-normal " +
-    "text-foreground transition-colors hover:bg-muted peer-checked:border-henge-green " +
-    "peer-checked:bg-henge-green peer-checked:font-semibold " +
-    "peer-checked:text-henge-green-foreground peer-checked:hover:bg-henge-green/90 " +
+    "focus-visible:ring-[3px] focus-visible:ring-ring/50 flex !h-10 w-full cursor-pointer " +
+    "items-center justify-center !rounded-xl border border-transparent text-base " +
+    "!font-normal !text-foreground transition-colors hover:bg-muted " +
+    "peer-checked:border-henge-green peer-checked:!bg-henge-green peer-checked:font-semibold " +
+    "peer-checked:!text-henge-green-foreground peer-checked:!shadow-none " +
+    "peer-checked:hover:!bg-henge-green/90 peer-checked:hover:!text-henge-green-foreground " +
     "peer-disabled:pointer-events-none peer-disabled:cursor-not-allowed peer-disabled:opacity-50";
 
 const DAY_TODAY_CLASSES = "ring-1 ring-border";
