@@ -21,6 +21,59 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `dropdown-menu/*.php` gestylt, kein Datei-pro-Variante-Split, kein Ordner-Umzug -- Design-Referenz nicht lesbar (2026-09-05)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/design/p/37768540-95a8-46e1-a647-33070ca71612?file=Dropdown+Menu.dc.html).
+Klassen-Herleitung/Deviationen stehen direkt in `dropdown-menu.php`s eigenem Kopfkommentar (Regel
+12: kein Doppel-Text hier) -- dieser Eintrag haelt nur die Entscheidungen fest, die nicht schon aus
+dem Diff folgen:
+
+- **Die Referenz konnte nicht vollstaendig gelesen werden**, anders als bei jedem bisherigen Phase-
+  2-Eintrag. Weder der reine Artifact-Viewer (`.../code/artifact/...`) noch der eigentliche
+  Design-Editor (`.../design/p/...`) reagierten in dieser Session auf Browser-Automatisierung --
+  Klicks auf den Trigger oeffneten kein Panel, Scroll-/Drag-/Tastatur-Versuche bewegten den
+  sichtbaren Ausschnitt nicht (der Present-Modus blieb schwarz), nur der eingebaute Zoom-Regler
+  (50-200%) reagierte ueberhaupt. Sichtbar waren dadurch ausschliesslich die GESCHLOSSENEN Trigger
+  ("Aktionen"/"Spalten"/"Teilen"-Buttons, drei Abschnittsueberschriften/-beschreibungen); die
+  geoeffneten Panel-Zustaende (Item-Hover/Fokus, destructive/disabled/Checkbox/Radio-Optik, das
+  Untermenue) blieben unsichtbar. Nutzer-Rueckfrage dazu gestellt (Screenshots schicken/Edit-Zugriff
+  geben/ohne Rest weitermachen); Nutzer schickte stattdessen den Design-Editor-Link, der aber
+  demselben Automatisierungs-Problem unterlag.
+- **Konsequenz: die Panel-/Item-Klassen sind NICHT aus der Referenz hergeleitet**, sondern aus
+  shadcns eigenem, live gegen aktuelle Docs geprueftem Stock-`DropdownMenuContent`/-`Item`/
+  \-`CheckboxItem`/-`RadioItem`/-`Label`-Klassen-Rezept, adaptiert auf die bereits etablierten
+  Projekt-Tokens (`border-border`/`bg-popover`/`rounded-2xl`/derselbe literale Schatten wie
+  popover.php/hover-card.php). Aeussere Karte uebernimmt deren Look 1:1 fuer
+  Cross-Komponenten-Konsistenz, aber `p-1` statt deren `p-4` -- popover.phps eigener Phase-2-Eintrag
+  hatte diese Unterscheidung bereits vorweggenommen ("a menu-flavoured popover is just
+  dropdown-menu.php's own item styling ... not a distinct popover variant"). Sollte sich die
+  tatsaechliche Referenz-Optik spaeter doch noch erschliessen (z. B. wenn Edit-Zugriff moeglich
+  wird), ist ein Abgleich/Nacharbeiten dieser Datei angezeigt -- kein stillschweigend akzeptierter
+  Kompromiss.
+- **Kein Datei-pro-Variante-Split, kein `dropdown-menu/`-Ordner-Umzug** (die Aufgabenstellung hat
+  beides explizit an "sinnvoll oder notwendig" geknuepft, dieselbe Formulierung wie bei jedem
+  bisherigen Phase-2-Eintrag) -- anders als bei jenen Eintraegen war die Komponente hier aber schon
+  VOR diesem Auftrag (seit Phase 1) in einem eigenen Ordner UND in ein File pro Unterteil
+  (item/checkbox-item/radio-item/radio-group/group/label) aufgeteilt, aus demselben "mehr als eine
+  Datei" Grund wie toggle/radio/button-group (CLAUDE.md Regel 4). Diese Runde erfindet also keinen
+  neuen Split, sondern stylt die bestehenden Dateien; jede shadcn-eigene Item-"Variante"
+  (`default`/`destructive`) ist bereits ein `variant`-Config-Wert auf der einen bestehenden
+  dropdown-menu-item.php, dieselbe Schlussfolgerung wie bei card.php/popover.php/hover-card.php.
+- **Kein Pfeil** (anders als popover.php/hover-card.php/tooltip.php) -- shadcns eigenes reales
+  `DropdownMenuContent` hat gar keinen Pfeil-Slot, und nichts am sichtbaren Teil der Referenz
+  widerspricht dem.
+- **`page-component-showcase-dropdown-menu.php` neu, analog zu den anderen Showcase-Seiten** --
+  reproduziert nur, was tatsaechlich sichtbar/bekannt war (Aktionen-Menue mit Shortcut/Disabled/
+  Destructive, Spalten/Sortierung-Menue mit Checkbox-/Radio-Items, Zeilenmenue in einer
+  Produktliste). Die Referenz-eigene "Untermenue"-Sektion wurde NICHT nachgebaut -- DropdownMenuSub
+  ist seit Phase 1 explizit out of scope (dropdown-menu.php eigener Kopfkommentar), unabhaengig vom
+  Automatisierungs-Problem oben.
+- Vier bislang fehlende Lucide-Icons synchronisiert (`pencil`, `copy`, `trash-2`, `eye`) fuer die
+  neue Showcase-Seite, `archive`/`ellipsis`/`chevron-down` waren bereits vorhanden.
+
+---
+
 ### `dialog.php` gestylt, kein Datei-Split, kein Ordner-Umzug (2026-09-05)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"

@@ -17,6 +17,10 @@ declare(strict_types=1);
 //   value    string   the currently checked item's `value`
 //   class / attributes / data_attributes   passthrough onto the outer
 //                    <div role="group" data-slot="dropdown-menu-radio-group"> wrapper
+//
+// Phase 2 (CLAUDE.md Regel 1): no classes added -- shadcn's own real stock DropdownMenuRadioGroup
+// (live-checked against current docs) carries none either, same reasoning as
+// dropdown-menu-group.php's own Phase 2 note.
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

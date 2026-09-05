@@ -41,7 +41,55 @@ declare(strict_types=1);
 //
 // Deliberately out of scope for v1, a genuinely different/more complex component, not a variant of
 // this one (same reasoning as native-select.php's `multiple`, combobox.php's chips mode):
-// DropdownMenuSub (nested submenus) -- deferred, not silently dropped.
+// DropdownMenuSub (nested submenus) -- deferred, not silently dropped. The Phase 2 reference below
+// has its own "Untermenü" section demonstrating exactly this -- still not built here, same
+// deferral, now just visually confirmed as a real gap rather than a hypothetical one.
+//
+// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
+// "Hengegroup" (https://claude.ai/code/design/p/37768540-95a8-46e1-a647-33070ca71612?file=Dropdown+Menu.dc.html,
+// same `.dc.html` reference workflow as popover.php's/hover-card.php's own entries, see
+// docs/entscheidungen.md for this component's entry). Unlike every prior Phase 2 entry, the
+// reference's OPEN panel states (item hover/focus, the destructive/disabled/checkbox/radio looks,
+// the submenu) could not actually be read off the canvas -- the design tool's pan/zoom/click-to-open
+// interactions did not respond to browser automation in this session (documented in
+// docs/entscheidungen.md, not silently glossed over). Only the CLOSED triggers ("Aktionen"/
+// "Spalten"/"Teilen" buttons) were visible. The open-panel classes below are therefore NOT traced to
+// this reference like every other Phase 2 file's are -- they're shadcn's own real stock
+// DropdownMenuContent/-Item/-CheckboxItem/-RadioItem/-Label class recipe (live-checked against
+// current docs), adapted onto this project's own already-established floating-card tokens (see
+// below) instead of shadcn's stock ones, the same adaptation popover.php/hover-card.php already did
+// for their own cards.
+//
+// What carried over from popover.php's/hover-card.php's own precedent, and what didn't:
+//   - the card (`border-border`/`bg-popover`/`rounded-2xl`/the same literal shadow) reuses their
+//     token choices verbatim, for the same cross-component-consistency reasoning both files already
+//     state -- but `p-1` instead of their own `p-4`, because this content is a tight menu list of
+//     full-bleed hover rows (shadcn's own real `DropdownMenuContent` is `p-1`, not a spacious
+//     content card), a distinction popover.php's own Phase 2 entry already anticipated ("a
+//     menu-flavoured popover is just dropdown-menu.php's own item styling nested inside a `content`
+//     string ... not a distinct popover variant").
+//   - `min-w-32` (shadcn's own real `min-w-[8rem]`, expressed as a Tailwind scale step since it
+//     matches exactly -- same "hits the scale, no arbitrary value needed" preference as
+//     card.php's/dialog.php's own entries).
+//   - entrance animation reuses `hg-popover-in` unconditionally, same reasoning as popover.php's own
+//     entry: native `<details>` already removes/reinserts this element from the render tree on
+//     toggle, so every open re-triggers the animation for free, no JS-toggled state class needed.
+//   - positioning reuses `hengegroup_theme_floating_position_classes()` (inc/template-parts/
+//     helpers.php) exactly like popover.php -- this component has no JS side-flip either
+//     (dropdown-menu.js only adds keyboard/type-ahead/outside-click behaviour on top, see above), so
+//     there is exactly one side/align combination to emit per render, not a reactive matrix.
+//   - No arrow, unlike popover.php/hover-card.php/tooltip.php -- shadcn's own real
+//     `DropdownMenuContent` has no arrow slot at all (unlike Popover/HoverCard/Tooltip), and nothing
+//     in the visible part of the reference contradicts that.
+//   - No file-per-variant split, no further folder move (the task explicitly asked to check both) --
+//     this component already lives in its own `dropdown-menu/` folder and is already split into one
+//     file per sub-part (item/checkbox-item/radio-item/radio-group/group/label) since Phase 1, for
+//     the same "genuinely more than one file" reason toggle/radio/button-group live in folders (see
+//     CLAUDE.md Regel 4) -- not a NEW split invented for Phase 2, and every item-level "variant"
+//     shadcn itself models (`default`/`destructive`) is already a `variant` config value on the one
+//     existing dropdown-menu-item.php, same conclusion popover.php's/hover-card.php's/card.php's own
+//     entries reached for their own variant-shaped config keys.
+//   - `page-component-showcase-dropdown-menu.php` new, analog to the other showcase pages.
 //
 // Supported config:
 //   trigger       string   required. Pre-rendered HTML for the <summary> trigger's inner content
@@ -90,11 +138,15 @@ if ($id === '') {
     $id = 'hengegroup-theme-dropdown-menu-' . wp_unique_id();
 }
 
+// `relative`/`inline-flex` is this file's own project-CSS half of the positioning (see the Phase 2
+// file header) -- same wrapper treatment as popover.php's own `<details data-slot="popover">`.
+$wrapper_base_classes = 'relative inline-flex';
+
 $wrapper_attributes = $attributes;
 
-if ($class_name !== '') {
-    $wrapper_attributes['class'] = $class_name;
-}
+$wrapper_attributes['class'] = trim(
+    $wrapper_base_classes . ($class_name !== '' ? ' ' . $class_name : ''),
+);
 
 $wrapper_attributes['data-slot'] = 'dropdown-menu';
 $wrapper_attributes['id'] = $id;
@@ -109,13 +161,33 @@ foreach ($data_attributes as $attribute_key => $attribute_value) {
     $wrapper_attributes['data-' . $data_name] = $attribute_value;
 }
 
+// `list-none`/the webkit pseudo-element rule suppress the native disclosure triangle (this
+// component's trigger is meant to look like whatever `trigger` itself renders, e.g. a plain
+// button.php call, not an accordion row) -- same marker-hiding pair popover.php's own `<summary>`
+// already uses.
 $trigger_markup = sprintf(
-    '<summary data-slot="dropdown-menu-trigger" aria-haspopup="menu">%s</summary>',
+    '<summary class="list-none cursor-pointer [&::-webkit-details-marker]:hidden" ' .
+        'data-slot="dropdown-menu-trigger" aria-haspopup="menu">%s</summary>',
     $trigger, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
+// Card look (`border-border`/`bg-popover`/`rounded-2xl`/the shared literal shadow) plus `side`/
+// `align` floating placement -- see the Phase 2 file header for where each value comes from and how
+// it differs from popover.php's own spacious `p-4` card. Position comes from the shared
+// hengegroup_theme_floating_position_classes() helper (inc/template-parts/helpers.php), same
+// reasoning as popover.php's own call: `$side`/`$align` are fixed for this element's whole lifetime
+// once PHP renders it, so there is exactly one combination to emit, not a reactive
+// `data-[side=...]` matrix. `data-side`/`data-align` stay as stable hooks (CLAUDE.md Regel 1),
+// not something this file's own CSS reads.
+$content_classes =
+    'absolute z-50 min-w-32 rounded-2xl border border-border bg-popover p-1 ' .
+    'text-popover-foreground shadow-[0_12px_32px_rgba(0,0,0,0.14)] ' .
+    'animate-[hg-popover-in_140ms_ease-out] ' .
+    hengegroup_theme_floating_position_classes($side, $align);
+
 $content_markup = sprintf(
-    '<div data-slot="dropdown-menu-content" role="menu" data-side="%1$s" data-align="%2$s">%3$s</div>',
+    '<div class="%1$s" data-slot="dropdown-menu-content" role="menu" data-side="%2$s" data-align="%3$s">%4$s</div>',
+    esc_attr($content_classes),
     esc_attr($side),
     esc_attr($align),
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

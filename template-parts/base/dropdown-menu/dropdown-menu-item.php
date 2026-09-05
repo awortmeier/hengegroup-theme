@@ -30,6 +30,21 @@ declare(strict_types=1);
 //                          `href` and sets `aria-disabled="true"` instead, same technique as
 //                          button.php's own href+disabled handling
 //   class / attributes / data_attributes   passthrough, as in the other base parts
+//
+// Phase 2 (CLAUDE.md Regel 1): styled via shadcn's own real stock DropdownMenuItem class recipe
+// (live-checked against current docs) adapted onto this project's own tokens -- see
+// dropdown-menu.php's own header comment for why this file (unlike every other Phase 2 entry) isn't
+// traced to the Claude-Design reference's own literal values: the open panel never rendered during
+// this session. `cursor-default` (not `-pointer`) is shadcn's own real choice here -- a menu is
+// keyboard-first, the pointer doesn't need to signal "clickable" the way a plain link/button does.
+// `hover:`/`focus:` (not `focus-visible:`) drive the highlight because these are real, always-
+// interactive `<button>`/`<a>` elements (unlike shadcn's own Radix-managed `data-highlighted`
+// state) -- a real mouse hover and a real DOM focus (mouse click OR keyboard) both create the same
+// "this is the highlighted item" look Radix's own single synthetic state produces, so two native
+// pseudo-classes cover it without inventing a state class. `disabled:`/`aria-disabled:` both need
+// covering (not just one) because `$disabled` renders as native `disabled` on a `<button>` but as
+// `aria-disabled="true"` on an `<a>` (no native disabled there, see above) -- same dual-variant
+// pattern button.php's own `aria-invalid:` already established for this project.
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -60,18 +75,41 @@ if (!in_array($variant, $allowed_variants, true)) {
 
 $icon_markup = $icon_config !== null ? hengegroup_theme_render_icon($icon_config) : '';
 
+// `ml-auto` pushes a shortcut (a pre-rendered kbd.php/kbd-group.php call, already styled by that
+// file) to the row's trailing edge -- shadcn's own real `DropdownMenuShortcut` does the same, this
+// just wraps the caller's own markup instead of owning it (see the header comment on why kbd.php
+// already covers that atom).
+$shortcut_markup =
+    $shortcut !== ''
+        ? sprintf(
+            '<span class="ml-auto pl-4">%s</span>',
+            $shortcut, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        )
+        : '';
+
 $inner_html = sprintf(
     '%1$s<span data-slot="dropdown-menu-item-text">%2$s</span>%3$s',
     $icon_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     esc_html($text),
-    $shortcut, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    $shortcut_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
+
+// See the Phase 2 file header for the full derivation of each piece below.
+$base_classes =
+    'relative flex w-full cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-left ' .
+    'text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground ' .
+    'focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 ' .
+    'aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[inset=true]:pl-8 ' .
+    'data-[variant=destructive]:text-destructive ' .
+    'data-[variant=destructive]:hover:bg-destructive/10 ' .
+    'data-[variant=destructive]:hover:text-destructive ' .
+    'data-[variant=destructive]:focus:bg-destructive/10 ' .
+    'data-[variant=destructive]:focus:text-destructive ' .
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
 $element_attributes = $attributes;
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'dropdown-menu-item';
 $element_attributes['data-variant'] = $variant;

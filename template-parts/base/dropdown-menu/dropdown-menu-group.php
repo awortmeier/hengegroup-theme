@@ -11,6 +11,10 @@ declare(strict_types=1);
 //   content   string   required. Pre-rendered HTML to wrap (dropdown-menu-item.php/
 //                       -checkbox-item.php calls)
 //   class / attributes / data_attributes   passthrough, as in the other base parts
+//
+// Phase 2 (CLAUDE.md Regel 1): no classes added -- shadcn's own real stock DropdownMenuGroup
+// (live-checked against current docs) carries none either, it's a pure semantic wrapper; the
+// visible styling all lives on the nested item calls this wraps.
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

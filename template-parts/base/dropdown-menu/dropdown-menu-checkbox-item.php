@@ -25,6 +25,14 @@ declare(strict_types=1);
 //   checked     bool     default false. Initial state, see above
 //   disabled    bool     native `disabled` on the <button>
 //   class / attributes / data_attributes   passthrough, as in the other base parts
+//
+// Phase 2 (CLAUDE.md Regel 1): styled via shadcn's own real stock DropdownMenuCheckboxItem class
+// recipe (live-checked against current docs) adapted onto this project's own tokens -- see
+// dropdown-menu.php's own header comment for why this file's open-panel look isn't traced to the
+// Claude-Design reference like every prior Phase 2 entry (the panel never rendered during this
+// session). `group` on the `<button>` lets the indicator span below react to this same element's
+// own `data-state` via `group-data-[state=...]:` -- the indicator is always rendered (see above),
+// visibility is the only thing toggling.
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -45,17 +53,31 @@ if ($text === '') {
 
 $indicator_markup = hengegroup_theme_render_icon(['name' => 'check', 'set' => 'lucide']);
 
+// `absolute left-2` positions the indicator inside the item's own `pl-8` reserved gutter (below);
+// `group-data-[state=unchecked]:hidden` is the only thing toggling it, see the Phase 2 file header.
+$indicator_classes =
+    'absolute left-2 flex size-3.5 items-center justify-center ' .
+    'group-data-[state=unchecked]:hidden [&_svg]:size-4';
+
 $inner_html = sprintf(
-    '<span data-slot="dropdown-menu-item-indicator">%1$s</span><span data-slot="dropdown-menu-item-text">%2$s</span>',
+    '<span class="%1$s" data-slot="dropdown-menu-item-indicator">%2$s</span>' .
+        '<span data-slot="dropdown-menu-item-text">%3$s</span>',
+    esc_attr($indicator_classes),
     $indicator_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     esc_html($text),
 );
 
+// `group` lets the indicator span above react to this element's own `data-state`, see the Phase 2
+// file header. `pl-8` reserves the indicator's gutter (shadcn's own real spacing), `pr-2` matches
+// dropdown-menu-item.php's own trailing edge.
+$base_classes =
+    'group relative flex w-full cursor-default items-center gap-2 rounded-lg py-1.5 pr-2 pl-8 ' .
+    'text-left text-sm outline-hidden select-none hover:bg-accent hover:text-accent-foreground ' .
+    'focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50';
+
 $element_attributes = $attributes;
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['type'] = 'button';
 $element_attributes['data-slot'] = 'dropdown-menu-checkbox-item';

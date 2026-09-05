@@ -13,6 +13,10 @@ declare(strict_types=1);
 //                      sibling items (project-CSS padding, same convention as
 //                      dropdown-menu-item.php's `inset`)
 //   class / attributes / data_attributes   passthrough, as in the other base parts
+//
+// Phase 2 (CLAUDE.md Regel 1): styled via shadcn's own real stock DropdownMenuLabel class recipe
+// (live-checked against current docs) -- see dropdown-menu.php's own header comment for why this
+// isn't traced to the Claude-Design reference like every prior Phase 2 entry.
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -30,11 +34,11 @@ if ($text === '') {
     return;
 }
 
+$base_classes = 'px-2 py-1.5 text-sm font-medium text-foreground data-[inset=true]:pl-8';
+
 $element_attributes = $attributes;
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
-}
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = 'dropdown-menu-label';
 
