@@ -21,6 +21,53 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `hover-card.php` gestylt, kein Datei-Split, kein Ordner-Umzug (2026-09-05)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/d9a5a3e2-3a09-494f-926b-206c5fa23e93). Klassen-Herleitung/
+Deviationen stehen direkt in `hover-card.php`s eigenem Kopfkommentar (Regel 12: kein Doppel-Text
+hier) -- dieser Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **Kein Datei-pro-Variante-Split, kein `hover-card/`-Ordner-Umzug** (die Aufgabenstellung hat
+  beides explizit an "sinnvoll oder notwendig" geknuepft) -- alle Referenz-Beispiele (reiche
+  Produktvorschau, Kontaktkarte, vier `side`s, eine Produktliste, die dieselbe Vorschau-Form
+  wiederverwendet) sind Markup/Config, das die bestehende Ein-Datei-Komponente schon ueber
+  `content`/`side`/`align` abbildet -- dieselbe Schlussfolgerung wie popover.phps/tooltip.phps
+  eigene, fast identisch geformte Phase-2-Eintraege.
+- **Karten-Look von popover.php uebernommen** (`bg-popover`/`border-border`/`rounded-2xl`/`p-4`/
+  derselbe literale Schatten), nicht tooltip.phps dunkle `neutral-900`-Karte -- HoverCards Inhalt
+  ist reiches, oft strukturiertes Vorschau-Material (Avatar-Zeile, Kennwerte-Liste,
+  "Datenblatt öffnen"-Link), dieselbe Form wie popover.phps eigenes `content`, kein kurzer
+  Text-Hinweis wie bei tooltip.php.
+- **Abstand zum Trigger 12&nbsp;px statt der sonst ueblichen 10&nbsp;px** (popover.php/tooltip.php)
+  -- die Referenz begruendet das explizit ("damit der Zeiger die Karte erreicht, ohne sie zu
+  schließen"), ein bewusster, dokumentierter Unterschied, kein Rundungsfehler. Genutzt ueber
+  `hengegroup_theme_floating_position_classes()`s (`inc/template-parts/helpers.php`) bereits
+  vorhandenen, generischen dritten `$gap_px`-Parameter (Default 10, unveraendert fuer die anderen
+  beiden Aufrufer) -- kein Aenderungsbedarf am Helper selbst. Breite `w-64` (shadcns eigener Stock-Default fuer `HoverCardContent`, schmaler als Popovers
+  `w-72`) statt eines der Referenz-eigenen, pro Demo unterschiedlichen Pixelwerte (210-320px).
+- **Eintritts-Uebergang ist Opacity+Scale, NICHT die Referenz-eigene woertliche
+  `translateY(-4px)`-Achse** und kein `@keyframes` (anders als popover.phps `hg-popover-in`) --
+  der Inhalt bleibt (wie bei tooltip.php) durchgehend im DOM, `data-state`-getoggelt statt per
+  natives `<details>` ein-/ausgehaengt, daher ein CSS-`transition` statt eines nur einmal beim
+  Laden abspielenden Keyframes. Die `translateY`-Achse zusaetzlich weggelassen, weil
+  `utils/floating-position.js`s `positionFloatingElement()` bei jedem Oeffnen `content.style.translate
+= "none"` als Inline-Style setzt, was ab dem ersten Oeffnen dauerhaft jede `translate-y-*`-Klasse
+  gewinnt -- der Uebergang wuerde beim ersten Mal sichtbar animieren und danach still aufhoeren.
+  `scale`/`opacity` bleiben von dieser Funktion unangetastet und animieren zuverlaessig bei jedem
+  Oeffnen/Schliessen. Siehe `hover-card.php`s eigenen Kopfkommentar fuer die volle Herleitung.
+- **Pfeil 8&nbsp;px (`size-2`)**, nicht die Referenz-eigenen 10&nbsp;px -- popover.phps eigener
+  Phase-2-Eintrag hatte diese Zahl bereits vorab angekuendigt ("same size as tooltip.php's/
+  hover-card.php's own arrow for cross-component consistency"), dieser Eintrag loest das nur ein.
+  Bleibt anders als popover.phps eigener, einmalig berechneter Pfeil aber eine reaktive
+  `group-data-[side=...]`-Matrix (tooltip.phps Technik), weil hover-card.js zur Laufzeit den `side`
+  nach einem Viewport-Kollisions-Flip aendern kann, ohne dass die Positionierungs-Funktion den
+  Pfeil selbst mitkorrigiert.
+- **Referenz-Abschnitt "Auf dunklem Grund" NICHT uebernommen**, gleicher Grund wie bei jedem
+  bisherigen Phase-2-Eintrag (popover.php/tooltip.php/card.php/etc.) -- dieses Theme hat noch keine
+  Dark-Mode-/Dark-Surface-Strategie, siehe `docs/to-do.md`.
+- `page-component-showcase-hover-card.php` neu, analog zu den anderen Showcase-Seiten.
+
 ### `card.php` gestylt, `media_badge`/`footer_divider`/`href` neu, kein Datei-Split (2026-09-05)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
