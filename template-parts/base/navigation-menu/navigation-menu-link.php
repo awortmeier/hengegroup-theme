@@ -20,6 +20,26 @@ declare(strict_types=1);
 // content-agnostic convention as aspect-ratio.php's `content`), with a plain `text` shorthand for
 // the common simple-link case (a bare top-level "Home"/"About" item has no need for that).
 //
+// Phase 2 (CLAUDE.md Regel 1): deliberately NOT one fixed look, because this file's own two real
+// usages (see above) need visually different presentations -- a top-level nav-bar item (padded
+// button, brand-accent hover) vs. a panel-internal "list item" (tight title+description row,
+// subtle hover tint). shadcn's own real docs hit the same fork and resolve it the same way: a
+// shared `navigationMenuTriggerStyle()` helper styles top-level NavigationMenuLink usage, but
+// panel-internal links go through a caller-defined local `ListItem` wrapper, NOT
+// NavigationMenuLink's own styling. This file follows that split: it only ever renders a minimal,
+// context-agnostic base (focus ring + color transition, no background/padding/text color of its
+// own) and leaves the actual look to whichever caller composes it --
+// navigation-menu.php computes and passes the full top-level trigger-button recipe via `class` for
+// plain link items (see that file's header comment); a panel-internal list-item look is the
+// caller's own `class`, see the recipe in navigation-menu.php's header comment. This avoids the
+// class-ordering pitfall button.php's own header comment documents (a caller-passed `class` is
+// appended, not merged -- a conflicting `bg-*`/`text-*` utility doesn't reliably win): with no
+// competing background/color classes baked in here, there is nothing for a caller's own classes to
+// lose to.
+// `active` still recolors unconditionally (`text-henge-green`, brand accent, reads on both light
+// and dark surfaces) -- a "current page" indicator is meaningful regardless of which of the two
+// contexts above this link is used in, unlike the base look.
+//
 // Supported config:
 //   text / label   string   visible link text (used when `content` is omitted)
 //   content        string   optional. Pre-rendered HTML for a richer link body (e.g. a title +
@@ -27,8 +47,10 @@ declare(strict_types=1);
 //                             priority over `text` when both are given
 //   href           string   required. Native `href`
 //   active         bool     marks this as the current page's link: sets `data-active="true"` and
-//                             `aria-current="page"` (shadcn's own NavigationMenuLink `active` prop)
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+//                             `aria-current="page"` (shadcn's own NavigationMenuLink `active` prop),
+//                             plus recolors it `text-henge-green font-semibold` (Phase 2, see above)
+//   class / attributes / data_attributes   passthrough, as in the other base parts -- appended
+//                             after this file's own minimal base classes (see Phase 2 note above)
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -50,12 +72,17 @@ if ($href === '' || ($text === '' && trim($content) === '')) {
 
 $inner_html = trim($content) !== '' ? $content : esc_html($text);
 
-$element_attributes = $attributes;
+// Minimal, context-agnostic base -- no background/padding/text color, see Phase 2 note above.
+// `active` recolors on top, unconditionally (reads on both this file's own two usages).
+$base_class =
+    'outline-none rounded-lg transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
+if ($active) {
+    $base_class .= ' text-henge-green font-semibold';
 }
 
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_class . ($class_name !== '' ? ' ' . $class_name : ''));
 $element_attributes['data-slot'] = 'navigation-menu-link';
 $element_attributes['href'] = $href;
 

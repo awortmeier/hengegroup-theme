@@ -21,6 +21,72 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `navigation-menu/*.php` gestylt, neues `color`-Config, kein Datei-pro-Variante-Split, kein Ordner-Umzug (2026-09-05)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/code/artifact/5cb1e148-c394-4f71-bc4b-61912a213332)'s "Basis"/"Auf dunklem
+Grund"-Abschnitte. Klassen-Herleitung/Deviationen stehen direkt in `navigation-menu.php`s/
+`navigation-menu-link.php`s eigenen Kopfkommentaren (Regel 12: kein Doppel-Text hier) -- dieser
+Eintrag haelt nur die Entscheidungen fest, die nicht schon aus dem Diff folgen:
+
+- **Die Referenz war diesmal lesbar, trotz eines nicht-interaktiven Viewers.** Wie beim
+  `dropdown-menu.php`-Eintrag unten reagierte der Artifact-Viewer nicht auf
+  Hover-/Klick-/Scroll-Automatisierung (die eigentliche Vorschau steckt in einer Cross-Origin-
+  iframe, auf die weder `read_page` noch injiziertes JS zugreifen konnten). Anders als dort liess
+  sich der Artifact-Export selbst (per `WebFetch`) als Rohdatei lesen -- die Vorschau ist ein
+  kleines eingebettetes React-artiges Prototyp-Programm (Farben, Abstaende, Radien, Schatten,
+  Timing als literale Werte im Quelltext, keine kompilierten/verschleierten Klassen), nicht nur ein
+  statisches Bild. Alle Werte unten sind dadurch Literale aus diesem Quelltext, keine Schaetzungen.
+- **Kein Datei-pro-Variante-Split, kein weiterer Ordner-Umzug.** `navigation-menu/` ist bereits seit
+  Phase 1 ein eigener Ordner (`navigation-menu.php` + `navigation-menu-link.php`) -- "Basis"/"Auf
+  dunklem Grund" sind zudem kein Varianten-Split, sondern ein neuer `color`-Config-Wert (naechster
+  Punkt), also ohnehin kein Kandidat fuer eine zweite Datei.
+- **Neues `color`-Config (`default | light`)**, dieselbe Idee/dasselbe Vokabular wie
+  `accordion.php`s/`typography.php`s eigenes `color: light` ("dieses Projekt hat noch keine
+  Dark-Mode-Strategie", `docs/to-do.md` -- deshalb ein explizites Config statt eines
+  `dark:`/`prefers-color-scheme`-Umschalters). Gleiche Vereinfachung wie `accordion.php`s Eintrag:
+  die Referenz nutzt fuer den dunklen Hintergrund ein eigenes helleres Gruen (`#8fd6ab`) statt
+  `henge-green`, hier bewusst NICHT uebernommen -- ein Marken-Gruenton fuer beide `color`-Werte,
+  eine Ausnahme weniger im Design-System. Anders als bei `accordion.php` bekommt das Mega-Menu-
+  Panel selbst trotzdem eine eigene dunkle Kartenflaeche (Hintergrund/Rand/Schatten) statt sich nur
+  auf den Aufrufer zu verlassen -- ein Panel schwebt ueber beliebigem Seiteninhalt, anders als
+  `accordion.php`s Inline-Content, das direkt im Elternhintergrund sitzt.
+- **`navigation-menu-link.php`s Styling ist jetzt rollenabhaengig statt einheitlich.** Die Datei
+  wird an zwei visuell komplett unterschiedlichen Stellen verwendet (Top-Level-Button vs.
+  Panel-interner Listeneintrag) -- echtes shadcn loest denselben Konflikt identisch (ein
+  `navigationMenuTriggerStyle()`-Helper fuer Top-Level, ein separater, aufrufer-eigener
+  `ListItem`-Wrapper fuer Panel-Eintraege, nicht dieselbe Komponente fuer beides gestylt). Diese
+  Datei traegt deshalb nur noch eine minimale, kontextneutrale Basis (Fokus-Ring, keine
+  Hintergrund-/Text-Farbe); `navigation-menu.php` liefert das volle Top-Level-Rezept selbst per
+  `class`, ein Panel-interner Listen-Look ist ein dokumentiertes Rezept fuer den Aufrufer (siehe
+  `navigation-menu.php`s Kopfkommentar) -- vermeidet damit auch `button.php`s dokumentierte
+  Klassen-Reihenfolge-Falle (ein per `class` uebergebenes, konfligierendes `bg-*`/`text-*` gewinnt
+  nicht zuverlaessig).
+- **`page-component-showcase-navigation-menu.php` neu**, analog zu den anderen Showcase-Seiten;
+  Inhalte (Produkte/Anwendungen/Unternehmen, Beschreibungstexte) 1:1 aus der Referenz uebernommen,
+  keine erfundenen Platzhalter.
+- **Nutzer-Feedback nach dem ersten Durchlauf, direkt eingearbeitet (kein neuer Eintrag noetig,
+  Regel 12 -- reine Korrektur derselben Aenderung, nicht der Beleg einer neuen Entscheidung):**
+  Chevron flippt jetzt vertikal (`group-open:-scale-y-100`) statt zu rotieren
+  (`group-open:rotate-180`, wie zuerst gebaut und wie `accordion.php`s eigener Chevron es weiterhin
+  tut) -- eine Rotation dreht das Symbol sichtbar durch eine seitwaerts zeigende Zwischenposition,
+  ein Flip quetscht es stattdessen flach und entfaltet es gespiegelt wieder, liest sich als "zeigt
+  jetzt woanders hin" statt als Drehbewegung. Panel-Mindestbreite von `min-w-56` auf `min-w-72`
+  angehoben, und wichtiger: die Showcase-Seite bekommt pro Grid-Spalte einen echten
+  `minmax()`-Boden (`grid-cols-[repeat(2,minmax(13rem,1fr))]` statt nacktem `grid-cols-2`) --
+  Tailwinds eigenes `minmax(0,1fr)` erlaubt Spalten, auf 0 zu schrumpfen, was bei laengeren
+  deutschen Produktnamen/Beschreibungen zu wirklich zu schmalen Eintraegen fuehrte (Nutzer-Befund
+  "Menuepunkte im Dropdown sind zu schmal").
+- **Nicht visuell im Browser verifiziert** -- dieses Repo hat keine lauffaehige WordPress-Instanz
+  in dieser Umgebung (siehe `docs/to-do.md`s a11y-/Visual-Regression-Punkt zur fehlenden
+  `wp-env`-Infrastruktur). Verifiziert stattdessen: `composer lint`/`composer test`/
+  `pnpm format:check`/`pnpm test` gruen, `pnpm exec vite build` erfolgreich, jede neue Utility-
+  Klasse (u. a. `hover:bg-henge-green/10`, `group-open:rotate-180`, `bg-neutral-800`, `min-w-56`,
+  beide `shadow-[...]`-Werte) im kompilierten `dist/assets/css/app-*.css` stichprobenartig
+  bestaetigt.
+
+---
+
 ### `dropdown-menu/*.php` gestylt, kein Datei-pro-Variante-Split, kein Ordner-Umzug -- Design-Referenz nicht lesbar (2026-09-05)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
