@@ -46,16 +46,16 @@ Die Config-API jeder Komponente orientiert sich **stark** an der jeweiligen shad
   `radio.php`, `native-select.php`, `select.php`, `slider.php`, `switch.php` —
   konsistent vorhanden sein. Ein Blick auf shadcn allein deckt das nicht zwingend auf, ein Blick
   auf die eigenen Nachbardateien schon.
-- **Wo wirklich kein natives HTML-Verhalten existiert** (z. B. der Avatar-Fallback jenes headless
-  Primitives bei fehlgeschlagenem Bild-Ladevorgang — es gibt kein CSS-`:error`-Pseudo-Element),
-  lohnt sich ein serverseitiger Trick, wenn PHP die Antwort zur Renderzeit schon kennt, statt JS
-  nachzubauen: `avatar.php` puffert `image.php` und zeigt automatisch den Fallback, wenn dessen
-  Output leer bleibt (`image.php` liefert bei fehlendem Theme-Asset ja bereits nichts) —
-  entspricht dem Verhalten jenes headless Primitives 1:1, nur zur Renderzeit statt im Browser
-  entschieden. Grenze klar dokumentieren (bei `avatar.php`: funktioniert nur fuer serverseitig
-  pruefbare Quellen wie `name`/`set`, nicht fuer eine extern gegebene `src`-URL, die erst im
-  Browser fehlschlagen kann). Das ist ein gutes Muster, wenn es passt — keine Pflicht, wenn eine
-  volle JS-Umsetzung die bessere UX liefert (siehe Kernhaltung in `CLAUDE.md`).
+- **Wo wirklich kein natives HTML-Verhalten existiert** (z. B. ein Fallback fuer einen
+  fehlgeschlagenen Bild-Ladevorgang — es gibt kein CSS-`:error`-Pseudo-Element), lohnt sich ein
+  serverseitiger Trick, wenn PHP die Antwort zur Renderzeit schon kennt, statt JS nachzubauen:
+  `card.php` puffert `image.php` fuer seinen optionalen Cover-Media-Slot und blendet den Wrapper
+  automatisch aus, wenn dessen Output leer bleibt (`image.php` liefert bei fehlendem Theme-Asset ja
+  bereits nichts) — zur Renderzeit entschieden statt im Browser. Grenze klar dokumentieren: das
+  funktioniert nur fuer serverseitig pruefbare Quellen wie `name`/`set`, nicht fuer eine extern
+  gegebene `src`-URL, die erst im Browser fehlschlagen kann. Das ist ein gutes Muster, wenn es
+  passt — keine Pflicht, wenn eine volle JS-Umsetzung die bessere UX liefert (siehe Kernhaltung in
+  `CLAUDE.md`).
 
 **Hintergrund — warum ein Teil der bestehenden Komponenten native HTML-Basis statt JS-Nachbau
 nutzt:** Diese Entscheidung wurde unter der frueheren, inzwischen aufgehobenen "natives HTML hat
@@ -200,12 +200,17 @@ Text-Highlighting, u. ae.), lebt **ausschliesslich** in `inc/template-parts/help
   HTML-Attribut-String rendern (inkl. Bool-Attribute, `esc_attr()`). Genutzt von praktisch allen
   Base-Komponenten, inkl. `icon.php` (dort in den bestehenden `<svg>`-Tag injiziert statt einen
   neuen Tag zu erzeugen).
+- `hengegroup_theme_merge_data_attributes(array $attributes, array $data_attributes): array` —
+  mischt eine Komponente eigenes `data_attributes`-Config (Keys ohne `data-`-Praefix) in ein
+  bestehendes Attribute-Array, mit `data-`-Praefix und getrimmten/uebersprungenen Leer-Keys.
+  Genutzt von praktisch allen Base-Komponenten, die einen `data_attributes`-Passthrough anbieten
+  (der ueberwiegende Teil, siehe Regel 4) — ersetzt den bis 2026-09-16 identisch in allen diesen
+  Dateien kopierten `foreach`-Merge-Loop.
 - `hengegroup_theme_render_accent_text(string $content, array $highlighted_words): string` —
   `accent_words`-Highlighting (`<span class="font-accent">`). Genutzt von `typography.php`.
 - `hengegroup_theme_render_icon(array $icon_config): string` — puffert einen `template-parts/base/icon`-
   Aufruf und gibt das SVG-Markup als String zurueck. Genutzt von `button.php` (Icon-Slot +
-  Loading-Spinner), `accordion.php` (Chevron), `badge.php` (Icon-Slot), `avatar.php`
-  (Icon-Fallback), `breadcrumb.php` (Separator + Ellipsis), `select.php` (Chevron +
+  Loading-Spinner), `accordion.php` (Chevron), `badge.php` (Icon-Slot), `select.php` (Chevron +
   Selected-Indikator-Template), `toast.php` (Close-Icon + Close-Icon-Template), `toggle.php`
   (Icon-Slot, gleiches `data-icon`-Prinzip wie `button.php`), `combobox.php`
   (Selected-Indikator-Template, gleiches Prinzip wie `select.php`), `dropdown-menu-item.php`
@@ -218,8 +223,8 @@ Text-Highlighting, u. ae.), lebt **ausschliesslich** in `inc/template-parts/help
 - `hengegroup_theme_render_image(array $image_config): string` — puffert einen
   `template-parts/base/image`-Aufruf und gibt das Markup als String zurueck (leerer String, wenn
   `image.php` selbst nichts rendert, z. B. fehlende Datei — siehe dessen `is_file()`-Check). Genutzt
-  von `avatar.php` (Bild-Slot, dessen Leer-Pruefung den Fallback triggert, siehe Regel 2),
-  `card.php` (optionaler Cover-Media-Slot) und `attachment.php` (optionaler Image-Media-Slot,
+  von `card.php` (optionaler Cover-Media-Slot, dessen Leer-Pruefung den Wrapper ausblendet, siehe
+  Regel 2) und `attachment.php` (optionaler Image-Media-Slot,
   gleiches `variant`-Switch-Prinzip wie dessen Icon-Media-Slot oben) — ersetzt die vorher in
   mehreren Dateien separat duplizierte `ob_start()`/`get_template_part('.../image')`/
   `ob_get_clean()`-Sequenz, gleiches

@@ -106,15 +106,7 @@ if ($striped) {
 $table_attributes['class'] = trim($table_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 $table_attributes['data-slot'] = 'table';
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $table_attributes['data-' . $data_name] = $attribute_value;
-}
+$table_attributes = hengegroup_theme_merge_data_attributes($table_attributes, $data_attributes);
 
 $table_markup = sprintf(
     '<table%1$s>%2$s</table>',

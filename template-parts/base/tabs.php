@@ -422,15 +422,7 @@ $wrapper_attributes['class'] = trim($root_classes . ($class_name !== '' ? ' ' . 
 $wrapper_attributes['data-slot'] = 'tabs';
 $wrapper_attributes['data-orientation'] = $orientation;
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $attribute_value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 $panels_attributes = ['data-slot' => 'tabs-panels'];
 

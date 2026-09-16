@@ -209,15 +209,7 @@ if ($label_text === '' && $aria_label !== '') {
     $element_attributes['aria-label'] = $aria_label;
 }
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $element_attributes['data-' . $data_name] = $attribute_value;
-}
+$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
 $input_markup = '<input' . hengegroup_theme_render_attributes($element_attributes) . '>';
 

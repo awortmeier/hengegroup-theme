@@ -51,7 +51,7 @@ declare(strict_types=1);
 //
 // CSS contract: the checkbox holds the live state; style off of it, not off of the render-time
 // data-state below (which only reflects the value at render time, like data-state elsewhere in this
-// theme, e.g. progress.php/avatar.php).
+// theme, e.g. progress.php/switch.php).
 //   [data-slot="toggle-input"] { /* visually-hidden technique, e.g. position:absolute; width:1px;
 //     height:1px; overflow:hidden; clip-path:inset(50%); -- must stay focusable, not display:none */ }
 //   [data-slot="toggle-input"]:checked + [data-slot="toggle"] { /* pressed styles */ }
@@ -362,15 +362,7 @@ if ($aria_invalid) {
     $label_attributes['data-invalid'] = 'true';
 }
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $label_attributes['data-' . $data_name] = $attribute_value;
-}
+$label_attributes = hengegroup_theme_merge_data_attributes($label_attributes, $data_attributes);
 
 printf(
     '%1$s<label%2$s>%3$s</label>',

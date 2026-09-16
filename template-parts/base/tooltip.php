@@ -181,15 +181,7 @@ if ($title_value !== '') {
     $wrapper_attributes['title'] = $title_value;
 }
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $attribute_value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 // `inline-flex` here (not the no-display default an unstyled <span> would have) matters for
 // correctness, not just looks: a plain inline element wrapping an inline-block child (e.g. a

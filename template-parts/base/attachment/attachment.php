@@ -8,7 +8,7 @@ declare(strict_types=1);
 // upload lists". Unlike most components in this theme, there is no native-vs-headless-primitive
 // question to work through at all -- shadcn's own Attachment is already "styled native React/HTML
 // rather than wrapping headless UI primitives" (no interaction pattern to replicate), so this file
-// is, like badge.php/avatar.php, a direct presentational translation: pure data-attributed markup,
+// is, like badge.php, a direct presentational translation: pure data-attributed markup,
 // zero JS (see CLAUDE.md #1).
 //
 // Composition: `media` nests template-parts/base/icon.php or
@@ -339,15 +339,7 @@ $wrapper_attributes['data-size'] = $size;
 $wrapper_attributes['data-orientation'] = $orientation;
 $wrapper_attributes['id'] = $id;
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $attribute_value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 printf(
     '<div%1$s>%2$s%3$s%4$s%5$s</div>',

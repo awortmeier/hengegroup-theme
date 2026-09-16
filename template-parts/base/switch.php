@@ -17,7 +17,7 @@ declare(strict_types=1);
 // `label` config).
 //
 // `data-state="checked"|"unchecked"` mirrors shadcn's own Switch vocabulary (distinct from
-// toggle.php's "on"/"off") but, like data-state elsewhere in this theme (progress.php/avatar.php),
+// toggle.php's "on"/"off") but, like data-state elsewhere in this theme (progress.php/toggle.php),
 // only reflects the value at render time -- project CSS should style off of the native
 // `:checked` pseudo-class for anything that needs to stay live after a user interaction, not this
 // attribute; it's provided purely so `[data-slot="switch"][data-state="..."]` selectors are
@@ -159,15 +159,7 @@ if ($label_text === '' && $aria_label !== '') {
     $element_attributes['aria-label'] = $aria_label;
 }
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $element_attributes['data-' . $data_name] = $attribute_value;
-}
+$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
 $input_markup = '<input' . hengegroup_theme_render_attributes($element_attributes) . '>';
 

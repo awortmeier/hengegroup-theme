@@ -64,15 +64,7 @@ $element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . 
 $element_attributes['data-slot'] = 'field-description';
 $element_attributes['id'] = $id;
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $element_attributes['data-' . $data_name] = $attribute_value;
-}
+$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
 printf(
     '<p%1$s>%2$s</p>',

@@ -90,6 +90,40 @@ final class HelpersTest extends TestCase
         $this->assertSame(' title="foo&quot;bar"', $result);
     }
 
+    public function test_merge_data_attributes_prefixes_and_merges_onto_existing_attributes(): void
+    {
+        $result = hengegroup_theme_merge_data_attributes(
+            ['class' => 'foo'],
+            ['state' => 'open', 'index' => 2],
+        );
+
+        $this->assertSame(['class' => 'foo', 'data-state' => 'open', 'data-index' => 2], $result);
+    }
+
+    public function test_merge_data_attributes_skips_blank_keys(): void
+    {
+        $result = hengegroup_theme_merge_data_attributes([], ['' => 'ignored', '  ' => 'ignored']);
+
+        $this->assertSame([], $result);
+    }
+
+    public function test_merge_data_attributes_returns_original_array_unchanged_when_empty(): void
+    {
+        $attributes = ['class' => 'foo'];
+
+        $this->assertSame($attributes, hengegroup_theme_merge_data_attributes($attributes, []));
+    }
+
+    public function test_merge_data_attributes_overwrites_an_existing_data_attribute_with_the_same_name(): void
+    {
+        $result = hengegroup_theme_merge_data_attributes(
+            ['data-state' => 'closed'],
+            ['state' => 'open'],
+        );
+
+        $this->assertSame(['data-state' => 'open'], $result);
+    }
+
     public function test_render_accent_text_wraps_highlighted_words(): void
     {
         $this->stubEscapingPassthrough();

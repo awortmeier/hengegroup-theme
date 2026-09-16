@@ -240,15 +240,7 @@ if ($trigger_title !== '') {
     $wrapper_attributes['title'] = $trigger_title;
 }
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $attribute_value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 // `inline-flex` here is a functional fix, not styling -- see tooltip.php's identical
 // `tooltip-trigger` span for why an unstyled inline wrapper throws off the shared

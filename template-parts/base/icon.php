@@ -136,15 +136,7 @@ if ($decorative) {
     }
 }
 
-foreach ($data_attributes as $attribute_key => $value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $svg_attributes['data-' . $data_name] = $value;
-}
+$svg_attributes = hengegroup_theme_merge_data_attributes($svg_attributes, $data_attributes);
 
 $svg_attributes = array_merge($svg_attributes, $attributes);
 

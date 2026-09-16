@@ -243,15 +243,7 @@ $wrapper_attributes['data-placeholder'] = $placeholder;
 $wrapper_attributes['data-count-template'] = esc_html__('%d dates selected', 'hengegroup-theme');
 $wrapper_attributes['id'] = $id;
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $attribute_value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 printf(
     '<details%1$s>%2$s%3$s</details>',

@@ -48,15 +48,7 @@ $element_attributes['class'] = trim(
 );
 $element_attributes['data-slot'] = 'table-body';
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $element_attributes['data-' . $data_name] = $attribute_value;
-}
+$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
 printf(
     '<tbody%1$s>%2$s</tbody>',

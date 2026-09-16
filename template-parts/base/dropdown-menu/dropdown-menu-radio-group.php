@@ -72,15 +72,7 @@ if ($class_name !== '') {
 $wrapper_attributes['role'] = 'group';
 $wrapper_attributes['data-slot'] = 'dropdown-menu-radio-group';
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $attribute_value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 printf(
     '<div%1$s>%2$s</div>',

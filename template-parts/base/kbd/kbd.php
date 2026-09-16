@@ -22,7 +22,7 @@ declare(strict_types=1);
 //     px -> Tailwind-scale mapping (reuses button.php's own h-6/h-8/h-10 height steps).
 //   - a `pressed` state was added -- the reference's "Gedrückter Zustand" section shows the key
 //     sinking 1px with an accent-colored fill. Exposed the same render-time-only way
-//     progress.php/avatar.php/toggle.php's data-state already work in this theme (reflects the
+//     progress.php's/toggle.php's data-state already work in this theme (reflects the
 //     value passed at render time, not a live keydown listener -- kbd.php stays the "no ARIA/JS
 //     needed" static element its own original header already established, nothing added here
 //     changes that).
@@ -109,15 +109,7 @@ $element_attributes['data-slot'] = 'kbd';
 $element_attributes['data-size'] = $size;
 $element_attributes['data-state'] = $pressed ? 'on' : 'off';
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $element_attributes['data-' . $data_name] = $attribute_value;
-}
+$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
 printf(
     '<kbd%1$s>%2$s</kbd>',

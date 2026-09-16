@@ -151,15 +151,7 @@ $wrapper_attributes['class'] = trim(
 $wrapper_attributes['data-slot'] = 'dropdown-menu';
 $wrapper_attributes['id'] = $id;
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $attribute_value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 // `list-none`/the webkit pseudo-element rule suppress the native disclosure triangle (this
 // component's trigger is meant to look like whatever `trigger` itself renders, e.g. a plain

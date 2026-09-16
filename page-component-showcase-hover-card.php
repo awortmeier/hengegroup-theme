@@ -18,7 +18,7 @@
 
 get_header();
 
-// This project has no standalone avatar.php yet (see docs/to-do.md) -- the initials circle below
+// This project has no standalone avatar.php (see docs/entscheidungen.md) -- the initials circle below
 // is dev-only decorative markup for this one demo trigger, not a reusable base component, same
 // spirit as popover.php's own showcase building one-off demo markup (its filter checkbox list)
 // that isn't part of any base component either.

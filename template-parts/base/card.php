@@ -19,9 +19,10 @@ declare(strict_types=1);
 // `data_slot`, see those files' own header comments) so the rendered elements carry
 // data-slot="card-title"/"card-description" instead of typography.php's own default
 // data-slot="typography" -- lets project CSS target [data-slot="card-title"] directly without an
-// extra wrapper element. Nests image.php for the optional cover-media slot the same way avatar.php
-// nests image.php: buffer the output and check for emptiness (image.php renders nothing for a
-// missing/invalid file), skip the media wrapper entirely rather than emitting an empty <div>.
+// extra wrapper element. Nests image.php for the optional cover-media slot: buffer the output and
+// check for emptiness (image.php renders nothing for a missing/invalid file), skip the media
+// wrapper entirely rather than emitting an empty <div> (same pattern hengegroup_theme_render_image()
+// exists for, see inc/template-parts/helpers.php).
 //
 // Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
 // "Hengegroup" (https://claude.ai/code/artifact/c2fdca5b-79fc-47b7-92c8-e861966ac106, same

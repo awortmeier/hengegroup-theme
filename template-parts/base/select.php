@@ -241,15 +241,7 @@ if ($label_text === '' && $aria_label !== '') {
     $trigger_attributes['aria-label'] = $aria_label;
 }
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $trigger_attributes['data-' . $data_name] = $attribute_value;
-}
+$trigger_attributes = hengegroup_theme_merge_data_attributes($trigger_attributes, $data_attributes);
 
 $chevron_markup = hengegroup_theme_render_icon(['name' => 'chevron-down', 'set' => 'lucide']);
 $check_markup = hengegroup_theme_render_icon(['name' => 'check', 'set' => 'lucide']);

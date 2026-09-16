@@ -101,12 +101,6 @@ fuehren.
 - Pruefen, ob wirklich nur ein Submenu gleichzeitig offen ist (kein gleichzeitig zweites offenes
   Submenu nach dem Wechsel).
 
-### `breadcrumb.php`
-
-- Reine Link-Liste, Tab-Reihenfolge = Lesereihenfolge, kein Sonderverhalten.
-- Falls eine Ellipsis (`…`) fuer ausgeblendete Zwischen-Schritte gerendert wird und diese als
-  `dropdown-menu.php` umgesetzt ist: siehe dessen Abschnitt oben.
-
 ### `pagination.php`
 
 - Reine Link-Liste (`<a href>`), kein JS-Sonderverhalten — pruefen, dass die aktuelle Seite per

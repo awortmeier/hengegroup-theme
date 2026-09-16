@@ -21,6 +21,62 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Neuer Helper `hengegroup_theme_merge_data_attributes()`: identischer `data_attributes`-Merge-Loop aus 63 Base-Komponenten in `inc/template-parts/helpers.php` extrahiert (2026-09-16)
+
+Review-Auftrag (gezielt nach dupliziertem Code statt nach Kompositions-Luecken gesucht): der
+`foreach ($data_attributes as $attribute_key => $attribute_value) { ... }`-Block, der jede
+Komponente eigenes `data_attributes`-Config in ihr Attribute-Array mischt (`data-`-Praefix,
+Leer-Keys ueberspringen), lag Byte-fuer-Byte identisch in 63 Dateien unter `template-parts/base/`
+(~500 Zeilen kopierte Logik, nur der Ziel-Variablenname unterschied sich je Datei) -- genau der
+Fall, den Regel 7 ("Cross-cutting Logik lebt ausschliesslich in `inc/template-parts/helpers.php`,
+nie kopieren") verhindern soll, ohne dass bislang ein Helper dafuer existierte.
+
+Neue Funktion `hengegroup_theme_merge_data_attributes(array $attributes, array $data_attributes): array`
+(siehe deren eigenen Docblock) ersetzt den Loop an allen 63 Fundstellen durch einen Einzeiler
+(`$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);`,
+Ziel-Variable bleibt je Datei unveraendert). Mechanischer Refactor ohne Verhaltensaenderung:
+`composer lint`/`composer test` (inkl. 4 neuer PHPUnit-Tests fuer den Helper selbst) laufen
+unveraendert durch, jede betroffene Datei einzeln `php -l`-geprueft.
+
+**Lehre aus einem Zwischenfall waehrend dieser Aenderung**: ein erster Versuch, die 63 Stellen per
+PowerShell-Regex-Bulk-Skript zu ersetzen, hatte einen Bug (`[regex]$str1 + $str2 + ...`-Verkettung
+schlaegt in PowerShell fehl, da `+` auf einem `[regex]`-Objekt nicht definiert ist) und hat dadurch
+alle 64 betroffenen Dateien komplett geleert, bevor der Fehler auffiel -- nur im Arbeitsverzeichnis,
+nichts committet, per `git checkout -- template-parts/base/` folgenlos wiederhergestellt. Der
+zweite, tatsaechlich verwendete Versuch lief deshalb erst als Trockenlauf (kein Schreiben) gegen
+eine Kopie in einem Scratch-Verzeichnis, mit Abbruch-Guards (leerer/verdaechtig kurzer Output wird
+nicht geschrieben) und `php -l` ueber die Kopie, bevor irgendetwas am echten Repo geaendert wurde.
+
+---
+
+### `avatar.php`/`breadcrumb.php`: kein Bestandteil dieses Projekt-Themes, stale Referenzen bereinigt (2026-09-16)
+
+Beide Komponenten wurden bereits im Commit `f3cc35e` (30.08.2026, Phase-2-Styling fuer
+button.php/badge.php/typography.php) aus `template-parts/base/` entfernt -- vermutlich beim
+Zuschneiden der generischen Vorlage auf dieses konkrete Projekt (Hengegroup braucht aktuell weder
+Nutzer-Avatare noch eine Breadcrumb-Navigation), ohne dass diese Entscheidung damals hier
+festgehalten wurde (Regel 12 haette das verlangt). In der Zwischenzeit hatten mehrere andere,
+weiterhin aktive Dateien beide Komponenten in ihren Kopfkommentaren als bestehende, funktionierende
+Geschwister-Komponenten zitiert (`card.php`, `attachment.php`, `kbd.php`, `switch.php`,
+`toggle/toggle.php`, `pagination/pagination.php`), dazu `docs/neue-komponente-erstellen.md`,
+`inc/template-parts/helpers.php` und ein eigener Abschnitt in
+`docs/tastatur-screenreader-testplan.md` fuer `breadcrumb.php` -- reine Doku-/Kommentar-Drift nach
+der Loeschung, kein Hinweis auf tatsaechlich fehlenden Code (keine `get_template_part()`-Aufrufe auf
+`base/avatar`/`base/breadcrumb` existierten mehr).
+
+Alle betroffenen Stellen wurden auf reale, weiterhin existierende Komponenten umgehaengt statt sie
+mit erfundenem Kontext zu ersetzen (`card.php` beschreibt seinen eigenen `image.php`-Puffer-Trick
+jetzt direkt statt per Analogie zu `avatar.php`, `pagination.php`s Ellipsis-Icon-Begruendung
+verweist auf shadcn's eigenes `PaginationEllipsis` statt auf `breadcrumb.php`, etc.) --
+`page-component-showcase-hover-card.php`s eigener Hinweis auf die fehlende `avatar.php` bleibt
+bestehen (zeigt jetzt hierher statt auf `docs/to-do.md`, wo die Komponente nie gelistet war).
+
+Beide Alt-Versionen (Phase 1, vor jeglichem Tailwind-Styling) sind bei Bedarf weiterhin aus der
+Git-Historie rekonstruierbar (`git show f3cc35e^:template-parts/base/avatar.php` bzw.
+`.../breadcrumb.php`) -- kein Wiederaufbau in diesem Pass, nur die Referenz-Bereinigung.
+
+---
+
 ### `skeleton.php` gestylt, neue `shape`/`color`-Configs, erste `motion-reduce`-Nutzung (2026-09-16)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"

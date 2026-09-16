@@ -38,6 +38,32 @@ function hengegroup_theme_render_attributes(array $attributes): string
 }
 
 /**
+ * Merges a component's `data_attributes` config (a plain ['name' => value, ...] map, keys WITHOUT
+ * the `data-` prefix) into an existing HTML-attributes array, prefixing each key with `data-` and
+ * trimming/skipping empty names -- the standard passthrough every base component offers alongside
+ * `class`/`attributes` (see docs/neue-komponente-erstellen.md Regel 4). Returns the merged array,
+ * ready for hengegroup_theme_render_attributes(); does not mutate $attributes in place (PHP arrays
+ * are values, not references), so callers re-assign the result, e.g.
+ * `$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);`.
+ * Replaces the identical foreach loop every base component used to duplicate locally for this same
+ * merge (Regel 7: cross-cutting logic belongs here, not copied per file).
+ */
+function hengegroup_theme_merge_data_attributes(array $attributes, array $data_attributes): array
+{
+    foreach ($data_attributes as $attribute_key => $attribute_value) {
+        $data_name = trim((string) $attribute_key);
+
+        if ($data_name === '') {
+            continue;
+        }
+
+        $attributes['data-' . $data_name] = $attribute_value;
+    }
+
+    return $attributes;
+}
+
+/**
  * Escapes $content and wraps every occurrence of the words in $highlighted_words in
  * <span class="font-accent">...</span>. Used by base components that support an
  * `accent_words`-config key (e.g. headline, text) to highlight individual words within a string.
@@ -118,8 +144,8 @@ function hengegroup_theme_render_icon(array $icon_config): string
  * Renders a nested template-parts/base/image.php call and returns its output as a string, for
  * components that need to know whether an image actually resolved (image.php renders nothing for
  * a missing/invalid file -- name/set is checked via is_file(), see that file's own header comment)
- * before deciding what else to render, e.g. avatar.php falling back to initials/an icon, card.php
- * skipping its optional cover-media wrapper entirely. Buffers get_template_part() output instead
+ * before deciding what else to render, e.g. card.php skipping its optional cover-media wrapper
+ * entirely. Buffers get_template_part() output instead
  * of every component duplicating the same ob_start()/get_template_part()/ob_get_clean() closure
  * locally -- same idiom as hengegroup_theme_render_icon() above, just for image.php.
  */

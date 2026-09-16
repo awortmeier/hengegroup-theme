@@ -5,9 +5,8 @@ declare(strict_types=1);
 // shadcn/ui's Pagination is a small family of subcomponents (Pagination, PaginationContent,
 // PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis) that a
 // caller composes by hand, one <PaginationItem> per page/control. This file collapses that family
-// into a single config-driven `items` array instead -- same shape as breadcrumb.php's own
-// items-array API: nothing in the family is meaningfully reused standalone
-// outside a pagination list the way table/*'s row/cell atoms are, so a one-file-per-subcomponent
+// into a single config-driven `items` array instead: nothing in the family is meaningfully reused
+// standalone outside a pagination list the way table/*'s row/cell atoms are, so a one-file-per-subcomponent
 // split (like table/, dropdown-menu/) would just be indirection a caller has to assemble by hand
 // for no benefit.
 //
@@ -28,7 +27,7 @@ declare(strict_types=1);
 // inside <li data-slot="pagination-item"> is hook enough for Phase 2 styling), any
 // component-specific meaning is layered on top via other attributes instead of a renamed
 // data-slot. The ellipsis item nests template-parts/base/icon.php via hengegroup_theme_render_icon(),
-// same default Lucide `ellipsis` glyph as breadcrumb.php's own ellipsis item.
+// with the same default Lucide `ellipsis` glyph shadcn's own PaginationEllipsis uses.
 //
 // Moved into its own template-parts/base/pagination/ folder alongside the new
 // pagination-compact.php (Rule 4: a folder appears once a component becomes more than one file;
@@ -100,8 +99,7 @@ declare(strict_types=1);
 //                                'lucide'])
 //     class           string   passthrough onto this item's <li data-slot="pagination-item">
 //   aria_label  string   accessible name for the outer <nav> (default: translated 'pagination',
-//                        matching shadcn's own hardcoded default) -- same override precedent as
-//                        breadcrumb.php's own aria_label
+//                        matching shadcn's own hardcoded default)
 //   class / attributes / data_attributes   passthrough onto the outer <nav data-slot="pagination">
 
 if (!isset($args['config']) || !is_array($args['config'])) {
@@ -246,15 +244,7 @@ $wrapper_attributes['class'] = trim(
 $wrapper_attributes['data-slot'] = 'pagination';
 $wrapper_attributes['aria-label'] = $aria_label;
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $attribute_value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 printf(
     '<nav%1$s><ul data-slot="pagination-content" class="flex flex-row items-center gap-1.5">%2$s</ul></nav>',

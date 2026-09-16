@@ -546,15 +546,10 @@ if ($close_button) {
     $viewport_attributes['data-close-button'] = 'true';
 }
 
-foreach ($data_attributes as $attribute_key => $attribute_value) {
-    $data_name = trim((string) $attribute_key);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $viewport_attributes['data-' . $data_name] = $attribute_value;
-}
+$viewport_attributes = hengegroup_theme_merge_data_attributes(
+    $viewport_attributes,
+    $data_attributes,
+);
 
 printf(
     '<ol%1$s>%2$s%3$s</ol>',
