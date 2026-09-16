@@ -47,15 +47,7 @@ if ($class_name !== '') {
 $element_attributes['data-slot'] = 'carousel-content';
 $element_attributes['tabindex'] = '0';
 
-foreach ($data_attributes as $name => $value) {
-    $data_name = trim((string) $name);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $element_attributes['data-' . $data_name] = $value;
-}
+$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
 printf(
     '<div%1$s>%2$s</div>',

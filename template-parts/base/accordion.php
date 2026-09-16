@@ -304,15 +304,7 @@ $wrapper_attributes['data-slot'] = 'accordion';
 $wrapper_attributes['data-type'] = $type;
 $wrapper_attributes['data-color'] = $color;
 
-foreach ($data_attributes as $name => $value) {
-    $data_name = trim((string) $name);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $wrapper_attributes['data-' . $data_name] = $value;
-}
+$wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
 printf(
     '<div%1$s>%2$s</div>',

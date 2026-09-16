@@ -150,15 +150,7 @@ $element_attributes['data-slot'] = $data_slot;
 $element_attributes['data-variant'] = $variant;
 $element_attributes['data-color'] = $color;
 
-foreach ($data_attributes as $name => $value) {
-    $data_name = trim((string) $name);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $element_attributes['data-' . $data_name] = $value;
-}
+$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
 printf(
     '<%1$s%2$s>%3$s</%1$s>',

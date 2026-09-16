@@ -181,15 +181,7 @@ if ($lazy_srcset !== '') {
     $image_attributes['data-srcset'] = $lazy_srcset;
 }
 
-foreach ($data_attributes as $name => $value) {
-    $data_name = trim((string) $name);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $image_attributes['data-' . $data_name] = $value;
-}
+$image_attributes = hengegroup_theme_merge_data_attributes($image_attributes, $data_attributes);
 
 $image_attributes = array_merge($image_attributes, $attributes);
 

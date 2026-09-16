@@ -251,15 +251,7 @@ if ($is_icon_only && $aria_label !== '') {
 
 hengegroup_theme_warn_missing_aria_label('button.php', $is_icon_only, $aria_label);
 
-foreach ($data_attributes as $name => $value) {
-    $data_name = trim((string) $name);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $element_attributes['data-' . $data_name] = $value;
-}
+$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
 if ($href !== '') {
     if ($disabled) {

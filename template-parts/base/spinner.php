@@ -168,15 +168,7 @@ if ($decorative) {
     $svg_attributes['aria-label'] = $aria_label;
 }
 
-foreach ($data_attributes as $name => $value) {
-    $data_name = trim((string) $name);
-
-    if ($data_name === '') {
-        continue;
-    }
-
-    $svg_attributes['data-' . $data_name] = $value;
-}
+$svg_attributes = hengegroup_theme_merge_data_attributes($svg_attributes, $data_attributes);
 
 printf(
     '<svg%1$s><circle cx="12" cy="12" r="10" class="opacity-20"></circle>' .
