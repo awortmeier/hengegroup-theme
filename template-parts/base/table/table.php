@@ -34,15 +34,15 @@ declare(strict_types=1);
 // shadcn's own Table (registry/new-york-v4/ui/table.tsx, live-checked 2026-09-03):
 // `w-full caption-bottom text-sm`. The <div data-slot="table-container"> wrapper is rendered by
 // the nested scroll-area.php call below, not this file directly -- shadcn's own stock class there
-// is `relative w-full overflow-x-auto`; this file passes that 1:1 as scroll-area.php's `class`
-// (scroll-area.php itself stays unstyled/Phase-1, see its own header -- table.php owns this
-// specific instance's classes the same way any composing caller supplies scroll-area.php's
-// `class`, not a change to scroll-area.php's own defaults), PLUS a card treatment
-// (`rounded-xl border border-border bg-card shadow-xs`) on the strength of the Claude-Design
-// reference "Hengegroup" (same `.dc.html` reference workflow as button.php's/kbd.php's own
-// entries in docs/entscheidungen.md -- see that file for this component's entry): every non-dark
-// section of the reference wraps its table in exactly this card look, so it becomes this file's
-// own default rather than something every caller has to repeat.
+// is `relative w-full overflow-x-auto`; `overflow-x-auto` now comes from scroll-area.php's own
+// `orientation: 'horizontal'` default (see that file's header), this file only adds `relative w-full`
+// via scroll-area.php's `class` (table.php owns this specific instance's classes the same way any
+// composing caller supplies scroll-area.php's `class`, not a change to scroll-area.php's own
+// defaults), PLUS a card treatment (`rounded-xl border border-border bg-card shadow-xs`) on the
+// strength of the Claude-Design reference "Hengegroup" (same `.dc.html` reference workflow as
+// button.php's/kbd.php's own entries in docs/entscheidungen.md -- see that file for this component's
+// entry): every non-dark section of the reference wraps its table in exactly this card look, so it
+// becomes this file's own default rather than something every caller has to repeat.
 //
 // `striped` (new, on explicit request from the reference's own "Gestreift" section) adds a
 // zebra-row hook targeting `<tbody>` rows via an arbitrary-variant selector on <table> itself --
@@ -122,7 +122,9 @@ $table_markup = sprintf(
     $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
-$container_classes = 'relative w-full overflow-x-auto';
+// `overflow-x-auto` comes from scroll-area.php's own `orientation: 'horizontal'` default now, not
+// repeated here.
+$container_classes = 'relative w-full';
 
 if ($card) {
     $container_classes .= ' rounded-xl border border-border bg-card shadow-xs';

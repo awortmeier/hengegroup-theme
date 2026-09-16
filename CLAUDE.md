@@ -6,13 +6,14 @@ aus dieser Vorlage starten) um verbindliche Konventionen fuer die Arbeit an dies
 ## Zielbild und Phasen
 
 Endergebnis ist ein **PHP-basiertes WordPress-Theme**. Der Weg dahin laeuft in drei Phasen —
-**aktuell laeuft Phase 1**, Phase 2 und 3 sind geplant, aber noch nicht begonnen:
+**Phase 1 ist abgeschlossen, aktuell laeuft Phase 2**, Phase 3 ist geplant, aber noch nicht
+begonnen:
 
-1. **Phase 1 — Base-Komponenten (aktuell).** `template-parts/base/` bekommt die shadcn/ui-
+1. **Phase 1 — Base-Komponenten (abgeschlossen).** `template-parts/base/` bekommt die shadcn/ui-
    Komponenten als generische, projektunabhaengige PHP-Bausteine: Markup, Config-API, Verhalten
    (nativ und/oder JS) und Barrierefreiheit. **Kein visuelles Styling in dieser Phase** — Tailwind-
-   Klassen sind nur erlaubt, wenn sie funktional notwendig sind, nicht fuer Optik (siehe Regel 1).
-2. **Phase 2 — Styling-Layer (spaeter).** Visuelles Design (Farben, Abstaende, Typografie,
+   Klassen waren nur erlaubt, wenn sie funktional notwendig waren, nicht fuer Optik (siehe Regel 1).
+2. **Phase 2 — Styling-Layer (aktuell).** Visuelles Design (Farben, Abstaende, Typografie,
    Radien, Schatten, Animationen, ...) kommt als eigener Schritt obendrauf, **ausschliesslich
    ueber Tailwind** (siehe Regel 1).
 3. **Phase 3 — Gutenberg-Block-Wrapper (spaeter).** Die fertig gestylten Base-Komponenten werden
@@ -44,9 +45,9 @@ Vorbild ankuendigen wuerde (z. B. `role="checkbox"` statt `role="button"`), blei
 dauerhaft akzeptierter Kompromiss, sondern wird entweder durch eine vollstaendige JS-Umsetzung
 oder eine schliessende JS-Enhancement-Schicht behoben.
 
-### 1. Styling: was jetzt erlaubt ist, was Phase 2 gehoert
+### 1. Styling: was in Phase 1 erlaubt war, was jetzt (Phase 2) dazukommt
 
-Diese Regel geht allen anderen vor, solange Phase 1 laeuft:
+Diese Regel geht allen anderen vor:
 
 - **Ausschliesslich Tailwind**, wenn ueberhaupt Styling-Code entsteht — kein eigenes Utility-CSS,
   kein SCSS/LESS, kein CSS-in-JS, keine Inline-`style`-Attribute fuer Optik. Nur wenn ein
@@ -54,15 +55,18 @@ Diese Regel geht allen anderen vor, solange Phase 1 laeuft:
   `assets/css/tokens.css`) nachweislich nicht abbildbar ist, darf rohes CSS/eine
   CSS-Custom-Property als Ausnahme genutzt werden — die Ausnahme kurz im Dateikopf-Kommentar
   begruenden.
-- **Phase 1 (jetzt): nur funktionale Klassen.** Erlaubt sind Tailwind-Klassen, die ein Verhalten
-  bzw. einen Zustand abbilden, ohne den die Komponente nicht korrekt funktionieren wuerde —
-  typischerweise Sichtbarkeits-/Zustandsklassen, die an `data-state`/`aria-*`/JS gekoppelt sind
-  (z. B. ein Dropdown-Panel, das erst nach dem Oeffnen sichtbar sein darf: `hidden` als Default,
-  Umschaltung ueber JS/`data-state`). **Nicht erlaubt** in Phase 1: alles, was eine gestalterische
-  Entscheidung ist — Farben, Abstaende/Spacing ueber das fuer die Funktion noetige Minimum hinaus,
-  Typografie, Radien, Schatten, rein optische Transitions/Animationen. Testfrage im Zweifel:
-  "Wuerde die Komponente ohne diese Klasse kaputt/falsch funktionieren (nicht nur schlechter
-  aussehen)?" — nur dann gehoert sie jetzt schon ins PHP.
+- **Phase 1 (abgeschlossen): nur funktionale Klassen.** Erlaubt waren Tailwind-Klassen, die ein
+  Verhalten bzw. einen Zustand abbilden, ohne den die Komponente nicht korrekt funktionieren
+  wuerde — typischerweise Sichtbarkeits-/Zustandsklassen, die an `data-state`/`aria-*`/JS
+  gekoppelt sind (z. B. ein Dropdown-Panel, das erst nach dem Oeffnen sichtbar sein darf: `hidden`
+  als Default, Umschaltung ueber JS/`data-state`). **Nicht erlaubt** in Phase 1: alles, was eine
+  gestalterische Entscheidung ist — Farben, Abstaende/Spacing ueber das fuer die Funktion noetige
+  Minimum hinaus, Typografie, Radien, Schatten, rein optische Transitions/Animationen.
+- **Phase 2 (jetzt): visuelles Styling ist erlaubt.** Die Phase-1-Beschraenkung oben gilt fuer
+  bereits gebaute Base-Komponenten nicht mehr — Farben, Abstaende, Typografie, Radien, Schatten,
+  Animationen duerfen jetzt ergaenzt werden, weiterhin ausschliesslich ueber Tailwind (siehe oben)
+  und ohne die in Phase 1 festgelegte Struktur/Config-API der Komponente zu aendern (siehe
+  "Zielbild und Phasen").
 - `data-slot`/`data-variant`/`data-size`/weitere `data-*`-Attribute werden trotzdem weiterhin
   gesetzt — nicht als Styling-Pflichtmechanik, sondern als stabile Hooks fuer JS-Zustands-
   Selektoren, Tests und die kommende Phase-2-Styling-Arbeit, egal ob diese am Ende
@@ -76,8 +80,8 @@ Diese Regel geht allen anderen vor, solange Phase 1 laeuft:
 
 Siehe `docs/neue-komponente-erstellen.md` — API-Design, Komposition, Datei-Struktur, a11y,
 Datei-Sicherheit, Helper, Abgrenzung, Doku-Pflicht, JS-Enhancement, Checkliste. Ausgelagert, weil
-aktuell kein Arbeitsauftrag (Phase 1 ist fast abgeschlossen); dort nachschlagen, sobald wieder eine
-neue Base-Komponente entsteht.
+aktuell kein Arbeitsauftrag (Phase 1 ist abgeschlossen, aktuell laeuft Phase 2); dort nachschlagen,
+sobald wieder eine neue Base-Komponente entsteht.
 
 ### 11. Tooling
 

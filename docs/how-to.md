@@ -48,6 +48,34 @@ add_filter(
   ersetzen/entfernen, nicht nur ergaenzen.
 - Details/Contract siehe Docblock von `hengegroup_theme_get_seo_structured_data()` im selben File.
 
+### Ein weiteres Icon ergaenzen
+
+`template-parts/base/icon.php` (bzw. der Helper `hengegroup_theme_render_icon()`) rendert nur
+Icons, die als statische SVG-Datei unter `assets/images/icons/<set>/` vorliegen — welche Dateien
+dort liegen, haengt vom `set`-Wert ab:
+
+- **Lucide** (`set => 'lucide'`, z. B. `['name' => 'arrow-right', 'set' => 'lucide']`): Datei kommt
+  aus `node_modules/lucide-static`. Icon-Name im Code referenzieren (als String-Literal in der
+  `icon.php`-Config), dann `pnpm icons:lucide` ausfuehren — synct automatisch nur die tatsaechlich
+  referenzierten Icons (`scripts/find-lucide-icons.php` scannt dafuer den gesamten Theme-PHP-Code)
+  und raeumt nicht mehr benoetigte Dateien mit auf. Laeuft ausserdem automatisch bei jedem
+  `pnpm build`.
+- **Tabler** (`set => 'tabler/outline'` bzw. `'tabler/filled'`): analog ueber `pnpm icons:tabler`,
+  Quelle `node_modules/@tabler/icons`, Scanner `scripts/find-tabler-icons.php`.
+- **Name wird erst zur Laufzeit zusammengesetzt** (z. B. `['name' => $icon_name, ...]` mit
+  `$icon_name` aus einer PHP-Variable/Expression) — der statische Scanner sieht dann kein
+  String-Literal und findet das Icon nicht. In diesem Fall den Icon-Namen zusaetzlich in
+  `scripts/lucide-icons.json` bzw. `scripts/tabler-icons.json` eintragen (einfaches JSON-Array,
+  bei Tabler `{"name": "...", "variant": "outline"|"filled"}`-Objekte) — beide Sync-Skripte lesen
+  diese Datei zusaetzlich zum Scan-Ergebnis aus.
+- **Icon jenseits Lucide/Tabler** (Marken-/Custom-SVG): kein Sync-Skript noetig, einfach manuell
+  unter `assets/images/icons/<eigener-set-name>/` ablegen und mit `set => '<eigener-set-name>'`
+  referenzieren — `icon.php` liest jede vorhandene Datei unter `assets/images/icons/`, unabhaengig
+  davon, ob ein Sync-Skript sie dorthin kopiert hat.
+
+Details zur Config (`name`/`set`/`class`/`decorative`/`title`/`attributes`/`data_attributes`)
+stehen im Kopfkommentar von `template-parts/base/icon.php`.
+
 ### Ein weiteres, Seiten-spezifisches SEO-Feld nutzen
 
 Die SEO-Ausgabe (`inc/setup/theme-seo-output.php`) folgt fuer Titel/Beschreibung/Social-Bild/

@@ -21,6 +21,35 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### `skeleton.php` gestylt, neue `shape`/`color`-Configs, erste `motion-reduce`-Nutzung (2026-09-16)
+
+Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"
+(https://claude.ai/artifact/AgUuYjLPw8bHzEXojvtqyj)'s "Basis"/"Formen"/"Auf dunklem
+Grund"-Abschnitte. Klassen-Herleitung/Deviationen stehen direkt in `skeleton.php`s eigenem
+Kopfkommentar (Regel 12: kein Doppel-Text hier) -- dieser Eintrag haelt nur fest, was nicht schon
+aus dem Diff folgt:
+
+- **Referenz-Link in einem neuen Format** (`claude.ai/artifact/<kurze-id>` statt des bisherigen
+  `claude.ai/code/artifact/<uuid>`) -- funktioniert im Browser identisch (per Claude-in-Chrome
+  verifiziert), nur das `Artifact`-Tool/`WebFetch` dieser Session konnten ihn nicht direkt lesen
+  (andere Produktoberflaeche als die Code-eigenen Artifacts). Design-Inhalt stattdessen per
+  Browser-Screenshot/Zoom gesichtet, nicht per HTML-Extraktion.
+- **`motion-reduce:animate-none` ergaenzt** -- die erste Phase-2-Animation dieses Themes ueberhaupt
+  mit tatsaechlicher Reduced-Motion-Beruecksichtigung (spinner.php's `animate-spin`/progress.php's
+  Streifen-Animation haben bislang keine). `docs/to-do.md`s eigener a11y-Abschnitt wollte das
+  ausdruecklich "von Anfang an" fuer jede neue Phase-2-Animation, nicht nachtraeglich fuer alle auf
+  einmal -- Tailwinds eingebaute `motion-reduce:`-Variante deckt das hier ab, ohne das dort
+  zusaetzlich verlangte projektweite Reduced-Motion-Token vorwegzunehmen. Bestehende Animationen
+  (spinner.php, progress.php, dialog.php, ...) bleiben bewusst unangetastet -- das waere ein
+  separates Nachrüst-Vorhaben, nicht Teil dieser Komponente.
+- **`page-component-showcase-skeleton.php` neu**, analog zu den anderen Showcase-Seiten. Die
+  Referenz-Interaktion in "Übergang" (Toggle-Button Platzhalter/Inhalt) wurde als statischer
+  Nebeneinander-Vergleich nachgebaut statt als echter Toggle -- der gezeigte Punkt (Platzhalter- und
+  Inhalts-Maße stimmen exakt ueberein) braucht dafuer keine Interaktivitaet, und eine neue Show/Hide-
+  Technik nur fuer eine Dev-only-Seite haette keinen weiteren Nutzen gehabt.
+
+---
+
 ### `navigation-menu/*.php` gestylt, neues `color`-Config, kein Datei-pro-Variante-Split, kein Ordner-Umzug (2026-09-05)
 
 Phase-2-Styling auf Basis der Claude-Design-Referenz "Hengegroup"

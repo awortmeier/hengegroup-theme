@@ -47,17 +47,16 @@
         height: auto;
     }
 
-    /* template-parts/base/attachment/attachment-group.php: hidden scrollbar + edge fade for its
-       horizontal-scroll row of attachment.php cards -- documented Regel-1 raw-CSS exception, see
-       that file's own header comment for why (no stock Tailwind utility for `scrollbar-width` or a
-       `mask-image` edge fade; shadcn's own `scrollbar-none`/`scroll-fade-x` are its own custom
-       utilities, not built into Tailwind itself). `mask-image` fades the actual scrolling content
-       to transparent at both edges -- works on any background, unlike a fake gradient-to-a-
-       hardcoded-color overlay div. Always-on (no scroll-position tracking without JS), so it also
-       dims the first/last card when nothing is actually cut off -- accepted, documented tradeoff,
-       not a bug. */
+    /* template-parts/base/attachment/attachment-group.php: edge fade for its horizontal-scroll row
+       of attachment.php cards -- documented Regel-1 raw-CSS exception, see that file's own header
+       comment for why (no stock Tailwind utility for a `mask-image` edge fade; shadcn's own
+       `scroll-fade-x` is its own custom utility, not built into Tailwind itself -- the scrollbar
+       itself is hidden via scroll-area.php's own `scrollbar: 'none'` config instead, a Tailwind
+       class, not raw CSS). `mask-image` fades the actual scrolling content to transparent at both
+       edges -- works on any background, unlike a fake gradient-to-a-hardcoded-color overlay div.
+       Always-on (no scroll-position tracking without JS), so it also dims the first/last card when
+       nothing is actually cut off -- accepted, documented tradeoff, not a bug. */
     [data-slot="attachment-group"] {
-        scrollbar-width: none;
         mask-image: linear-gradient(
             to right,
             transparent,
@@ -65,10 +64,6 @@
             black calc(100% - 24px),
             transparent
         );
-    }
-
-    [data-slot="attachment-group"]::-webkit-scrollbar {
-        display: none;
     }
 
     /* template-parts/base/progress/progress.php: `striped: true`'s animated diagonal stripe fill --
@@ -336,6 +331,48 @@
         }
         to {
             opacity: 1;
+        }
+    }
+
+    /* template-parts/base/skeleton.php: moving-highlight shimmer sweep, documented Regel-1 raw-CSS
+       exception -- see that file's own header comment for the full rationale (no stock Tailwind
+       utility for a moving-gradient sweep, same category as progress.php's own striped-fill
+       exception above). Layered as a second `background-image` on top of `bg-accent`/`bg-grey-
+       light`'s own solid `background-color` (a separate CSS property, not a shorthand overwrite) --
+       the gradient's `transparent` stops let that solid fill show through everywhere except the
+       moving highlight band, so no extra pseudo-element/wrapper is needed. `color-mix(in oklab, ...)`
+       matches progress.php's own striped-fill technique above. Sweeps right-to-left (`background-
+       position` from a positive to a negative offset), matching the design reference's own "Ein
+       heller Streifen läuft von rechts nach links". */
+    [data-slot="skeleton"] {
+        background-image: linear-gradient(
+            90deg,
+            transparent,
+            color-mix(in oklab, white 55%, transparent),
+            transparent
+        );
+        background-size: 200% 100%;
+        animation: hg-skeleton-shimmer 1.8s ease-in-out infinite;
+    }
+
+    /* `color: 'light'` (see skeleton.php's own header): same sweep, dimmer highlight -- the
+       reference's own "der Streifen läuft mit geringerer Deckkraft" (the stripe runs at lower
+       opacity) for a shape already sitting on a dark surface. */
+    [data-slot="skeleton"][data-color="light"] {
+        background-image: linear-gradient(
+            90deg,
+            transparent,
+            color-mix(in oklab, var(--color-grey-light) 35%, transparent),
+            transparent
+        );
+    }
+
+    @keyframes hg-skeleton-shimmer {
+        from {
+            background-position: 150% 0;
+        }
+        to {
+            background-position: -50% 0;
         }
     }
 }

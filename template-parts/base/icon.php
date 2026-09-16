@@ -7,8 +7,9 @@ declare(strict_types=1);
 // no wrapper needed because JS/React already gives every icon its own importable module. PHP has
 // no equivalent import-per-icon mechanism, so this component is the necessary server-side
 // substitute: a generic renderer parameterized by `name`/`set` that resolves to a pre-synced
-// static SVG file from lucide-static/@tabler/icons (see README "Icons" section) -- the closest
-// practical PHP analog to "importing an icon component", not a deviation from shadcn's approach.
+// static SVG file from lucide-static/@tabler/icons (see docs/how-to.md "Ein weiteres Icon
+// ergaenzen") -- the closest practical PHP analog to "importing an icon component", not a
+// deviation from shadcn's approach.
 //
 // Supported config:
 //   name             string   required. Icon file name (without or with .svg), e.g. 'arrow-right'

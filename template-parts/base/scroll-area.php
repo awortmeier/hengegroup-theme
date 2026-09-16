@@ -26,16 +26,31 @@ declare(strict_types=1);
 // Content-agnostic wrapper, same nesting pattern as button-group.php/kbd-group.php:
 // buffer the scrollable content and pass it as `content`.
 //
-// Styling note: the actual `overflow`/`scrollbar-width`/`scrollbar-color`/`::-webkit-scrollbar-*`
-// rules per `data-orientation` value are a project-CSS concern, not baked in here (CLAUDE.md #1),
-// e.g.:
-//   [data-slot="scroll-area"][data-orientation="vertical"] { overflow-y: auto; overflow-x: hidden; }
-//   [data-slot="scroll-area"] { scrollbar-width: thin; scrollbar-color: ... ; }
+// Phase 2 (CLAUDE.md Regel 1): both the functional `overflow-*` per `orientation` and the visual
+// thin/subtle native scrollbar are baked in below as regular Tailwind classes -- `scrollbar-width`/
+// `scrollbar-color`/`::-webkit-scrollbar-*` are all reachable via Tailwind's arbitrary-property/
+// arbitrary-variant bracket syntax (`[scrollbar-color:var(--color-border)_transparent]`,
+// `[&::-webkit-scrollbar-thumb]:bg-border`, ...), same idiom progress-circle.php's own
+// `[--pc-track:var(--color-border)]` already uses -- no raw-CSS exception needed here, unlike e.g.
+// attachment-group.php's own `mask-image` edge fade.
+// `scrollbar: 'none'` (see config below) swaps to a fully hidden native scrollbar instead --
+// attachment-group.php uses that for its edge-faded horizontal row rather than reinventing the hide
+// via its own raw CSS (previously a project-CSS `[data-slot="attachment-group"]` rule in app.css).
+// That's a mutually exclusive PHP config branch, not two competing Tailwind classes for the same
+// `scrollbar-width` property on one element -- the utilities layer gives no source-order guarantee
+// between two same-specificity utility classes, so a caller-supplied override class could not
+// reliably have beaten this file's own default the other way round.
 //
 // Supported config:
 //   content       string   required. Pre-rendered HTML to wrap (caller's responsibility to
 //                          escape/build)
-//   orientation   string   vertical (default) | horizontal | both -- sets data-orientation only
+//   orientation   string   vertical (default) | horizontal | both -- sets data-orientation AND the
+//                          matching default `overflow-*` Tailwind classes (vertical: scroll y only,
+//                          horizontal: scroll x only, both: scroll both axes)
+//   scrollbar     string   thin (default) | none -- thin: subtle themed native scrollbar
+//                          (`--color-border`, see tokens.css). none: scrollbar fully hidden
+//                          (content still scrolls, e.g. via touch/trackpad/keyboard) -- for a caller
+//                          that draws its own affordance instead (attachment-group.php's edge fade)
 //   data_slot     string   overrides the root `data-slot` value (default: 'scroll-area') -- same
 //                          composing-parent escape hatch as input.php's/textarea.php's `data_slot`;
 //                          e.g. attachment-group.php requests 'attachment-group' here instead of
@@ -52,6 +67,7 @@ $config = $args['config'];
 
 $content = (string) ($config['content'] ?? '');
 $orientation = trim((string) ($config['orientation'] ?? 'vertical'));
+$scrollbar = trim((string) ($config['scrollbar'] ?? 'thin'));
 $data_slot = trim((string) ($config['data_slot'] ?? ''));
 $class_name = trim((string) ($config['class'] ?? ''));
 $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : [];
@@ -71,11 +87,31 @@ if (!in_array($orientation, $allowed_orientations, true)) {
     $orientation = 'vertical';
 }
 
-$element_attributes = $attributes;
+$allowed_scrollbars = ['thin', 'none'];
 
-if ($class_name !== '') {
-    $element_attributes['class'] = $class_name;
+if (!in_array($scrollbar, $allowed_scrollbars, true)) {
+    $scrollbar = 'thin';
 }
+
+$overflow_classes = [
+    'vertical' => 'overflow-y-auto overflow-x-hidden',
+    'horizontal' => 'overflow-x-auto overflow-y-hidden',
+    'both' => 'overflow-auto',
+];
+
+$scrollbar_classes = [
+    'thin' =>
+        '[scrollbar-width:thin] [scrollbar-color:var(--color-border)_transparent] ' .
+        '[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 ' .
+        '[&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ' .
+        '[&::-webkit-scrollbar-thumb]:bg-border',
+    'none' => '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+];
+
+$base_classes = trim($overflow_classes[$orientation] . ' ' . $scrollbar_classes[$scrollbar]);
+
+$element_attributes = $attributes;
+$element_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $element_attributes['data-slot'] = $data_slot;
 $element_attributes['data-orientation'] = $orientation;

@@ -246,9 +246,16 @@ $datalist_markup = sprintf(
 // `absolute` (not a plain in-flow block) + `z-50`: the panel must float OVER whatever comes after
 // it in the document once opened, not push it down -- the wrapper below gets `relative` so this is
 // positioned against it, same fix as select.php's own `select-content` (see that file for the full
-// rationale). `max-h-64 overflow-y-auto` caps very long/unfiltered option lists.
+// rationale). `max-h-64 overflow-y-auto` caps very long/unfiltered option lists. Not nested via
+// scroll-area.php (its `thin`-scrollbar classes are just duplicated below instead): this panel is
+// an empty shell populated by JS at runtime, and scroll-area.php's `content` guard renders nothing
+// at all for empty content -- a mismatch with this file's own "empty div, id-addressed by JS" shape.
 $content_markup = sprintf(
     '<div class="absolute top-full left-0 z-50 mt-2 max-h-64 w-full overflow-y-auto ' .
+        '[scrollbar-width:thin] [scrollbar-color:var(--color-border)_transparent] ' .
+        '[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 ' .
+        '[&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ' .
+        '[&::-webkit-scrollbar-thumb]:bg-border ' .
         'rounded-lg border border-input bg-background p-1 shadow-md" ' .
         'data-slot="combobox-content" id="%1$s" role="listbox" hidden></div>',
     esc_attr($id . '-listbox'),
