@@ -11,3 +11,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../inc/template-parts/helpers.php';
+
+// inc/setup/theme-svg-support.php is NOT required here, unlike helpers.php above: it has
+// top-level add_filter() calls that fire at require time, and Brain Monkey only defines
+// add_filter()/apply_filters() lazily inside Brain\Monkey\setUp() (see
+// vendor/brain/monkey/inc/api.php), not eagerly via Composer's autoloader -- requiring it this
+// early would hit "Call to undefined function add_filter()". See
+// tests/Unit/SvgSupportTest.php's own setUp() for where it's required instead (after
+// parent::setUp() has run Brain\Monkey\setUp() at least once).

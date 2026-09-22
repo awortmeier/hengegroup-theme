@@ -1,0 +1,46 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/buehne",
+    "title": "Bühne",
+    "category": "henge",
+    "icon": "images-alt2",
+    "description": "Rotierender Bild-Slider mit Kicker, Titel, Text und Call-to-Actions je Folie.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "align": {
+            "type": "string",
+            "default": "full"
+        },
+        "slides": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "object"
+            }
+        },
+        "autoplay": {
+            "type": "boolean",
+            "default": true
+        },
+        "autoplayInterval": {
+            "type": "number",
+            "default": 6000
+        },
+        "loop": {
+            "type": "boolean",
+            "default": true
+        },
+        "ariaLabel": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "align": ["wide", "full"],
+        "html": false,
+        "multiple": true
+    },
+    "editorScript": "hengegroup-theme-buehne-editor",
+    "render": "file:./render.php"
+}

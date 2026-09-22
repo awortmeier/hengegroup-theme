@@ -48,19 +48,27 @@ Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als ne
   `docs/entscheidungen.md`, "Marken-Tokens: drei Akzentfarben, Grau-Mapping, zwei Font-Rollen"),
   offen bleibt nur noch, ob/wie Dark Mode ueber `tokens.css` abgebildet wird — keine Aenderung
   jetzt noetig, Vormerkung fuer den Start von Phase 2.
-- **Phase 2:** `add_theme_support('editor-styles')` + `add_editor_style()` fehlen noch bewusst —
-  `align-wide`/`responsive-embeds` sind bereits gesetzt (`inc/setup/theme-setup.php`), da sie schon
-  jetzt normale Core-Bloecke in Beitraegen/Seiten betreffen; `editor-styles` bringt erst etwas,
-  sobald es echtes Phase-2-CSS zum Laden gibt.
-- **Phase 3:** kein dokumentiertes Konzept, wie `block.json`/Block-Registrierung strukturell
-  organisiert wird (eigener `blocks/`-Ordner? Namensschema? Wie verhaelt sich das zu
-  `template-parts/blocks/`, das laut `find` bereits als leerer Ordner existiert, aber in
-  README/CLAUDE.md noch nicht erwaehnt wird?) — `template-parts/blocks/` als bereits angelegter,
-  aber undokumentierter Ordner ist selbst ein kleiner Punkt wert: entweder fuellen/dokumentieren
-  oder (falls Ueberbleibsel) entfernen, damit er nicht als stiller, nicht eingeloester Claim im
-  Repo liegen bleibt.
+- **Phase 2/3:** `add_theme_support('editor-styles')` + `add_editor_style()` sowie das Konzept fuer
+  `block.json`/Block-Registrierung (Ordner-Konvention `template-parts/blocks/<name>/`, natives
+  Block statt ACF, Editor-Script per eigenem Vite-Build gegen WordPress' `wp.*`-Globals) sind jetzt
+  entschieden und mit dem ersten Block (`hengegroup-theme/buehne`) umgesetzt — siehe
+  `docs/entscheidungen.md` "Phase-3-Block-Architektur".
 - **Phase 3:** `inc/setup/theme-admin.php` versteckt Site-Editor-/Customizer-Menuepunkte aktiv
   (`hengegroup_theme_action_admin_menu_cleanup()`), was fuer ein reines klassisches Theme sinnvoll ist —
   sollte aber gegengeprueft werden, sobald Phase 3 eigene Bloecke registriert (der normale
   Block-Editor in Seiten/Beitraegen bleibt davon unabhaengig ohnehin erreichbar, braucht dafuer
   keinen sichtbaren Site Editor).
+
+## 4. Header (`header.php`)
+
+- **Mobile-Navigation fehlt noch.** Der aktuelle Header (siehe `docs/entscheidungen.md` "Header:
+  Navigationsinhalt aus wp_nav_menu statt hartkodiert"/"Header: Scroll-Verhalten aus dem
+  Referenzdesign...") setzt nur die Desktop-Ansicht der Claude-Design-Referenz um — die Referenz
+  selbst zeigt kein Mobile-Layout (kein Hamburger-/Off-Canvas-Menue). Sobald ein Mobile-Design
+  vorliegt, muss `hengegroup_theme_primary_navigation_items()`
+  (`inc/template-parts/navigation.php`) plus die Header-Composition in `header.php` entsprechend
+  ergaenzt werden.
+- **Sprachumschalter ist reines UI-Element ohne Funktion.** Siehe
+  `docs/entscheidungen.md` "Header: Sprachumschalter als reines UI-Element" — beide Eintraege
+  verlinken aktuell auf `#`. Erst mit dem geplanten Multisite-Netzwerk (siehe "Mehrsprachigkeit
+  ueber Multisite statt Hreflang-Plugin") mit echten Sprach-URLs verdrahten.

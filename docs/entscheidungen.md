@@ -21,6 +21,375 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Buehne: Kicker-Logo-Filter fuer inaktive Dots (Bugfix) (2026-09-22)
+
+Bug: die Kicker-Bild-Dots (Marken-Logos in der Dot-Navigation, siehe "Buehne: Dot-Navigation als
+Text-Tabs statt Pillen") zeigten inaktive Logos in ihrer vollen Originalfarbe -- die Design-Referenz
+zeigt sie stattdessen entsaettigt/aufgehellt (weisslich-grau), erst der aktive Dot zeigt sein Logo
+in Originalfarbe. `render.php` liess das Logo-`<img>` bislang unveraendert, nur die Text-Dots
+(`$accent_dot_classes`) hatten bereits einen aktiv/inaktiv-Kontrast.
+
+- **`grayscale brightness-[1.6] opacity-80`** als Default-Filter auf dem Kicker-`<img>` (Bugfix,
+  `template-parts/blocks/buehne/render.php`), aufgehoben fuer den aktiven Dot per
+  `group-data-[active=true]:grayscale-0 group-data-[active=true]:brightness-100
+group-data-[active=true]:opacity-100`. `brightness-[1.6]` als Arbitrary Value statt eines
+  Tailwind-Stops, weil Tailwinds Brightness-Skala keinen 160%-Wert kennt (naechste Stufen sind 150%/
+  200%) und die Referenz exakt 1.6 vorgibt.
+- **`group`-Klasse auf dem Dot-`<button>` ergaenzt**: `group-data-[active=true]:*` auf dem
+  verschachtelten `<img>` braucht diesen Marker auf dem Vorfahren, der `data-active` traegt (per
+  `assets/js/template-parts/blocks/buehne.js`s `setActiveDot()` gesetzt) -- ohne `group` haette
+  Tailwind den Selector nicht auf den passenden Vorfahren binden koennen.
+- **Keine Aenderung an `buehne.js`**: das Script setzte `data-active` bereits korrekt, das war rein
+  ein fehlender Tailwind-Klassen-Zustand auf dem Bild selbst.
+
+### `ueberschrift-text` bekommt `"align": "full"`-Support (Bugfix) (2026-09-22)
+
+Bug: das neue `containerWidth`-Attribut ("Schmal"/"Breit", siehe vorheriger Eintrag zum Block) hatte
+im Block-Editor-Canvas keinen sichtbaren Effekt -- `.wrapper` (1600px) und `.wrapper-small` (1000px)
+sahen dort optisch identisch aus, obwohl das Frontend korrekt die gewaehlte Breite zeigte. Ursache:
+`theme.json`s `settings.layout.contentSize`/`wideSize` (48rem/72rem) begrenzt jeden Block OHNE
+eigene `align`-Unterstuetzung im Editor-Iframe automatisch auf die schmale 48rem-Spalte -- fuer
+dieses klassische (nicht Full-Site-Editing-)Theme gilt das nur im Editor, `page.php`s
+`the_content()`-Ausgabe im Frontend kennt diese Breiten-Beschraenkung gar nicht. Ohne eigene
+Align-Unterstuetzung quetschte der Editor also BEIDE `containerWidth`-Optionen gleichermassen auf
+768px zusammen.
+
+- **`block.json` bekommt `"align": {"type": "string", "default": "full"}` +
+  `"supports": {"align": ["full"]}`**, analog zu `buehne/block.json`s bereits bestehender
+  `align: full`-Vorgabe -- macht den Block im Editor-Canvas standardmaessig "full width" (bricht aus
+  der `contentSize`-Spalte aus), wodurch die eigene `.wrapper`/`.wrapper-small`-Breite dort exakt so
+  sichtbar wird wie im Frontend. Nur `"full"` (nicht zusaetzlich `"wide"`) im Supports-Array, weil
+  `wideSize` (72rem/1152px) immer noch schmaler als `.wrapper`s 1600px waere und die "Breit"-Option
+  dann weiterhin verfaelscht angezeigt haette.
+- **Keine Aenderung an `render.php`**: das Frontend brauchte diesen Fix nie, `align`-Support wirkt
+  nur auf den Editor-Iframe.
+
+### `add_editor_style()` bekommt einen theme-relativen Pfad statt einer absoluten URI (Bugfix) (2026-09-22)
+
+Bug: die Akzent-Schrift (Crillee, `@font-face src: url(../fonts/...)` in `tokens.css`) fehlte im
+Block-Editor-Canvas (z. B. in `ueberschrift-text`s ServerSideRender-Vorschau), obwohl dieselbe
+Schrift im Frontend korrekt lud. Ursache: `hengegroup_theme_get_vite_style_uri()` gab eine ABSOLUTE
+URI (`https://.../assets/css/app-xxxx.css`) an `add_editor_style()` weiter. WordPress' eigene
+`get_block_editor_theme_styles()` behandelt beide Faelle unterschiedlich -- ein theme-relativer Pfad
+wird direkt von der Platte gelesen (`get_theme_file_path()`) und bekommt dabei eine korrekte
+`baseURL`, gegen die der Editor-Iframe relative `url(...)`-Referenzen im Stylesheet umschreibt; eine
+volle URI wird stattdessen EINMALIG per `wp_remote_get()` abgerufen und OHNE diese `baseURL` inline
+eingebettet -- jedes relative `url(...)` darin (hier: die `@font-face`-Pfade) loest dann ins Leere
+auf. Das Frontend war nie betroffen, weil dort dieselbe Datei ganz normal per `<link>` geladen wird,
+wo relative URLs sich schon immer korrekt gegen die verlinkte Datei selbst aufloesen.
+
+- **`hengegroup_theme_get_vite_style_uri()` zu `hengegroup_theme_get_vite_style_relative_path()`
+  umbenannt und umgestellt**: gibt jetzt `"assets/" . $file` (theme-relativ) statt
+  `hengegroup_theme_get_vite_asset_uri($file)` (absolute URI) zurueck -- einzige Verwendungsstelle
+  bleibt `hengegroup_theme_theme_setup()`s `add_editor_style()`-Aufruf (`inc/setup/theme-setup.php`).
+- **Keine Aenderung an `hengegroup_theme_get_vite_asset_uri()`/`_enqueue_vite_style_entry()`**:
+  betrifft nur den `add_editor_style()`-Sonderfall, das normale `wp_enqueue_style()`
+  fuer das Frontend (echtes `<link>`-Tag) braucht weiterhin die absolute URI wie bisher.
+
+### Eigene Block-Kategorie "Henge" statt Core-Kategorie "theme" (2026-09-22)
+
+Beide bisherigen Bloecke (`buehne`, `ueberschrift-text`) nutzten `block.json`s Core-Kategorie
+`"theme"`. Auf expliziten Wunsch jetzt stattdessen eine eigene Kategorie `henge` (`inc/setup/
+theme-blocks.php`, `hengegroup_theme_register_block_categories()` ueber den `block_categories_all`-
+Filter) -- eigene, klar erkennbare Gruppe im Block-Inserter statt zwischen generischen Theme-
+Bloecken. Per `array_unshift()` an den Anfang des Kategorien-Arrays gesetzt (WordPress rendert die
+Inserter-Akkordeons in Array-Reihenfolge), damit sie als erste Gruppe erscheint statt hinten
+angehaengt zu werden. Jeder neue Block bekommt `"category": "henge"` in seinem `block.json` statt
+`"theme"`.
+
+### Zweiter Gutenberg-Block `ueberschrift-text`: generisch statt "Intro"-Spezialfall, Vite-Build-Factory (2026-09-22)
+
+Der Bereich direkt unter der Buehne im urspruenglichen Claude-Design-Mockup (zentrierte Ueberschrift
+
+- Textabsatz, "Willkommen bei der HENGEGROUP") sollte als zweiter Block nach `buehne` umgesetzt
+  werden. Entscheidung (mit dem Auftraggeber abgestimmt): kein `intro`-spezifischer Block, sondern ein
+  generischer `hengegroup-theme/ueberschrift-text` (Attribute `heading`/`accentWords`/`text`/
+  `textAlign`) -- wiederverwendbar fuer jede aehnliche Textsektion, nicht nur die eine Stelle unter der
+  Buehne.
+
+* **Kein Core-`Heading`+`Paragraph`(+`Group`) statt eines eigenen Blocks**: die native Loesung deckt
+  die reine Struktur ab, aber weder die Akzent-Schrift auf einzelnen Woertern innerhalb der
+  Ueberschrift (dafuer braeuchte es ohnehin einen eigenen RichText-Format-Type) noch die Bindung an
+  das feste `headline-*`/`body-*`-Vokabular aus `typography.php` statt freier Font-Size/Farbwahl pro
+  Editor-Instanz -- selbes Konsistenz-Argument wie Buehnes feste `henge-green/-blue/-grey`-Akzente
+  statt eines freien Farbwaehlers.
+* **`typography.php`s `accent_words`-Config wird hier zum ersten Mal tatsaechlich genutzt**
+  (bislang nur in dessen eigenem Kopfkommentar/Showcase-Seite dokumentiert) -- derselbe
+  `font-accent`-Span-Mechanismus, den `badge.php` per `font: 'accent'` bereits anspricht.
+* **`.wrapper-small` statt eigenem Arbitrary-max-width** fuer die Textspalte (siehe
+  "12-Spalten-Grid ueber .wrapper" weiter unten) -- 1000px statt der 900px aus dem Mockup, weil das
+  bereits der bestehende Token fuer schmale Block-Inhalte ist und ein zweiter, nur 100px
+  abweichender Wert keine eigene Deckelung rechtfertigt.
+* **Vertikaler Abstand `py-16 md:py-24 lg:py-35`** (140px bei `lg:`, angelehnt an Tailwind v4s
+  dynamischer Spacing-Skala -- `py-35` ist trotz fehlendem `35`-Stop in Tailwind v3 in v4 gueltig,
+  da die Skala dort als `--spacing * n` berechnet statt als feste Werteliste gepflegt wird) statt
+  fix 140px auf allen Breakpoints; keine bestehende Sektion im Theme hatte bislang eine eigene
+  vertikale Padding-Konvention fuer einen reinen Textblock, dies ist der erste Praezedenzfall.
+* **`vite.config.editor.js` zu `vite.config.editor.factory.js` (`createEditorBlockConfig()`)
+  umgebaut**: mit dem zweiten Block waere die komplette `build.lib`/`esbuild.jsx*`/
+  `rollupOptions.external`+`output.globals`-Konfiguration sonst wortgleich in einer zweiten
+  Config-Datei dupliziert gewesen. Jede Block-Config (`vite.config.editor.js` fuer `buehne`,
+  `vite.config.editor-ueberschrift-text.js` fuer den neuen Block) bleibt weiterhin eine EIGENE Datei
+  mit eigenem `vite build --config ...`-Aufruf in `build:assets` -- kein gemeinsamer Multi-Entry-Build,
+  weil Rollups/Vites `iife`/`umd`-Ausgabeformat in Lib-Mode keine mehreren Entry-Points in einem
+  einzigen Build unterstuetzt (dieselbe Einschraenkung, die bereits gegen ein gemeinsames
+  Array-Config fuer `vite.config.js` selbst sprach, siehe "Phase-3-Block-Architektur" weiter unten).
+* **`hengegroup_theme_register_buehne_block()` zu `hengegroup_theme_register_theme_block(string
+$block_dir, string $editor_script_handle, string $editor_script_relative_path)` verallgemeinert**
+  (`inc/setup/theme-blocks.php`) -- aus demselben Grund wie der Vite-Umbau: identische Registrierungs-
+  logik fuer beide Bloecke, jetzt an einer Stelle statt dupliziert.
+* **UX-Falle entdeckt und mit Inline-`Notice` entschaerft (Bugfix, direkt nach der ersten
+  Nutzung)**: `accent_words` hebt nur Woerter hervor, die WOERTLICH bereits im `heading`-Text
+  vorkommen -- es fuegt nichts ein. Ein Redakteur, der (in Anlehnung an das urspruengliche, fest
+  codierte Mockup-Markup) "HENGEGROUP" nur ins separate Akzent-Woerter-Feld eintraegt, aber nicht
+  mehr in die Ueberschrift selbst schreibt, bekommt keinen Fehler, sondern das Wort verschwindet
+  komplett aus der Ueberschrift (kein Treffer -> keine Hervorhebung -> aber eben auch keine
+  Ergaenzung). Reine `help`-Text-Prosa in `edit.jsx` reichte nicht, um das zu verhindern -- jetzt
+  zusaetzlich eine `Notice`-Warnung im Inspector (`findUnmatchedAccentWords()`), die jedes
+  Akzent-Wort ohne Treffer im aktuellen Ueberschrift-Text sofort beim Editieren benennt.
+
+### `--container-page`-Token gegen auseinanderlaufende `.wrapper`-Breite (Bugfix) (2026-09-22)
+
+Bug: die Dot-Reihe in `template-parts/blocks/buehne/render.php` (siehe "Buehne: Dot-Navigation als
+Text-Tabs statt Pillen") wurde schmaler dargestellt als die Content-Box daneben. Ursache: die
+Dot-Reihe kann `.wrapper` nicht direkt nutzen (braucht `flex flex-wrap justify-center` statt
+`.wrapper`s `grid`, siehe render.php-Kommentar), trug ihre Deckelung deshalb als eigenen
+Arbitrary-Value `max-w-[1400px]` -- der urspruengliche `.wrapper`-Wert zum Zeitpunkt, als dieser
+Code entstand. `.wrapper`s eigener Wert wurde seitdem manuell auf 1600px geaendert, der duplizierte
+Wert in render.php aber nicht mitgezogen; die beiden liefen auseinander.
+
+- **Fix**: `--container-page: 1600px` neues Token in `tokens.css`s `@theme static`-Block --
+  Tailwinds `--container-*`-Namespace generiert daraus automatisch die Utility `max-w-page`.
+  `.wrapper` (`app.css`) und die Dot-Reihe (`render.php`) nutzen jetzt beide `max-w-page` statt
+  je einen eigenen `max-w-[1600px]`/`max-w-[1400px]`-Arbitrary-Value -- eine Quelle statt zweier
+  unabhaengig gepflegter Zahlen, die sonst erneut auseinanderlaufen koennen.
+- **`.wrapper-small` bekommt bewusst KEIN eigenes Token**: ihr Wert (1000px) wird bislang nur an
+  der einen Stelle gebraucht, kein zweiter Verbraucher, kein Drift-Risiko -- Token erst anlegen,
+  wenn ein zweiter Ort denselben Wert braucht (gleiche tokens.css-Konvention wie bei den
+  Marken-Grautoenen, siehe deren Kopfkommentar).
+
+---
+
+### Buehne: Dot-Navigation als Text-Tabs statt Pillen (2026-09-22)
+
+Auf explizite Design-Vorgabe (per Claude-Design-Canvas-Referenz geteilt) wurde die Dot-Navigation
+von runden Pill-Buttons (Rahmen, Fuellung, `rounded-full`) auf schmale Text-Tabs mit Unterstrich
+umgestellt -- **nur die Dots selbst**, Position/Layout des Wrappers (`data-buehne-dots`, zentriert,
+nahe am unteren Rand), Autoplay-/Klick-Logik (`assets/js/template-parts/blocks/buehne.js`) und
+alles andere am Block blieben unangetastet (expliziter Arbeitsauftrag).
+
+- **Design**: fett/kursiv/Grossbuchstaben-Label mit `border-b-2`-Unterstrich statt Pille. In der
+  Referenz traegt NUR der aktive Tab Farbe (Marken-Akzent von Text + Unterstrich), alle inaktiven
+  bleiben einheitlich neutral-grau, unabhaengig von ihrer eigenen Marke -- 1:1 uebernommen:
+  `$accent_dot_classes` (neue Map neben `$accent_border_classes`, gleiches Akzent-Vokabular
+  henge-green/henge-blue/henge-grey wie die Content-Box-Border) faerbt per
+  `data-[active=true]:text-*`/`data-[active=true]:border-*` NUR den aktiven Zustand; die Basis-
+  Klassen (`text-grey-light/50`, `border-grey-light/25`) decken den inaktiven Zustand ab, keine
+  weitere Fallunterscheidung noetig.
+- **Referenz zeigt zusaetzlich eine zweite, kleinere Subtitle-Zeile pro Tab** (z. B. Markenname +
+  Kategorie) -- NICHT uebernommen: `buehne`s Slide-Konfiguration (`block.json`/`edit.jsx`, "Rest
+  lassen") hat kein zweites Textfeld fuer den Dot, nur `badgeText`/`kickerImage*`, aus denen
+  `$dot_label` bereits abgeleitet wird. Eine echte zweite Zeile haette ein neues Attribut/Edit-UI-
+  Feld gebraucht -- ausserhalb des erteilten Auftrags ("nur Klicker"); bei Bedarf separat
+  nachreichen.
+- **Tap-Target bewusst per unsichtbarem `pt-3` erhalten**: die Pille gab vorher ueber `h-11`/`px-4.5`
+  eine grosszuegige Klickflaeche; ein reiner Text+Unterstrich-Tab waere ohne Gegenmassnahme deutlich
+  kleiner als ein angemessenes Touch-Target. `pt-3` (nur oben, `pb-1.5` bleibt eng am Unterstrich)
+  vergroessert die Klickflaeche unsichtbar, ohne den Abstand zwischen Text und Unterstrich optisch
+  zu veraendern.
+- **Kicker-Bild-Faelle** (`kickerImageId` gesetzt) behalten ihr `<img>` als Inhalt, bekommen aber
+  denselben Rahmen-/Farb-Wechsel wie die Text-Variante (Unterstrich faerbt sich, wenn aktiv).
+
+---
+
+### Buehne: `justify-self-start` von der Content-Box entfernt (Bugfix, Mobile-Overflow) (2026-09-22)
+
+Bug: auf schmalen Viewports konnte die Slide-Content-Box ueber den Bildschirmrand hinausragen.
+Ursache war `justify-self-start`, das beim `.wrapper`-Umbau der Box (siehe "12-Spalten-Grid ueber
+`.wrapper`" oben) mit angehaengt wurde -- CSS Grids Default `justify-self: stretch` verhaelt sich
+bei einem Item mit `width: auto` + `max-width` (hier `max-w-xl`) exakt wie ein normaler Block:
+Breite = `min(Grid-Zellen-Breite, max-w-xl)`, nie mehr. `justify-self: start` schaltet dagegen auf
+Shrink-to-fit-Sizing um (wie `width: fit-content`) -- die Box wird dann so breit wie ihr Inhalt es
+verlangt (bis zur `max-w-xl`-Deckelung), UND ein nicht umbrechbares Kind (`button.php`s
+`whitespace-nowrap` + `shrink-0` auf einem laengeren CTA-Label) kann diese "gewuenschte" Breite
+ueber die verfuegbare Viewport-Breite hinaus treiben, weil Shrink-to-fit-Boxen (anders als normale
+Block-Boxen) ihre Groesse aktiv am Content-Minimum ausrichten statt einfach zu clippen. Die
+Linksausrichtung, wegen der `justify-self-start` urspruenglich ergaenzt wurde, liefert `stretch`
+bereits von selbst (siehe oben), das Attribut war fuer den sichtbaren Effekt nie noetig -- reines
+Entfernen behebt den Bug ohne sichtbare Layout-Aenderung auf Desktop.
+
+- **Zusaetzlich**: die Box-eigenen Innenabstaende (`p-6 md:px-6`, ein redundanter Rest aus einem
+  frueheren Zwischenstand) sind jetzt eine echte progressive Skala (`p-4 sm:p-5 md:p-6`, 16/20/24px)
+  statt eines auf allen Breakpoints fast identischen Werts -- mehr Content-Breite auf kleinen
+  Screens, ohne die Deckkraft auf Desktop zu aendern.
+
+---
+
+### `button.php`: `wp-element-button` gegen die globale Link-Farbe (2026-09-22, aktualisiert)
+
+Bug: im Editor-Preview (Bühne-Block, `@wordpress/server-side-render`) zeigte ein `href`-Button mit
+`variant: 'henge-blue'` gruene statt der erwarteten hellen Schrift -- `theme.json`s
+`styles.elements.link.color.text` (henge-green, siehe `tokens.css`-Kopfkommentar/"Design-Token-
+System"-Eintrag unten) wird von WordPress' globalem Styles-Layer als
+`a:where(:not(.wp-element-button)) { color: ...; }` ausgegeben. Diese `:where()`-Selektor-Form
+traegt fuer den eigentlichen Treffer (`a`, ausserhalb von `:where()`) genau eine Element-Selektor-
+Spezifitaet, aber der volle Regelblock wird ueblich unter einem `:root`-Praefix erzeugt --
+`:root`s eigene Pseudoklassen-Spezifitaet zieht mit einer einzelnen Tailwind-Klasse
+(`.text-henge-blue-foreground`, ebenfalls eine Stufe) gleich. Bei gleicher Spezifitaet gewinnt die
+Regel, die zuletzt im Cascade-Order steht -- im Editor-iFrame liegt WordPress' eigenes
+`global-styles-inline-css` nach `add_editor_style()`s `app.css`, auf dem Frontend offenbar in
+umgekehrter Reihenfolge (dort bisher nicht als Bug aufgefallen).
+
+- **Fix**: `button.php` haengt jetzt bei JEDER gerenderten Variante (nicht nur `href`, auch das
+  native `<button>`) die Klasse `wp-element-button` an -- WordPress' eigener Opt-out aus der
+  globalen Link-Farbe, denselben Weg, den jeder Core-Block mit einem echten Button-Element geht
+  (Button-, Search-, Pagination-Block, ...). `<button>`-Elemente traf der Bug nie (der Selektor
+  matched nur `a`), bekommen die Klasse trotzdem fuer Konsistenz -- semantisch ist `button.php`
+  IMMER ein Button, nie ein Inline-Content-Link, unabhaengig vom gerenderten Tag.
+- **Nicht als eigenes `elements.button` in `theme.json` geloest**: haette globale Standardfarben
+  fuer JEDEN `.wp-element-button` gesetzt (auch WP-Core-Bloecke), waere also eine viel groessere
+  Aenderung fuer einen Bug gewesen, der nur dieses eine Element betrifft.
+- **Andere `href`-rendernde Base-Komponenten** (`attachment.php`, `navigation-menu-link.php`,
+  `dropdown-menu-item.php`, `card.php`s optionales `href`, `pagination*.php`, `badge.php`,
+  `carousel-previous.php`/`-next.php`, `toast.php`) sind potenziell vom selben
+  Spezifitaets-Patt betroffen, wurden hier aber NICHT mitgeaendert -- die meisten davon sind
+  semantisch tatsaechlich Links/Navigation, kein pauschales `wp-element-button` angebracht; nur
+  bei konkretem Symptom (wie hier) gezielt nachziehen.
+
+**Nachtrag/Regression (selbes Datum):** der `wp-element-button`-Fix oben loeste die Textfarbe, riss
+aber im selben Editor-Preview eine ZWEITE, neue Regression auf: die Hintergrundfarbe zeigte danach
+immer hellweiss statt der Variantenfarbe (`variant: 'henge-blue'` blieb weiss statt blau), waehrend
+die Textfarbe jetzt korrekt war. Ursache: `.wp-element-button` ist WordPress' eigene generische
+"erbt Button-Farben aus `theme.json`s `styles.elements.button`, sonst aus den Top-Level-
+Farbeinstellungen"-Klasse -- da dieses Theme kein eigenes `elements.button` definiert, faellt der
+generische Default auf die Top-Level-Hintergrundfarbe (`--color-background`, weiss) zurueck. Durch
+das Anhaengen von `wp-element-button` ist `button.php` jetzt also NEU dieser zweiten globalen
+Regel ausgesetzt -- exakt dasselbe Spezifitaets-Patt/Cascade-Order-Problem wie beim Link-Farbe-Bug
+oben (0,1,0 gegen 0,1,0, im Editor-iFrame gewinnt WordPress' `global-styles-inline-css`, weil es
+nach `add_editor_style()`s `app.css` laedt), diesmal aber auf `background-color`/`color` statt nur
+`color`, und ein Ausschluss-Class-Trick wie oben existiert dafuer nicht (der Button SOLL ja als
+`.wp-element-button` erkannt werden, das war der eigentliche Fix).
+
+- **Fix**: alle bg-\*/text-\*-Utilities in `button.php`s `$variant_classes` sind jetzt `!`-markiert
+  (Tailwinds eigener Important-Modifier, z. B. `!bg-henge-blue`) -- selber Mechanismus/dieselbe
+  Begruendung wie `calendar.php`s eigener `!`-Praefix-Fix (siehe "toggle.php/toggle-group.php
+  gestylt..."-Eintrag weiter unten): PHP hat kein `tailwind-merge`/`cn()`, das eine Kollision mit
+  einer extern injizierten, gleich spezifischen Regel automatisch aufloest, `!important` erzwingt
+  den Sieg unabhaengig von der Cascade-Reihenfolge. Betrifft ausschliesslich die tatsaechlich
+  deklarierten Farb-Utilities (inkl. ihrer `hover:`-Pendants) -- border-/shadow-/underline-/
+  focus-visible-Utilities auf denselben Zeilen blieben unangetastet, die kollidierten nie.
+- **Kein eigenes `styles.elements.button` in `theme.json`**: aus demselben Grund wie beim
+  Link-Farbe-Bug oben nicht gewaehlt -- waere eine globale Standardfarbe fuer JEDEN
+  `.wp-element-button` (auch WP-Core-Bloecke), nicht nur fuer dieses eine Element.
+
+### Buehne: Opacity-Crossfade statt Scroll-Snap (2026-09-22)
+
+Kehrtwende gegenueber der urspruenglichen Buehne-Entscheidung (siehe "Phase-3-Block-Architektur"
+weiter unten, Bullet "Verhalten bewusst an `carousel.php`s echtem CSS-Scroll-Snap-Verhalten
+ausgerichtet") -- auf explizite Nachfrage soll der Folienwechsel jetzt als Opacity-Crossfade laufen,
+kein Scroll-Effekt mehr. `template-parts/base/carousel/carousel.php` selbst bleibt unveraendert
+(bleibt ein generischer, wiederverwendbarer Scroll-Snap-Baustein fuer andere/kuenftige Bloecke) --
+`template-parts/blocks/buehne/render.php` komponiert ihn nur noch anders:
+
+- **`carousel.php` (Root, `role="region"`) und `carousel-item.php` (je Folie `role="group"`)
+  bleiben komponiert** -- beide sind transitions-agnostisch (reines Markup/ARIA, keine
+  Scroll-spezifische Logik im PHP selbst), passen also unveraendert auch zu einem Crossfade.
+  **`carousel-content.php` wird jetzt bewusst NICHT mehr genutzt**: dessen `tabindex="0"` existiert
+  explizit fuer natives Tastatur-Scrolling (siehe dessen eigener Kopfkommentar) -- ohne
+  Scroll-Container waere das nur noch ein totes, fokussierbares Element ohne Funktion.
+- **Folien liegen absolut uebereinander gestapelt** (`absolute inset-0` statt vormals
+  `carousel-item.php`s `basis: '100%'` + `snap-start` im `flex`-Track von `carousel-content.php`)
+  direkt im `relative` Root von `carousel.php`. `data-state="active"/"inactive"` (per
+  `data_attributes`-Config) steuert per `data-[state=active]:opacity-100` +
+  `transition-opacity duration-700` die Blende.
+- **Inaktive Folien bekommen zusaetzlich `aria-hidden="true"` + `inert`** (per `attributes`-Config)
+  -- ohne Scroll-Container, der sie ausserhalb des sichtbaren Bereichs haelt, waeren ihre Buttons/
+  Links sonst weiterhin per Tastatur/Screenreader erreichbar, obwohl sie unsichtbar hinter der
+  aktiven Folie liegen.
+- **`assets/js/template-parts/blocks/buehne.js` haelt den Aktiv-Index jetzt selbst** (`currentIndex`,
+  von Dot-Klick/Autoplay direkt gesetzt) statt ihn wie zuvor per IntersectionObserver aus der
+  Scroll-Position abzuleiten -- ohne Scrollen gibt es keine Position mehr, aus der sich das ableiten
+  liesse. `goToIndex()` setzt `data-state`/`aria-hidden`/`inert` direkt; `assets/js/template-parts/
+base/carousel.js` selbst bleibt unangetastet, wird jetzt schlicht nicht mehr eingebunden (kein
+  `[data-slot="carousel-content"]` mehr im Markup, das seine Scroll-Snap-Verdrahtung braeuchte).
+- **Kein `prefers-reduced-motion`-Sonderfall fuer die Opacity-Transition selbst** (anders als
+  Autoplay, das weiterhin bei `prefers-reduced-motion: reduce` komplett pausiert) -- ein reiner
+  Opacity-Fade gilt nicht als die Art vestibulaer-ausloesender Bewegung, die diese Media Query
+  adressiert (anders als z. B. ein Slide/Parallax-Effekt); bei Bedarf spaeter separat entscheiden.
+
+### 12-Spalten-Grid ueber `.wrapper` in `app.css`, kein eigener Template-Part (2026-09-18)
+
+Fuer wiederverwendbare Block-Layouts (12 Spalten, max. 1400px, Seiten-Padding) stand zur Wahl, das
+als PHP-Komponente (`template-parts/base` oder `template-parts/components`) mit eigener Config-API
+zu bauen, oder als reine CSS-Klasse. Entscheidung: reine Tailwind-Klasse `.wrapper`
+(`assets/css/app.css`, `@layer components`) statt eines Template-Parts -- ein Grid-Container hat
+keine sinnvolle Config-API jenseits "welche Kinder bekommen welchen `col-span-*`", das ist bereits
+Tailwinds eigenes Vokabular und braucht keine PHP-Abstraktion darueber. `.wrapper` war schon seit
+dem initialen Vorlagen-Commit als leerer Platzhalter genau fuer diesen Zweck vorgesehen (ungenutzt
+bis jetzt). `.wrapper-small` ist dieselbe Klasse mit `max-w-[900px]` statt `max-w-[1400px]` fuer
+schmalere Block-Inhalte (z. B. Textabschnitte, Formulare), sonst identisches Grid-/Padding-Schema.
+
+- **1400px als Arbitrary Value (`max-w-[1400px]`), kein eigenes `--container-*`-Token in
+  `tokens.css`**: der Wert wird nur an dieser einen Stelle gebraucht; ein Token lohnt sich laut
+  `tokens.css`s eigener Konvention erst, wenn eine Komponenten-API den Wert selbst braucht (siehe
+  dortiger Kopfkommentar zu den Marken-Grautoenen).
+- **Grid direkt auf dem Container** (`grid grid-cols-12`), kein zusaetzliches inneres
+  Grid-Element -- Bloecke platzieren Kinder direkt mit Tailwinds `col-span-*`/`col-start-*` auf
+  `.wrapper` als Grid-Eltern, ein Kind ohne `col-span-*` belegt wie bei jedem 12-Spalten-System nur
+  eine Spalte.
+- **Padding/Gap-Skala** (`px-4`/`gap-x-4` mobil, `sm:px-6`/`sm:gap-x-6`, `lg:px-8`/`lg:gap-x-8`) ist
+  ein Standard-Tailwind-Rhythmus (16/24/32px), keine Design-Vorgabe aus einer Referenz -- bei Bedarf
+  gezielt anpassen, betrifft dann alle Bloecke, die `.wrapper` nutzen.
+- **Bewusst nicht auf `header.php`/`footer.php` angewendet**: der Header nutzt bereits einen
+  eigenen, breiteren Container (`max-w-[2000px]`, siehe `header.php`) fuer die Sticky-Nav-Leiste --
+  eigene, unabhaengige Design-Entscheidung, nicht Teil dieses Block-Grids.
+
+### Header: Navigationsinhalt aus `wp_nav_menu` statt hartkodiert (2026-09-16)
+
+Beim Umsetzen des Headers (`header.php`, Claude-Design-Referenz "Hengegroup") stand zur Wahl, die
+Mega-Menue-Dropdowns (Produkte/Karriere/Unternehmen mit Untereintraegen) wie in der Referenz fest
+im Template zu hartcodieren, oder ueber die bereits registrierte `primary`-Menu-Location
+(`inc/setup/theme-setup.php`) redaktionell pflegbar zu machen. Entscheidung: dynamisch ueber
+`wp_nav_menu` -- der Navigationsinhalt ist echte, redaktionell gepflegte Geschaeftsstruktur, keine
+feste Chrome, gehoert also ins WP-Menu-Backend wie bei jeder anderen Seite auch, trotz des
+Mehraufwands gegenueber einem hartkodierten Array.
+
+`navigation-menu.php` erwartet ein `items`-Array mit vorgerendertem `content`-HTML pro Trigger
+(kein `wp_nav_menu()`-Walker-Output) -- der neue `hengegroup_theme_primary_navigation_items()`
+(`inc/template-parts/navigation.php`) uebersetzt die WP-Menuestruktur (nur eine Ebene tief, siehe
+dessen eigenen Kopfkommentar) in dieses Format, inkl. "current item"-Erkennung ueber denselben
+`wp_nav_menu_objects`-Kern-Filter, den `wp_nav_menu()` selbst nutzt, statt WordPress' eigene
+Current-Item-Logik von Hand nachzubauen. Mobile Navigation (Hamburger/Off-Canvas) ist bewusst noch
+nicht gebaut -- die Referenz zeigt kein Mobile-Layout dafuer, siehe `docs/to-do.md`.
+
+### Header: Scroll-Verhalten aus dem Referenzdesign statt der Vorlagen-eigenen Pill-Logik (2026-09-16)
+
+Die `base-theme`-Vorlage brachte bereits ein generisches Scroll-Verhalten mit (`header.js`/
+`header.css`, schon in `app.js` eingebunden): ein zentrierter Header, der beim Scrollen zu einer
+schmaleren, abgerundeten "Pill" schrumpft (`IntersectionObserver` + Sentinel-Element,
+`is-floating`-Klasse). Die Hengegroup-Referenz zeigt stattdessen einen vollbreiten, fixierten,
+dunklen Balken, der beim Scrollen nur teiltransparent wird und einen Backdrop-Blur bekommt (keine
+Formaenderung), mit einem farbigen Gradient-Rand oben. Auf Rueckfrage: die Referenz wird 1:1
+uebernommen, die Pill-Logik der Vorlage entfaellt fuer diesen Header vollstaendig.
+
+`header.js` ist dadurch deutlich einfacher geworden: kein Sentinel/`IntersectionObserver`/
+`top`-Offset-Tracking mehr noetig (der Header aendert seine Position nicht laenger), nur noch ein
+`scroll`-Listener, der `data-scrolled` auf dem Header-Element toggelt. Der eigentliche visuelle
+Uebergang (Hintergrundfarbe/Blur) liegt als `data-[scrolled=true]:`-Tailwind-Variante direkt in
+`header.php` (CLAUDE.md Regel 1), keine neue Logik in `header.css` noetig.
+
+### Header: Sprachumschalter als reines UI-Element (2026-09-16)
+
+Der DE/English-Sprachumschalter aus der Referenz wurde als reine `dropdown-menu.php`-Komposition
+umgesetzt (kein echtes Sprachwechsel-Backend dahinter, beide Eintraege verlinken aktuell auf `#`).
+Grund: Mehrsprachigkeit ist fuer dieses Projekt ueber ein WordPress-Multisite-Netzwerk geplant (ein
+Standort pro Sprache, siehe den Eintrag "Mehrsprachigkeit ueber Multisite statt Hreflang-Plugin"
+weiter unten in dieser Datei) -- eine echte URL-Zuordnung zwischen Sprachstandorten laesst sich
+sinnvoll erst bauen, sobald dieses Netzwerk existiert. Bis dahin ist der Umschalter bewusst nur
+Optik, kein Deadcode-Feature-Flag und keine Wegwerf-Loesung, die spaeter wieder entfernt werden
+muesste -- die Komponente selbst (`dropdown-menu.php`) bleibt unveraendert, nur ihr Inhalt
+bekommt spaeter echte Links.
+
 ### Neuer Helper `hengegroup_theme_merge_data_attributes()`: identischer `data_attributes`-Merge-Loop aus 63 Base-Komponenten in `inc/template-parts/helpers.php` extrahiert (2026-09-16)
 
 Review-Auftrag (gezielt nach dupliziertem Code statt nach Kompositions-Luecken gesucht): der
@@ -1690,3 +2059,115 @@ Fragen bzw. Entscheidung vs. Anleitung), was das Auffinden erschwerte, je feingr
 wurde. `CLAUDE.md` selbst bleibt unveraendert die einzige automatisch geladene, normative
 Anweisungsdatei — nur die Verweise auf die alten Dateinamen in Regel 11/12 wurden auf die drei neuen
 Dateien umgestellt, der bindende Regel-Inhalt selbst ist nicht verschoben worden.
+
+### Phase-3-Block-Architektur: natives Block + Vite-gebautes Editor-Script statt ACF/`@wordpress/scripts` (2026-09-16)
+
+Erster Gutenberg-Block des Themes (`hengegroup-theme/buehne`, ein Hero-/Bild-Slider), damit auch
+erste konkrete Antwort auf die in `docs/to-do.md` offen gelassene Frage "wie wird
+`block.json`/Block-Registrierung strukturell organisiert". Entscheidung (mit dem Auftraggeber
+abgestimmt): natives Block statt ACF Block (keine neue Plugin-Abhaengigkeit, insb. kein ACF Pro
+fuer ein Repeater-Feld) und ein eigenes Editor-Script statt eines reinen InnerBlocks-Aufbaus mit
+Core-Bloecken (gefuehrte, feste Felder pro Folie statt freier Komposition, naeher am
+Mockup-Ausgangspunkt).
+
+- **Ordner-Konvention**: jeder Block lebt unter `template-parts/blocks/<name>/` (block.json +
+  render.php) — dieselbe Konvention wie `template-parts/base/<name>/` fuer mehrteilige
+  Base-Komponenten. `template-parts/blocks/` existierte bereits als leerer, undokumentierter
+  Ordner (siehe `docs/to-do.md`); ist jetzt gefuellt und damit kein stiller Claim mehr.
+- **`"render": "file:./render.php"`** (Block API "render"-Property, seit WP 6.1) statt manuellem
+  `render_callback` in PHP — WordPress injiziert `$attributes`/`$content`/`$block` automatisch in
+  den Scope der Datei. `inc/setup/theme-blocks.php` ruft dafuer nur noch
+  `register_block_type(get_template_directory() . '/template-parts/blocks/<name>')` auf.
+- **render.php komponiert ausschliesslich `template-parts/base/*`** (image/badge/typography/
+  button/carousel-Familie) — keine neue Markup-/Styling-Logik, gleiche Regel-1-Tailwind-Klassen
+  direkt im PHP wie button.php/badge.php, kein separates Block-Stylesheet.
+- **Kein `@wordpress/scripts`/Webpack als zweite Toolchain.** Das Editor-Script
+  (`assets/js/blocks/<name>/edit.jsx`) wird stattdessen ueber eine EIGENE Vite-Config-Datei
+  (`vite.config.editor.js`, per `pnpm build:assets`'s zweitem `vite build --config ...`-Aufruf)
+  als klassisches, nicht-Modul-IIFE gebaut: jeder `@wordpress/*`-Import wird per
+  `rollupOptions.external` + `output.globals` gegen WordPress' eigene `wp.*`-Globals aufgeloest
+  (`@wordpress/element` -> `wp.element` usw.) statt eine zweite React-Instanz zu bundeln — Rollup/
+  Rolldown loest dabei auch mehrteilige Global-Pfade wie `wp.blockEditor` korrekt auf (im gebauten
+  Bundle verifiziert, IIFE-Aufruf am Dateiende mit genau dieser Argumentliste). JSX kompiliert
+  ueber esbuilds klassischen Pragma-Modus (`esbuild.jsx: 'transform'` + `jsxFactory: 'el'`,
+  WICHTIG: Vite 8s Rolldown-Standard ist der automatische React-17-Transform gegen
+  `react/jsx-runtime`, das muss explizit auf klassisch zurueckgestellt werden, sonst schlaegt der
+  Build fehl) gegen einen `createElement as el`-Import aus `@wordpress/element`. Ein einzelnes
+  `vite.config.js` mit einem Array aus zwei
+  Build-Configs wurde probiert und verworfen — Vite 8s CLI (`vite build`) akzeptiert dort nur ein
+  einzelnes Objekt, keine zweite Config im selben Lauf; deshalb zwei Config-Dateien und zwei
+  `vite build`-Aufrufe in `pnpm build:assets` (`emptyOutDir: false` in `vite.config.editor.js`,
+  da beide `dist/assets` teilen und nur der erste Lauf leeren darf). Kein `.asset.php` mit
+  automatisch extrahierten Script-Dependencies (das ist `@wordpress/scripts`-spezifisch) — die
+  wp-blocks/wp-element/...-Dependency-Liste steht deshalb von Hand in
+  `inc/setup/theme-blocks.php`s `wp_register_script()`-Aufruf.
+- **Editor-Vorschau via `@wordpress/server-side-render`** (Core-Paket, immer als
+  `wp-server-side-render`-Handle verfuegbar) statt eines zweiten, in JS nachgebauten Markups —
+  render.php bleibt die einzige Stelle, die tatsaechlich Markup/Tailwind-Klassen erzeugt. Setzt
+  voraus, dass der Editor-Canvas Tailwind-korrekt rendert: `inc/setup/theme-setup.php` ruft
+  deshalb jetzt zusaetzlich `add_theme_support('editor-styles')` + `add_editor_style()` (ueber den
+  neuen Helper `hengegroup_theme_get_vite_style_uri()` in `theme-assets.php`) auf und laedt damit
+  dasselbe kompilierte `app.css` wie das Frontend in den iframe-isolierten Editor-Canvas — vormals
+  bewusst zurueckgestellt (siehe `docs/to-do.md`), jetzt sinnvoll, seit es mit den
+  Phase-2-gestylten Base-Komponenten echtes CSS zum Laden gibt.
+- **Akzentfarbe je Folie ist dasselbe `henge-green`/`henge-blue`/`henge-grey`-Vokabular wie
+  `button.php`/`badge.php`'s `variant`**, keine freie Farbauswahl — Konsistenz mit dem bestehenden
+  Marken-Farbsystem statt eines eigenen Farbwaehlers.
+- **Dot-Navigation ist eigenes, Block-spezifisches Markup**, kein weiterer
+  `carousel-*.php`-Aufruf — `carousel.php`s eigener Kopfkommentar dokumentiert Dots explizit als
+  nicht Teil der Komponente (nur optionale Previous-/Next-Buttons). Autoplay + Dot-Klick-Steuerung
+  laufen ueber ein eigenes JS-Enhancement-Modul (`assets/js/template-parts/blocks/buehne.js`),
+  `assets/js/template-parts/base/carousel.js` selbst bleibt unveraendert (siehe dessen eigenen
+  Kopfkommentar-Anspruch, dass Base-Komponenten fuer Phase 2/3 nicht nochmal angefasst werden
+  muessen).
+- **Verhalten bewusst an `carousel.php`s echtem CSS-Scroll-Snap-Verhalten ausgerichtet statt am
+  Opacity-Crossfade des urspruenglichen Mockups**: `carousel-item.php`s `basis: '100%'` gibt volle
+  Folienbreite, das native Scroll-Snap-Verhalten (Swipe/Wheel/Tastatur) wird 1:1 uebernommen. Eine
+  Crossfade-Animation haette entweder die Base-Komponente aendern (nicht erlaubt fuer diesen
+  Auftrag) oder ihr dokumentiertes Scroll-Snap-Verhalten duplizieren/umgehen muessen.
+  **Ueberholt seit 2026-09-22** -- auf explizite Nachfrage doch auf Crossfade umgestellt, siehe
+  "Buehne: Opacity-Crossfade statt Scroll-Snap" oben.
+
+### SVG-Upload-Support: Admin-only + `enshrined/svg-sanitize` (2026-09-17)
+
+WordPress erlaubt `image/svg+xml` in der Media Library standardmaessig nicht -- eine SVG-Datei
+kann `<script>`/Event-Handler-Attribute/externe Referenzen enthalten (gespeichertes XSS). Auf
+explizite Nachfrage (zwei Optionen zur Wahl gestellt: nur Rollen-Einschraenkung vs. zusaetzlich
+echtes Sanitizing) fiel die Entscheidung auf die staerkere Variante: SVG-Upload nur fuer Nutzer
+mit `manage_options` **und** serverseitiges Sanitizing jeder hochgeladenen Datei ueber
+`enshrined/svg-sanitize`, nicht die Rollen-Einschraenkung allein. Siehe
+`inc/setup/theme-svg-support.php`s eigenen Kopfkommentar fuer die Hook-Details
+(`upload_mimes`/`wp_check_filetype_and_ext`/`wp_handle_upload_prefilter`/
+`wp_generate_attachment_metadata`).
+
+- **Fail-closed statt fail-open**: `upload_mimes` schaltet `svg` nur frei, wenn
+  `class_exists(\enshrined\svgSanitize\Sanitizer::class)` true ist -- fehlt die Bibliothek (z. B.
+  `composer install` vergessen, `vendor/` nicht mitgeliefert), bleibt SVG fuer NIEMANDEN erlaubt,
+  statt eine ungesanitizte Datei durchzulassen. `wp_handle_upload_prefilter` prueft
+  Capability/Sanitizing-Erfolg ein zweites Mal (defense in depth) und setzt bei Fehlschlag
+  `$file['error']`, statt die Originaldatei durchzulassen.
+- **Capability ist filterbar** (`hengegroup_theme_svg_upload_capability`, Default
+  `manage_options`) statt hart codiert -- Escape-Hatch fuers Projekt-Theme, siehe
+  `docs/how-to.md` "SVG-Upload-Berechtigung anpassen".
+- **`enshrined/svg-sanitize` ist die ERSTE echte Laufzeit-Composer-Abhaengigkeit dieses Themes**
+  (`composer.json`s `require`, nicht `require-dev`) -- bisher war Composer laut `composer.json`s
+  eigener (jetzt aktualisierter) Beschreibung reines Dev-Tooling (WPCS/PHPUnit, CLAUDE.md Regel
+  11), nie zur Laufzeit geladen. `functions.php` laedt `vendor/autoload.php` deshalb jetzt bedingt
+  (`file_exists()`-Guard).
+- **`dist/vendor/` bekommt einen production-only Composer-Stand** (kein phpcs/PHPUnit/
+  wordpress-stubs/brain-monkey): das Theme wird per FTP als fertiges Bundle deployt (`dist/`,
+  siehe `package.json`s `deploy`/`deploy-changed`), keine Server-seitige `composer install`.
+  `scripts/build.sh`/`build.ps1` swappen dafuer das REPO-EIGENE `vendor/` kurz auf
+  `composer install --no-dev --optimize-autoloader`, kopieren es nach `dist/vendor/` und stellen
+  danach den Dev-Stand wieder her (`trap ... EXIT` in `build.sh`, `try`/`finally` in `build.ps1`,
+  jeweils in einer eigenen Subshell/einem eigenen `Push-Location`-Block) -- laeuft auch, wenn ein
+  spaeterer Build-Schritt fehlschlaegt, damit `composer lint`/`composer test` danach lokal weiter
+  funktionieren. Keine CI-Anpassung noetig: `.github/workflows/ci.yml` ruft nirgends
+  `pnpm build`/die Build-Scripts auf, nur ein normales `composer install` (mit Dev-Deps) fuer
+  Lint/Test.
+- **`hengegroup_theme_get_svg_dimensions()`** (reine Funktion, kein WP-Aufruf, per PHPUnit direkt
+  getestet statt Brain Monkey) liefert `width`/`height` aus dem `<svg>`-Root (Attribute, sonst
+  `viewBox`-Fallback) fuer `wp_generate_attachment_metadata` -- ohne das haette
+  `wp_get_attachment_image_src()`/damit `template-parts/base/image.php`'s
+  `attachment_id`-Aufloesung kein `width`/`height` fuer SVG-Attachments (WordPresss eigene
+  `getimagesize()`-basierte Metadaten-Generierung versteht kein SVG).

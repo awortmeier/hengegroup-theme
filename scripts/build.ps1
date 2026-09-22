@@ -43,6 +43,31 @@ finally {
     Pop-Location
 }
 
+# Ships a production-only vendor/ (enshrined/svg-sanitize, no phpcs/PHPUnit/wordpress-stubs/
+# brain-monkey -- see docs/entscheidungen.md "SVG-Upload-Support") inside dist/: this theme
+# deploys as a fertiges Bundle per FTP (siehe deploy/deploy-changed in package.json), keine
+# Server-seitige `composer install`. Swaps the REPO's OWN vendor/ to --no-dev just long enough to
+# copy it, then restores the dev vendor/ (phpcs/PHPUnit/...) in `finally` so `composer lint`/
+# `composer test` keep working locally afterwards -- even if a step below throws.
+Push-Location $repoRoot
+try {
+    & composer install --no-dev --optimize-autoloader
+    if ($LASTEXITCODE -ne 0) {
+        throw "Production-only composer install failed."
+    }
+
+    $vendorDestinationPath = Join-Path $distPath "vendor"
+    if (Test-Path -LiteralPath $vendorDestinationPath) {
+        Remove-Item -LiteralPath $vendorDestinationPath -Recurse -Force
+    }
+    Copy-Item -LiteralPath (Join-Path $repoRoot "vendor") -Destination $vendorDestinationPath -Recurse -Force
+    Write-Output "Copied vendor (production-only)"
+}
+finally {
+    & composer install
+    Pop-Location
+}
+
 foreach ($file in $themeStaticFiles) {
     $sourcePath = Join-Path $repoRoot $file
     if (-not (Test-Path -LiteralPath $sourcePath)) {

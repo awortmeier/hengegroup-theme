@@ -1,28 +1,18 @@
 export function initHeader() {
     const header = document.getElementById("siteHeader");
-    const topbar = document.querySelector("[data-topbar]");
-    const sentinel = document.querySelector("[data-header-sentinel]");
 
-    if (!header || !sentinel) {
+    if (!header) {
         return;
     }
 
-    const minimumTopOffset = 10;
+    const scrolledThreshold = 40;
     let isTicking = false;
 
-    const updateHeaderTop = () => {
-        if (!topbar) {
-            header.style.top = `${minimumTopOffset}px`;
-            return;
-        }
-
-        const topbarBottom = topbar.getBoundingClientRect().bottom;
-        const nextTopOffset = Math.max(minimumTopOffset, topbarBottom);
-
-        header.style.top = `${nextTopOffset}px`;
+    const updateScrolled = () => {
+        header.dataset.scrolled = window.scrollY > scrolledThreshold ? "true" : "false";
     };
 
-    const requestHeaderTopUpdate = () => {
+    const requestScrolledUpdate = () => {
         if (isTicking) {
             return;
         }
@@ -30,25 +20,12 @@ export function initHeader() {
         isTicking = true;
 
         window.requestAnimationFrame(() => {
-            updateHeaderTop();
+            updateScrolled();
             isTicking = false;
         });
     };
 
-    const observer = new IntersectionObserver(
-        ([entry]) => {
-            header.classList.toggle("is-floating", !entry.isIntersecting);
-        },
-        {
-            root: null,
-            threshold: 0,
-            rootMargin: `80px 0px 0px 0px`,
-        }
-    );
+    updateScrolled();
 
-    observer.observe(sentinel);
-    updateHeaderTop();
-
-    window.addEventListener("scroll", requestHeaderTopUpdate, { passive: true });
-    window.addEventListener("resize", requestHeaderTopUpdate);
+    window.addEventListener("scroll", requestScrolledUpdate, { passive: true });
 }

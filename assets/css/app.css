@@ -11,10 +11,30 @@
         @apply bg-background text-foreground font-primary;
     }
 
+    /* Wiederverwendbarer 12-Spalten-Grid-Container fuer Block-Layouts
+       (template-parts/blocks/*): zentriert, deckelt bei --container-page (tokens.css, aktuell
+       1600px), responsives Seiten-Padding. Setzt `grid-cols-12` direkt auf den Container statt
+       eines zweiten Wrapper-Elements -- Bloecke platzieren Kinder einfach mit Tailwinds eigenen
+       `col-span-*`/`col-start-*`-Utilities, kein eigenes `grid-template-columns` noetig. Ein Kind
+       ohne `col-span-*` belegt wie bei jedem 12-Spalten-Grid-System nur eine Spalte -- volle
+       Breite braucht explizit `col-span-12`. Siehe docs/entscheidungen.md "12-Spalten-Grid ueber
+       .wrapper" fuer die Breiten-/Abstands-Werte und warum das hier statt in
+       template-parts/base|components liegt. `max-w-page` (generiert aus `--container-page`) statt
+       eines eigenen Arbitrary-Values, weil buehne/render.php's Dot-Reihe dieselbe Breite braucht,
+       ohne `.wrapper` selbst nutzen zu koennen (siehe dortiger Kommentar) -- ein Token statt zweier
+       unabhaengig gepflegter Werte, die sonst wie bereits einmal passiert auseinanderlaufen. */
     .wrapper {
+        @apply max-w-page mx-auto grid w-full grid-cols-12 gap-x-4 px-4 sm:gap-x-6 sm:px-6 lg:gap-x-8 lg:px-8;
     }
 
+    /* Schmalere Variante von `.wrapper` (1000px statt --container-page) fuer schmalere
+       Block-Inhalte (z. B. Textabschnitte, Formulare) -- gleiches 12-Spalten-Grid/Padding-Schema,
+       nur mit niedrigerer Deckelung. Eigener Arbitrary-Value statt eines weiteren Tokens: wird
+       bislang nur hier gebraucht (siehe tokens.css-Konvention, Token erst anlegen, wenn eine
+       zweite Stelle den Wert tatsaechlich braucht). Siehe docs/entscheidungen.md "12-Spalten-Grid
+       ueber .wrapper". */
     .wrapper-small {
+        @apply mx-auto grid w-full max-w-[1000px] grid-cols-12 gap-x-4 px-4 sm:gap-x-6 sm:px-6 lg:gap-x-8 lg:px-8;
     }
 
     /* template-parts/base/accordion.php: open/close height transition for its native <details>

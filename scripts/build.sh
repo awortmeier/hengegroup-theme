@@ -37,6 +37,23 @@ mkdir -p "$dist_path"
     pnpm run build:assets
 )
 
+# Ships a production-only vendor/ (enshrined/svg-sanitize, no phpcs/PHPUnit/wordpress-stubs/
+# brain-monkey -- see docs/entscheidungen.md "SVG-Upload-Support") inside dist/: this theme
+# deploys as a fertiges Bundle per FTP (siehe deploy/deploy-changed in package.json), keine
+# Server-seitige `composer install`. Swaps the REPO's OWN vendor/ to --no-dev just long enough to
+# copy it, then restores the dev vendor/ (phpcs/PHPUnit/...) via `trap ... EXIT` so
+# `composer lint`/`composer test` keep working locally afterwards -- even if this subshell fails
+# partway through. Scoped to its own subshell so the trap can't linger for the rest of this
+# script.
+(
+    cd "$repo_root"
+    trap 'composer install' EXIT
+    composer install --no-dev --optimize-autoloader
+    rm -rf "$dist_path/vendor"
+    cp -R "$repo_root/vendor" "$dist_path/vendor"
+    echo "Copied vendor (production-only)"
+)
+
 for file in "${theme_static_files[@]}"; do
     source_path="$repo_root/$file"
     [ -e "$source_path" ] || continue

@@ -18,6 +18,7 @@ import { initHoverCard } from "./template-parts/base/hover-card.js";
 import { initNavigationMenu } from "./template-parts/base/navigation-menu.js";
 import { initPopover } from "./template-parts/base/popover.js";
 import { initDataTable } from "./template-parts/base/data-table.js";
+import { initBuehne } from "./template-parts/blocks/buehne.js";
 
 onDomReady(() => {
     initHeader();
@@ -37,4 +38,5 @@ onDomReady(() => {
     initNavigationMenu();
     initPopover();
     initDataTable();
+    initBuehne();
 });

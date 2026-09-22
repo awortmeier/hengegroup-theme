@@ -120,4 +120,12 @@
         "Outfit", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
         "Helvetica Neue", Arial, sans-serif;
     --font-accent: "Crillee", ui-sans-serif, system-ui, sans-serif;
+
+    /* Maximalbreite von .wrapper (assets/css/app.css) -- als benanntes Token statt eines an
+       mehreren Stellen wiederholten Arbitrary-Values (`max-w-[1600px]`), weil genau das schon
+       einmal auseinandergelaufen ist: template-parts/blocks/buehne/render.php's Dot-Reihe kann
+       .wrapper selbst nicht nutzen (braucht `flex`, nicht `.wrapper`s `grid`), musste die Breite
+       also separat tragen -- die generierte `max-w-page`-Utility (Tailwinds `--container-*`-
+       Namespace) ist jetzt fuer beide Stellen dieselbe Quelle. */
+    --container-page: 1600px;
 }

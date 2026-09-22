@@ -1,10 +1,11 @@
 {
     "name": "hengegroup-theme/theme",
-    "description": "Dev-only tooling (WPCS-Lint, PHPUnit) fuer hengegroup-theme. Nicht zur Laufzeit benoetigt, siehe CLAUDE.md Regel 11.",
+    "description": "Dev-Tooling (WPCS-Lint, PHPUnit, siehe CLAUDE.md Regel 11) sowie die eine echte Laufzeit-Abhaengigkeit dieses Themes (enshrined/svg-sanitize fuer SVG-Uploads, siehe inc/setup/theme-svg-support.php und docs/entscheidungen.md).",
     "type": "project",
     "license": "proprietary",
     "require": {
-        "php": ">=8.2"
+        "php": ">=8.2",
+        "enshrined/svg-sanitize": "^1.0"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.9",

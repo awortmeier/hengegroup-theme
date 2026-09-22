@@ -140,18 +140,32 @@ $base_classes =
     'disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 ' .
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
+// bg-*/text-* utilities below are `!`-marked (Tailwind's own important-modifier, e.g.
+// `!bg-henge-blue`, same mechanism/precedent as calendar.php's own `!`-prefixed day-cell classes,
+// see that file's header comment) -- bugfix for the block editor iframe: since button.php's
+// `<a>`/`<button>` output carries `wp-element-button` (WordPress' own opt-out class from the
+// global `styles.elements.link` text color, see docs/entscheidungen.md "button.php:
+// wp-element-button gegen die globale Link-Farbe"), it now ALSO opts into WordPress' generic
+// "give `.wp-element-button` a default color/background from the site's top-level color settings
+// when `styles.elements.button` isn't defined in theme.json" behaviour (ours isn't defined) --
+// that generic default ties in specificity with these plain Tailwind classes the exact same way
+// the link-color rule did, and in the editor iframe (global-styles-inline-css loads AFTER
+// add_editor_style()'s app.css there, opposite order from the frontend) it was winning, painting
+// every solid variant white instead of its actual brand color. `!` forces these specific
+// color-bearing utilities to win regardless of load order, without touching border/shadow/
+// underline/focus-ring utilities on the same line (those never collided).
 $variant_classes = [
-    'henge-green' => 'bg-henge-green text-henge-green-foreground hover:bg-henge-green/90',
-    'henge-blue' => 'bg-henge-blue text-henge-blue-foreground hover:bg-henge-blue/90',
-    'henge-grey' => 'bg-henge-grey text-henge-grey-foreground hover:bg-henge-grey/90',
-    'grey-dark' => 'bg-grey-dark text-grey-dark-foreground hover:bg-grey-dark/90',
-    'grey-light' => 'bg-grey-light text-grey-light-foreground hover:bg-grey-light/80',
+    'henge-green' => '!bg-henge-green !text-henge-green-foreground hover:!bg-henge-green/90',
+    'henge-blue' => '!bg-henge-blue !text-henge-blue-foreground hover:!bg-henge-blue/90',
+    'henge-grey' => '!bg-henge-grey !text-henge-grey-foreground hover:!bg-henge-grey/90',
+    'grey-dark' => '!bg-grey-dark !text-grey-dark-foreground hover:!bg-grey-dark/90',
+    'grey-light' => '!bg-grey-light !text-grey-light-foreground hover:!bg-grey-light/80',
     'destructive' =>
-        'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive/20',
+        '!bg-destructive !text-destructive-foreground hover:!bg-destructive/90 focus-visible:ring-destructive/20',
     'outline' =>
-        'border border-grey-dark bg-background shadow-xs hover:bg-grey-light hover:text-grey-light-foreground',
-    'ghost' => 'hover:bg-grey-light hover:text-grey-light-foreground',
-    'link' => 'text-grey-dark underline-offset-4 hover:underline',
+        'border border-grey-dark !bg-background shadow-xs hover:!bg-grey-light hover:!text-grey-light-foreground',
+    'ghost' => 'hover:!bg-grey-light hover:!text-grey-light-foreground',
+    'link' => '!text-grey-dark underline-offset-4 hover:underline',
 ];
 
 $size_classes = [
@@ -233,8 +247,18 @@ if ($is_icon_only) {
 }
 
 $element_attributes = $attributes;
+// `wp-element-button` is WordPress core's own opt-out class: theme.json's global
+// `styles.elements.link` text color (this project's henge-green, see tokens.css/
+// docs/entscheidungen.md) is emitted as `a:where(:not(.wp-element-button))`, so WITHOUT this class
+// an <a>-rendered button's `text-*-foreground` variant class ties in specificity with that global
+// rule and can lose the cascade (visibly wrong in the block editor iframe, where the global-styles
+// stylesheet loads after add_editor_style()'s app.css) -- see docs/entscheidungen.md "button.php:
+// wp-element-button gegen die globale Link-Farbe" for the full story. Every core block that renders
+// an interactive button as an <a> (Button/Search/Pagination/...) adds this same class for the same
+// reason, native <button> elements are unaffected by that selector but get it too for consistency
+// (this IS a button, never an inline content link, regardless of `href`/tag).
 $element_attributes['class'] = trim(
-    $computed_class . ($class_name !== '' ? ' ' . $class_name : ''),
+    $computed_class . ' wp-element-button' . ($class_name !== '' ? ' ' . $class_name : ''),
 );
 
 $element_attributes['data-slot'] = 'button';
