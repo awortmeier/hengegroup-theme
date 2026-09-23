@@ -1,0 +1,25 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/produkte-raster",
+    "title": "Produkte-Raster (interne Editor-Vorschau)",
+    "category": "henge",
+    "icon": "cart",
+    "description": "Nur fuer die Editor-Vorschau des Produkte-Blocks -- rendert ausschliesslich das Produktraster, kein eigener Insertable Block.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "productCategory": {
+            "type": "string",
+            "default": ""
+        },
+        "numberOfProducts": {
+            "type": "number",
+            "default": 4
+        }
+    },
+    "supports": {
+        "inserter": false,
+        "html": false
+    },
+    "render": "file:./render.php"
+}

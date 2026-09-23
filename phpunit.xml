@@ -20,6 +20,7 @@
     <source>
         <include>
             <file>inc/template-parts/helpers.php</file>
+            <file>inc/template-parts/woocommerce-product-card.php</file>
         </include>
     </source>
 </phpunit>

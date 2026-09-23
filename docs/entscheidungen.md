@@ -21,6 +21,798 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Produkte-Block: Ueberschrift/Text als RichText, Produktraster als eigener Vorschau-Block (2026-09-23)
+
+`hengegroup-theme/produkte` (`template-parts/blocks/produkte/`) rendert sein Produktraster ueber
+`hengegroup_theme_render_produkte_grid()` (`inc/template-parts/woocommerce-product-card.php`) --
+eine eigene `WP_Query` + `wc_get_template_part('content', 'product')` statt einem eigenen,
+blockspezifischen Karten-Markup -- explizite Nachfrage: `woocommerce/content-product.php` (siehe
+dessen eigenen Kopfkommentar) bleibt unveraendert, derselbe Baustein wie im Shop-Archiv
+(`woocommerce/archive-product.php`). `wp_reset_postdata()` innerhalb des Helpers, weil dies --
+anders als die Archiv-Seite -- eine Nebenquery ist, keine Hauptquery.
+
+Kopfzeile (Ueberschrift/Text/Button) bekommt trotzdem volles `col-span-12` (nicht z. B.
+`lg:col-span-7`) und wird stattdessen per `max-w-2xl` optisch schmal gehalten -- ein Teil-`col-span`
+liesse die erste Produktkarte per CSS-Grid-Auto-Placement in die auf dieser Zeile noch freien
+Spalten rutschen statt in eine eigene Zeile darunter (siehe render.php's Kopfkommentar).
+
+**Nachtrag (2026-09-23): Ueberschrift/Text direkt im Editor-Content-Bereich editierbar.** Auf
+expliziten Wunsch laufen Ueberschrift/Text jetzt als natives `RichText` direkt im Canvas von
+`assets/js/blocks/produkte/edit.jsx` (gleiches Muster wie `ueberschrift-text/edit.jsx`) statt als
+Sidebar-Felder -- der Block hatte bis dahin eine reine `ServerSideRender`-Vorschau (wie
+`buehne/edit.jsx`), was mit direkt editierbarem `RichText` kollidiert: `ServerSideRender` gegen
+denselben Block wuerde render.php's eigene Ueberschrift/Text ein zweites Mal statisch neben dem
+editierbaren Feld rendern. Deshalb wurde die WP_Query/Loop-Logik in den oben genannten Helper
+extrahiert und zusaetzlich hinter einem zweiten, im Inserter versteckten Block
+`hengegroup-theme/produkte-raster` (`"supports": {"inserter": false}`, kein eigenes Editor-BUNDLE --
+siehe render.php-Kopfkommentar) verfuegbar gemacht: `produkte/edit.jsx` rendert Ueberschrift/Text/Button
+selbst (Klassen 1:1 aus render.php/button.php gespiegelt, gleiches Prinzip wie
+`ueberschrift-text/edit.jsx`) und ruft `ServerSideRender` gezielt NUR gegen `produkte-raster` auf
+(nur `productCategory`/`numberOfProducts` als Attribute), fuer eine weiterhin echte
+Live-Produktraster-Vorschau ohne Ueberschrift/Text zu duplizieren.
+
+Bekannte Einschraenkung, nur im Editor: `ServerSideRender`s eigenes Wrapper-`<div>` hat kein
+`display: contents`, unterbricht also die `.wrapper`-Grid-Kette zwischen `produkte/edit.jsx`s
+JSX-`.wrapper` und den Produktkarten-`<li>`s aus `produkte-raster` -- die Karten erscheinen im
+Editor-Canvas gestapelt statt im 4-Spalten-Raster, mit unveraendert echten Produktdaten/-Markup. Das
+Frontend (`produkte/render.php`) ist davon nicht betroffen, es nutzt `produkte-raster` gar nicht.
+
+**Bugfix (2026-09-23): "Block type 'hengegroup-theme/produkte-raster' is not registered."** Der
+Block crashte im Editor mit genau dieser React-Fehlermeldung, sobald `ServerSideRender` gegen
+`produkte-raster` aufgerufen wurde. Ursache: `@wordpress/server-side-render` prueft den
+uebergebenen Blocknamen zuerst gegen die CLIENTSEITIGE Block-Registry (`wp.blocks.getBlockType()`),
+bevor es ueberhaupt den `/wp/v2/block-renderer/...`-REST-Endpunkt aufruft -- die rein
+server-seitige `register_block_type()`-Registrierung von `produkte-raster`
+(inc/setup/theme-blocks.php) reicht dafuer NICHT, obwohl sie fuer den REST-Endpunkt selbst
+ausreicht. Fix: `produkte/edit.jsx` registriert `produkte-raster` zusaetzlich clientseitig via
+`registerBlockType(produkteRasterMetadata, { edit: () => null, save: () => null })`, huckepack im
+selben Bundle statt einer eigenen `vite.config.editor-produkte-raster.js` -- `produkte-raster`
+braucht ohnehin kein eigenes `edit`-UI (`"supports": {"inserter": false}`), nur eine der
+Client-Registry bekannte Definition.
+
+**Nachtrag (2026-09-23): Ueberschrift/Text/Button ohne vordefinierte Standardwerte, Button
+ebenfalls direkt im Content-Bereich editierbar.** Auf expliziten Wunsch haben `heading`/`buttonText`
+jetzt `""` als `default` statt vorausgefuellter Werte ("Produkte"/"Alle Produkte") --
+`template-parts/blocks/produkte/block.json`, kein Code jenseits der Defaults betroffen (render.php
+ueberspringt leere Werte ohnehin, siehe dessen `if ($heading !== '')`/`if ($button_text !== '')`).
+
+Der Button-TEXT ist jetzt ebenfalls `RichText` im Canvas (gleiches Muster wie Ueberschrift/Text),
+statt eines Sidebar-`TextControl`. Der Button-LINK ist keine ComboboxControl-Seitenauswahl mehr
+(das bisherige `PageLinkControl`-Muster von buehne/edit.jsx), sondern
+`@wordpress/block-editor`s eigene `LinkControl`-Komponente in einem `Popover`, aufgerufen ueber ein
+Link-Icon in der Block-Toolbar (`BlockControls`) -- exakt dasselbe UX-Muster wie Cores eigener
+`core/button`-Block. Vorteil gegenueber dem PageLinkControl-Muster: `LinkControl` sucht selbst per
+WP-REST-Suche ueber alle Inhaltstypen (nicht nur `page`) und erlaubt zusaetzlich freie/externe URLs,
+kein eigener `useSelect()`-Picker mehr noetig. Die Sidebar (`InspectorControls`) enthaelt dadurch
+nur noch Produktraster-KONFIGURATION (Produktkategorie/Anzahl Produkte), keine Text-/Link-Inhalte
+mehr.
+
+**Nachtrag (2026-09-23): Ueberschrift-Element (H1-H6/P) ebenfalls in der Toolbar statt Sidebar.**
+Das `headingTag`-Attribut (Default `h2`, siehe block.json) war zunaechst als Sidebar-`SelectControl`
+umgesetzt, auf expliziten Wunsch aber in die Block-Toolbar verschoben:
+`ToolbarDropdownMenu` (`@wordpress/components`) neben dem Button-Link-Icon, Icon `heading`, Liste
+H1-H6 + Absatz (P) als `controls`-Eintraege mit `isActive`/`onClick`. Bewusst NICHT an den Fokus des
+Ueberschrift-`RichText` gekoppelt (kein bedingtes Ein-/Ausblenden per `onFocus`/`onBlur`, obwohl der
+urspruengliche Wunsch "direkt an der Ueberschrift beim Anklicken" war) -- ein Klick auf ein
+Toolbar-Control loest zuerst `onBlur` des `RichText` aus, bevor der Klick selbst verarbeitet wird;
+eine fokus-gekoppelte Toolbar wuerde deshalb verschwinden, bevor man sie anklicken kann (bekannte
+Gutenberg-Falle). Die Toolbar bleibt stattdessen wie ueblich an die Block-Selektion gekoppelt
+(sichtbar, solange der Produkte-Block ausgewaehlt ist), nicht an die Ueberschrift-Feld-Selektion
+selbst.
+
+**Nachtrag (2026-09-23): "Ausrichten" aus der Toolbar entfernt, "Umwandeln in" bewusst NICHT.** Auf
+expliziten Wunsch verschwindet die "Ausrichten"-Kontrolle aus der Block-Toolbar: `supports.align`
+(vorher `["wide", "full"]`) sowie das eigene `align`-Attribut sind komplett aus block.json entfernt
+(render.php hat `$attributes['align']` ohnehin nie gelesen, siehe dessen Kopfkommentar). Ohne
+Ersatz wuerde die Editor-Canvas fuer diesen Block aber wieder auf theme.json's schmale
+`contentSize`-Spalte (48rem) zusammenschrumpfen -- derselbe Befund, den ueberschrift-text/buehne
+ueber `supports.align` loesen (siehe deren Kopfkommentare/den entsprechenden Eintrag oben). Fix:
+`assets/js/blocks/produkte/edit.jsx`s `useBlockProps()` setzt `alignfull` jetzt HARDCODIERT als
+Klasse -- rein die CSS-Klasse, unabhaengig davon, WIE sie zustande kommt, reicht fuer die
+Iframe-Breite, keine Toolbar-UI mehr noetig dafuer.
+
+"Umwandeln in" (Block-Switcher/Transform-Dropdown, `@wordpress/block-editor`s `BlockSwitcher`)
+bleibt dagegen bestehen: recherchiert (WordPress-Block-Editor-Handbuch + Gutenberg-Quellcode,
+2026-09-23) -- es gibt KEINEN dokumentierten `supports`-Schalter dafuer, das Icon wird fuer
+praktisch jeden entfernbaren Block unconditional von Core gerendert (der Inhalt des aufgeklappten
+Dropdowns haengt zwar von registrierten Transforms/Styles ab, der Toolbar-BUTTON selbst nicht). Die
+einzigen bekannten Wege waeren entweder die Block-Locking-API (verhindert nebenbei auch
+Verschieben/Entfernen des Blocks -- ungewollter Nebeneffekt fuer das eigentliche Anliegen) oder ein
+`editor.BlockListBlock`-Filter + block-spezifischer CSS-Selektor (fragiler Hack gegen interne, nicht
+oeffentlich stabile Gutenberg-DOM-Struktur, kein Regel-1-Tailwind-Styling-Fall). Bewusst nicht
+umgesetzt, bis eine sauberere Loesung existiert oder der Nutzer den Trade-off explizit akzeptiert.
+
+**Nachtrag (2026-09-23): Dasselbe Muster (Ueberschrift-Element + kein "Ausrichten") auch auf
+ueberschrift-text uebertragen, Default fuer beide Bloecke jetzt `p` statt `h2`.**
+`hengegroup-theme/ueberschrift-text` bekommt genau dieselben beiden Aenderungen wie oben fuer
+`hengegroup-theme/produkte` beschrieben: `headingTag`-Attribut (H1-H6/P) ueber ein
+`ToolbarDropdownMenu` in der Block-Toolbar (identischer `HEADING_TAG_OPTIONS`-Aufbau, dupliziert
+statt geteilt, siehe assets/js/blocks/ueberschrift-text/edit.jsx's Kopfkommentar), und
+`supports.align`/das `align`-Attribut komplett entfernt zugunsten eines hardcodierten `alignfull` in
+`useBlockProps()` (hier zusaetzlich noetig, damit `containerWidth`s `.wrapper`/`.wrapper-small`
+-Unterschied im Editor ueberhaupt sichtbar bleibt, siehe render.php's Kopfkommentar -- derselbe
+Grund, aus dem dieser Block `supports.align` urspruenglich ueberhaupt erst bekommen hatte).
+
+Beide Bloecke (`produkte` UND `ueberschrift-text`) haben jetzt `headingTag`-Default `p` statt `h2`
+(explizite Nachfrage) -- betrifft nur NEU eingefuegte Blockinstanzen, `render.php` validiert den
+Wert ohnehin gegen `h1`-`h6`/`p` mit `p` als Fallback bei ungueltigem/fehlendem Attribut.
+
+Nachtrag zum naechsten Eintrag unten: Nach dem ersten Deploy meldete der Nutzer, dass "Vollbild" in
+der Kurzbeschreibungs-Toolbar trotz
+`hengegroup_theme_filter_teeny_mce_buttons_product_short_description_remove_buttons()` weiterhin
+sichtbar war -- alle anderen Toolbar-Aenderungen (Hauptbeschreibung, "Medien hinzufuegen") wirkten
+bereits nach diesem Deploy, was ein Deploy-/Caching-Problem ausschloss und auf einen gezielten Bug
+nur bei diesem einen Filter hindeutete.
+
+- **Vermutete Ursache**: WooCommerce uebergibt fuer den `excerpt`-Editor vermutlich einen eigenen
+  `tinymce`-Settings-Teilarray (inkl. eigenem `toolbar1`-String), den `wp_editor()` per
+  `array_merge()` ueber die aus `teeny_mce_buttons` gebaute WordPress-Standard-Toolbar
+  draufbuegelt -- der Filter greift dadurch, greift aber ins Leere, weil das Ergebnis direkt danach
+  ueberschrieben wird.
+- **Fix**: zusaetzlicher `tiny_mce_before_init`-Filter
+  (`hengegroup_theme_filter_tiny_mce_before_init_product_short_description_remove_buttons()`) --
+  der letzte Filter vor der JSON-Kodierung des kompletten TinyMCE-Init-Arrays, entfernt
+  `blockquote`/`fullscreen` direkt aus den fertig zusammengebauten `toolbar1`-`toolbar4`-Strings.
+  Gewinnt garantiert gegen jeden vorherigen `array_merge()`, unabhaengig von der genauen Ursache.
+  Der urspruengliche `teeny_mce_buttons`-Filter bleibt zusaetzlich bestehen (schadet nicht, greift
+  ggf. auf anderen WooCommerce-Versionen ohne eigenen `tinymce`-Teilarray).
+
+### Produktbeschreibung/-kurzbeschreibung: nur noch Visual-Editor, stark reduzierte Toolbar (2026-09-23)
+
+Auf expliziten Wunsch bekommen die Produktbeschreibung (`content`-Editor) und die
+Produktkurzbeschreibung (`excerpt`-Editor) im Produkt-Editor nur noch den Visual-Editor mit einer
+reduzierten Toolbar -- Redakteure sollen kein HTML/Markup direkt bearbeiten, keine Absatz-/
+Ueberschriften-Formatierung waehlen und weder "Weiterlesen"-Tag, Blockzitat, Medien-Upload noch
+Vollbild/die erweiterte zweite Toolbar-Zeile nutzen koennen.
+
+- **`inc/setup/theme-admin-woocommerce.php`**:
+  `hengegroup_theme_filter_wp_editor_settings_product_description_visual_only()` (Hook:
+  `wp_editor_settings`) setzt `quicktags => false` und `media_buttons => false` fuer die
+  Editor-IDs `content`/`excerpt`, aber nur auf dem einzelnen Produkt-Editor
+  (`hengegroup_theme_is_admin_product_edit_screen()`) -- unterdrueckt den Visual/Text-Umschalter
+  sowie den "Medien hinzufuegen"-Button komplett, nicht nur versteckt sie.
+  `hengegroup_theme_filter_mce_buttons_product_description_remove_buttons()` (Hook: `mce_buttons`)
+  entfernt zusaetzlich `formatselect` (Absatz/Ueberschrift 1-6/...), `wp_more` ("Weiterlesen"-Tag),
+  `blockquote` (Blockzitat) und `wp_adv` (Umschalter fuer die erweiterte zweite Toolbar-Zeile) aus
+  der Toolbar der Hauptbeschreibung.
+  `hengegroup_theme_filter_teeny_mce_buttons_product_short_description_remove_buttons()` (Hook:
+  `teeny_mce_buttons`) entfernt `blockquote` und `fullscreen` (Vollbild) aus der
+  Kurzbeschreibungs-Toolbar -- die Kurzbeschreibung laeuft in TinyMCEs "teeny"-Modus mit eigener,
+  kleinerer Default-Toolbar (ohne `formatselect`/`wp_more`/`wp_adv`, aber inkl. `blockquote`/
+  `fullscreen`), die ueber einen eigenen Core-Filter statt `mce_buttons` laeuft.
+- **Bewusst die generischen WordPress-Core-Filter (`wp_editor_settings`/`mce_buttons`/
+  `teeny_mce_buttons`) statt eines WooCommerce-spezifischen Hooks** (z. B.
+  `woocommerce_product_short_description_editor_settings`) -- beide Editoren laufen letztlich durch
+  dieselbe Core-Funktion `wp_editor()`, unabhaengig davon, ob WordPress selbst (Hauptbeschreibung)
+  oder WooCommerce (Kurzbeschreibung) sie aufruft; ein einziges Filter-Set deckt so beide Editoren
+  ab, statt sich auf einen WC-internen Hook-Namen zu verlassen, der zwischen WC-Versionen wandern
+  koennte.
+- **Auf den einzelnen Produkt-Editor beschraenkt** (gleicher Screen-Check wie
+  `hengegroup_theme_action_admin_head_hide_woocommerce_virtual_downloadable()`) -- andere
+  Editor-Instanzen in wp-admin (Seiten, Beitraege, andere Post-Types) bleiben unveraendert, die
+  Nachfrage betraf ausschliesslich Produktbeschreibung/-kurzbeschreibung.
+
+### Anwendungen: Produktkategorie statt eigenem Post-Type (2026-09-23)
+
+Auf expliziten Wunsch bilden "Anwendungen" jetzt WooCommerce's eigene `product_cat`-Taxonomie ab,
+statt wie zuvor ein eigener `anwendung`-Post-Type + `_anwendungen`-Produkt-Meta-Beziehung (siehe
+den aelteren Eintrag "Produktbox: Badge-/Anwendungs-Datenmodell" unten, dessen
+Anwendungen-spezifische Punkte damit ueberholt sind) -- weniger eigener Code/Verwaltungsaufwand,
+Redakteure ordnen Produkten im Editor ohnehin schon Produktkategorien zu.
+
+- **`inc/setup/theme-woocommerce-products.php`**: `register_post_type('anwendung', ...)`, die
+  "Anwendungen"-Checkbox-Metabox im Produkt-Editor sowie deren Save-Handler komplett entfernt --
+  kein eigenes Datenmodell fuer Anwendungen mehr in diesem Projekt.
+- **`single-anwendung.php`** geloescht (Einzelseiten-Template des entfernten Post-Types).
+- **`inc/template-parts/woocommerce-product-card.php`**:
+  `hengegroup_theme_get_product_anwendungen()` entfernt (kein `_anwendungen`-Meta mehr zu lesen);
+  `hengegroup_theme_render_product_anwendung_badges()` liest jetzt `get_the_terms($product_id,
+'product_cat')` statt der bisherigen Post-ID-Liste, alphabetisch sortiert (`strnatcasecmp`,
+  ersetzt die bisherige Reihenfolge aus der checkbox-Metabox, die durch deren eigene
+  alphabetische Sortierung faktisch ebenfalls alphabetisch war). Label/Markup/`outline`-Variante/
+  "kein `href`"-Vorgabe unveraendert (siehe die urspruengliche Begruendung im aelteren Eintrag) --
+  nur die Datenquelle hat sich geaendert, das Anzeigekonzept "Anwendungen" bleibt bestehen.
+- **WooCommerce's Default-Kategorie ("Unkategorisiert", `get_option('default_product_cat', 0)`,
+  seit WC 3.3) wird explizit herausgefiltert**, bevor die Badges gerendert werden -- ohne diesen
+  Filter wuerde JEDES Produkt ohne eigene Kategoriezuordnung eine "Unkategorisiert"-Anwendung
+  zeigen, statt gar keine Anwendungen-Sektion (die urspruengliche `anwendung`-Beziehung hatte
+  dieses Problem nicht, weil sie nie implizit befuellt wurde).
+- **`docs/how-to.md`**s "Neue Anwendung anlegen und einem Produkt zuordnen" ersetzt durch
+  "Anwendungen einem Produkt zuordnen" (Produktkategorien zuordnen statt eigenen CPT-Eintrag
+  anlegen) -- kein eigener Erweiterungspunkt mehr, reine WooCommerce-Bordmittel.
+
+### WooCommerce: ungenutzte Produkttypen/-felder deaktiviert, Rezensionen/Marken nur im Backend
+
+ausgeblendet (2026-09-23)
+
+Auf expliziten Wunsch (`inc/setup/theme-admin-woocommerce.php`):
+
+- **"Gruppiert"/"Extern/angegliedert" raus aus dem Produkttyp-Dropdown** ueber den
+  `product_type_selector`-Filter (`unset($types['grouped'], $types['external'])`) -- dieses Projekt
+  nutzt nur einfache/variable Produkte, die beiden anderen Typen sollen gar nicht erst waehlbar
+  sein, nicht nur "nicht empfohlen".
+- **"Virtuell"/"Herunterladbar" per CSS ausgeblendet**, nicht per Filter -- WooCommerce bietet fuer
+  diese beiden Checkboxen (allgemeiner Produkt-Tab) keinen Hook, sie sind in
+  `html-product-data-general.php` fest verdrahtet. Rohes CSS (`display:none !important`) ist hier
+  keine Regel-1-Ausnahme im eigentlichen Sinn -- reines Backend-Feld-Ausblenden ausserhalb der
+  Tailwind-gestylten Theme-Oberflaeche, fuer die es in wp-admin ohnehin keinen Tailwind-Build gibt.
+  **Nachtrag (2026-09-23): urspruenglicher Selektor traf nichts.** Angenommen war ein
+  `_virtual_field`/`_downloadable_field`-Wrapper, wie ihn `woocommerce_wp_checkbox()` fuer andere
+  Checkbox-Felder erzeugt -- die installierte WooCommerce-Version rendert "Virtuell"/
+  "Herunterladbar" aber ueber eigenes, neueres Markup ohne diesen `<p class="{id}_field">`-Wrapper
+  (Checkbox + Label direkt). Anhand des live gerenderten HTML (vom Nutzer per Inspect-Element
+  geliefert) auf `label[for="_virtual"]`/`label[for="_downloadable"]` korrigiert -- WCs eigene,
+  stabile Feld-IDs (`_virtual`/`_downloadable`, identisch mit dem Post-Meta-Key), unabhaengig vom
+  Wrapper-Markup drumherum.
+- **Rezensionen (`edit.php?post_type=product&page=product-reviews`) und Marken
+  (`edit-tags.php?taxonomy=product_brand&post_type=product`) bleiben als Feature/Taxonomie aktiv**,
+  nur die jeweilige Backend-Verwaltungsseite unter "Produkte" verschwindet ueber
+  `remove_submenu_page()` (gleicher Mechanismus wie die uebrigen Eintraege in
+  `hengegroup_theme_get_woocommerce_submenu_pages_to_remove()`) -- bewusst **kein**
+  `update_option('wc_feature_woocommerce_brands_enabled', 'no')`, weil das die gesamte Marken-Taxonomie
+  inkl. Frontend/REST abschalten wuerde; die Nachfrage war explizit auf "im Backend ausblenden"
+  begrenzt.
+- **Nachtrag (2026-09-23): die "Produktmarken"-Sidebar-Metabox im einzelnen Produkt-Editor blieb
+  trotz entfernter Marken-Verwaltungsseite sichtbar** -- WordPress registriert diese Box
+  automatisch pro an "product" gebundene Taxonomie (`register_taxonomy()`s `show_ui`), unabhaengig
+  von der Menue-Sichtbarkeit; die entfernte Verwaltungsseite betraf nur den eigenen Menuepunkt, nicht
+  diese Box. Behoben ueber `remove_meta_box('product_branddiv', 'product', 'side')` auf
+  `add_meta_boxes_product` (`product_branddiv` ist WCs feste Box-ID fuer die
+  `product_brand`-Taxonomie). Reviews brauchten keinen aequivalenten Nachtrag -- dort greift keine
+  WC-Metabox-Sonderlocke, das Backend-Deaktivieren des Reviews-Features (WooCommerce-Einstellung)
+  allein reicht bereits.
+
+### `badge.php`: `outline`-Randfarbe jetzt `neutral-500` direkt, kein eigener Token (2026-09-23)
+
+Auf expliziten Wunsch nutzt `badge.php`s `outline`-Variante jetzt `!border-neutral-500` -- Tailwinds
+eigene Skala direkt referenziert, KEIN neuer `--color-grey-*`-Marken-Token dafuer (ein zwischenzeitlich
+angelegter `--color-grey-medium`-Token wurde auf denselben Wunsch wieder entfernt). Ausgangspunkt war
+die Suche nach einer Zwischenstufe zwischen `grey-light` (neutral-100, als Rand zu hell/kaum lesbar)
+und `grey-dark` (neutral-800, button.php's eigene `outline`-Randfarbe, fuer ein statisches Label als
+zu kraeftig empfunden) -- `neutral-500` liegt exakt in der Mitte dieser beiden.
+
+- **Kein eigener Marken-Token**, weil aktuell nur diese eine Aufrufstelle den Wert braucht --
+  dieselbe "Tailwinds eigene Skala referenzieren, wenn (noch) keine Komponenten-API den Markennamen
+  als Wert erwartet"-Konvention wie tokens.css sie fuer die uebrigen Neutraltoene bereits dokumentiert
+  (siehe deren Datei-Kopfkommentar). Direkt `border-neutral-500` statt `border-grey-medium` o. Ae.
+- **`button.php`s eigene `outline`-Variante bleibt bei `grey-dark`** -- bewusst KEINE
+  Vereinheitlichung: ein interaktiver Button darf einen kraeftigeren Rand haben als ein statisches
+  Label, unterschiedliche Randstaerke ist hier Absicht, keine Inkonsistenz.
+- Zwischenschritte auf dem Weg hierhin (`grey-light` -> `grey-dark` -> ein eigener
+  `--color-grey-medium`-Token -> `neutral-500` direkt) sind nicht einzeln dokumentiert -- keiner davon
+  wurde je committet, nur dieser Endstand zaehlt.
+
+### Produktbox: eigenes Markup statt `card.php` (2026-09-22)
+
+Auf expliziten Wunsch komponiert `woocommerce/content-product.php` sein Markup jetzt direkt
+(`<article>` + eigene Tailwind-Klassen), statt wie zuvor `template-parts/base/card.php` mit dessen
+`media`/`media_badge`/`content`/`footer`-Slots zu fuellen (Aenderung ggue. dem vorherigen Eintrag
+"Produktbox: WooCommerce-Template statt eigenem template-part" unten, der noch card.php nutzte).
+button.php/badge.php/typography.php/image.php (ueber `hengegroup_theme_render_image()`) werden
+weiterhin genutzt -- nur die gemeinsame "Card"-Abstraktion selbst nicht mehr.
+
+- **Grund**: das aktualisierte Referenz-Design (`Produktbox.dc.html`, per Markup-Export aus dem
+  Design-Programm) zeigt eine Bild-Geometrie, die nicht zu card.php's `media`-Slot passt -- card.php
+  laesst das Bild randlos ueber die volle Kartenbreite bluten (`-mt-6 overflow-hidden rounded-t-2xl`,
+  siehe dessen Kopfkommentar), die Referenz insetted das Bild dagegen auf drei Seiten mit Padding
+  (`padding:12px 12px 0`) in eine feste `height:180px`-Flaeche, mit einem Firma-Badge bei einem
+  literalen Pixel-Offset (`top:22px;left:22px`) statt card.php's eigenem `top-3 left-3` (das von der
+  randlosen Bild-Geometrie ausgeht). Card.php's Slot-Modell haette fuer genau diesen einen Anwendungsfall
+  gebogen werden muessen, statt es einfach zu nutzen -- eigenes Markup war der direktere Weg.
+- **Farben/Radius/Schatten sind literale Referenzwerte, auf Tailwind gemappt** (siehe
+  `content-product.php`s eigener Kopfkommentar fuer die volle Herleitung):
+  `bg-neutral-50`/`text`-Vererbung fuer `rgb(250,249,245)`/`rgb(30,29,28)` (dieselben Werte, die
+  tooltip.php's eigener Phase-2-Eintrag bereits auf `neutral-50`/`neutral-900` mappt, naeher dran
+  als dieses Projekts eigene `--color-background`/`-foreground`-Tokens), `rounded-2xl` statt der
+  Referenz-eigenen 20px (card.php's eigene "Radius ueber Oberflaechen hinweg vereinheitlichen"-
+  Konvention, siehe dessen Kopfkommentar), `shadow-[0_8px_24px_rgba(0,0,0,0.25)]` als literaler
+  Arbitrary-Value (kein Standard-Tailwind-Schatten kommt an Groesse/Dunkelheit heran, gleiche
+  Begruendung wie popover.php's/tooltip.php's eigene `shadow-[...]`-Eintraege).
+- **Firma-Farben brauchten keine neuen Tokens**: `--color-henge-blue` (`#075f8f`) matched die
+  Referenz' `rgb(7,95,143)` fast exakt; die Referenz' zweite Firma-Farbe `#1b6e46`/`rgb(27,110,70)`
+  ist derselbe literale Wert, den table-row.php's eigener Phase-2-Eintrag bereits als
+  `--color-henge-green` behandelt (Referenz-Exporte variieren offenbar leicht je Design-Datei,
+  gemeint ist dieselbe Marken-Akzentfarbe) -- Gruppierung/Rendering in
+  `inc/template-parts/woocommerce-product-card.php` blieb unveraendert richtig.
+- **"Anwendungen"-Eyebrow: `color` auf `default` statt `neutral`, `font-medium`/`tracking-wider`
+  statt `font-semibold`/`tracking-wide`, `mb-2.5` statt `mb-1`** (in
+  `hengegroup_theme_render_product_anwendung_badges()`) -- die Referenz zeigt das Label in
+  DEMSELBEN nahezu-schwarzen Ton wie Titel/Beschreibung (nicht gedaempft/grau), `font-weight:500`
+  bei `letter-spacing:1px` (bei 14px naeher an Tailwinds `tracking-wider`/0.05em als an
+  `tracking-widest`/0.1em), `margin-bottom:10px`.
+- **Anwendungs-Badges bekamen zwischenzeitlich `!px-3 !py-1.5`** (die Referenz zeigt `padding:6px
+12px` fuer diese Pillen, roomier als badge.php's eigene projektweite `px-2 py-0.75`-Basis), auf
+  spaeteren expliziten Wunsch wieder entfernt (2026-09-23) -- die Anwendungs-Badges nutzen jetzt
+  wieder badge.php's normales Basis-Padding, damit sie nicht sichtbar groesser wirken als die
+  Firma-Badge im Bild darueber (deren Basis-Padding unangetastet blieb).
+- **`badge.php`s `outline`-Randfarbe urspruenglich bewusst NICHT angefasst**, obwohl die Referenz
+  einen sichtbar dunkleren Rand (`#e2e0dc`, ~ diesem Projekts `grey-medium`/neutral-200,
+  = `--color-border`) zeigt -- eine Aenderung daran wuerde jede `outline`-Badge im ganzen Theme
+  treffen, nicht nur diese eine Kartenvariante. Inzwischen ueberholt: siehe den neueren Eintrag
+  "`badge.php`: `outline`-Randfarbe jetzt `neutral-500` direkt, kein eigener Token" oben.
+- **Button behaelt seinen normalen `grey-dark`-Hover** (`hover:!bg-grey-dark/90`), obwohl die
+  Referenz keinen eigenen Hover-Zustand definiert -- ein statischer Design-Export zeigt grundsaetzlich
+  keine Interaktionszustaende, das ist keine Anweisung, den projektweiten Button-Hover fuer genau
+  diesen einen Button zu entfernen (CLAUDE.md "Kernhaltung": Technologie-/UX-Entscheidungen nach
+  bester UX, ein konsistentes Hover-Feedback ist besser als keins). `!font-semibold`
+  (`font-weight:600` der Referenz, additiv auf button.php's eigenem `font-medium`, `!`-markiert aus
+  demselben "gemeinsame CSS-Property"-Grund wie oben) und `size: 'lg'` (`text-lg`/18px + `px-7`/28px
+  treffen die Referenz' `font-size:18px`/`padding: 14px 28px` am naechsten) wurden uebernommen; die
+  feste `h-10`(40px)-Hoehe bleibt button.php's eigene, bereits etablierte Groessen-Konvention
+  (2026-08-30-Design-Anfrage, siehe button.php's Kopfkommentar) und liegt unter der Referenz'
+  Padding-basierten (~55px) Hoehe -- keine Sonderbehandlung fuer eine einzelne Aufrufstelle.
+
+### `badge.php`: `outline`-Rand von `border-transparent` ueberschrieben (Bugfix, 2026-09-22)
+
+Live-Vergleich der Produktbox gegen den Referenzentwurf (`Produktbox.dc.html`) zeigte die
+"Anwendungen"-Badges (`variant: outline`) als reinen, randlosen Text -- kein Pillen-Rand, obwohl
+Padding/Layout korrekt aussahen. `getComputedStyle` bestaetigte `border-color: rgba(0,0,0,0)`.
+
+- **Ursache**: `badge.php`s `base_classes` setzt fuer JEDE Variante `border border-transparent`
+  (haelt die Border-Box bei Solid-Varianten absichtlich unsichtbar, aber gleich gross).
+  `outline`s eigenes `border-grey-light` sollte das fuer diese eine Variante ueberschreiben --
+  konkurriert damit aber um dieselbe CSS-Property (`border-color`). Tailwind v4 (Vite-Plugin/Oxide-
+  Engine) emittiert Utility-Regeln nach interner kanonischer Reihenfolge, NICHT nach der Reihenfolge
+  der Klassen im `class`-String -- `.border-transparent` landete im kompilierten CSS NACH
+  `.border-grey-light` und gewann dadurch bei identischer Spezifitaet.
+- **Fix**: `!border-grey-light` (Tailwind-Important-Modifier) statt `border-grey-light` --
+  dasselbe Werkzeug/Vorgehen wie button.php's eigene `!bg-henge-*`/`!bg-grey-*`-Varianten (siehe
+  dessen Kopfkommentar zur Editor-iframe-Kollision), hier fuer eine andere Kollision (Border- statt
+  Background-Farbe, gegen eine eigene Basis-Klasse statt gegen WordPress' globale Styles).
+- **Lehre**: bei mehreren Utility-Klassen fuer dieselbe CSS-Property in EINEM PHP-Base-Component
+  (hier: eine gemeinsame Basis-Klasse + eine variantenspezifische Klasse) reicht die Klassen-
+  Reihenfolge im PHP-String nicht als Gewinn-Garantie -- ohne tailwind-merge-Aequivalent (siehe
+  card.php's/badge.php's eigene Kopfkommentare zu genau dieser Einschraenkung) ist `!` der
+  verlaessliche Weg, eine bestimmte Utility unabhaengig von der kompilierten Reihenfolge gewinnen
+  zu lassen.
+
+### `woocommerce.php` (Theme-Root) entfernt -- ueberschrieb jedes WC-Template-Override (Bugfix, 2026-09-22)
+
+`woocommerce.php` im Theme-Root (vor der Produktbox-Arbeit bereits vorhanden: nur `get_header();
+<section class="woocommerce-shell"><?php woocommerce_content(); ?></section> get_footer();`)
+gewinnt in WooCommerces Template-Hierarchie (`WC_Template_Loader`) gegenueber jedem spezifischeren
+`woocommerce/*.php`-Override wie `archive-product.php` -- `woocommerce_content()` ist eine in WC
+CORE fest einprogrammierte Funktion (page-title, Ergebnis-Zaehler, Sortier-Formular, `<ul
+class="products">` als rohes PHP/HTML, KEIN Template-Datei-Aufruf, also durch kein Theme-Override
+erreichbar), die fuer `is_shop()`/`is_product_taxonomy()`/`is_singular('product')` komplett eigene
+Markup-Bloecke rendert.
+
+- **Symptom, das zur Diagnose fuehrte**: der live gerenderte Quelltext der Shop-Seite zeigte WCs
+  eigenen `<h1 class="page-title">Shop</h1>` + `woocommerce-result-count` + `woocommerce-ordering`-
+  Formular + `<ul class="products columns-4">` -- 1:1 identisch mit `woocommerce_content()`s
+  eigenem Quelltext, nicht mit unserem `archive-product.php`. Die einzelne Produktbox INNERHALB
+  dieses `<ul>` rendered trotzdem korrekt ueber unser `content-product.php`, weil
+  `wc_get_template_part('content', 'product')` (von `woocommerce_content()` selbst aufgerufen)
+  weiterhin normale Theme-Overrides respektiert -- nur der AEUSSERE Seiten-Wrapper ist bei
+  `woocommerce.php` fest einprogrammiert und nicht ueberschreibbar.
+- **Fix**: Datei komplett entfernt. `WC_Template_Loader` faellt fuer jede Seite, die kein
+  spezifischeres `woocommerce/*.php`-Override hat (aktuell: alles ausser Shop), automatisch auf WCs
+  eigene, im Plugin gebuendelte Default-Templates zurueck (ungestylt, aber funktionsfaehig) --
+  Cart/Checkout/My-Account sind ohnehin normale WordPress-Seiten mit Shortcode, laufen unabhaengig
+  davon immer schon ueber dieses Themes eigenes `page.php`.
+- **Konsequenz fuer kuenftige WC-Template-Arbeit**: jede weitere WC-Seite (Einzelprodukt,
+  Produktkategorie-Archiv, ...) braucht ihr EIGENES `woocommerce/*.php` (z. B.
+  `single-product.php`, `taxonomy-product_cat.php`) -- ein genereller Root-Wrapper wie der
+  entfernte ist eine Sackgasse, sobald mehr als eine WC-Seite eigenes Design bekommen soll.
+
+### `content-product.php` feuert `woocommerce_before/after_shop_loop_item` nicht mehr (Bugfix, 2026-09-22)
+
+Die urspruengliche Fassung von `content-product.php` feuerte `woocommerce_before_shop_loop_item`/
+`woocommerce_after_shop_loop_item` mit der Begruendung "so 3rd-party plugins that target the
+default loop item still fire" -- das war schlicht falsch fuer genau diese beiden Hook-Namen. WC
+core selbst haengt daran seine eigenen Default-Callbacks (`class-wc-template-hooks.php`):
+`woocommerce_template_loop_product_link_open()`/`_close()` (oeffnen/schliessen eine zusaetzliche
+`<a class="woocommerce-LoopProduct-link">` um das GESAMTE Element) und
+`woocommerce_template_loop_add_to_cart()` (rendert den Warenkorb-/"Weiterlesen"-Button + einen
+Screenreader-`<span>`) -- keine optionalen, leeren Erweiterungspunkte, sondern der Kern von WCs
+eigenem Default-Markup.
+
+- **Symptom**: jede Box zeigte zusaetzlich zu unserem `card.php`-Markup eine unsichtbare (aber im
+  DOM vorhandene) zweite `<a>`-Umhuellung UND einen sichtbaren "Weiterlesen"-Button unterhalb der
+  Karte -- genau das WC-Default-Verhalten, das dieses Template eigentlich vollstaendig ersetzen
+  soll.
+- **Fix**: beide `do_action()`-Aufrufe ersatzlos entfernt. Der `<li>`-Wrapper +
+  `wc_get_product_class()` bleiben (siehe Datei-Kopfkommentar) -- das ist reine CSS-Klassen-
+  Kompatibilitaet ohne eigenes Markup, im Unterschied zu den beiden entfernten Hooks.
+- **Lehre fuer kuenftige WC-Template-Arbeit**: vor dem Uebernehmen eines WC-Hook-Namens aus dem
+  Referenz-Default-Template IMMER pruefen, ob WC selbst (nicht nur Drittanbieter-Plugins) etwas
+  daran haengt (`class-wc-template-hooks.php` im Plugin) -- ein Hook-Name allein sagt nichts
+  darueber aus, ob er "leer" ist.
+
+### Build-Skripte: `woocommerce/`-Verzeichnis fehlte in der Kopier-Liste (Bugfix, 2026-09-22)
+
+`scripts/build.ps1`/`build.sh` kopieren Theme-Verzeichnisse nach `dist/` ueber eine fest
+enumerierte `$themeDirectories`/`theme_directories`-Liste (`inc`, `template-parts`, `languages`,
+`assets/images`) -- als das neue `woocommerce/`-Verzeichnis (WC-Template-Overrides,
+`content-product.php`/`archive-product.php`) angelegt wurde, fehlte der passende Eintrag. Anders
+als Top-Level-`*.php`-Dateien (die per `Get-ChildItem -Filter "*.php" -File`/`*.php`-Glob-Wildcard
+automatisch erfasst werden, siehe den Eintrag "Wildcard statt enumerierter Liste fuer Top-Level-
+PHP-Dateien" weiter unten) ist das kein rekursiver Scan -- eine neue Unterordner-Ebene braucht
+IMMER einen expliziten Listen-Eintrag, ein Wildcard-Scan wuerde hier auch `node_modules`/`vendor`/
+`dist` selbst als "Verzeichnis im Repo-Root" mit erfassen und muesste die dann aktiv ausschliessen.
+
+- **Symptom, das zur Diagnose fuehrte**: eine bereits per FTP deployte Umgebung zeigte auf der
+  WooCommerce-Shop-Seite weiterhin den ungestylten WordPress-Kern-Fallback (ein Gutenberg-
+  Query-Loop-Block mit Bild/Titel/"Weiterlesen"-Link) statt der Produktbox, OBWOHL
+  `woocommerce_shop_page_id` korrekt gesetzt war und `pnpm deploy:changed` scheinbar erfolgreich
+  lief -- weil `dist/` (und damit der FTP-Upload) das `woocommerce/`-Verzeichnis nie enthielt, WC
+  fiel implizit auf die normale Seiten-Vorlage zurueck.
+- **Fix**: `woocommerce` als weiterer Eintrag in beiden Listen (identisches Source/Destination-
+  Paar wie die anderen Verzeichnisse). Kein Wildcard-Scan wie bei den Top-Level-PHP-Dateien, weil
+  ein rekursiver Verzeichnis-Scan hier absichtlich vermieden wird (s. o.).
+- **Wie man das kuenftig frueher merkt**: nach jedem neuen Top-Level-Ordner (nicht nur Dateien) in
+  diesem Theme `dist/` nach einem lokalen Test-Build pruefen, ob der Ordner tatsaechlich mitkam --
+  kein automatischer Check dafuer vorhanden (`composer lint`/`pnpm test` pruefen PHP-Code, nicht den
+  Build-Output).
+
+### Produkt-Uebersichtsseite: `.wrapper`-Grid statt WCs eigenem Float-Grid (2026-09-22)
+
+`woocommerce/archive-product.php` (WC-Template-Override fuer die Shop-/Produkt-Archivseite) ersetzt
+WCs eigenes `<ul class="products columns-N">` (float-basiert, seit dem Dequeue der
+WC-Frontend-Styles ohnehin unstyled, siehe `theme-hardening-woocommerce.php`) durch ein eigenes
+`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`, vier Spalten ab `lg` (explizite Nachfrage).
+
+- **`.wrapper` (`assets/css/app.css`) statt eines neuen Container-Divs** -- derselbe
+  1600px-gedeckelte, responsiv gepolsterte 12-Spalten-Container, den bereits jeder andere
+  Seitenabschnitt nutzt (`template-parts/blocks/buehne/render.php` etc.), damit die
+  Uebersichtsseite auf jedem Breakpoint dieselben Raender wie der Rest der Seite hat statt eigener
+  Arbitrary-Values.
+- **Produktboxen sind direkte `col-span-*`-Kinder von `.wrapper`s eigenem 12-Spalten-Grid, kein
+  zweites, unabhaengig skaliertes Grid mehr** (aktualisiert 2026-09-22, explizite Nachfrage --
+  die urspruengliche Fassung hatte ein eigenes `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+  INNERHALB eines `.wrapper`-`col-span-12`-Divs verschachtelt, zwei Grids sitzen dabei eine Ebene
+  auseinander). `<ul class="contents">` (`display: contents`) haelt das semantische Listenelement,
+  ohne selbst einen zweiten Grid-Kontext zu eroeffnen -- seine `<li>`-Kinder (aus
+  `content-product.php`) werden dadurch direkte Kinder von `.wrapper`s EIGENEM `grid-cols-12` und
+  bekommen dort `col-span-12 sm:col-span-6 lg:col-span-3` (1/2/4 pro Reihe, dieselben Breakpoints
+  wie zuvor, jetzt ueber dieses Projekts eigenes `col-span`-Idiom statt einer eigenen
+  `grid-cols-N`-Utility). Liegt auf dem `<li>` selbst in `content-product.php`, nicht in
+  `archive-product.php` -- harmlos ausserhalb eines 12-Spalten-Grid-Elternteils (`col-span-*` ohne
+  Grid-Kontext ist ein No-op), bleibt also sicher fuer jeden anderen WC-Loop-Kontext (Related
+  Products, `[products]`-Shortcode, ...), der `.wrapper` gar nicht nutzt.
+- **Jedes ANDERE direkte Kind von `.wrapper` (Titel, WCs Before-/After-Loop-Hook-Ausgabe) bekommt
+  explizit `col-span-12`** -- ein Grid-Kind ohne eigenes `col-span-*` belegt sonst nur eine der
+  zwoelf Spalten (siehe `app.css`s eigener Kommentar zu `.wrapper`), wuerde also visuell auf einen
+  schmalen Streifen zusammenschrumpfen statt eine volle Zeile einzunehmen.
+- **`gap-y-6` zusaetzlich zu `.wrapper`** -- `.wrapper` setzt selbst nur `gap-x-*` (siehe
+  `app.css`), fuer den vertikalen Abstand zwischen Titel-/Hook-Zeile und den Produkt-Zeilen war ein
+  zusaetzlicher, nicht kollidierender Wert (andere CSS-Property) noetig.
+- **Bewusst "einfach" gehalten** (explizite Nachfrage): kein `woocommerce_sidebar()`-Aufruf. WCs
+  eigene Default-Hooks auf `woocommerce_before_shop_loop`/`woocommerce_after_shop_loop`
+  (Ergebnis-Zaehler, Sortier-Dropdown, Pagination) bleiben unangetastet bestehen -- aktiv entfernt
+  wurden sie nicht, u. a. damit Pagination bei mehr Produkten als `posts_per_page` funktioniert;
+  Ergebnis-Zaehler/Sortierung rendern dadurch mit nativen Browser-Elementen (kein eigenes Tailwind-
+  Styling dafuer bislang), nicht kaputt, nur ungestylt.
+- **`content-product.php` unveraendert** -- nur das Grid drumherum wurde ersetzt, siehe
+  "Produktbox: WooCommerce-Template statt eigenem template-part" unten fuer die Box selbst.
+
+### Produktbox: WooCommerce-Template statt eigenem template-part (2026-09-22)
+
+Auf expliziten Wunsch nutzt die neue Produktbox `woocommerce/content-product.php` -- ein echtes
+WooCommerce-Template-Override (WC's eigener `WC_Template_Loader` bevorzugt eine Datei unter
+`{theme}/woocommerce/...` gegenueber der im Plugin gebuendelten) statt eines eigenen, nur an einer
+Stelle eingebundenen `template-parts/`-Templates. Dadurch rendert JEDER WC-Loop-Kontext (Shop-Seite,
+Produktkategorie-/Tag-Archive, `[products]`-Shortcode, Related-/Upsell-/Cross-Sell-Loops) automatisch
+mit der neuen Karte, ohne dass ein Aufrufer explizit dieses Template einbinden muesste.
+
+- **`<li>`-Wrapper + `wc_get_product_class()` bleiben erhalten**: WCs eigenes
+  `archive-product.php` oeffnet ein `<ul class="products">` -- ein gueltiges Kind davon MUSS ein
+  `<li>` sein, sonst korrigieren Browser die ungueltige Verschachtelung und das Grid bricht. Andere
+  WC-/Plugin-CSS/JS, die `.product`/`.type-product`/... ansprechen, funktionieren dadurch weiter.
+- **`woocommerce_before_shop_loop_item`/`woocommerce_after_shop_loop_item` bleiben erhalten**,
+  obwohl das gesamte Innenmarkup (Bild/Preis/Warenkorb-Button in WCs eigenem Default) komplett durch
+  `template-parts/base/card.php` + `badge.php` ersetzt wird -- 3rd-Party-Plugins, die auf diese
+  Hooks zielen (z. B. Quick-View-Erweiterungen), feuern dadurch trotzdem weiter.
+- **Kein Preis, kein Warenkorb-Button** (explizite Nachfrage 2026-09-22): Kaufen/Warenkorb ist ein
+  spaeterer Auftrag.
+- **Verlinkung: EIN "Produkt ansehen"-Button in der Fusszeile, nicht mehr die ganze Karte**
+  (aktualisiert 2026-09-22, explizite Nachfrage anhand des aktualisierten Referenz-Designs
+  `Produktbox.dc.html`, das einen vollbreiten Button statt eines ganzflaechigen Karten-Links zeigt).
+  Die urspruengliche Fassung setzte `card.php`s eigenes `href`-Idiom (ganze Karte als `<a>`,
+  derselbe Anwendungsfall wie dessen "Mit Bild"-Referenzbeispiel) -- das kollidiert aber mit einem
+  echten Footer-Button: HTML erlaubt kein verschachteltes `<a>` in `<a>`. `content-product.php`
+  setzt `card.php`s `href` deshalb nicht mehr (Kartenwurzel bleibt `tag: 'article'`, kein
+  Hover-Lift mehr auf der ganzen Karte -- der war ohnehin nur inert, wenn die Wurzel ein `<a>`
+  ist), stattdessen wird `template-parts/base/button.php` (`variant: 'grey-dark'`,
+  `full_width: true`, `href` auf die Produktseite) gebuffert in `card.php`s `footer`-Slot gereicht
+  -- derselbe "vorgerendertes HTML"-Slot, den button-group.php-Callers schon nutzen, kein neuer
+  Mechanismus.
+- **Nur `content-product.php` wird ueberschrieben, nicht `archive-product.php`/das Grid selbst**
+  -- explizit "nur die Produktbox, nicht das drumherum". Das `<ul class="products">`-Grid bleibt
+  WCs eigenes (ungestyltes) Markup, bis eine spaetere Aufgabe das Archiv-Layout selbst angeht.
+- **`card.php`s `media_badge`-Slot war bereits exakt fuer diesen Fall gebaut** (siehe dessen
+  eigenen Kopfkommentar: "the reference's product cards overlay a colored label ... on the
+  top-left corner of the cover image") -- kein neuer Slot, keine Aenderung an `card.php`/`badge.php`
+  noetig, nur Komposition.
+- **`badge.php`s Basis-Klassen bleiben unveraendert**, die im Referenz-Design auffaellig
+  kompakte/versale Firma-Pille kommt stattdessen ueber additive, mit `badge.php`s eigenen
+  Basis-Klassen NICHT kollidierende `class`-Werte (`uppercase tracking-wide`) -- dieses Projekt hat
+  kein `tailwind-merge`-Aequivalent in PHP (siehe `card.php`s eigener Kopfkommentar zu genau diesem
+  Problem), ein `px-2`/`text-xs` on top haette je nach Tailwinds interner CSS-Reihenfolge
+  unvorhersehbar gewonnen oder verloren.
+
+### Produktbox: Badge-/Anwendungs-Datenmodell (2026-09-22, Badge-Teil ueberarbeitet 2026-09-23)
+
+Zwei neue Datenmodell-Bausteine fuer die Produktbox (`inc/setup/theme-woocommerce-products.php`,
+Rendering in `inc/template-parts/woocommerce-product-card.php`):
+
+**Die Anwendungen-spezifischen Punkte unten (Post-Type/Meta-Beziehung/Verlinkung) sind inzwischen
+ueberholt**, siehe den neueren Eintrag "Anwendungen: Produktkategorie statt eigenem Post-Type"
+oben -- der Badge-Teil bleibt unveraendert gueltig.
+
+- **Genau EIN "Badge" pro Produkt, ein einfaches Text-/Auswahl-Feld-Paar** (`_badge_text`-Postmeta
+    - `_badge_variant`-Postmeta, editierbar ueber eine "Badge"-Metabox im Produkt-Editor), KEINE
+      Taxonomie mehr (explizite Ueberarbeitung 2026-09-23, ersetzt die urspruengliche `firma`-Taxonomie
+    - hartkodierte Kominex/Imexco-sind-blau-Slug-Liste + Gruppierungslogik dieses Eintrags). Die
+      Farbe ist jetzt eine direkte redaktionelle Wahl aus `hengegroup_theme_get_badge_variants()`
+      (henge-blue | henge-green | henge-grey, dieselben drei Volltonfarben aus badge.php's Vokabular)
+      statt aus einem Firmennamen abgeleitet -- Motivation: es gibt nur noch eine Badge-Anzeige pro
+      Produkt, keine Mehrfachauswahl/Gruppierung mehr, eine Taxonomie mit fixer Farbregel war fuer
+      diesen schmaleren Anwendungsfall Overengineering geworden. `hengegroup_theme_render_product_badge()`
+      ersetzt das vorherige `hengegroup_theme_render_product_firma_badges()`/
+      `hengegroup_theme_group_firma_badge_labels()`-Paar; `tests/Unit/WoocommerceProductCardTest.php`
+      wurde entfernt, weil keine reine Logik mehr uebrig ist, die eine eigene PHPUnit-Suite braucht (ein
+      einzelnes Text-/Variant-Postmeta-Paar hat keine Gruppierung zum Testen). `docs/how-to.md`s
+      "Weitere blaue Firma ergaenzen" (der `hengegroup_theme_firma_blue_slugs`-Filter) ist damit
+      ebenfalls entfallen.
+- **`anwendung` ist ein eigener Post-Type, keine Taxonomie** (explizite Entscheidung zwischen beiden
+  Optionen 2026-09-22): Eine Anwendung soll spaeter eine eigene, inhaltsreiche Detailseite bekommen
+  (Bild, Beschreibung, eigene URL) -- eine Taxonomie-Term-Seite waere dafuer der falsche Ausgangspunkt.
+  `public => true` mit eigenem Rewrite-Slug (`anwendungen`) + `single-anwendung.php` sind deshalb
+  JETZT SCHON angelegt (zweite explizite Entscheidung, alternativ waere `public => false` bis ein
+  Design fuer die Seite steht moeglich gewesen) -- `single-anwendung.php` ist bewusst minimal
+  (wie `single.php`/`page.php`), kein eigenes Design ist Teil dieses Auftrags.
+- **Produkt-zu-Anwendung ist ein `_anwendungen`-Post-Meta (Array von Post-IDs) + eigene
+  Checkbox-Metabox im Produkt-Editor**, keine ACF-Relationship-Feld -- ACF ist keine
+  Composer-Abhaengigkeit dieses Projekts (siehe `composer.json`), und `product` nutzt den
+  klassischen Editor (kein `show_in_rest`), ein Block-Editor-Relationship-Control waere hier ohnehin
+  nicht nutzbar gewesen.
+- **Anwendungs-Badges verlinken nicht** (explizite Vorgabe), obwohl der Post-Type selbst oeffentlich
+  ist -- `hengegroup_theme_render_product_anwendung_badges()` gibt bewusst kein `href` an `badge.php`
+  weiter, rendert also ein `<span>` statt `<a>`. Das Badge im Bild verlinkt ebenfalls nicht (reines
+  Text-/Farb-Label, kein Ziel dafuer vorgesehen).
+- **Kein Preis in der Produktbox** (explizite Nachfrage, siehe auch den Eintrag oben) -- passend
+  zum gezeigten Referenz-Design, das ebenfalls keinen Preis zeigt.
+- **Kartentext ist WCs Kurzbeschreibung (`post_excerpt`), nicht die lange Produktbeschreibung**
+  (explizite Nachfrage 2026-09-22, aktualisiertes Referenz-Design zeigt einen kurzen Absatz unter
+  dem Titel) -- `wp_strip_all_tags()` (WCs Kurzbeschreibungs-Editor erlaubt einfaches HTML, die
+  Karte zeigt reinen Text) + `wp_trim_words(..., 24)` (2-3 Zeilen wie im Referenz-Design, ohne dass
+  eine laenger gepflegte Kurzbeschreibung die Kartenhoehe im Grid ungleichmaessig aufblaehen kann).
+  Nutzt `card.php`s bereits vorhandenen `description`-Slot unveraendert, kein neuer Slot noetig.
+- **"Anwendungen"-Eyebrow-Label vor der Badge-Reihe** (aktualisiertes Referenz-Design zeigt eine
+  kleine Versal-Ueberschrift ueber den Anwendungs-Badges) -- Teil von
+  `hengegroup_theme_render_product_anwendung_badges()` selbst statt separat in
+  `content-product.php` komponiert, weil ein zukuenftiger single-product.php-Einsatz (siehe oben)
+  voraussichtlich dieselbe Kombination aus Label + Badge-Reihe braucht.
+
+### Buehne: Button-Links als Seiten-Auswahl statt freier URL-Eingabe (2026-09-22)
+
+Auf expliziten Wunsch sind `primaryButtonUrl`/`secondaryButtonUrl` jetzt eine `ComboboxControl`-
+Seitenauswahl (`PageLinkControl` in `edit.jsx`) statt eines freien URL-`TextControl`s -- Redakteure
+sollen interne Seiten aus einer durchsuchbaren Liste waehlen statt Permalinks manuell abtippen/
+kopieren zu muessen.
+
+- **Attribute/`render.php` unveraendert**: gespeichert wird weiterhin nur die fertige Permalink-URL
+  als String (kein Seiten-ID-Attribut, kein Schema-Update in `block.json`) -- `PageLinkControl`
+  liefert der `ComboboxControl` lediglich `{value: page.link, label: page.title}` als Optionen,
+  `onChange` schreibt exakt denselben `page.link`-String in die Folie. Bereits gespeicherte Folien
+  mit einer frei getippten (externen oder inzwischen umgezogenen) URL bleiben dadurch technisch
+  gueltig -- die Combobox zeigt fuer eine nicht (mehr) zu einer Seite passende URL einfach keinen
+  Treffer, der gespeicherte Wert selbst wird dadurch nicht veraendert/geloescht.
+- **`@wordpress/data`s `useSelect()` gegen den `core`-Datenstore** (`select('core').
+getEntityRecords('postType', 'page', {status: 'publish', per_page: -1, ...})`) statt eines
+  eigenen REST-Fetch -- Standard-Weg fuer Editor-Datenabfragen in Gutenberg, inkl. eingebautem
+  Caching/Preloading. Nur veroeffentlichte Seiten (`status: 'publish'`), keine Entwuerfe/Papierkorb
+  -- ein Button soll nur auf bereits live erreichbare Seiten zeigen koennen.
+  `select('core')` per String statt eines `@wordpress/core-data`-Imports, weil kein eigener
+  JS-Import aus diesem Paket noetig ist -- die PHP-Seite muss den Store trotzdem explizit per
+  `wp-core-data`-Script-Dependency registrieren (`inc/setup/theme-blocks.php`, siehe dortiger
+  Kommentar), sonst waere der Store beim ersten Aufruf u. U. noch nicht da.
+- **`@wordpress/html-entities`s `decodeEntities()` fuer Seitentitel**: `page.title.rendered` liefert
+  HTML-entity-kodierten Text (z. B. `&amp;`) direkt aus der REST-API, `decodeEntities()` macht daraus
+  wieder lesbaren Klartext fuer die Options-Liste.
+- **Kein eigener "Kein Link"-Zustand im WP-Kern-Sinn**: eine erste `NO_PAGE_OPTION` (Wert `""`) wird
+  jeder Optionsliste vorangestellt, damit ein bereits gesetzter Link sich wieder entfernen laesst --
+  `render.php` faellt bei leerem `primaryButtonUrl`/`secondaryButtonUrl` ohnehin schon auf `'#'`
+  zurueck (siehe dortige `$primary_button_url !== '' ? $primary_button_url : '#'`-Stelle).
+- **`@wordpress/data`/`@wordpress/html-entities` neu als Editor-Script-Dependencies** (analog zu
+  `@wordpress/rich-text` beim `ueberschrift-text`-Eintrag weiter unten): `vite.config.editor.
+factory.js` bekommt beide Package-zu-Global-Eintraege (`wp.data`/`wp.htmlEntities`),
+  `inc/setup/theme-blocks.php`s geteilte Dependency-Liste bekommt `wp-data`/`wp-html-entities` (+
+  `wp-core-data`, siehe oben) ergaenzt -- `ueberschrift-text` laedt sie dadurch ungenutzt mit, siehe
+  Begruendung fuer dasselbe Muster beim `wp-rich-text`-Eintrag.
+
+---
+
+### Buehne: Folien-Felder im Modal statt dauerhaft offen im Sidebar-`PanelBody` (2026-09-22)
+
+Auf expliziten Wunsch oeffnen die Folien-Felder (Bild, Kicker-Bild, Badge, Titel, Text, Akzentfarbe,
+Buttons) jetzt in einem `@wordpress/components`-`Modal` pro Folie statt als aufklappbare
+`PanelBody`s dauerhaft im Sidebar zu haengen -- bei mehreren Folien wurde die Sidebar sonst schnell
+unuebersichtlich lang, weil alle Felder aller Folien gleichzeitig im DOM (nur eingeklappt) standen.
+
+- **Sidebar zeigt nur noch eine kompakte Liste** (`SlideListItem` in `edit.jsx`): Folien-Label
+  (Titel/Badge-Text/Fallback "Folie N"), Verschieben rauf/runter, "Bearbeiten" (oeffnet das Modal),
+  Entfernen -- alles als Icon-`Button`s in einer `PanelRow`, damit eine Folie auf einen Blick
+  identifizierbar/sortierbar/loeschbar ist, ohne dass dafuer ihre Felder aufgeklappt sein muessen.
+- **`editingIndex`-State (`useState`) statt eines Modals pro Folie**: genau ein `Modal` wird bedingt
+  gerendert, `SlideFields` bekommt nur noch `slide`/`onChange` (kein `index`/`onRemove`/`onMove`
+  mehr) -- Verschieben/Entfernen bleiben ausschliesslich Aktionen der Sidebar-Liste, weil WordPress'
+  `Modal` waehrend des Offenseins die Interaktion mit dem Rest der Seite (inkl. Sidebar) ohnehin
+  blockiert; ein Sync von `editingIndex` bei Verschieben/Entfernen waehrend offenem Modal ist
+  dadurch ein Szenario, das nicht eintreten kann, und wurde bewusst nicht gebaut.
+- **`ServerSideRender`-Live-Vorschau im Canvas bleibt unveraendert** (siehe `ueberschrift-text`-
+  Eintrag oben fuer die Abgrenzung, warum `buehne` dabei bleibt) -- nur die Bearbeitung der
+  Folien-Felder wandert vom Sidebar ins Modal, keine strukturelle Aenderung an der Vorschau.
+- **Abstand ueber `VStack`s `spacing`-Prop statt CSS/Tailwind** (Nachbesserung auf Screenshot-
+  Feedback, Modal wirkte "zusammengepresst", Sidebar-Folienzeilen zu dicht): Modal-Felder
+  (`SlideFields`) und Sidebar-Folienliste (`SlideListItem`s) rendern beide AUSSERHALB des
+  Editor-Canvas-Iframes (siehe Kopfkommentar oben zu `add_editor_style()`) -- Tailwind-Klassen
+  erreichen sie technisch gar nicht, Regel 1 der CLAUDE.md fordert Tailwind nur dort, wo ueberhaupt
+  Styling-Code entsteht. Statt dessen `__experimentalVStack` (`@wordpress/components`, im Projekt
+  ueblicherweise `VStack` importiert) mit expliziter `spacing`-Prop; jedes Formularfeld in
+  `SlideFields` bekommt zusaetzlich `__nextHasNoMarginBottom`, damit sich dessen eigener
+  Default-Bottom-Margin nicht zusaetzlich zum `VStack`-Gap aufsummiert.
+- **Neues Feld `adminLabel` (erste Stelle im Modal)**: reiner Verwaltungstitel, den Redakteure zur
+  Wiedererkennung der Folie in Sidebar-Liste und Modal-Titel eingeben koennen, unabhaengig vom
+  tatsaechlichen (evtl. noch leeren) Inhalt -- `slideLabel()` in `edit.jsx` zieht ihn jetzt vor
+  `title`/`badgeText`. Bewusst NICHT in `render.php` ausgelesen/gerendert (die Foreach-Schleife dort
+  greift explizit einzelne Attribut-Keys ab, unbekannte Keys wie `adminLabel` werden schlicht
+  ignoriert) -- rein internes Backend-Feld, kein Frontend-Effekt.
+
+---
+
+### Theme-Kategorie-Bloecke (Autor/Lesedauer) aus dem Inserter ausgeblendet (2026-09-22)
+
+Auf expliziten Wunsch sind vier weitere Core-Bloecke jetzt in `HIDDEN_BLOCK_TYPES`
+(`assets/js/editor/editor-customizations.js`) ausgeblendet: Biografie des Autors
+(`core/post-author-biography`), Name des Autors (`core/post-author-name`), Avatar (`core/avatar`)
+sowie Anzahl Woerter/Lesedauer zusammen (`core/post-to-read`).
+
+- **"Anzahl Woerter" und "Lesedauer" sind ein einziger Blocktyp**: anders als bei den 25
+  Embed-Anbietern (echte Block-VARIATIONEN eines gemeinsamen `core/embed`) sind das hier zwei
+  Anzeige-Varianten (`word-count`/`time-to-read`) EINES eigenstaendigen Blocktyps namens
+  `core/post-to-read` -- `hideBlockTypes()` mit diesem einen Slug deckt beide Anfrage-Punkte ab,
+  kein `unregisterBlockVariation()` noetig. Slug gegen Gutenberg-Core verifiziert: der Ordner-/
+  Titel-Name legt `core/post-time-to-read` nahe, das tatsaechliche `block.json`-`name`-Feld ist aber
+  `core/post-to-read` (ohne "time").
+
+Auf expliziten Wunsch sind 25 Embed-Anbieter jetzt per `unregisterBlockVariation('core/embed', ...)`
+(`assets/js/editor/editor-customizations.js`, `HIDDEN_EMBED_VARIATIONS`) aus dem Inserter entfernt:
+WordPress, SoundCloud, Flickr, Animoto, Cloudup, CrowdSignal, Dailymotion, Imgur, Issuu, Kickstarter,
+Mixcloud, Pocket Casts, Reddit, ReverbNation, Scribd, SmugMug, Speaker Deck, TED, Tumblr, VideoPress,
+WordPress.tv, Amazon Kindle, Pinterest, Wolfram, Bluesky. Bewusst NICHT ausgeblendet (nicht genannt):
+Twitter/X, YouTube, Facebook, Instagram, Spotify, Vimeo, TikTok, CollegeHumor.
+
+- **Block-VARIATIONEN, kein eigener Blocktyp**: anders als beim vorherigen Eintrag (Core-Bloecke wie
+  Zitat/Code) sind diese 25 Anbieter technisch keine eigenen `blocks.registerBlockType()`-Eintraege,
+  sondern Varianten des einen `core/embed`-Blocks (`packages/block-library/src/embed/variations.js`
+  in Gutenberg-Core, `name`-Feld je Anbieter-Slug, z. B. `pocket-casts`, `speaker-deck`,
+  `wolfram-cloud`, `wordpress-tv`) -- deshalb `unregisterBlockVariation()` statt eines weiteren
+  Eintrags in `HIDDEN_BLOCK_TYPES`. Die exakten Slugs wurden gegen Gutenberg-Core's
+  `variations.js` verifiziert statt geraten (u. a. `wolfram-cloud` nicht `wolfram`, `pocket-casts`
+  mit Bindestrich).
+- **`unregisterBlockVariation()` statt `unregisterBlockType('core/embed')`**: entfernt nur die
+  Anbieter-spezifischen Eintraege aus dem Inserter/der Anbieter-Auswahl, der `core/embed`-Block
+  selbst (inkl. der acht bewusst NICHT ausgeblendeten Anbieter) bleibt voll nutzbar -- bereits
+  vorhandener Content mit einem der 25 ausgeblendeten Anbieter (`providerNameSlug`-Attribut) bleibt
+  dadurch ebenfalls weiterhin normal render-/editierbar, dieselbe Nicht-destruktiv-Ueberlegung wie
+  bei `hideBlockTypes()` im vorherigen Eintrag.
+- **`wp-block-library` neu als Editor-Script-Dependency** (`inc/setup/theme-blocks.php`): registriert
+  saemtliche Core-Bloecke inkl. der `core/embed`-Varianten -- ohne diese explizite Dependency waere
+  die Ladereihenfolge nicht garantiert, `unregisterBlockVariation()` liefe dann u. U. ins Leere, weil
+  die Variante zum Aufrufzeitpunkt noch gar nicht registriert ist. `wp-blocks` (fuer
+  `unregisterBlockVariation()` selbst) ebenfalls ergaenzt.
+
+---
+
+### Standard-Gutenberg-Bloecke aus dem Inserter ausgeblendet (2026-09-22)
+
+Auf expliziten Wunsch sind elf Core-Bloecke jetzt per `hideBlockTypes()` (`assets/js/editor/
+editor-customizations.js`, `core/edit-post`-Datenstore) aus dem Inserter ausgeblendet: Zitat
+(`core/quote`), Zitatkasten (`core/pullquote`), Code (`core/code`), Lyrik (`core/verse`), Klassisch
+(`core/freeform`), Audio (`core/audio`), Wiedergabeliste (`core/playlist`), Individuelles HTML
+(`core/html`), Neuste Kommentare (`core/latest-comments`), Seitenliste (`core/page-list`), RSS
+(`core/rss`) -- keiner dieser Bloecke ist Teil der Theme-Blockpalette/hat Tailwind-Styling in
+`app.css`, sollen Redakteuren deshalb nicht zur Auswahl stehen.
+
+- **`hideBlockTypes()` statt `unregisterBlockType()`**: blendet nur aus dem Inserter aus, bereits
+  vorhandener Content mit einem dieser Bloecke (z. B. aus vor der Theme-Migration importiertem
+  Content) bleibt dadurch weiterhin normal render-/editierbar -- ein vollstaendiges
+  `unregisterBlockType()` haette solchen Content beim naechsten Oeffnen als "ungueltiger Block"
+  markiert. Alternative PHP-seitige Sperre ueber das `allowed_block_types_all`-Filter bewusst NICHT
+  gewaehlt, aus demselben Grund (dieses Filter schraenkt nicht nur den Inserter ein, sondern auch,
+  welche bereits im Content vorhandenen Bloecke der Editor noch als gueltig akzeptiert).
+- **`core/playlist` wirkt nur mit Jetpack** (kein WordPress-Core-Block, sondern von Jetpack
+  registriert, falls das Plugin aktiv ist) -- in der Liste trotzdem mit aufgefuehrt, weil vom
+  Auftraggeber explizit als "Wiedergabeliste" genannt; ohne aktives Jetpack ist der Eintrag
+  wirkungslos (kein Fehler, `hideBlockTypes()` prueft nicht, ob der Blocktyp tatsaechlich
+  registriert ist).
+- **`domReady()`**: `hideBlockTypes()` braucht den `core/edit-post`-Datenstore, der erst nach
+  dessen eigenem Bootstrap sicher verfuegbar ist -- Standard-Pattern aus dem
+  Block-Editor-Handbook fuer genau diesen Anwendungsfall. `wp-edit-post`/`wp-dom-ready` dafuer neu
+  als Editor-Script-Dependencies (`inc/setup/theme-blocks.php`), `@wordpress/dom-ready` neu als
+  External/Global in `vite.config.editor.factory.js`.
+- **`assets/js/editor/hide-advanced-panel.js` umbenannt zu `editor-customizations.js`** (inkl.
+  `vite.config.editor-hide-advanced-panel.js` -> `vite.config.editor-customizations.js`,
+  Script-Handle `hengegroup-theme-hide-advanced-panel` -> `hengegroup-theme-editor-customizations`):
+  das Script deckt jetzt zwei block-editor-weite Anpassungen ab (siehe vorheriger Eintrag zu
+  `customClassName` fuer die erste) -- ein Name, der nur die erste beschreibt, waere fuer die zweite
+  irrefuehrend gewesen. Ein Script statt zweier, weil beide denselben Bootstrap (Registrierung/
+  Dependencies) brauchen; bei einer dritten, deutlich groesseren Anpassung lohnt sich ggf. eine
+  Aufteilung.
+
+---
+
+### `customClassName`-Support global per Filter deaktiviert statt pro `block.json` (2026-09-22)
+
+Auf expliziten Nachfrage-Wunsch ("generell in der Sidebar", nicht nur fuer `buehne`/
+`ueberschrift-text`) ersetzt ein neues, block-editor-WEITES Script
+(`assets/js/editor/editor-customizations.js`) den anfaenglichen Ansatz, `"supports":
+{"customClassName": false}` einzeln in jedes eigene `block.json` einzutragen -- ohne
+`customClassName`-Support haengt WordPress sonst automatisch ein "Zusaetzliche CSS-Klasse(n)"-Feld
+in ein eigenes "Erweitert"-`PanelBody` am Ende jedes Block-Sidebars an. Redakteure sollen hier keine
+freien CSS-Klassen vergeben koennen (widerspraeche ohnehin Regel 1s "ausschliesslich Tailwind ueber
+die Config-API der Komponenten", eine frei getippte Klasse haette nie eine zugehoerige
+Tailwind-Definition).
+
+- **`blocks.registerBlockType`-Filter (`@wordpress/hooks`) statt Block-fuer-Block-`supports`**:
+  wirkt automatisch auf JEDEN Block -- Core-Bloecke (Absatz, Bild, Spalten, ...) eingeschlossen,
+  nicht nur die beiden eigenen -- und auf jeden kuenftigen eigenen Block, ohne dass das jedes Mal
+  einzeln im `block.json` nachgezogen werden muss. Die beiden vorher gesetzten
+  `"customClassName": false`-Eintraege in `buehne`/`ueberschrift-text`s `block.json` sind wieder
+  entfernt (redundant, der globale Filter deckt sie mit ab).
+- **`anchor`-Support bleibt bewusst unangetastet**: HTML-Anker/Sprungmarken sind ein
+  eigenstaendiges, potenziell genutztes Feature (z. B. Inhaltsverzeichnis-Links) -- kein Ziel dieser
+  Anfrage. Core-Bloecke mit aktiviertem `anchor`-Support (z. B. `core/heading`) zeigen "Erweitert"
+  deshalb weiterhin, nur ohne das CSS-Klassen-Feld.
+- **Eigenes Vite-Build-Entry statt eines block.json-`editorScript`**: `vite.config.editor-
+customizations.js` nutzt dieselbe `createEditorBlockConfig()`-Factory wie jeder Block, weil
+  der Build (externes IIFE gegen `wp.*`-Globals) identisch ist -- neu dabei: `@wordpress/hooks`
+  (`wp.hooks`) als External/Global, bisher von keinem Block gebraucht. PHP-seitig registriert
+  `hengegroup_theme_enqueue_editor_assets()` (`inc/setup/theme-blocks.php`) das Script ueber
+  `enqueue_block_editor_assets` statt `register_block_type()`, weil es nicht an einen einzelnen
+  Block gebunden ist.
+
+---
+
+### `ueberschrift-text`: Ueberschrift/Text direkt im Content-Bereich statt Sidebar-Textfeldern (2026-09-22)
+
+Auf expliziten Wunsch bearbeiten Redakteure `heading`/`text` jetzt direkt im Editor-Canvas (per
+`RichText`, wie bei `core/heading`/`core/paragraph`) statt in sidebar-`TextControl`/
+`TextareaControl`-Feldern -- Eingabe passiert dort, wo der Inhalt optisch erscheint, statt blind in
+einem vom Ergebnis getrennten Sidebar-Feld. `accentWords`/`textAlign`/`containerWidth` bleiben
+unveraendert Sidebar-`PanelBody`-Felder (Konfiguration, kein Inhalt).
+
+- **`ServerSideRender` entfaellt fuer diesen Block**: `edit.jsx` baut jetzt selbst dieselbe
+  Section-/`.wrapper`(`-small`)/`col-span-12`/Align-Struktur wie `render.php` und stylt die beiden
+  `RichText`-Felder mit denselben `typography.php`-Variant-Klassen (`headline-base`/`body-lg`) --
+  der Canvas IST jetzt die Live-Vorschau, keine zweite SSR-Anfrage pro Tastenanschlag noetig. Anders
+  als bei `buehne` (bleibt bei `ServerSideRender`, siehe dessen eigener Eintrag weiter unten): dort
+  gibt es Carousel-/Autoplay-Verhalten, das sich nicht sinnvoll 1:1 im Editor nachbauen laesst,
+  hier nur zwei reine Textfelder plus Layout-Klassen.
+- **Keine Live-Akzent-Hervorhebung waehrend des Tippens** (bewusst, auf Nachfrage entschieden): die
+  bestehende `Notice`-Warnung bei nicht-treffenden Akzent-Woertern bleibt die einzige Rueckmeldung
+  im Editor, die eigentliche `font-accent`-Hervorhebung sieht man weiterhin erst im echten
+  Frontend/in der WordPress-Vorschau. Eine live mitlaufende Hervorhebung haette eine kontrolliert
+  neu formatierte `RichText`-`value` bei jedem Tastendruck gebraucht -- bekanntes Cursor-Sprung-/
+  Ruckel-Risiko bei kontrollierten RichText-Werten in Gutenberg, deutlich mehr Code fuer einen rein
+  kosmetischen Editor-Komfort.
+- **`heading`/`text` bleiben PLAIN-STRING-Attribute** (`block.json` unveraendert) -- `RichText`
+  arbeitet intern mit HTML-Strings, `toRichTextValue()`/`fromRichTextValue()` (neue Helper in
+  `edit.jsx`) roundtripen ueber `@wordpress/rich-text`s `create()`/`toHTMLString()` nur fuer
+  korrektes Entity-Escaping (z. B. ein literales "&"/"<" im Text); `allowedFormats={[]}` +
+  `disableLineBreaks` auf beiden `RichText`-Feldern verhindert, dass echte Formatierung (fett,
+  Links, `<br>`) in die gespeicherten Strings gelangt -- `render.php`/`typography.php` escapen den
+  Text weiterhin selbst (`esc_html()`), eingebettetes HTML wuerde dort sonst literal (doppelt
+  escaped) angezeigt statt interpretiert.
+- **`@wordpress/rich-text` neu als Editor-Script-Dependency**: `vite.config.editor.factory.js`
+  bekommt den Package-zu-Global-Eintrag (`wp.richText`), `inc/setup/theme-blocks.php`s geteilte
+  `wp_register_script()`-Dependency-Liste bekommt `wp-rich-text` ergaenzt -- dieselbe Liste gilt
+  fuer beide Bloecke (siehe `hengegroup_theme_register_theme_block()`s Kopfkommentar zur
+  Konsolidierung), `buehne` laedt das Skript dadurch ungenutzt mit statt eine zweite, block-eigene
+  Dependency-Liste einzufuehren.
+
 ### Buehne: Kicker-Logo-Filter fuer inaktive Dots (Bugfix) (2026-09-22)
 
 Bug: die Kicker-Bild-Dots (Marken-Logos in der Dot-Navigation, siehe "Buehne: Dot-Navigation als

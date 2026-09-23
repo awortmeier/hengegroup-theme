@@ -21,7 +21,11 @@ $themeDirectories = @(
     @{ Source = "inc"; Destination = "inc" },
     @{ Source = "template-parts"; Destination = "template-parts" },
     @{ Source = "languages"; Destination = "languages" },
-    @{ Source = "assets/images"; Destination = "assets/images" }
+    @{ Source = "assets/images"; Destination = "assets/images" },
+    # WooCommerce-Template-Overrides (woocommerce/content-product.php, archive-product.php, ...) --
+    # eine Unterordner-Ebene, deshalb NICHT vom *.php-Wildcard oben erfasst (das ist -File, nicht
+    # -Recurse). Fehlte bis 2026-09-22, siehe docs/entscheidungen.md.
+    @{ Source = "woocommerce"; Destination = "woocommerce" }
 )
 
 if (-not (Test-Path -LiteralPath $distPath)) {

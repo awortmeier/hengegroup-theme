@@ -16,6 +16,31 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Produkt-Badge setzen
+
+Das Badge im Produktbox-Bild ist ein einfaches Feld-Paar im Produkt-Editor (Metabox "Badge",
+Seitenleiste, siehe `inc/setup/theme-woocommerce-products.php`) -- kein Term/keine Taxonomie mehr
+zu verwalten. Text eingeben, Farbe aus dem Dropdown waehlen (henge-blue | henge-green | henge-grey |
+grey-dark, siehe `hengegroup_theme_get_badge_variants()`), speichern. Leerer Text = kein Badge auf
+der Karte (siehe `docs/entscheidungen.md` "Produktbox: Badge-/Anwendungs-Datenmodell" fuer die
+Begruendung, warum das ein Postmeta-Feld-Paar statt einer Taxonomie ist).
+
+Ein weiterer Farbwert im Dropdown braucht eine Code-Aenderung
+(`hengegroup_theme_get_badge_variants()` erweitern) -- die vier Farben sind badge.php's eigenes
+Volltonfarben-Vokabular, kein per Filter erweiterbarer Escape-Hatch wie das vorherige
+`firma`-Datenmodell.
+
+### Anwendungen einem Produkt zuordnen
+
+Anwendungen sind seit 2026-09-23 dieselben Produktkategorien (`product_cat`, WooCommerce-eigene
+Taxonomie), kein theme-eigenes Datenmodell mehr (siehe `docs/entscheidungen.md` "Anwendungen:
+Produktkategorie statt eigenem Post-Type") -- im Produkt-Editor unter "Produktkategorien"
+zuordnen, kein eigenes Metabox-Feld dafuer. Zugeordnete Kategorien erscheinen automatisch als
+neutrale (nicht verlinkende) Badges unter dem "Anwendungen"-Label in der Produktbox
+(`hengegroup_theme_render_product_anwendung_badges()`, `inc/template-parts/woocommerce-product-card.php`)
+-- kein weiterer Schritt noetig. Die WooCommerce-eigene Default-Kategorie ("Unkategorisiert")
+wird dabei automatisch ausgeblendet.
+
 ### Ein weiteres JSON-LD-Schema ergaenzen (z. B. Product/JobPosting)
 
 `inc/setup/theme-seo-output.php` rendert immer das site-weite Organization-Schema und bietet dafuer

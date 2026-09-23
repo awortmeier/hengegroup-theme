@@ -11,6 +11,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../inc/template-parts/helpers.php';
+// Same reasoning as helpers.php above: only *defines* functions at include time (no top-level
+// add_action()/WP calls), so requiring it here without WordPress loaded is safe -- unlike
+// inc/setup/theme-woocommerce-products.php, which registers the taxonomy/post type/hooks at
+// require time and stays untested for the same reason inc/setup/theme-svg-support.php does (see
+// tests/Unit/SvgSupportTest.php's own setUp()).
+require_once __DIR__ . '/../inc/template-parts/woocommerce-product-card.php';
 
 // inc/setup/theme-svg-support.php is NOT required here, unlike helpers.php above: it has
 // top-level add_filter() calls that fire at require time, and Brain Monkey only defines

@@ -19,21 +19,30 @@ declare(strict_types=1);
 // Kopfkommentar) fuer die Akzent-Schrift auf einzelnen Woertern -- derselbe `font-accent`-Span-
 // Mechanismus, den auch badge.php per `font: 'accent'` anspricht.
 //
-// block.json's `"align": "full"` (Default) + `"supports": {"align": ["full"]}` (Bugfix, wie bei
-// buehne/block.json) ist noetig, damit `containerWidth` im Editor-Canvas ueberhaupt sichtbar wird:
-// `theme.json`s `settings.layout.contentSize`/`wideSize` (48rem/72rem) begrenzt jeden Block ohne
-// eigene Align-Unterstuetzung im Editor-Iframe automatisch auf diese schmale Spalte -- fuer dieses
-// (klassische, nicht Full-Site-Editing-) Theme gilt das NUR im Editor, das Frontend (page.php's
-// the_content()) kennt diese Breiten-Beschraenkung gar nicht. Ohne `align: full` waeren `.wrapper`
-// (1600px) UND `.wrapper-small` (1000px) im Editor also gleichermassen auf 48rem/768px
-// zusammengequetscht und optisch ununterscheidbar, obwohl das Frontend korrekt die gewaehlte
-// Breite zeigt.
+// Kein `supports.align`/`align`-Attribut mehr (explizite Nachfrage 2026-09-23: keine
+// "Ausrichten"-Toolbar-Kontrolle) -- vorher war `"align": "full"` (Default) +
+// `"supports": {"align": ["full"]}` der einzige Grund dafuer, dass `containerWidth` im
+// Editor-Canvas ueberhaupt sichtbar wurde: `theme.json`s `settings.layout.contentSize`/`wideSize`
+// (48rem/72rem) begrenzt jeden Block ohne eigene Align-Unterstuetzung im Editor-Iframe automatisch
+// auf diese schmale Spalte -- fuer dieses (klassische, nicht Full-Site-Editing-) Theme gilt das NUR
+// im Editor, das Frontend (page.php's the_content()) kennt diese Breiten-Beschraenkung gar nicht.
+// assets/js/blocks/ueberschrift-text/edit.jsx loest das jetzt stattdessen ueber eine HARDCODIERTE
+// `alignfull`-Klasse in `useBlockProps()` -- reine CSS-Klasse ohne zugehoerige Toolbar-UI, siehe
+// dessen Kopfkommentar. Ohne diese Klasse waeren `.wrapper` (1600px) UND `.wrapper-small` (1000px)
+// im Editor gleichermassen auf 48rem/768px zusammengequetscht und optisch ununterscheidbar, obwohl
+// das Frontend korrekt die gewaehlte Breite zeigt.
 
 if (!is_array($attributes ?? null)) {
     return;
 }
 
 $heading = trim((string) ($attributes['heading'] ?? ''));
+$heading_tag = strtolower(trim((string) ($attributes['headingTag'] ?? 'p')));
+
+if (!in_array($heading_tag, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'], true)) {
+    $heading_tag = 'p';
+}
+
 $text = trim((string) ($attributes['text'] ?? ''));
 
 if ($heading === '' && $text === '') {
@@ -64,6 +73,7 @@ if ($heading !== '') {
         'config' => [
             'text' => $heading,
             'variant' => 'headline-base',
+            'tag' => $heading_tag,
             'accent_words' => $accent_words,
             'class' => $text !== '' ? 'mb-7' : '',
         ],

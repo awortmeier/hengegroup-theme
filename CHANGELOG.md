@@ -11,6 +11,31 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Added
 
+- Neuer Gutenberg-Block "Produkte" (`template-parts/blocks/produkte/`): dunkle Sektion mit
+  Ueberschrift (H1-H6/P waehlbar, Default `p`)/Text/Button direkt im Editor-Content-Bereich
+  editierbar (natives `RichText`, Button-Link ueber `LinkControl` in einem Toolbar-Popover) und
+  einem Live-Produktraster (Kategorie-/Anzahl-Filter in der Sidebar). Die Produktkarten sind
+  `woocommerce/content-product.php` unveraendert, wiederverwendet ueber
+  `hengegroup_theme_render_produkte_grid()`; die Editor-Vorschau des Rasters laeuft ueber einen
+  eigenen, im Inserter versteckten Zwillingsblock `hengegroup-theme/produkte-raster`. Siehe
+  `docs/entscheidungen.md`.
+- Globale Block-Editor-Anpassungen (`assets/js/editor/editor-customizations.js`): "Zusaetzliche
+  CSS-Klasse(n)"-Feld im "Erweitert"-Panel fuer jeden Block (Core wie eigene) deaktiviert (widerspraeche
+  Regel 1 der CLAUDE.md), eine Reihe fuer dieses Projekt nicht vorgesehener Core-Bloecke
+  (Zitat, Code, Klassisch, RSS, ... ) aus dem Inserter ausgeblendet sowie ungewuenschte
+  `core/embed`-Anbieter-Varianten entfernt. Siehe `docs/entscheidungen.md`.
+- Produkt-Uebersichtsseite als WooCommerce-Template-Override (`woocommerce/archive-product.php`):
+  vierspaltiges Tailwind-Grid (`.wrapper`, ab `lg` vier Spalten) statt WCs eigenem
+  Float-Grid, bewusst einfach gehalten (kein Sidebar, WCs Standard-Sortier-/Pagination-Hooks
+  unangetastet). Siehe `docs/entscheidungen.md`.
+- Produktbox als WooCommerce-Template-Override (`woocommerce/content-product.php`, gilt fuer jeden
+  WC-Loop: Shop, Kategorie-/Tag-Archive, `[products]`-Shortcode, Related/Upsell/Cross-Sell) auf
+  Basis von `badge.php`/`button.php`/`typography.php`/`image.php`: ein vollbreiter "Produkt
+  ansehen"-Button in der Fusszeile verlinkt aufs Produkt (noch kein Warenkorb/Kaufen), zeigt ein
+  frei editierbares "Badge" (Text + henge-blue/henge-green/henge-grey/grey-dark-Farbwahl im
+  Produkt-Editor) im Bild, die Kurzbeschreibung (gekuerzt) sowie die einem Produkt zugeordneten
+  Produktkategorien als nicht verlinkende Badges unter einem "Anwendungen"-Label. Siehe
+  `docs/entscheidungen.md`.
 - macOS/Linux-Pendants (`scripts/*.sh`) zu allen zehn `scripts/*.ps1`-Skripten (`build`, `clean`,
   `deploy`, `deploy-changed`, `i18n-make-pot`, `pull-base-updates`, `rename-theme`,
   `sync-lucide-icons`, `sync-tabler-icons`, `sync-theme-tokens`, `sync-theme-version`) — bislang
@@ -81,8 +106,54 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
   `docs/entscheidungen.md` fuer die Einordnung von "Tested up to" als deklarierte Zielmarke, nicht
   als verifizierte Aussage.
 
+### Changed
+
+- Block "Ueberschrift & Text": Ueberschrift-Element (H1-H6 oder Absatz, Default jetzt `p` statt
+  `h2`) ist ueber die Block-Toolbar waehlbar statt fest verdrahtet; die "Ausrichten"-Toolbar-
+  Kontrolle ist entfernt (`supports.align`/das `align`-Attribut raus aus `block.json`, die volle
+  Editor-Canvas-Breite kommt jetzt ueber ein hardcodiertes `alignfull` in `useBlockProps()`). Siehe
+  `docs/entscheidungen.md`.
+- Produktbeschreibung und -kurzbeschreibung im Produkt-Editor zeigen nur noch den Visual-Editor mit
+  stark reduzierter Toolbar -- kein Visual/Text-Umschalter, kein Absatz-/Ueberschriften-Format-
+  Dropdown, kein "Weiterlesen"-Tag, kein Blockzitat, kein "Medien hinzufuegen"-Button, kein
+  Vollbild und keine erweiterte zweite Toolbar-Zeile mehr. Siehe `docs/entscheidungen.md`.
+
 ### Fixed
 
+- **"Vollbild"-Button blieb in der Produktkurzbeschreibungs-Toolbar trotz `teeny_mce_buttons`-Filter
+  sichtbar** -- WooCommerce ueberschreibt die daraus gebaute Toolbar vermutlich per eigenem
+  `tinymce`-Settings-Teilarray. Zusaetzlicher `tiny_mce_before_init`-Filter (letzter Filter vor der
+  Auslieferung ans Frontend) behebt das garantiert. Siehe `docs/entscheidungen.md`.
+- **"Virtuell"/"Herunterladbar" (allgemeiner Produkt-Tab) blieben trotz CSS-Ausblendung sichtbar**
+  -- der urspruenglich angenommene `_virtual_field`/`_downloadable_field`-Wrapper existiert in der
+  installierten WooCommerce-Version nicht mehr; Selektor auf `label[for="_virtual"]`/
+  `label[for="_downloadable"]` korrigiert. Siehe `docs/entscheidungen.md`.
+- **`badge.php`s `outline`-Variante zeigte keinen sichtbaren Rand** -- `base_classes` setzt fuer
+  jede Variante `border border-transparent` (reserviert dieselbe Border-Box, auch wenn sie bei
+  Solid-Varianten unsichtbar bleiben soll), `outline`s eigenes `border-grey-light` konkurrierte mit
+  genau derselben CSS-Property und verlor gegen `border-transparent`, weil Tailwind v4 Utility-
+  Regeln nach interner Reihenfolge statt nach Reihenfolge im `class`-String ausgibt. Sichtbar u. a.
+  an den "Anwendungen"-Badges der Produktbox (rendered als reiner Text ohne Pille/Rand). Fix:
+  `!border-grey-light` (Tailwind-Important-Modifier, selbes Vorgehen wie button.php's eigene
+  `!bg-*`-Varianten). Siehe `docs/entscheidungen.md`.
+- **`woocommerce.php` (Theme-Root) entfernt** -- diese generische, bereits vor der Produktbox-
+  Arbeit vorhandene Datei (nur `get_header(); woocommerce_content(); get_footer();`) hatte in
+  WooCommerces Template-Hierarchie hoehere Prioritaet als `woocommerce/archive-product.php` und
+  ueberschrieb es fuer JEDE WC-Seite (Shop, Produkt-Taxonomie-Archive, Einzelprodukt) komplett mit
+  WCs eigener, fest einprogrammierter `woocommerce_content()`-Ausgabe. Siehe
+  `docs/entscheidungen.md`.
+- `content-product.php` feuerte `woocommerce_before_shop_loop_item`/`woocommerce_after_shop_loop_item`
+  in der Annahme, das seien neutrale Marker-Hooks -- WC core haengt daran aber selbst seine
+  Standard-Callbacks (oeffnet/schliesst eine zusaetzliche `<a class="woocommerce-LoopProduct-link">`
+  um die ganze Box, rendert den Warenkorb-/"Weiterlesen"-Button), was genau das WC-Default-Markup
+  zurueckbrachte, das dieses Template ersetzen soll. Beide `do_action()`-Aufrufe entfernt. Siehe
+  `docs/entscheidungen.md`.
+- `build.ps1`/`build.sh` kopierten das neue `woocommerce/`-Verzeichnis (WooCommerce-Template-
+  Overrides wie `content-product.php`/`archive-product.php`) nicht nach `dist/` -- es fehlte in der
+  fest enumerierten `$themeDirectories`/`theme_directories`-Liste, die anders als die Top-Level-
+  `*.php`-Dateien (siehe naechster Punkt) nicht per Wildcard erfasst wird. Dadurch liefen bereits
+  deployte Umgebungen weiterhin ohne jede Produktbox-Anpassung, obwohl die Dateien lokal/im Git
+  existierten. Siehe `docs/entscheidungen.md`.
 - `build.ps1`/`build.sh` kopierten Top-Level-Theme-Dateien bislang ueber eine fest enumerierte
   Liste (`style.css`, `functions.php`, ... `theme.json`) — ein neues Custom-Page-Template nach
   WordPress-Template-Hierarchie (z. B. `page-{slug}.php`) landete dadurch nie in `dist/`. Beide

@@ -18,6 +18,11 @@
  *     keine Komponenten-API "grey-medium" als Wert erwartet.
  *   - grey-dark   #222222 -> neutral-800 (#262626), Differenz ~4/Kanal.
  *
+ * badge.php's `outline`-Variante nutzt fuer ihre Randfarbe `neutral-500` direkt als Tailwind-
+ * Utility (`border-neutral-500`), keinen der drei Marken-Grautoene oben -- ebenfalls kein eigenes
+ * Token dafuer, aus demselben "keine Komponenten-API erwartet den Wert als Markennamen"-Grund, siehe
+ * badge.php's eigenen Kopfkommentar und docs/entscheidungen.md.
+ *
  * --color-henge-green ist die primaere Marken-Akzentfarbe — der einzige Farbwert, der automatisiert
  * per `pnpm run sync-theme-tokens` nach theme.json uebernommen wird (siehe
  * scripts/sync-theme-tokens.ps1: sync't settings.color.palette "accent"-Eintrag/Label "Henge Green"

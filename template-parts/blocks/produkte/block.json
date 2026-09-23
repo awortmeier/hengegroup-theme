@@ -1,11 +1,11 @@
 {
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
-    "name": "hengegroup-theme/ueberschrift-text",
-    "title": "Überschrift & Text",
+    "name": "hengegroup-theme/produkte",
+    "title": "Produkte",
     "category": "henge",
-    "icon": "heading",
-    "description": "Zentrierte oder linksbündige Überschrift (mit optionaler Akzent-Hervorhebung einzelner Wörter) gefolgt von einem Textabsatz.",
+    "icon": "cart",
+    "description": "Dunkle Sektion mit Überschrift, Text, Call-to-Action und einem Raster ausgewählter WooCommerce-Produkte.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "heading": {
@@ -16,29 +16,30 @@
             "type": "string",
             "default": "p"
         },
-        "accentWords": {
-            "type": "array",
-            "default": [],
-            "items": {
-                "type": "string"
-            }
-        },
         "text": {
             "type": "string",
             "default": ""
         },
-        "textAlign": {
+        "buttonText": {
             "type": "string",
-            "default": "center"
+            "default": ""
         },
-        "containerWidth": {
+        "buttonUrl": {
             "type": "string",
-            "default": "small"
+            "default": ""
+        },
+        "productCategory": {
+            "type": "string",
+            "default": ""
+        },
+        "numberOfProducts": {
+            "type": "number",
+            "default": 4
         }
     },
     "supports": {
         "html": false
     },
-    "editorScript": "hengegroup-theme-ueberschrift-text-editor",
+    "editorScript": "hengegroup-theme-produkte-editor",
     "render": "file:./render.php"
 }
