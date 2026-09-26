@@ -21,6 +21,7 @@ require_once get_template_directory() . '/inc/setup/theme-svg-support.php';
 require_once get_template_directory() . '/inc/setup/theme-admin.php';
 require_once get_template_directory() . '/inc/setup/theme-admin-woocommerce.php';
 require_once get_template_directory() . '/inc/setup/theme-woocommerce-products.php';
+require_once get_template_directory() . '/inc/setup/theme-careers.php';
 require_once get_template_directory() . '/inc/setup/theme-seo-admin.php';
 require_once get_template_directory() . '/inc/setup/theme-seo-output.php';
 require_once get_template_directory() . '/inc/setup/theme-hardening.php';

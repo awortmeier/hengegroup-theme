@@ -11,10 +11,15 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Added
 
+- Neuer Custom Post Type "Stellenangebote" (`inc/setup/theme-careers.php`, Karriere/Jobs):
+  Übersichtsseite unter `/karriere/`, Einzelseiten unter `/karriere/<slug>/`. Bewusst erster,
+  grober Aufschlag (Titel + Gutenberg-Inhalt + Beitragsbild, keine strukturierten Felder wie
+  Standort/Unternehmen/Bewerbungsformular). Siehe `docs/entscheidungen.md`.
 - Neuer Gutenberg-Block "Produkte" (`template-parts/blocks/produkte/`): dunkle Sektion mit
   Ueberschrift (H1-H6/P waehlbar, Default `p`)/Text/Button direkt im Editor-Content-Bereich
   editierbar (natives `RichText`, Button-Link ueber `LinkControl` in einem Toolbar-Popover) und
-  einem Live-Produktraster (Kategorie-/Anzahl-Filter in der Sidebar). Die Produktkarten sind
+  einem Live-Produktraster mit manueller Produktauswahl (Redakteure waehlen einzelne, bestehende
+  Produkte in frei waehlbarer Reihenfolge/Anzahl in der Sidebar aus). Die Produktkarten sind
   `woocommerce/content-product.php` unveraendert, wiederverwendet ueber
   `hengegroup_theme_render_produkte_grid()`; die Editor-Vorschau des Rasters laeuft ueber einen
   eigenen, im Inserter versteckten Zwillingsblock `hengegroup-theme/produkte-raster`. Siehe

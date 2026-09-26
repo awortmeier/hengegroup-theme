@@ -8,13 +8,12 @@
     "description": "Nur fuer die Editor-Vorschau des Produkte-Blocks -- rendert ausschliesslich das Produktraster, kein eigener Insertable Block.",
     "textdomain": "hengegroup-theme",
     "attributes": {
-        "productCategory": {
-            "type": "string",
-            "default": ""
-        },
-        "numberOfProducts": {
-            "type": "number",
-            "default": 4
+        "productIds": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "number"
+            }
         }
     },
     "supports": {

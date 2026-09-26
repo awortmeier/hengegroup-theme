@@ -28,13 +28,12 @@
             "type": "string",
             "default": ""
         },
-        "productCategory": {
-            "type": "string",
-            "default": ""
-        },
-        "numberOfProducts": {
-            "type": "number",
-            "default": 4
+        "productIds": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "number"
+            }
         }
     },
     "supports": {

@@ -53,10 +53,9 @@ if (!in_array($heading_tag, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'], true)) {
 $text = trim((string) ($attributes['text'] ?? ''));
 $button_text = trim((string) ($attributes['buttonText'] ?? ''));
 $button_url = trim((string) ($attributes['buttonUrl'] ?? ''));
-$product_category = trim((string) ($attributes['productCategory'] ?? ''));
-$number_of_products = (int) ($attributes['numberOfProducts'] ?? 4);
+$product_ids = array_map('intval', (array) ($attributes['productIds'] ?? []));
 
-$grid_markup = hengegroup_theme_render_produkte_grid($product_category, $number_of_products);
+$grid_markup = hengegroup_theme_render_produkte_grid($product_ids);
 
 if ($grid_markup === '') {
     return;

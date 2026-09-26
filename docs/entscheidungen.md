@@ -21,6 +21,46 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Stellenangebote: Custom-Post-Type angelegt (2026-09-23)
+
+Auf expliziten Wunsch ein neuer Custom Post Type `stellenangebote` (Karriere/Jobs) --
+`inc/setup/theme-careers.php`, Vorlage/Ablauf analog zum inzwischen wieder entfernten `anwendung`-
+Post-Type (siehe "Anwendungen: Produktkategorie statt eigenem Post-Type" unten). Bewusst als erster,
+grober Aufschlag angelegt (explizite Ansage: "leg es mal grob an, genaue Infos kommen später") --
+Content-Modell aktuell nur `title`/`editor`/`thumbnail`/`excerpt`, keine strukturierten Metafelder.
+
+- **URL-Struktur**: `has_archive` UND `rewrite.slug` beide auf `'karriere'` gesetzt --
+  Übersichtsseite unter `/karriere/`, jede einzelne Stellenanzeige unter `/karriere/<slug>/`
+  (explizite Vorgabe, entspricht der geplanten Live-URL-Struktur). Gleiches Muster wie WordPress
+  Core selbst für `/blog/` + `/blog/post-name/` (Archiv-Slug == Rewrite-Slug einer Custom-Post-
+  Type). **Achtung**: kollidiert mit einer evtl. bereits existierenden WordPress-Seite mit Slug
+  "karriere" -- falls eine solche Seite existiert, muss sie vor dem Go-Live entfernt/umbenannt
+  werden, sonst gewinnt die Seite gegen das CPT-Archiv. Nach dem Anlegen einmalig Permalinks
+  neu speichern (Einstellungen -> Permalinks -> Speichern), sonst liefert `/karriere/` einen
+  404, bis die Rewrite-Rules neu geschrieben wurden.
+- **Post-Type-Key `stellenangebote`** ist bewusst unabhängig vom URL-Slug `karriere` -- beide
+  Werte werden in WordPress komplett getrennt konfiguriert (`register_post_type()`s erstes
+  Argument vs. `rewrite`/`has_archive`), keine Notwendigkeit, sie gleichzusetzen.
+- **Inhalt ausschließlich über den nativen Gutenberg-Editor** (`the_content()`), kein eigenes
+  Datenmodell für Unternehmensdarstellung/Benefits/Anforderungen/Aufgaben (explizite Ansage) --
+  anders als z. B. die Produktbox gibt es hier (noch) keine strukturierten Felder, die eine eigene
+  Metabox/ein eigenes Markup rechtfertigen würden.
+- **`archive-stellenangebote.php`/`single-stellenangebote.php`**: Archiv nutzt dieselbe
+  `.wrapper`-Grid-/`display: contents`-Technik wie `woocommerce/archive-product.php`, pro Job
+  `template-parts/base/card.php` (generische Komponente, kein eigenes Markup wie bei der
+  Produktbox -- noch keine projektspezifische Form zu modellieren). Die Einzelseite ist bewusst so
+  schlicht wie `single.php`/`page.php` (Titel + `the_content()`), nur mit `.wrapper`-Innenabstand
+  für konsistenten Randabstand unter dem `fixed`-Header.
+- **SEO-Integration**: `stellenangebote` über den bestehenden `hengegroup_theme_seo_post_types`-
+  Filter (siehe `docs/how-to.md`) in die SEO-Metabox aufgenommen -- kein eigenes JobPosting-JSON-LD-
+  Schema (siehe `docs/how-to.md`s eigenes Beispiel dafür), da die dafür nötigen Felder
+  (Standort/Beschäftigungsart/Bewerbungsschluss/...) noch nicht existieren; Vormerkung in
+  `docs/to-do.md`.
+- **Noch offen** (siehe `docs/to-do.md`): Standort/Unternehmen(-Taxonomie mit Logo)/sonstige
+  strukturierte Felder, Bewerbungsformular (inkl. Versand/Speicherung, Datei-Upload, DSGVO) --
+  bewusst nicht Teil dieses Aufschlags, folgt als eigener Auftrag, sobald das genaue Feld-/
+  Formular-Konzept feststeht.
+
 ### Produkte-Block: Ueberschrift/Text als RichText, Produktraster als eigener Vorschau-Block (2026-09-23)
 
 `hengegroup-theme/produkte` (`template-parts/blocks/produkte/`) rendert sein Produktraster ueber
@@ -136,6 +176,59 @@ Grund, aus dem dieser Block `supports.align` urspruenglich ueberhaupt erst bekom
 Beide Bloecke (`produkte` UND `ueberschrift-text`) haben jetzt `headingTag`-Default `p` statt `h2`
 (explizite Nachfrage) -- betrifft nur NEU eingefuegte Blockinstanzen, `render.php` validiert den
 Wert ohnehin gegen `h1`-`h6`/`p` mit `p` als Fallback bei ungueltigem/fehlendem Attribut.
+
+**Nachtrag (2026-09-23): `ueberschrift-text`s Ausrichtung/Breite ebenfalls in die Toolbar
+verlagert, Akzent-Woerter bleibt in der Sidebar.** Auf expliziten Wunsch verlassen **Ausrichtung**
+(`textAlign`, zentriert/linksbuendig) und **Breite** (`containerWidth`, Standard/Schmal) die
+Sidebar. Ausrichtung ist binaer (2 Werte) und deshalb eine `ToolbarGroup` mit zwei
+`ToolbarButton`s (`isPressed` zeigt den aktiven Wert), analog zu Cores eigenen
+Format-/Ausrichtungs-Toggle-Gruppen. Breite lief zunaechst genauso, ist auf erneute Nachfrage
+(2026-09-23, noch am selben Tag) aber ein `ToolbarDropdownMenu` geworden -- exakt derselbe Aufbau
+wie beim Ueberschrift-Element oben (`CONTAINER_WIDTH_OPTIONS` statt `HEADING_TAG_OPTIONS`,
+`title`/`isActive`/`onClick`-`controls`-Eintraege), Labels "Standard" (Wert `default`, die breite
+`.wrapper`-Klasse) und "Schmal" (Wert `small`, `.wrapper-small`).
+
+**Akzent-Woerter** war kurzzeitig ebenfalls in einem Toolbar-`Popover` (`ToolbarButton` +
+`accentWordsButtonRef`, exakt dasselbe Popover-Muster wie `produkte/edit.jsx`s
+Button-Link-Popover), ist aber auf erneute Nachfrage (2026-09-23, noch am selben Tag) wieder
+zurueck in die Sidebar (`InspectorControls`/`PanelBody`) verlagert -- als einziges verbleibendes
+Freitextfeld dieses Blocks bleibt es dort besser editierbar als in einem Toolbar-Popover. Die
+Sidebar enthaelt dadurch weiterhin genau eine `PanelBody` mit nur noch diesem einen Feld
+(+ der `Notice` fuer nicht-treffende Akzent-Woerter).
+
+**Nachtrag (2026-09-23): Produkte-Block bekommt eine manuelle Produktauswahl statt
+Kategorie+Anzahl-Filter, plus Fix fuer die gestapelte Editor-Vorschau.** Auf expliziten Wunsch
+waehlen Redakteure jetzt einzelne, bestehende Produkte in frei waehlbarer Reihenfolge/Anzahl aus,
+statt eine `product_cat`-Kategorie + eine feste Produktanzahl anzugeben -- das bisherige Ergebnis
+("irgendwelche N Produkte dieser Kategorie") liess sich nicht gezielt kuratieren.
+
+- **`productCategory`/`numberOfProducts`-Attribute ersetzt durch `productIds`** (Array von
+  Produkt-IDs in Anzeigereihenfolge) in `template-parts/blocks/produkte/block.json` UND dem
+  Editor-Vorschau-Zwillingsblock `produkte-raster/block.json` (beide immer im Gleichschritt, siehe
+  deren aeltere Eintraege oben).
+- **`hengegroup_theme_render_produkte_grid()`** (`inc/template-parts/woocommerce-product-card.php`)
+  nimmt jetzt `array $product_ids` statt `string $product_category, int $number_of_products` --
+  `WP_Query` laeuft ueber `post__in` + `orderby: post__in` (Ausgabereihenfolge = Auswahlreihenfolge
+  der Redaktion, keine implizite Kategorie-/Datumssortierung mehr), leeres Array liefert `''`
+  (gleiche "buffer and check for emptiness"-Konvention wie zuvor).
+- **`assets/js/blocks/produkte/edit.jsx`**: neue `ProductPicker`-Komponente ersetzt die bisherige
+  `ProductCategoryControl` + `RangeControl` in der Sidebar -- laedt (wie die alte
+  `ProductCategoryControl` fuer `product_cat`-Terms) ALLE veroeffentlichten Produkte einmalig ueber
+  den `core`-Datenstore, eine `ComboboxControl` durchsucht die noch nicht gewaehlten Produkte zum
+  Hinzufuegen, darunter eine Liste der gewaehlten Produkte mit Verschieben/Entfernen (gleiches
+  `PanelRow`+Pfeil-Icons-Muster wie `buehne/edit.jsx`s Folien-Liste, siehe dessen eigenen Eintrag,
+  hier ohne "Bearbeiten"-Button, weil es pro Produkt keine eigenen Felder gibt).
+- **Bugfix "Karten sehen im Backend komisch aus" (Nutzer-Feedback):** die Editor-Vorschau
+  (`ServerSideRender` gegen `produkte-raster`) zeigte die Produktkarten bisher gestapelt statt im
+  4-Spalten-Raster -- `ServerSideRender`s eigener Wrapper-`<div>` (kein `display: contents`)
+  unterbrach die `display: contents`-Kette zwischen `.wrapper`s Grid und den Produktkarten-`<li>`s
+  (siehe produkte-raster/render.php's aelteren Eintrag zu dieser bis dahin bekannten
+  Einschraenkung). Fix: der Tailwind-Selektor `[&>div]:contents` auf dem
+  `ServerSideRender`-umschliessenden `<div>` in edit.jsx macht auch dessen direktes `<div>`-Kind (den
+  SSR-Wrapper) zu `display: contents`, die Kette bleibt dadurch bis zu den `<li>`s durchgaengig --
+  reine Editor-JS-Massnahme, render.php/produkte-raster/render.php selbst unveraendert.
+- Ohne ausgewaehlte Produkte zeigt die Canvas jetzt einen Hinweistext statt einer leeren
+  `ServerSideRender`-Anfrage (spart zugleich einen unnoetigen REST-Request).
 
 Nachtrag zum naechsten Eintrag unten: Nach dem ersten Deploy meldete der Nutzer, dass "Vollbild" in
 der Kurzbeschreibungs-Toolbar trotz

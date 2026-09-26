@@ -10,8 +10,7 @@
 // surrounding markup below (section/wrapper/col-span/align classes) mirrors render.php's structure
 // so the canvas already looks like the frontend while typing; `ServerSideRender` is gone because the
 // canvas itself IS the live preview now (see docs/entscheidungen.md's `ueberschrift-text`-Vite-Build
-// entry for why it existed for buehne's still-SSR-based preview). Accent-Wörter/Ausrichtung/Breite
-// stay sidebar `PanelBody` fields, unchanged -- those are configuration, not content.
+// entry for why it existed for buehne's still-SSR-based preview).
 //
 // Ueberschrift-Element (`headingTag`, h1-h6 oder p, Default `p`) ist ueber ein
 // `ToolbarDropdownMenu` in der Block-Toolbar waehlbar statt Sidebar (explizite Nachfrage
@@ -20,21 +19,34 @@
 // Achsen (siehe dessen Kopfkommentar), die visuelle Groesse (`headline-base`) bleibt deshalb immer
 // gleich, nur `tagName` von `RichText` folgt `headingTag` direkt.
 //
-// "Ausrichten" ist aus der Toolbar entfernt (explizite Nachfrage 2026-09-23, wie bei
-// blocks/produkte/edit.jsx): `supports.align`/das `align`-Attribut sind komplett aus block.json
-// entfernt (render.php hat `$attributes['align']` ohnehin nie gelesen). Damit die Editor-Canvas
-// trotzdem nicht auf theme.json's schmale `contentSize`-Spalte zusammenschrumpft -- noetig, damit
-// `containerWidth` (`.wrapper` vs. `.wrapper-small`) im Editor ueberhaupt sichtbar unterscheidbar
-// bleibt, siehe render.php's Kopfkommentar --, setzt `blockProps` unten `alignfull` HARDCODIERT als
-// Klasse, rein visuell/CSS, ohne zugehoerige Toolbar-UI.
+// Ausrichtung/Breite sind EBENFALLS aus der Sidebar in die Toolbar verlagert (explizite Nachfrage
+// 2026-09-23). Ausrichtung (`textAlign`, nur 2 Werte) ist als zwei einzelne `ToolbarButton`s in
+// EINER `ToolbarGroup` mit `isPressed` abgebildet. Breite (`containerWidth`) lief zunaechst
+// genauso, ist auf erneute Nachfrage (2026-09-23) aber ein `ToolbarDropdownMenu` geworden --
+// gleicher Aufbau wie beim Ueberschrift-Element oben (`CONTAINER_WIDTH_OPTIONS` statt
+// `HEADING_TAG_OPTIONS`), Labels "Standard"/"Schmal" statt der vorherigen Button-Beschriftungen.
+// Akzent-Woerter war kurzzeitig ebenfalls in einem Toolbar-Popover, ist aber auf erneute Nachfrage
+// (2026-09-23) wieder zurueck in die Sidebar (`InspectorControls`/`PanelBody`) verlagert -- als
+// einziges verbleibendes Freitextfeld bleibt es dort besser editierbar als in einem
+// Toolbar-Popover.
+//
+// "Ausrichten" (Gutenberg's eigenes `supports.align`) ist aus der Toolbar entfernt (explizite
+// Nachfrage 2026-09-23, wie bei blocks/produkte/edit.jsx) -- zu unterscheiden von der obigen,
+// blockeigenen "Ausrichtung"(`textAlign`)-Toolbar-Gruppe: `supports.align`/das `align`-Attribut
+// sind komplett aus block.json entfernt (render.php hat `$attributes['align']` ohnehin nie
+// gelesen). Damit die Editor-Canvas trotzdem nicht auf theme.json's schmale `contentSize`-Spalte
+// zusammenschrumpft -- noetig, damit `containerWidth` (`.wrapper` vs. `.wrapper-small`) im Editor
+// ueberhaupt sichtbar unterscheidbar bleibt, siehe render.php's Kopfkommentar --, setzt
+// `blockProps` unten `alignfull` HARDCODIERT als Klasse, rein visuell/CSS, ohne zugehoerige
+// Toolbar-UI.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import { BlockControls, InspectorControls, RichText, useBlockProps } from "@wordpress/block-editor";
 import {
     Notice,
     PanelBody,
-    SelectControl,
     TextControl,
+    ToolbarButton,
     ToolbarDropdownMenu,
     ToolbarGroup,
 } from "@wordpress/components";
@@ -55,18 +67,13 @@ const HEADING_TAG_OPTIONS = [
     { title: __("Absatz (P)", "hengegroup-theme"), value: "p" },
 ];
 
-const TEXT_ALIGN_OPTIONS = [
-    { label: __("Zentriert", "hengegroup-theme"), value: "center" },
-    { label: __("Linksbündig", "hengegroup-theme"), value: "left" },
-];
-
 // Values match render.php's `$container_width`/`.wrapper`-`.wrapper-small` choice (assets/css/
-// app.css, see docs/entscheidungen.md "12-Spalten-Grid ueber .wrapper") -- "small" is this block's
-// original, narrower default (schmale Textspalte), "default" opts into the wider `.wrapper` used
-// by full-width block layouts.
+// app.css, see docs/entscheidungen.md "12-Spalten-Grid ueber .wrapper") -- "default" is the wider
+// `.wrapper` used by full-width block layouts, "small" this block's original, narrower default
+// (schmale Textspalte).
 const CONTAINER_WIDTH_OPTIONS = [
-    { label: __("Schmal (Textspalte)", "hengegroup-theme"), value: "small" },
-    { label: __("Breit (Seitenbreite)", "hengegroup-theme"), value: "default" },
+    { title: __("Standard", "hengegroup-theme"), value: "default" },
+    { title: __("Schmal", "hengegroup-theme"), value: "small" },
 ];
 
 function parseAccentWords(value) {
@@ -131,6 +138,31 @@ function Edit({ attributes, setAttributes }) {
                         }))}
                     />
                 </ToolbarGroup>
+                <ToolbarGroup>
+                    <ToolbarButton
+                        icon="editor-alignleft"
+                        label={__("Linksbündig", "hengegroup-theme")}
+                        isPressed={textAlign === "left"}
+                        onClick={() => setAttributes({ textAlign: "left" })}
+                    />
+                    <ToolbarButton
+                        icon="editor-aligncenter"
+                        label={__("Zentriert", "hengegroup-theme")}
+                        isPressed={textAlign === "center"}
+                        onClick={() => setAttributes({ textAlign: "center" })}
+                    />
+                </ToolbarGroup>
+                <ToolbarGroup>
+                    <ToolbarDropdownMenu
+                        icon="editor-expand"
+                        label={__("Breite ändern", "hengegroup-theme")}
+                        controls={CONTAINER_WIDTH_OPTIONS.map((option) => ({
+                            title: option.title,
+                            isActive: option.value === containerWidth,
+                            onClick: () => setAttributes({ containerWidth: option.value }),
+                        }))}
+                    />
+                </ToolbarGroup>
             </BlockControls>
             <InspectorControls>
                 <PanelBody title={__("Einstellungen", "hengegroup-theme")} initialOpen>
@@ -156,18 +188,6 @@ function Edit({ attributes, setAttributes }) {
                             )}
                         </Notice>
                     )}
-                    <SelectControl
-                        label={__("Ausrichtung", "hengegroup-theme")}
-                        value={textAlign}
-                        options={TEXT_ALIGN_OPTIONS}
-                        onChange={(value) => setAttributes({ textAlign: value })}
-                    />
-                    <SelectControl
-                        label={__("Breite", "hengegroup-theme")}
-                        value={containerWidth}
-                        options={CONTAINER_WIDTH_OPTIONS}
-                        onChange={(value) => setAttributes({ containerWidth: value })}
-                    />
                 </PanelBody>
             </InspectorControls>
             <section {...blockProps}>

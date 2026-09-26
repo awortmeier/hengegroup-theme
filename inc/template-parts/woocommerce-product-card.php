@@ -141,46 +141,34 @@ function hengegroup_theme_render_product_anwendung_badges(int $product_id): stri
  * `display: contents` technique as woocommerce/archive-product.php, see
  * template-parts/blocks/produkte/render.php's own header comment) -- each `<li>` is
  * woocommerce/content-product.php UNVERAENDERT, rendered via a dedicated `WP_Query` +
- * `wc_get_template_part('content', 'product')` loop. Returns '' when no products match (so
- * callers can skip the section/wrapper entirely, same "buffer and check for emptiness" convention
- * as the rest of this file), '' also functions as the "invalid attributes" fallback for callers
- * that don't pre-validate `$number_of_products`.
+ * `wc_get_template_part('content', 'product')` loop over the given `$product_ids`, in the exact
+ * order given (`orderby => post__in`, editors pick/reorder products manually, see
+ * assets/js/blocks/produkte/edit.jsx's Kopfkommentar -- no implicit category/date ordering).
+ * Returns '' when `$product_ids` is empty or none of the given IDs resolve to a published product
+ * (so callers can skip the section/wrapper entirely, same "buffer and check for emptiness"
+ * convention as the rest of this file).
  *
  * `wp_reset_postdata()` before returning -- this is always a secondary query (a real page's main
  * query loop runs separately, if any), never the main query, so callers never need to call it
  * themselves.
+ *
+ * @param int[] $product_ids
  */
-function hengegroup_theme_render_produkte_grid(
-    string $product_category,
-    int $number_of_products,
-): string {
-    if (!function_exists('wc_get_template_part')) {
+function hengegroup_theme_render_produkte_grid(array $product_ids): string
+{
+    if (!function_exists('wc_get_template_part') || $product_ids === []) {
         return '';
     }
 
-    if ($number_of_products < 1) {
-        $number_of_products = 4;
-    }
-
-    $query_args = [
+    $products_query = new WP_Query([
         'post_type' => 'product',
         'post_status' => 'publish',
-        'posts_per_page' => $number_of_products,
+        'post__in' => $product_ids,
+        'orderby' => 'post__in',
+        'posts_per_page' => count($product_ids),
         'no_found_rows' => true,
         'ignore_sticky_posts' => true,
-    ];
-
-    if ($product_category !== '') {
-        $query_args['tax_query'] = [
-            [
-                'taxonomy' => 'product_cat',
-                'field' => 'slug',
-                'terms' => $product_category,
-            ],
-        ];
-    }
-
-    $products_query = new WP_Query($query_args);
+    ]);
 
     if (!$products_query->have_posts()) {
         return '';

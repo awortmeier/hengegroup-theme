@@ -5,8 +5,8 @@
 // through vite.config.editor.factory.js.
 //
 // Ueberschrift/Text/Button sind ALLE DIREKT im Editor-Canvas editierbar (explizite Nachfrage
-// 2026-09-23), keine Sidebar-Felder fuer Inhalte mehr -- die Sidebar behaelt nur noch
-// Produktkategorie/Anzahl (Konfiguration des Produktrasters, kein Text-Inhalt). Ueberschrift/Text
+// 2026-09-23), keine Sidebar-Felder fuer Inhalte mehr -- die Sidebar behaelt nur noch die
+// Produktauswahl (Konfiguration des Produktrasters, kein Text-Inhalt). Ueberschrift/Text
 // laufen als natives `RichText` (gleiches Muster wie ueberschrift-text/edit.jsx, siehe dessen
 // Kopfkommentar fuer die Begruendung/den toRichTextValue()/fromRichTextValue()-Rundlauf). Das
 // semantische Element der Ueberschrift (`headingTag`, h1-h6 oder p) ist ueber ein
@@ -57,13 +57,30 @@
 // (WooCommerce-Daten, unveraendertes content-product.php), nur ausgelagert auf einen zweiten,
 // inserter-versteckten Block `hengegroup-theme/produkte-raster`
 // (template-parts/blocks/produkte-raster/render.php), den `ServerSideRender` unten gezielt NUR mit
-// `productCategory`/`numberOfProducts` aufruft -- siehe dessen Kopfkommentar fuer die volle
-// Begruendung inkl. der editor-only Grid-Layout-Einschraenkung dort.
+// `productIds` aufruft -- siehe dessen Kopfkommentar fuer die volle Begruendung.
 //
-// Produktkategorie analog ueber den `core`-Datenstore, hier gegen die `product_cat`-Taxonomie
-// (`getEntityRecords('taxonomy', 'product_cat', ...)`) -- gespeichert wird der Term-`slug`
-// (`productCategory`), derselbe Wert, den render.php/produkte-raster/render.php direkt in ihre
-// `tax_query` einsetzen.
+// Produktauswahl (explizite Nachfrage 2026-09-23): statt einer Kategorie+Anzahl-Filterung waehlen
+// Redakteure die Produkte jetzt EINZELN und in beliebiger Reihenfolge/Anzahl aus den bestehenden
+// WooCommerce-Produkten aus (`productIds`, Array von Produkt-IDs in Anzeigereihenfolge --
+// render.php/produkte-raster/render.php geben es 1:1 als `post__in`+`orderby: post__in` an
+// `WP_Query` weiter, siehe inc/template-parts/woocommerce-product-card.php's
+// `hengegroup_theme_render_produkte_grid()`). `ProductPicker` unten laedt dafuer ALLE
+// veroeffentlichten Produkte ueber den `core`-Datenstore (`getEntityRecords('postType', 'product',
+// {per_page: -1, ...})`) -- derselbe "alles auf einmal laden, lokal filtern"-Ansatz wie die
+// vorherige `ProductCategoryControl` fuer `product_cat`-Terms, nur jetzt gegen Produkte selbst statt
+// Kategorien. Eine `ComboboxControl` durchsucht die noch nicht ausgewaehlten Produkte und haengt die
+// gewaehlte ID an `productIds` an; darunter eine Liste der bereits gewaehlten Produkte mit
+// Verschieben/Entfernen -- exakt dasselbe `PanelRow`+Pfeil-Icons-Muster wie buehne/edit.jsx's
+// Folien-Liste (`SlideListItem`, siehe dessen Kopfkommentar), hier ohne "Bearbeiten"-Button, weil es
+// pro Produkt keine eigenen Felder gibt (nur die Reihenfolge selbst ist editierbar).
+//
+// `ServerSideRender`s eigener Wrapper-`<div>` (kein `display: contents`) unterbricht sonst die
+// `display: contents`-Kette zwischen `.wrapper`s `grid-cols-12` unten und den Produktkarten-`<li>`s
+// des `produkte-raster`-Blocks -- die Karten erschienen im Editor-Canvas dadurch gestapelt statt im
+// Raster (siehe produkte-raster/render.php's frueherer Kopfkommentar). Fix: der Tailwind-Selektor
+// `[&>div]:contents` auf dem `ServerSideRender`-umschliessenden `<div>` unten macht auch DESSEN
+// direktes `<div>`-Kind (den SSR-Wrapper) zu `display: contents`, die Kette bis zu den `<li>`s bleibt
+// dadurch durchgaengig.
 import { createElement as el, Fragment, useEffect, useRef, useState } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {
@@ -74,17 +91,19 @@ import {
     useBlockProps,
 } from "@wordpress/block-editor";
 import {
+    Button,
     ComboboxControl,
     PanelBody,
+    PanelRow,
     Popover,
-    RangeControl,
     ToolbarButton,
     ToolbarDropdownMenu,
     ToolbarGroup,
+    __experimentalVStack as VStack,
 } from "@wordpress/components";
 import { useSelect } from "@wordpress/data";
 import { decodeEntities } from "@wordpress/html-entities";
-import { __ } from "@wordpress/i18n";
+import { __, sprintf } from "@wordpress/i18n";
 import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/produkte/block.json";
@@ -116,40 +135,103 @@ const HEADING_TAG_OPTIONS = [
     { title: __("Absatz (P)", "hengegroup-theme"), value: "p" },
 ];
 
-const NO_CATEGORY_OPTION = { value: "", label: __("— Alle Kategorien —", "hengegroup-theme") };
-
-function ProductCategoryControl({ value, onChange }) {
-    const categories = useSelect(
+// Siehe Kopfkommentar: laedt ALLE veroeffentlichten Produkte einmalig, danach rein lokale
+// Combobox-Filterung/Zuordnung -- kein weiterer REST-Request pro Tastenanschlag.
+function ProductPicker({ productIds, onChange }) {
+    const products = useSelect(
         (select) =>
-            select("core").getEntityRecords("taxonomy", "product_cat", {
+            select("core").getEntityRecords("postType", "product", {
                 per_page: -1,
-                hide_empty: true,
-                orderby: "name",
+                status: "publish",
+                orderby: "title",
                 order: "asc",
             }),
         []
     );
 
-    const options = [
-        NO_CATEGORY_OPTION,
-        ...(categories || []).map((category) => ({
-            value: category.slug,
-            label: decodeEntities(category.name),
-        })),
-    ];
+    // Zuruecksetzen nach jeder Auswahl (siehe `addProduct` unten) -- die Combobox selbst speichert
+    // keine der ausgewaehlten Produkt-IDs dauerhaft, nur `productIds` tut das.
+    const [comboboxValue, setComboboxValue] = useState("");
+
+    const productsById = new Map((products || []).map((product) => [product.id, product]));
+
+    const addOptions = (products || [])
+        .filter((product) => !productIds.includes(product.id))
+        .map((product) => ({
+            value: String(product.id),
+            label: decodeEntities(product.title.rendered) || String(product.id),
+        }));
+
+    function productLabel(productId) {
+        const product = productsById.get(productId);
+
+        return product
+            ? decodeEntities(product.title.rendered) || String(productId)
+            : sprintf(__("Produkt #%d", "hengegroup-theme"), productId);
+    }
+
+    function addProduct(value) {
+        const productId = parseInt(value, 10);
+
+        if (!Number.isNaN(productId) && !productIds.includes(productId)) {
+            onChange([...productIds, productId]);
+        }
+
+        setComboboxValue("");
+    }
+
+    function removeProduct(index) {
+        const nextProductIds = productIds.slice();
+        nextProductIds.splice(index, 1);
+        onChange(nextProductIds);
+    }
+
+    function moveProduct(index, direction) {
+        const targetIndex = index + direction;
+
+        if (targetIndex < 0 || targetIndex >= productIds.length) {
+            return;
+        }
+
+        const nextProductIds = productIds.slice();
+        const [moved] = nextProductIds.splice(index, 1);
+        nextProductIds.splice(targetIndex, 0, moved);
+        onChange(nextProductIds);
+    }
 
     return (
-        <ComboboxControl
-            __nextHasNoMarginBottom
-            label={__("Produktkategorie", "hengegroup-theme")}
-            help={__(
-                "Beschränkt das Raster auf eine WooCommerce-Produktkategorie. Leer = alle Kategorien.",
-                "hengegroup-theme"
-            )}
-            value={value}
-            onChange={(nextValue) => onChange(nextValue || "")}
-            options={options}
-        />
+        <VStack spacing={3}>
+            <ComboboxControl
+                __nextHasNoMarginBottom
+                label={__("Produkt hinzufügen", "hengegroup-theme")}
+                value={comboboxValue}
+                onChange={addProduct}
+                options={addOptions}
+            />
+            {productIds.map((productId, index) => (
+                <PanelRow key={productId}>
+                    {productLabel(productId)}
+                    <Button
+                        icon="arrow-up-alt2"
+                        label={__("Nach oben", "hengegroup-theme")}
+                        onClick={() => moveProduct(index, -1)}
+                        disabled={index === 0}
+                    />
+                    <Button
+                        icon="arrow-down-alt2"
+                        label={__("Nach unten", "hengegroup-theme")}
+                        onClick={() => moveProduct(index, 1)}
+                        disabled={index === productIds.length - 1}
+                    />
+                    <Button
+                        icon="trash"
+                        isDestructive
+                        label={__("Entfernen", "hengegroup-theme")}
+                        onClick={() => removeProduct(index)}
+                    />
+                </PanelRow>
+            ))}
+        </VStack>
     );
 }
 
@@ -161,8 +243,7 @@ const BUTTON_PREVIEW_CLASSNAME =
     "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-7 text-lg font-medium whitespace-nowrap !bg-grey-light !text-grey-light-foreground";
 
 function Edit({ attributes, setAttributes, isSelected }) {
-    const { heading, headingTag, text, buttonText, buttonUrl, productCategory, numberOfProducts } =
-        attributes;
+    const { heading, headingTag, text, buttonText, buttonUrl, productIds } = attributes;
     // `alignfull` HARDCODIERT statt ueber `supports.align`/das (entfernte) `align`-Attribut: der
     // Block ist immer volle Breite, ohne dass die "Ausrichten"-Toolbar dafuer eine UI braucht
     // (explizite Nachfrage 2026-09-23, siehe Kopfkommentar). `alignfull` bleibt trotzdem noetig --
@@ -209,18 +290,10 @@ function Edit({ attributes, setAttributes, isSelected }) {
                 </ToolbarGroup>
             </BlockControls>
             <InspectorControls>
-                <PanelBody title={__("Produktraster", "hengegroup-theme")} initialOpen>
-                    <ProductCategoryControl
-                        value={productCategory}
-                        onChange={(value) => setAttributes({ productCategory: value })}
-                    />
-                    <RangeControl
-                        __nextHasNoMarginBottom
-                        label={__("Anzahl Produkte", "hengegroup-theme")}
-                        min={1}
-                        max={12}
-                        value={numberOfProducts}
-                        onChange={(value) => setAttributes({ numberOfProducts: value || 4 })}
+                <PanelBody title={__("Produkte", "hengegroup-theme")} initialOpen>
+                    <ProductPicker
+                        productIds={productIds}
+                        onChange={(nextProductIds) => setAttributes({ productIds: nextProductIds })}
                     />
                 </PanelBody>
             </InspectorControls>
@@ -275,10 +348,21 @@ function Edit({ attributes, setAttributes, isSelected }) {
                             )}
                         </span>
                     </div>
-                    <ServerSideRender
-                        block="hengegroup-theme/produkte-raster"
-                        attributes={{ productCategory, numberOfProducts }}
-                    />
+                    {productIds.length === 0 ? (
+                        <p className="text-grey-light col-span-12">
+                            {__(
+                                "Noch keine Produkte ausgewählt — im rechten Bereich Produkte hinzufügen.",
+                                "hengegroup-theme"
+                            )}
+                        </p>
+                    ) : (
+                        <div className="contents [&>div]:contents">
+                            <ServerSideRender
+                                block="hengegroup-theme/produkte-raster"
+                                attributes={{ productIds }}
+                            />
+                        </div>
+                    )}
                 </div>
             </section>
         </Fragment>

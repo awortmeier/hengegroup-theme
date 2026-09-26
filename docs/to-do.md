@@ -72,3 +72,22 @@ Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als ne
   `docs/entscheidungen.md` "Header: Sprachumschalter als reines UI-Element" — beide Eintraege
   verlinken aktuell auf `#`. Erst mit dem geplanten Multisite-Netzwerk (siehe "Mehrsprachigkeit
   ueber Multisite statt Hreflang-Plugin") mit echten Sprach-URLs verdrahten.
+
+## 5. Stellenangebote (`inc/setup/theme-careers.php`)
+
+- **Strukturierte Felder fehlen noch** (Standort, Unternehmen/Marke innerhalb der HengeGroup inkl.
+  Logo, ggf. Beschäftigungsart/Ansprechpartner) — aktuell bewusst nur Titel + Gutenberg-Inhalt +
+  Beitragsbild, siehe `docs/entscheidungen.md` "Stellenangebote: Custom-Post-Type angelegt". Genaue
+  Feldliste kommt noch vom Nutzer; "Unternehmen" ggf. als eigene Taxonomie (Vorbild `product_cat`)
+  statt Freitext, falls ein Logo pro Marke wiederverwendet werden soll.
+- **Kein Bewerbungsformular.** Die Live-Referenz (`hengegroup.com/karriere/?job=...`) hat ein
+  Formular (Name/Alter/Berufserfahrung/Kontakt) direkt auf der Stellenanzeige — Empfang/Versand,
+  Datei-Upload, DSGVO-Einwilligung sind hier komplett offen, eigener, groesserer Auftrag.
+- **Kein JobPosting-JSON-LD-Schema.** `docs/how-to.md`s "Ein weiteres JSON-LD-Schema ergaenzen"
+  nennt JobPosting explizit als Beispiel — sinnvoll nachzuziehen, sobald Standort/
+  Beschäftigungsart/Bewerbungsschluss als echte Felder existieren (das Schema braucht die als
+  Pflichtangaben, siehe schema.org/JobPosting).
+- **Rewrite-Rules müssen nach dem Anlegen einmal neu geschrieben werden** (Einstellungen ->
+  Permalinks -> Speichern), sonst liefert `/karriere/` 404. Ausserdem prüfen, ob bereits eine
+  WordPress-Seite mit Slug "karriere" existiert (würde mit dem Archiv kollidieren, siehe
+  `docs/entscheidungen.md`).
