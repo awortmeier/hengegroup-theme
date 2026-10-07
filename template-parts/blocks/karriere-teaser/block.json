@@ -1,0 +1,41 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/karriere-teaser",
+    "title": "Karriere-Teaser",
+    "category": "henge",
+    "icon": "businessman",
+    "description": "Startseiten-Sektion mit Überschrift, Text, Button und den neuesten offenen Stellen (inkl. Unternehmens-Pill).",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        },
+        "text": {
+            "type": "string",
+            "default": ""
+        },
+        "buttonText": {
+            "type": "string",
+            "default": ""
+        },
+        "buttonUrl": {
+            "type": "string",
+            "default": ""
+        },
+        "limit": {
+            "type": "number",
+            "default": 4
+        }
+    },
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-karriere-teaser-editor",
+    "render": "file:./render.php"
+}

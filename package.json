@@ -10,7 +10,7 @@
         "version": "bash scripts/sync-theme-version.sh",
         "sync-theme-version": "bash scripts/sync-theme-version.sh --no-git-add",
         "sync-theme-tokens": "bash scripts/sync-theme-tokens.sh",
-        "build:assets": "vite build && vite build --config vite.config.editor.js && vite build --config vite.config.editor-ueberschrift-text.js && vite build --config vite.config.editor-produkte.js && vite build --config vite.config.editor-customizations.js",
+        "build:assets": "vite build && vite build --config vite.config.editor.js && vite build --config vite.config.editor-ueberschrift-text.js && vite build --config vite.config.editor-produkte.js && vite build --config vite.config.editor-customizations.js && vite build --config vite.config.editor-offene-stellen.js && vite build --config vite.config.editor-karriere-teaser.js",
         "build:theme": "bash scripts/build.sh",
         "build": "pnpm run build:theme",
         "deploy:all": "bash scripts/deploy.sh",

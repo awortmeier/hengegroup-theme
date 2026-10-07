@@ -17,6 +17,8 @@ require_once __DIR__ . '/../inc/template-parts/helpers.php';
 // require time and stays untested for the same reason inc/setup/theme-svg-support.php does (see
 // tests/Unit/SvgSupportTest.php's own setUp()).
 require_once __DIR__ . '/../inc/template-parts/woocommerce-product-card.php';
+// Same reasoning again: only constants + function definitions, no hooks at require time.
+require_once __DIR__ . '/../inc/template-parts/careers.php';
 
 // inc/setup/theme-svg-support.php is NOT required here, unlike helpers.php above: it has
 // top-level add_filter() calls that fire at require time, and Brain Monkey only defines

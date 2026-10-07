@@ -35,7 +35,57 @@ Standard-`/bin/bash` 3.2 (keine Bash-4-Features); Linux funktioniert damit in de
 
 ---
 
+### Stellenangebote: Datenmodell, Google-Jobs-JSON-LD und Ablauf (2026-10-07)
+
+Ausbau des groben CPT-Aufschlags vom 2026-09-23 (Eintrag darunter), auf expliziten Wunsch: Stellen
+sollen in der Google-Jobsuche erscheinen und alle SEO-/GEO-Anforderungen erfuellen. Details stehen
+in den Kopfkommentaren von `inc/setup/theme-careers.php`, `theme-careers-admin.php`,
+`theme-careers-seo.php` und `inc/template-parts/careers.php`; hier nur die Entscheidungen:
+
+- **Wiederverwendbare Daten als Taxonomien** (`stellen_unternehmen`, `stellen_standort`,
+  `stellen_bereich`) mit Term-Meta statt Freitext je Stelle: Adresse/Koordinaten, rechtlicher Name,
+  Logo, Farbe, Standard-Benefits werden einmal gepflegt und sind in jeder Stelle identisch. Bewusst
+  `public => false` (keine duennen Archivseiten im Index) und ohne Block-Editor-Panel -- Zuordnung
+  ueber die "Stellendetails"-Box (Unternehmen als Einzelauswahl).
+- **Klassische Metabox statt Gutenberg-Sidebar-Bundle** fuer die Stellenfelder: gleiches Muster wie
+  SEO-/Badge-Box, kein weiteres JS-Bundle; Listen (Aufgaben/Profil/Benefits) als "ein Punkt pro
+  Zeile"-Textfelder statt Repeater.
+- **Kein ACF**: Das Theme hatte bisher keine Plugin-Abhaengigkeit fuer Felder, eine fuer diesen einen
+  Fall waere mehr Pflegeaufwand als Ersparnis.
+- **Ansprechpartner**: ein Standard fuer alle Unternehmen (Karriere > Einstellungen), pro Unternehmen
+  ueberschreibbar (explizite Vorgabe: "aktuell nur einer fuer alle, kann sich aber aendern").
+- **Gehalt wird angegeben** (explizite Vorgabe), sichtbar und als `baseSalary`.
+- **Abgelaufene Stellen** (Feld "Gueltig bis" ueberschritten oder "besetzt") leiten per 301 auf die
+  Karriereseite weiter (explizite Vorgabe), verschwinden aus allen Listen und der XML-Sitemap und
+  bekommen kein JobPosting mehr. Die Pruefung passiert zur Abfragezeit (meta_query), kein Cron.
+  Redakteure sehen die Seite weiterhin mit Hinweis.
+- **/karriere/ ist kein Post-Type-Archiv mehr, sondern eine normale Seite** (`has_archive => false`),
+  gebaut aus Bloecken (Buehne, Ueberschrift & Text, neuer Block "Offene Stellen", ...) -- so bleibt
+  die Karriereseite redaktionell frei gestaltbar und nutzt die vorhandenen Bloecke. Einzelstellen
+  bleiben unter /karriere/<slug>/; Unterseiten der Karriereseite (z. B. /karriere/ausbildung/), die
+  sonst von der Einzel-Regel des Post-Types abgefangen wuerden, biegt ein `request`-Filter auf die
+  Seite um. Rewrite-Regeln werden einmalig automatisch neu geschrieben (Versions-Option).
+- **Alte Live-URLs** /karriere/?job=job-67 werden ueber das Feld "Alte Stellen-ID" per 301 auf die
+  neue Adresse umgeleitet; die ID dient zugleich als Referenznummer (`identifier`).
+- **JobPosting als reine Funktion** (`hengegroup_theme_build_job_posting_schema()`), damit die
+  Google-relevante Struktur unit-getestet ist (`tests/Unit/CareersTest.php`). Seite und JSON-LD lesen
+  aus demselben Daten-Array (`hengegroup_theme_get_job_data()`), damit sichtbarer Inhalt und
+  strukturierte Daten nicht auseinanderlaufen. `directApply: false`, solange es kein Formular gibt.
+- **Faktenleiste auf der Einzelseite** (Ergaenzung zum Design): Gehalt/Anstellungsart/Eintritt/
+  Veroeffentlicht muessen laut Google sichtbar sein und sind als `<dl>` auch fuer KI-Suchen klar
+  lesbar (GEO).
+- **Automatischer Title/Description** fuer Stellen ("Jobtitel in Ort – Unternehmen"), solange die
+  SEO-Box leer ist; dafuer bekam `hengegroup_theme_get_seo_description()` den Filter
+  `hengegroup_theme_seo_description` (siehe `docs/how-to.md`).
+- **Bewerbung vorerst per E-Mail** (mailto mit Betreff inkl. Referenznummer); das Formular aus dem
+  Design ist ein eigener Schritt (siehe `docs/to-do.md`).
+
+---
+
 ### Stellenangebote: Custom-Post-Type angelegt (2026-09-23)
+
+> **Teilweise abgeloest** durch den Eintrag darueber (2026-10-07): kein Post-Type-Archiv mehr,
+> strukturierte Felder/JSON-LD sind umgesetzt. URL-Schema /karriere/<slug>/ gilt weiter.
 
 Auf expliziten Wunsch ein neuer Custom Post Type `stellenangebote` (Karriere/Jobs) --
 `inc/setup/theme-careers.php`, Vorlage/Ablauf analog zum inzwischen wieder entfernten `anwendung`-

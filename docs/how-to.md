@@ -149,6 +149,31 @@ sich in dieselbe Kette ein, statt eine eigene Logik zu erfinden — siehe besteh
 Funktionen in `theme-seo-output.php` als Vorlage. Weitere Post-Types fuer die Metabox kommen ueber
 den `hengegroup_theme_seo_post_types`-Filter dazu, nicht durch Code-Aenderung an `theme-seo-admin.php`.
 
+### Meta-Description fuer einen Post-Type automatisch erzeugen
+
+`hengegroup_theme_get_seo_description()` (`inc/setup/theme-seo-output.php`) laeuft am Ende durch den
+Filter `hengegroup_theme_seo_description(string $description, int $post_id)`. Ein Callback prueft
+zuerst, ob die SEO-Box einen eigenen Wert hat (dann `$description` unveraendert zurueckgeben), und
+liefert sonst seinen berechneten Text -- Beispiel: `hengegroup_theme_filter_seo_description_jobs()`
+in `inc/setup/theme-careers-seo.php`.
+
+### Stellenangebot anlegen / Karriereseite einrichten
+
+1. Einmalig unter Karriere > Unternehmen und Karriere > Standorte die Stammdaten anlegen (rechtlicher
+   Name, Logo, Farbe, Adresse; Koordinaten optional) und unter Karriere > Einstellungen Karriereseite
+   und Standard-Ansprechpartner pflegen.
+2. Die Karriereseite ist eine normale Seite unter /karriere/ mit dem Block "Offene Stellen"; die
+   Startseite nutzt den Block "Karriere-Teaser".
+3. Neue Stelle: Titel, Einleitung im Editor, Auszug optional (wird Meta-Description), dann die
+   "Stellendetails"-Box ausfuellen. Der gelbe Hinweis oben in der Box nennt fehlende Angaben fuer
+   Google Jobs.
+4. Stelle beenden: "Gueltig bis" setzen oder "Stelle ist besetzt" anhaken -- nicht loeschen, dann
+   greift die 301-Weiterleitung auf die Karriereseite.
+5. Neues JobPosting-Feld: in `hengegroup_theme_get_job_data()` lesen, in
+   `hengegroup_theme_build_job_posting_schema()` ausgeben (beide `inc/template-parts/careers.php`),
+   sichtbar in `single-stellenangebote.php` rendern und einen Fall in `tests/Unit/CareersTest.php`
+   ergaenzen.
+
 ### SVG-Upload-Berechtigung anpassen
 
 `inc/setup/theme-svg-support.php` erlaubt SVG-Uploads standardmaessig nur fuer Nutzer mit

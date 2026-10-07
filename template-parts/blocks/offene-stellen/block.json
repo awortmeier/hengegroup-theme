@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/offene-stellen",
+    "title": "Offene Stellen",
+    "category": "henge",
+    "icon": "businessman",
+    "description": "Alle aktiven Stellenangebote, gruppiert nach Unternehmen, mit Ansprechpartner-Karte. Abgelaufene Stellen werden automatisch ausgeblendet.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "showContact": {
+            "type": "boolean",
+            "default": true
+        },
+        "contactHeading": {
+            "type": "string",
+            "default": "Ansprechpartner"
+        }
+    },
+    "supports": {
+        "html": false,
+        "multiple": false
+    },
+    "editorScript": "hengegroup-theme-offene-stellen-editor",
+    "render": "file:./render.php"
+}

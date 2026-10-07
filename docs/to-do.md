@@ -75,19 +75,19 @@ Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als ne
 
 ## 5. Stellenangebote (`inc/setup/theme-careers.php`)
 
-- **Strukturierte Felder fehlen noch** (Standort, Unternehmen/Marke innerhalb der HengeGroup inkl.
-  Logo, ggf. Beschäftigungsart/Ansprechpartner) — aktuell bewusst nur Titel + Gutenberg-Inhalt +
-  Beitragsbild, siehe `docs/entscheidungen.md` "Stellenangebote: Custom-Post-Type angelegt". Genaue
-  Feldliste kommt noch vom Nutzer; "Unternehmen" ggf. als eigene Taxonomie (Vorbild `product_cat`)
-  statt Freitext, falls ein Logo pro Marke wiederverwendet werden soll.
-- **Kein Bewerbungsformular.** Die Live-Referenz (`hengegroup.com/karriere/?job=...`) hat ein
-  Formular (Name/Alter/Berufserfahrung/Kontakt) direkt auf der Stellenanzeige — Empfang/Versand,
-  Datei-Upload, DSGVO-Einwilligung sind hier komplett offen, eigener, groesserer Auftrag.
-- **Kein JobPosting-JSON-LD-Schema.** `docs/how-to.md`s "Ein weiteres JSON-LD-Schema ergaenzen"
-  nennt JobPosting explizit als Beispiel — sinnvoll nachzuziehen, sobald Standort/
-  Beschäftigungsart/Bewerbungsschluss als echte Felder existieren (das Schema braucht die als
-  Pflichtangaben, siehe schema.org/JobPosting).
-- **Rewrite-Rules müssen nach dem Anlegen einmal neu geschrieben werden** (Einstellungen ->
-  Permalinks -> Speichern), sonst liefert `/karriere/` 404. Ausserdem prüfen, ob bereits eine
-  WordPress-Seite mit Slug "karriere" existiert (würde mit dem Archiv kollidieren, siehe
-  `docs/entscheidungen.md`).
+Datenmodell, JSON-LD, Ablauf und die Bloecke "Offene Stellen"/"Karriere-Teaser" sind umgesetzt
+(siehe `docs/entscheidungen.md` "Stellenangebote: Datenmodell, Google-Jobs-JSON-LD und Ablauf").
+Offen:
+
+- **Bewerbungsformular** aus dem Design (Name, Alter, Berufserfahrung, Kontaktweg/-zeit,
+  Lebenslauf/Zeugnisse als Upload, Nachricht): Versand/Speicherung, Datei-Upload-Absicherung,
+  DSGVO-Einwilligung/Loeschfristen. Danach im JSON-LD `directApply: true` setzen
+  (`hengegroup_theme_get_job_posting_schema_for_post()`).
+- **Karriereseite: Abschnitte "Auszeichnungen & Mitgliedschaften", "Benefits" (Icon-Raster) und
+  "Galerie"** aus dem Design als eigene Bloecke -- aktuell nur mit Core-Bloecken nachbaubar.
+- **Google Indexing API** (optional): neue/geaenderte/abgelaufene Stellen aktiv melden statt auf den
+  naechsten Crawl zu warten; braucht ein Google-Cloud-Service-Konto.
+- **Einrichtung nach dem Deploy**: Seite "Karriere" (Slug `karriere`) mit Block "Offene Stellen"
+  anlegen bzw. unter Karriere > Einstellungen waehlen, Standard-Ansprechpartner pflegen,
+  Unternehmen/Standorte anlegen, alte Anzeigen mit "Alte Stellen-ID" uebernehmen. Danach mit dem
+  Google Rich Results Test pruefen.

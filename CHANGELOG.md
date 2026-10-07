@@ -11,11 +11,23 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Removed
 
+- `archive-stellenangebote.php`: /karriere/ ist jetzt eine normale, mit Bloecken gebaute Seite
+  statt eines Post-Type-Archivs.
 - Windows-/PowerShell-Unterstuetzung: alle `scripts/*.ps1` und der Plattform-Dispatcher
   `scripts/run.mjs` entfernt. Die `pnpm`-Skripte rufen die Bash-Skripte direkt auf; unterstuetzt
   wird nur noch macOS. Siehe `docs/entscheidungen.md`.
 
 ### Added
+
+- Stellenangebote fuer die Google-Jobsuche ausgebaut: Taxonomien Unternehmen/Standort/
+  Taetigkeitsbereich mit Zusatzfeldern, "Stellendetails"-Box (Anstellungsart, Gueltig bis, Eintritt,
+  Gehalt, Arbeitsmodell, Erfahrung/Abschluss, Aufgaben/Profil/Benefits, besetzt, alte Stellen-ID),
+  Karriere-Einstellungen (Karriereseite, Standard-Ansprechpartner), JobPosting- und
+  BreadcrumbList-JSON-LD, automatischer Title/Description, Einzelseite nach Design mit Faktenleiste
+  und Bewerbung per E-Mail, neue Bloecke "Offene Stellen" (Karriereseite) und "Karriere-Teaser"
+  (Startseite). Abgelaufene/besetzte Stellen verschwinden aus Listen und Sitemap und leiten per 301
+  auf die Karriereseite; alte URLs /karriere/?job=<ID> leiten auf die neue Stelle weiter. Siehe
+  `docs/entscheidungen.md`.
 
 - Neuer Custom Post Type "Stellenangebote" (`inc/setup/theme-careers.php`, Karriere/Jobs):
   Übersichtsseite unter `/karriere/`, Einzelseiten unter `/karriere/<slug>/`. Bewusst erster,

@@ -1,0 +1,21 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/karriere-teaser-liste",
+    "title": "Karriere-Teaser-Liste (interne Editor-Vorschau)",
+    "category": "henge",
+    "icon": "businessman",
+    "description": "Nur fuer die Editor-Vorschau des Karriere-Teaser-Blocks -- rendert ausschliesslich die Stellenliste, kein eigener Insertable Block.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "limit": {
+            "type": "number",
+            "default": 4
+        }
+    },
+    "supports": {
+        "inserter": false,
+        "html": false
+    },
+    "render": "file:./render.php"
+}

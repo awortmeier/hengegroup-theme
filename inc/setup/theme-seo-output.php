@@ -65,10 +65,24 @@ function hengegroup_theme_filter_pre_get_document_title(string $title): string
 }
 add_filter('pre_get_document_title', 'hengegroup_theme_filter_pre_get_document_title', 20);
 
+/**
+ * Effective meta description, filterable via `hengegroup_theme_seo_description` (receives the
+ * resolved string + the current post id) -- e.g. inc/setup/theme-careers-seo.php builds an
+ * automatic description for job postings that have no own one. See docs/how-to.md.
+ */
 function hengegroup_theme_get_seo_description(): string
 {
     $post_id = hengegroup_theme_seo_current_post_id();
 
+    return (string) apply_filters(
+        'hengegroup_theme_seo_description',
+        hengegroup_theme_resolve_seo_description($post_id),
+        $post_id,
+    );
+}
+
+function hengegroup_theme_resolve_seo_description(int $post_id): string
+{
     if ($post_id > 0) {
         $meta = trim((string) get_post_meta($post_id, '_hengegroup_theme_seo_description', true));
         if ($meta !== '') {
@@ -358,3 +372,8 @@ function hengegroup_theme_action_wp_head_seo_meta_tags(): void
     }
 }
 add_action('wp_head', 'hengegroup_theme_action_wp_head_seo_meta_tags', 1);
+
+// Core's own rel_canonical() would print a second <link rel="canonical"> on every singular view
+// next to the one above (which also honours the per-page "Kanonische URL" override) -- two
+// canonicals are ambiguous for search engines, so the theme's own tag is the only one.
+remove_action('wp_head', 'rel_canonical');

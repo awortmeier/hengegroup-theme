@@ -105,6 +105,21 @@ function hengegroup_theme_register_blocks(): void
     // NICHT). Diese Zeile deckt nur die serverseitige Haelfte ab (den `/wp/v2/block-renderer/...`-
     // REST-Endpunkt).
     register_block_type(get_template_directory() . '/template-parts/blocks/produkte-raster');
+
+    hengegroup_theme_register_theme_block(
+        'offene-stellen',
+        'hengegroup-theme-offene-stellen-editor',
+        'js/blocks/offene-stellen-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
+        'karriere-teaser',
+        'hengegroup-theme-karriere-teaser-editor',
+        'js/blocks/karriere-teaser-edit.js',
+    );
+
+    // Gleicher Vorschau-Zwilling-Fall wie produkte-raster oben: kein eigenes Editor-Bundle,
+    // karriere-teaser/edit.jsx registriert ihn clientseitig mit.
+    register_block_type(get_template_directory() . '/template-parts/blocks/karriere-teaser-liste');
 }
 add_action('init', 'hengegroup_theme_register_blocks');
 
