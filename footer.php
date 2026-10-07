@@ -8,6 +8,11 @@
 // (inc/setup/theme-footer-admin.php), the "Links" column from the `footer` wp_nav_menu() location;
 // every entry/column is skipped when empty, so no "#" placeholder ends up on the live site.
 //
+// Social-Media-Links are button.php icon buttons (variant `ghost`, size `icon-lg`) with a
+// translucent resting background added via `class` (ghost itself has none, so nothing competes);
+// the hover state is ghost's own (light fill, dark icon) instead of the reference's green fill --
+// button.php has no variant for that, and a footer-only variant isn't worth extending its API.
+//
 // `hover:text-[#8fd6ab]` is the reference's own light-green link hover -- a Tailwind ARBITRARY
 // VALUE (CLAUDE.md Regel 1 allows these), since no brand token matches it and henge-green itself
 // is too dark for readable text on grey-dark.
@@ -51,14 +56,12 @@ if ($footer_fax !== '') {
 
 $footer_social_links = [];
 foreach (hengegroup_theme_get_footer_social_networks() as $key => $network) {
-    $url = (string) ($footer_options[$key] ?? '');
+    $url = esc_url_raw((string) ($footer_options[$key] ?? ''), ['http', 'https']);
     if ($url !== '') {
         $footer_social_links[] = [
             'url' => $url,
             'label' => $network['label'],
-            'icon_html' => hengegroup_theme_render_icon(
-                $network['icon'] + ['class' => 'size-[17px]'],
-            ),
+            'icon' => $network['icon'] + ['class' => 'size-[17px]'],
         ];
     }
 }
@@ -78,7 +81,18 @@ $footer_address_icon = hengegroup_theme_render_icon([
     'class' => 'mt-0.5 size-4 shrink-0',
 ]);
 
-$footer_heading_class = 'mb-4 text-sm font-bold text-grey-light';
+$footer_heading = static function (string $text, array $attributes = []): void {
+    get_template_part('template-parts/base/typography', null, [
+        'config' => [
+            'variant' => 'body-xs',
+            'tag' => 'h2',
+            'text' => $text,
+            'color' => 'light',
+            'class' => 'mb-4 font-bold',
+            'attributes' => $attributes,
+        ],
+    ]);
+};
 $footer_link_class = 'text-grey-light no-underline transition-colors hover:text-[#8fd6ab]';
 ?>
 
@@ -117,9 +131,7 @@ $footer_link_class = 'text-grey-light no-underline transition-colors hover:text-
 
         <?php if ($footer_contact_rows !== []): ?>
             <div>
-                <h2 class="<?php echo esc_attr($footer_heading_class); ?>">
-                    <?php esc_html_e('Kontakt', 'hengegroup-theme'); ?>
-                </h2>
+                <?php $footer_heading(__('Kontakt', 'hengegroup-theme')); ?>
                 <ul class="flex flex-col gap-2.5">
                     <?php foreach ($footer_contact_rows as $contact_row): ?>
                         <?php $contact_icon = hengegroup_theme_render_icon(
@@ -149,24 +161,24 @@ $footer_link_class = 'text-grey-light no-underline transition-colors hover:text-
 
         <?php if ($footer_social_links !== []): ?>
             <div>
-                <h2 class="<?php echo esc_attr($footer_heading_class); ?>">
-                    <?php esc_html_e('Social Media', 'hengegroup-theme'); ?>
-                </h2>
+                <?php $footer_heading(__('Social Media', 'hengegroup-theme')); ?>
                 <ul class="flex gap-3.5">
                     <?php foreach ($footer_social_links as $social_link): ?>
                         <li>
-                            <a
-                                class="flex size-9 items-center justify-center rounded-full bg-grey-light/10 text-grey-light transition-colors hover:bg-henge-green"
-                                href="<?php echo esc_url($social_link['url']); ?>"
-                                aria-label="<?php echo esc_attr($social_link['label']); ?>"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <?php printf(
-                                    '%s',
-                                    $social_link['icon_html'], // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                ); ?>
-                            </a>
+                            <?php get_template_part('template-parts/base/button', null, [
+                                'config' => [
+                                    'href' => $social_link['url'],
+                                    'icon' => $social_link['icon'],
+                                    'aria_label' => $social_link['label'],
+                                    'variant' => 'ghost',
+                                    'size' => 'icon-lg',
+                                    'class' => 'bg-grey-light/10 text-grey-light',
+                                    'attributes' => [
+                                        'target' => '_blank',
+                                        'rel' => 'noopener noreferrer',
+                                    ],
+                                ],
+                            ]); ?>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -175,11 +187,9 @@ $footer_link_class = 'text-grey-light no-underline transition-colors hover:text-
 
         <?php if ($footer_menu): ?>
             <nav aria-labelledby="footer-links-heading">
-                <h2 class="<?php echo esc_attr(
-                    $footer_heading_class,
-                ); ?>" id="footer-links-heading">
-                    <?php esc_html_e('Links', 'hengegroup-theme'); ?>
-                </h2>
+                <?php $footer_heading(__('Links', 'hengegroup-theme'), [
+                    'id' => 'footer-links-heading',
+                ]); ?>
                 <div class="text-sm [&_a]:text-grey-light [&_a]:no-underline [&_a]:transition-colors [&_a:hover]:text-[#8fd6ab]">
                     <?php printf(
                         '%s',

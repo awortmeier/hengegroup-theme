@@ -22,6 +22,7 @@ const HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY = 'stellen_unternehmen';
 const HENGEGROUP_THEME_JOB_LOCATION_TAXONOMY = 'stellen_standort';
 const HENGEGROUP_THEME_JOB_CATEGORY_TAXONOMY = 'stellen_bereich';
 const HENGEGROUP_THEME_CAREER_OPTION = 'hengegroup_theme_career_options';
+const HENGEGROUP_THEME_APPLICATION_STORAGE_FOLDER = 'hengegroup-bewerbungen';
 
 /**
  * Post-Meta-Keys je Stelle. Leere Werte werden geloescht statt als '' gespeichert (siehe
@@ -1070,9 +1071,13 @@ function hengegroup_theme_render_jobs_grouped(): string
                 : '';
 
         $markup .= sprintf(
-            '<div class="mb-12 last:mb-0" data-slot="job-group"><div class="mb-4.5 flex flex-wrap items-center gap-x-3.5 gap-y-1"><h2 class="font-accent text-[22px] font-bold %1$s">%2$s</h2>%3$s</div><ul class="flex flex-col gap-3">%4$s</ul></div>',
-            esc_attr($text_class),
-            esc_html($name),
+            '<div class="mb-12 last:mb-0" data-slot="job-group"><div class="mb-4.5 flex flex-wrap items-center gap-x-3.5 gap-y-1">%1$s%2$s</div><ul class="flex flex-col gap-3">%3$s</ul></div>',
+            hengegroup_theme_render_typography([
+                'variant' => 'body-lg',
+                'tag' => 'h2',
+                'text' => $name,
+                'class' => 'font-accent font-bold ' . $text_class,
+            ]),
             $location_markup,
             $rows,
         );
@@ -1313,4 +1318,47 @@ function hengegroup_theme_validate_job_application(array $values): array
     }
 
     return $errors;
+}
+
+/**
+ * Ablageordner fuer Bewerbungsunterlagen ausserhalb des Web-Roots: Geschwister-Ordner des
+ * Website-Stammverzeichnisses (`$site_root`, i. d. R. get_home_path(), z. B. `.../httpdocs/` ->
+ * `.../hengegroup-bewerbungen`). Reine Funktion, unit-getestet (tests/Unit/CareersTest.php); ob der
+ * Ordner angelegt werden kann, prueft hengegroup_theme_get_application_storage_dir()
+ * (inc/setup/theme-careers-application.php). Leerer String, wenn `$site_root` bereits das
+ * Dateisystem-Wurzelverzeichnis ist (kein Ordner darueber).
+ */
+function hengegroup_theme_get_private_storage_dir(string $site_root): string
+{
+    $site_root = rtrim($site_root, '/\\');
+
+    if ($site_root === '') {
+        return '';
+    }
+
+    return rtrim(dirname($site_root), '/\\') . '/' . HENGEGROUP_THEME_APPLICATION_STORAGE_FOLDER;
+}
+
+/**
+ * Ob PHPs `open_basedir` (`$open_basedir`, Wert von ini_get(), leer = keine Beschraenkung) den
+ * Zugriff auf `$path` erlaubt -- damit hengegroup_theme_get_application_storage_dir() den Ordner
+ * ausserhalb des Web-Roots gar nicht erst prueft, wenn der Host das sperrt (sonst eine PHP-Warnung
+ * je Aufruf). Gleiche Regel wie PHP selbst: jeder Eintrag ist ein Pfad-Praefix. Reine Funktion,
+ * unit-getestet (tests/Unit/CareersTest.php).
+ */
+function hengegroup_theme_is_path_within_open_basedir(string $path, string $open_basedir): bool
+{
+    if (trim($open_basedir) === '') {
+        return true;
+    }
+
+    foreach (explode(PATH_SEPARATOR, $open_basedir) as $allowed) {
+        $allowed = trim($allowed);
+
+        if ($allowed !== '' && str_starts_with($path, $allowed)) {
+            return true;
+        }
+    }
+
+    return false;
 }

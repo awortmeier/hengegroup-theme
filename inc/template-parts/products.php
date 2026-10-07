@@ -600,7 +600,7 @@ function hengegroup_theme_render_anwendung_card(WP_Term $term, string $variant):
     $icon = hengegroup_theme_render_anwendung_icon($anwendung['icon'], 'size-[22px]');
 
     return sprintf(
-        '<li class="rounded-2xl bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" data-slot="anwendung-card"><div class="mb-4 flex items-center gap-3.5">%1$s<h3 class="text-[19px] leading-snug font-extrabold text-grey-dark">%2$s</h3></div>%3$s</li>',
+        '<li class="rounded-2xl bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" data-slot="anwendung-card"><div class="mb-4 flex items-center gap-3.5">%1$s%2$s</div>%3$s</li>',
         $icon !== ''
             ? sprintf(
                 '<span class="flex size-11 shrink-0 items-center justify-center rounded-xl %1$s">%2$s</span>',
@@ -608,19 +608,26 @@ function hengegroup_theme_render_anwendung_card(WP_Term $term, string $variant):
                 $icon,
             )
             : '',
-        esc_html($anwendung['name']),
+        hengegroup_theme_render_typography([
+            'variant' => 'body-base',
+            'tag' => 'h3',
+            'text' => $anwendung['name'],
+            'class' => 'font-extrabold',
+        ]),
         $anwendung['short'] !== ''
-            ? '<p class="text-base leading-normal text-grey-dark">' .
-                esc_html($anwendung['short']) .
-                '</p>'
+            ? hengegroup_theme_render_typography([
+                'variant' => 'body-sm',
+                'text' => $anwendung['short'],
+            ])
             : '',
     );
 }
 
 /**
  * Querkarte einer Anwendung auf der Seite /anwendungen/ (Design "Anwendungen"): Bild links (240 px,
- * mobil oben), rechts Titel, Beschreibung und die zugeordneten Produkte als Chips. Die Chips
- * verlinken auf die Produktseiten (Design) -- die Gegenrichtung (Produkt -> Anwendung) bleibt
+ * mobil oben), rechts Titel, Beschreibung und die zugeordneten Produkte als Chips (badge.php,
+ * Variante `outline` mit `href` -- gleiche Optik wie die Anwendungs-Badges der Produktbox). Die
+ * Chips verlinken auf die Produktseiten (Design) -- die Gegenrichtung (Produkt -> Anwendung) bleibt
  * ohne Link. `id` = Slug der Anwendung als Sprungziel.
  */
 function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
@@ -642,31 +649,48 @@ function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
     $chips = '';
 
     foreach (hengegroup_theme_get_anwendung_product_ids($anwendung['term_id']) as $product_id) {
-        $chips .= sprintf(
-            '<li><a class="inline-block max-w-full rounded-2xl border border-[#e2e0dc] px-3 py-1.5 text-sm font-medium break-words text-grey-dark no-underline transition-colors hover:border-grey-dark hover:bg-grey-dark hover:text-grey-light focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none" href="%1$s">%2$s</a></li>',
-            esc_url((string) get_permalink($product_id)),
-            esc_html(get_the_title($product_id)),
-        );
+        ob_start();
+        get_template_part('template-parts/base/badge', null, [
+            'config' => [
+                'text' => get_the_title($product_id),
+                'href' => (string) get_permalink($product_id),
+                'variant' => 'outline',
+                'class' => 'max-w-full',
+            ],
+        ]);
+        $chips .= '<li class="max-w-full">' . (string) ob_get_clean() . '</li>';
     }
 
     $products =
         $chips !== ''
             ? sprintf(
-                '<p class="mb-2.5 text-sm font-medium tracking-wider text-grey-dark uppercase">%1$s</p><ul class="flex flex-wrap gap-2">%2$s</ul>',
-                esc_html__('Produkte', 'hengegroup-theme'),
+                '%1$s<ul class="flex flex-wrap gap-2">%2$s</ul>',
+                hengegroup_theme_render_typography([
+                    'variant' => 'body-xs',
+                    'tag' => 'p',
+                    'text' => __('Produkte', 'hengegroup-theme'),
+                    'class' => 'mb-2.5 font-medium tracking-wider uppercase',
+                ]),
                 $chips,
             )
             : '';
 
     return sprintf(
-        '<li id="%1$s" class="grid scroll-mt-24 overflow-hidden rounded-[20px] bg-neutral-50 shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:grid-cols-[240px_1fr]" data-slot="anwendung-overview-card"><div class="relative min-h-45">%2$s</div><div class="flex flex-col px-7 py-6"><h3 class="mb-2.5 text-[21px] leading-snug font-extrabold text-grey-dark">%3$s</h3>%4$s%5$s</div></li>',
+        '<li id="%1$s" class="grid scroll-mt-24 overflow-hidden rounded-[20px] bg-neutral-50 shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:grid-cols-[240px_1fr]" data-slot="anwendung-overview-card"><div class="relative min-h-45">%2$s</div><div class="flex flex-col px-7 py-6">%3$s%4$s%5$s</div></li>',
         esc_attr($anwendung['slug']),
         hengegroup_theme_render_image($image_config),
-        esc_html($anwendung['name']),
+        hengegroup_theme_render_typography([
+            'variant' => 'body-lg',
+            'tag' => 'h3',
+            'text' => $anwendung['name'],
+            'class' => 'mb-2.5 font-extrabold',
+        ]),
         $anwendung['description'] !== ''
-            ? '<p class="mb-4.5 text-base leading-[1.55] text-grey-dark">' .
-                esc_html($anwendung['description']) .
-                '</p>'
+            ? hengegroup_theme_render_typography([
+                'variant' => 'body-sm',
+                'text' => $anwendung['description'],
+                'class' => 'mb-4.5',
+            ])
             : '',
         $products,
     );

@@ -11,6 +11,20 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Changed
 
+- Bewerbungsunterlagen liegen jetzt ausserhalb des Web-Roots (Ordner neben dem
+  Website-Stammverzeichnis) statt unter uploads/, damit sie auch unter nginx nicht per URL
+  abrufbar sind; vorhandene Dateien am alten Ort werden weiter gefunden. Neuer Filter
+  `hengegroup_theme_application_storage_dir`.
+- Alle Produkt-Taxonomie-Archive (auch WooCommerce-Marken) leiten auf die Produktuebersicht weiter
+  und fehlen in der XML-Sitemap, nicht mehr nur Kategorien/Schlagwoerter.
+- 404-Seite nach Design, mit Link zur Produktuebersicht.
+- Formularfelder von Anfrage- und Bewerbungsformular ueber die Field-Komponenten
+  (`hengegroup_theme_render_form_field()`), Ueberschriften/Texte in Karten, Bloecken, Footer und
+  404 ueber `typography.php` (`hengegroup_theme_render_typography()`), Social-Media-Icons im Footer
+  ueber `button.php`.
+- Produktdetailseite: Downloads als `attachment.php` (Icon-Button zum Herunterladen, Beschreibung
+  darunter); Produkt-Chips auf der Seite /anwendungen/ als `badge.php` (`outline`).
+
 - Bewerbungen werden nicht mehr per E-Mail verschickt, sondern als Eintraege unter Karriere >
   Bewerbungen gespeichert (Unterlagen geschuetzt ausserhalb der Mediathek, Download nur im
   Backend); keine Eingangsbestaetigung mehr. Das Formular erscheint auch ohne gepflegte
@@ -22,6 +36,8 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
   `default`/`minimal`).
 
 ### Removed
+
+- `woocommerce/archive-product.php`: es gibt keine erreichbaren Produkt-Archive mehr.
 
 - `archive-stellenangebote.php`: /karriere/ ist jetzt eine normale, mit Bloecken gebaute Seite
   statt eines Post-Type-Archivs.

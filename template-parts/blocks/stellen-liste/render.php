@@ -59,9 +59,16 @@ if (!$has_items) {
     return;
 }
 
+$heading_markup = hengegroup_theme_render_typography([
+    'variant' => 'body-lg',
+    'tag' => 'h2',
+    'text' => $types[$type],
+    'class' => 'mb-3 font-bold',
+]);
+
 printf(
-    '<section class="my-6 text-base text-grey-dark [&_li]:leading-[1.7] [&_ul]:list-disc [&_ul]:pl-5" data-slot="job-list" data-type="%1$s"><h2 class="mb-3 text-xl font-bold">%2$s</h2>%3$s</section>',
+    '<section class="my-6 text-base text-grey-dark [&_li]:leading-[1.7] [&_ul]:list-disc [&_ul]:pl-5" data-slot="job-list" data-type="%1$s">%2$s%3$s</section>',
     esc_attr($type),
-    esc_html($types[$type]),
+    $heading_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $list_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

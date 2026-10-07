@@ -8,7 +8,7 @@
 </head>
 <body>
 <?php wp_body_open(); ?>
-<div class="min-h-screen">
+<div class="flex min-h-screen flex-col">
     <?php
 // Full-width, fixed dark header with a scroll-triggered translucent/blurred state and a
 // brand-gradient top edge, composed from template-parts/base/* components on top of the
@@ -113,4 +113,7 @@
         </div>
     </header>
 
-    <main>
+    <?php
+// flex-1: main fuellt die Resthoehe, damit der Footer auch bei wenig/keinem Inhalt am unteren Rand steht.
+?>
+    <main class="flex-1">

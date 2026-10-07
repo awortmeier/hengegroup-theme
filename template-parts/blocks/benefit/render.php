@@ -22,11 +22,25 @@ if ($title === '') {
 
 $text = trim((string) ($attributes['text'] ?? ''));
 
-printf(
-    '<li class="flex items-start gap-4"><span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-135 from-henge-grey via-henge-green to-henge-blue">%1$s</span><div><h3 class="mb-1.5 text-lg font-bold text-grey-light">%2$s</h3>%3$s</div></li>',
-    hengegroup_theme_render_benefit_icon((string) ($attributes['icon'] ?? '')), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    esc_html($title),
+$title_markup = hengegroup_theme_render_typography([
+    'variant' => 'body-base',
+    'tag' => 'h3',
+    'text' => $title,
+    'color' => 'light',
+    'class' => 'mb-1.5 font-bold',
+]);
+$text_markup =
     $text !== ''
-        ? '<p class="text-base leading-normal text-grey-light/85">' . esc_html($text) . '</p>'
-        : '',
+        ? hengegroup_theme_render_typography([
+            'variant' => 'body-sm',
+            'text' => $text,
+            'class' => 'text-grey-light/85',
+        ])
+        : '';
+
+printf(
+    '<li class="flex items-start gap-4"><span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-135 from-henge-grey via-henge-green to-henge-blue">%1$s</span><div>%2$s%3$s</div></li>',
+    hengegroup_theme_render_benefit_icon((string) ($attributes['icon'] ?? '')), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    $title_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    $text_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

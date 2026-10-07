@@ -7,7 +7,8 @@ declare(strict_types=1);
 // inc/setup/theme-product-inquiries.php -- Eintrag im Menuepunkt "Produktanfragen", keine E-Mail.
 //
 // Gleiche Bauweise wie template-parts/components/job-application-form.php (Basis-Felder aus
-// template-parts/base/, Fehler je Feld mit `aria-describedby`, Zusammenfassung oben mit
+// template-parts/base/, je Feld field/field.php + field-label.php + field-error.php ueber
+// hengegroup_theme_render_form_field(), Fehler je Feld mit `aria-describedby`, Zusammenfassung oben mit
 // `role="alert"`, Honeypot, Pflicht-Checkbox fuer die Datenschutzhinweise als Ergaenzung zum
 // Design). Kein eigenes Skript: reines HTML-Formular mit nativer Pflichtfeld-Pruefung.
 //
@@ -32,28 +33,16 @@ $text_class = $is_dark ? 'text-grey-light' : 'text-grey-dark';
 $muted_class = $is_dark ? 'text-grey-light/70' : 'text-grey-dark/70';
 $link_class = $is_dark ? 'text-grey-light' : 'text-grey-dark';
 
-$label = static function (string $for, string $text, bool $required = false) use (
-    $text_class,
-): void {
-    get_template_part('template-parts/base/label', null, [
-        'config' => [
-            'for' => $for,
-            'text' => $required ? $text . '*' : $text,
-            'class' => 'text-sm font-semibold ' . $text_class,
-        ],
-    ]);
-};
+$label_class = 'text-sm font-semibold ' . $text_class;
+$error_class = $is_dark ? '!text-red-300' : '';
 
-$error = static function (string $control_id, string $field) use ($errors, $is_dark): void {
-    if (!isset($errors[$field])) {
-        return;
-    }
-
+// Gibt ein Feld aus hengegroup_theme_render_form_field() aus (field/field.php + field-label.php +
+// field-error.php). Die Datenschutz-Checkbox bringt ein eigenes <label> mit statt field-label.php,
+// weil ihr Text einen Link enthaelt und label.php reinen Text escaped.
+$print_field = static function (array $field): void {
     printf(
-        '<p id="%1$s" class="text-sm %3$s">%2$s</p>',
-        esc_attr(hengegroup_theme_field_error_id($control_id)),
-        esc_html((string) $errors[$field]),
-        esc_attr($is_dark ? 'text-red-300' : 'text-destructive'),
+        '%s',
+        hengegroup_theme_render_form_field($field), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered by base components.
     );
 };
 
@@ -63,11 +52,10 @@ $input = static function (
     string $type = 'text',
     bool $required = false,
     string $autocomplete = '',
-) use ($form_id, $value, $errors, $label, $error): void {
+) use ($form_id, $value, $errors, $label_class, $error_class, $print_field): void {
     $control_id = $form_id . '-' . $field;
 
-    echo '<div class="flex flex-col gap-1.5">';
-    $label($control_id, $label_text, $required);
+    ob_start();
     get_template_part('template-parts/base/input', null, [
         'config' => [
             'id' => $control_id,
@@ -83,8 +71,15 @@ $input = static function (
                 : [],
         ],
     ]);
-    $error($control_id, $field);
-    echo '</div>';
+
+    $print_field([
+        'control_id' => $control_id,
+        'control' => (string) ob_get_clean(),
+        'label' => $required ? $label_text . '*' : $label_text,
+        'error' => (string) ($errors[$field] ?? ''),
+        'label_class' => $label_class,
+        'error_class' => $error_class,
+    ]);
 };
 
 // Feldzeilen: [Feld, Label, Typ, Pflicht, autocomplete] -- als Daten statt einzelner Aufrufe im
@@ -185,43 +180,55 @@ $privacy_label =
       </div>
     <?php endforeach; ?>
 
-    <div class="flex flex-col gap-1.5">
-      <?php $label($form_id . '-message', $message_label); ?>
-      <?php get_template_part('template-parts/base/textarea', null, [
-          'config' => [
-              'id' => $form_id . '-message',
-              'name' => 'message',
-              'value' => $value('message'),
-              'rows' => 4,
-              'maxlength' => '5000',
-          ],
-      ]); ?>
-    </div>
+    <?php
+    ob_start();
+    get_template_part('template-parts/base/textarea', null, [
+        'config' => [
+            'id' => $form_id . '-message',
+            'name' => 'message',
+            'value' => $value('message'),
+            'rows' => 4,
+            'maxlength' => '5000',
+        ],
+    ]);
+    $print_field([
+        'control_id' => $form_id . '-message',
+        'control' => (string) ob_get_clean(),
+        'label' => $message_label,
+        'label_class' => $label_class,
+    ]);
+    ?>
 
-    <div class="flex flex-col gap-2">
-      <div class="flex items-start gap-3">
-        <?php get_template_part('template-parts/base/checkbox', null, [
-            'config' => [
-                'id' => $form_id . '-privacy',
-                'name' => 'privacy',
-                'value' => '1',
-                'required' => true,
-                'checked' => $value('privacy') === '1',
-                'aria_invalid' => isset($errors['privacy']),
-                'class' => 'mt-0.5',
-                'attributes' => isset($errors['privacy'])
-                    ? ['aria-describedby' => hengegroup_theme_field_error_id($form_id . '-privacy')]
-                    : [],
-            ],
-        ]); ?>
-        <label for="<?php echo esc_attr($form_id . '-privacy'); ?>" class="<?php echo esc_attr(
-    'text-sm leading-normal ' . $text_class,
-); ?>">
-          <?php echo wp_kses_post($privacy_label); ?>
-        </label>
-      </div>
-      <?php $error($form_id . '-privacy', 'privacy'); ?>
-    </div>
+    <?php
+    ob_start();
+    get_template_part('template-parts/base/checkbox', null, [
+        'config' => [
+            'id' => $form_id . '-privacy',
+            'name' => 'privacy',
+            'value' => '1',
+            'required' => true,
+            'checked' => $value('privacy') === '1',
+            'aria_invalid' => isset($errors['privacy']),
+            'class' => 'mt-0.5',
+            'attributes' => isset($errors['privacy'])
+                ? ['aria-describedby' => hengegroup_theme_field_error_id($form_id . '-privacy')]
+                : [],
+        ],
+    ]);
+    $privacy_control = sprintf(
+        '<div class="flex items-start gap-3">%1$s<label for="%2$s" class="%3$s">%4$s</label></div>',
+        (string) ob_get_clean(),
+        esc_attr($form_id . '-privacy'),
+        esc_attr('text-sm leading-normal ' . $text_class),
+        wp_kses_post($privacy_label),
+    );
+    $print_field([
+        'control_id' => $form_id . '-privacy',
+        'control' => $privacy_control,
+        'error' => (string) ($errors['privacy'] ?? ''),
+        'error_class' => $error_class,
+    ]);
+    ?>
 
     <div class="flex flex-col-reverse items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
       <p class="<?php echo esc_attr('text-sm ' . $muted_class); ?>"><?php esc_html_e(

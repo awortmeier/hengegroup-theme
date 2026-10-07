@@ -123,9 +123,8 @@ function hengegroup_theme_render_product_anwendung_badges(int $product_id): stri
 }
 
 /**
- * Renders the "Produkte"-block's product grid as `<ul class="contents">...</ul>` (same
- * `display: contents` technique as woocommerce/archive-product.php, see
- * template-parts/blocks/produkte/render.php's own header comment) -- each `<li>` is
+ * Renders the "Produkte"-block's product grid as `<ul class="contents">...</ul>` (`display:
+ * contents`, see template-parts/blocks/produkte/render.php's own header comment) -- each `<li>` is
  * woocommerce/content-product.php UNVERAENDERT, rendered via a dedicated `WP_Query` +
  * `wc_get_template_part('content', 'product')` loop over the given `$product_ids`, in the exact
  * order given (`orderby => post__in`, editors pick/reorder products manually, see

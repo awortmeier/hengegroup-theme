@@ -24,7 +24,7 @@ theme_directories=(
     "template-parts:template-parts"
     "languages:languages"
     "assets/images:assets/images"
-    # WooCommerce-Template-Overrides (woocommerce/content-product.php, archive-product.php, ...) --
+    # WooCommerce-Template-Overrides (woocommerce/content-product.php, single-product.php, ...) --
     # eine Unterordner-Ebene, deshalb NICHT vom *.php-Wildcard oben erfasst (nicht rekursiv).
     # Fehlte bis 2026-09-22, siehe docs/entscheidungen.md.
     "woocommerce:woocommerce"

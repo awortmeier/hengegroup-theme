@@ -425,6 +425,53 @@ final class CareersTest extends TestCase
         );
     }
 
+    public static function privateStorageDirProvider(): array
+    {
+        return [
+            'trailing slash' => [
+                '/var/www/vhosts/example.com/httpdocs/',
+                '/var/www/vhosts/example.com/hengegroup-bewerbungen',
+            ],
+            'no trailing slash' => [
+                '/dev.example.com/httpdocs',
+                '/dev.example.com/hengegroup-bewerbungen',
+            ],
+            'site root directly below filesystem root' => ['/httpdocs/', '/hengegroup-bewerbungen'],
+            'filesystem root' => ['/', ''],
+            'empty' => ['', ''],
+        ];
+    }
+
+    #[DataProvider('privateStorageDirProvider')]
+    public function test_private_storage_dir_is_sibling_of_site_root(
+        string $site_root,
+        string $expected,
+    ): void {
+        $this->assertSame($expected, hengegroup_theme_get_private_storage_dir($site_root));
+    }
+
+    public static function openBasedirProvider(): array
+    {
+        return [
+            'no restriction' => ['/srv/private/x', '', true],
+            'inside allowed dir' => ['/srv/site/httpdocs/x', '/srv/site/httpdocs/:/tmp/', true],
+            'outside allowed dirs' => ['/srv/site/private', '/srv/site/httpdocs/:/tmp/', false],
+            'second entry matches' => ['/tmp/upload', '/srv/site/httpdocs/:/tmp/', true],
+        ];
+    }
+
+    #[DataProvider('openBasedirProvider')]
+    public function test_is_path_within_open_basedir(
+        string $path,
+        string $open_basedir,
+        bool $expected,
+    ): void {
+        $this->assertSame(
+            $expected,
+            hengegroup_theme_is_path_within_open_basedir($path, $open_basedir),
+        );
+    }
+
     private function context(): array
     {
         return [

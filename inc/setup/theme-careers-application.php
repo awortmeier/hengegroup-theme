@@ -16,8 +16,9 @@ declare(strict_types=1);
 // inc/setup/theme-requests.php) -- es werden KEINE E-Mails versendet, weder an den Ansprechpartner
 // noch als Eingangsbestaetigung (explizite Vorgabe 2026-10-07, loest die fruehere Entscheidung
 // "Versand per E-Mail statt Speicherung" ab). Hochgeladene Dateien landen NICHT in der Mediathek
-// (dort waeren sie oeffentlich abrufbar), sondern in einem eigenen, per .htaccess gesperrten
-// Verzeichnis unter uploads/ mit zufaelligen Dateinamen; heruntergeladen werden sie nur ueber
+// (dort waeren sie oeffentlich abrufbar), sondern in einem eigenen Verzeichnis AUSSERHALB des
+// Web-Roots mit zufaelligen Dateinamen (siehe hengegroup_theme_get_application_storage_dir());
+// heruntergeladen werden sie nur ueber
 // hengegroup_theme_handle_application_file_download() mit Rechte- und Nonce-Pruefung. Beim
 // endgueltigen Loeschen einer Bewerbung werden ihre Dateien mitgeloescht; automatisch geloescht wird
 // nichts (explizite Vorgabe). Siehe docs/entscheidungen.md "Formulare: Eintraege im Backend statt
@@ -287,18 +288,32 @@ add_action(
 );
 
 /**
- * Geschuetztes Ablageverzeichnis fuer Bewerbungsunterlagen (uploads/hengegroup-bewerbungen/), wird
- * bei Bedarf angelegt und per .htaccess (Apache) gesperrt; index.php verhindert Verzeichnislisten.
- * Auf nginx greift .htaccess nicht -- dort schuetzen die zufaelligen Dateinamen, eine
- * Server-Regel fuer dieses Verzeichnis ist trotzdem empfehlenswert (siehe docs/to-do.md).
- * Leerer String, wenn das Verzeichnis nicht angelegt werden kann.
+ * Ablageverzeichnis fuer Bewerbungsunterlagen, bei Bedarf angelegt. Bevorzugt ausserhalb des
+ * Web-Roots (Geschwister-Ordner des Website-Stammverzeichnisses, z. B. neben `httpdocs/`) -- dort
+ * ist keine Datei per URL erreichbar, egal ob Apache oder nginx ausliefert (.htaccess allein
+ * schuetzt unter nginx nicht, der Dev-Server laeuft mit nginx). Nur wenn dieser Ordner nicht
+ * angelegt werden kann (nicht beschreibbar oder ausserhalb von `open_basedir` -- so z. B. auf dem
+ * Dev-Server, Plesk-Standard), faellt es auf uploads/hengegroup-bewerbungen/ zurueck (dann per
+ * .htaccess gesperrt; auf dev geprueft: Plesk reicht die Anfrage an Apache durch, Antwort 403). `.htaccess`/`index.php` werden in beiden Faellen zusaetzlich geschrieben.
+ * Filter `hengegroup_theme_application_storage_dir` setzt einen eigenen Pfad (docs/how-to.md).
+ * Leerer String, wenn kein Verzeichnis angelegt werden kann.
  */
 function hengegroup_theme_get_application_storage_dir(): string
 {
-    $uploads = wp_upload_dir(null, false);
-    $directory = trailingslashit((string) $uploads['basedir']) . 'hengegroup-bewerbungen';
+    if (!function_exists('get_home_path')) {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
 
-    if (!wp_mkdir_p($directory)) {
+    $private = hengegroup_theme_get_private_storage_dir(get_home_path());
+    $directory =
+        $private !== '' &&
+        hengegroup_theme_is_path_within_open_basedir($private, (string) ini_get('open_basedir')) &&
+        (is_dir($private) || wp_is_writable(dirname($private)))
+            ? $private
+            : hengegroup_theme_get_legacy_application_storage_dir();
+    $directory = (string) apply_filters('hengegroup_theme_application_storage_dir', $directory);
+
+    if ($directory === '' || !wp_mkdir_p($directory)) {
         return '';
     }
 
@@ -315,6 +330,46 @@ function hengegroup_theme_get_application_storage_dir(): string
     }
 
     return $directory;
+}
+
+/**
+ * Frueherer Ablageort unter uploads/ -- Rueckfall fuer hengegroup_theme_get_application_storage_dir()
+ * und Fundort fuer Dateien, die vor dem Umzug ausserhalb des Web-Roots gespeichert wurden.
+ */
+function hengegroup_theme_get_legacy_application_storage_dir(): string
+{
+    $uploads = wp_upload_dir(null, false);
+
+    return trailingslashit((string) $uploads['basedir']) .
+        HENGEGROUP_THEME_APPLICATION_STORAGE_FOLDER;
+}
+
+/**
+ * Vollstaendiger Pfad einer gespeicherten Bewerbungsdatei (Meta-Eintrag mit `file`), gesucht im
+ * aktuellen und im frueheren Ablageort. Leerer String, wenn die Datei nirgends liegt.
+ */
+function hengegroup_theme_get_application_file_path(array $file): string
+{
+    $name = wp_basename((string) ($file['file'] ?? ''));
+
+    if ($name === '') {
+        return '';
+    }
+
+    $directories = array_unique([
+        hengegroup_theme_get_application_storage_dir(),
+        hengegroup_theme_get_legacy_application_storage_dir(),
+    ]);
+
+    foreach ($directories as $directory) {
+        $path = trailingslashit($directory) . $name;
+
+        if ($directory !== '' && is_file($path)) {
+            return $path;
+        }
+    }
+
+    return '';
 }
 
 /**
@@ -431,13 +486,9 @@ function hengegroup_theme_handle_application_file_download(): void
         (array) get_post_meta($post_id, HENGEGROUP_THEME_REQUEST_META_PREFIX . 'files', true),
     );
     $file = $files[$index] ?? null;
-    $directory = hengegroup_theme_get_application_storage_dir();
-    $path =
-        is_array($file) && $directory !== ''
-            ? trailingslashit($directory) . wp_basename((string) ($file['file'] ?? ''))
-            : '';
+    $path = is_array($file) ? hengegroup_theme_get_application_file_path($file) : '';
 
-    if ($path === '' || !is_file($path)) {
+    if ($path === '') {
         wp_die(esc_html__('Datei nicht gefunden.', 'hengegroup-theme'), '', ['response' => 404]);
     }
 
@@ -471,19 +522,13 @@ function hengegroup_theme_action_before_delete_post_application_files(int $post_
         return;
     }
 
-    $directory = hengegroup_theme_get_application_storage_dir();
-
-    if ($directory === '') {
-        return;
-    }
-
     foreach (
         (array) get_post_meta($post_id, HENGEGROUP_THEME_REQUEST_META_PREFIX . 'files', true)
         as $file
     ) {
-        $path = trailingslashit($directory) . wp_basename((string) ($file['file'] ?? ''));
+        $path = is_array($file) ? hengegroup_theme_get_application_file_path($file) : '';
 
-        if (is_array($file) && is_file($path)) {
+        if ($path !== '') {
             wp_delete_file($path);
         }
     }

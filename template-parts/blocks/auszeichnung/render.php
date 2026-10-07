@@ -45,10 +45,23 @@ if ($image_id > 0) {
 }
 
 echo '<div class="flex min-w-0 flex-1 flex-col">';
-printf('<h3 class="mb-2 text-lg font-bold text-grey-dark">%s</h3>', esc_html($title));
+get_template_part('template-parts/base/typography', null, [
+    'config' => [
+        'variant' => 'body-base',
+        'tag' => 'h3',
+        'text' => $title,
+        'class' => 'mb-2 font-bold',
+    ],
+]);
 
 if ($text !== '') {
-    printf('<p class="mb-4 text-base leading-normal text-grey-dark">%s</p>', esc_html($text));
+    get_template_part('template-parts/base/typography', null, [
+        'config' => [
+            'variant' => 'body-sm',
+            'text' => $text,
+            'class' => 'mb-4',
+        ],
+    ]);
 }
 
 if ($button_text !== '' && $button_url !== '') {

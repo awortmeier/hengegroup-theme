@@ -10,7 +10,7 @@ declare(strict_types=1);
 // see docs/entscheidungen.md "Produktbox: WooCommerce-Template statt eigenem template-part").
 //
 // Keeps ONE of WC's own structural conventions: the `<li>` wrapper + wc_get_product_class() (WC's
-// default archive-product.php wraps loop items in `<ul class="products">`, so a valid child MUST
+// own archive-product.php wraps loop items in `<ul class="products">`, so a valid child MUST
 // be an `<li>`; other WC/plugin CSS or JS keyed off `.product`/`.type-product`/etc. still finds
 // them) -- but replaces WC's own default inner markup (price/rating/add-to-cart included) entirely
 // with this theme's own base components (button.php/badge.php/typography.php/image.php) via
@@ -35,8 +35,9 @@ declare(strict_types=1);
 // particular hook names.
 //
 // `col-span-12 sm:col-span-6 lg:col-span-3` on the `<li>` itself (explicit request 2026-09-22, see
-// docs/entscheidungen.md): archive-product.php renders the `<ul>` as `display: contents`, so these
-// `<li>`s become direct children of ITS parent's `.wrapper` 12-column grid -- 1/2/4 per row, same
+// docs/entscheidungen.md): hengegroup_theme_render_produkte_grid() renders the `<ul>` as
+// `display: contents`, so these `<li>`s become direct children of ITS parent's `.wrapper` 12-column
+// grid -- 1/2/4 per row, same
 // breakpoints the earlier standalone grid used. Harmless outside a 12-column grid parent
 // (col-span-* is a no-op without a CSS grid ancestor), so this stays safe for any other WC loop
 // context (related products, [products] shortcode, ...) that doesn't use `.wrapper`.

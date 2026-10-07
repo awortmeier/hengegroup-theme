@@ -11,8 +11,8 @@ declare(strict_types=1);
 //                                "Kontakt"), KEIN WooCommerce-Shop-Archiv -- gleiches Muster wie
 //                                /karriere/. Deshalb liefert der Filter
 //                                `woocommerce_get_shop_page_id` -1: sonst wuerde WooCommerce die
-//                                Seite (falls sie als Shop-Seite eingetragen ist) per
-//                                archive-product.php kapern und die Bloecke ignorieren.
+//                                Seite (falls sie als Shop-Seite eingetragen ist) mit
+//                                seinem Archiv-Template kapern und die Bloecke ignorieren.
 //   /produkte/<produkt>/      -> Produktdetailseite (woocommerce/single-product.php). Rewrite-Slug
 //                                des Post-Types `product` per Filter statt ueber die
 //                                WooCommerce-Permalink-Einstellung, damit die Struktur im Code
@@ -20,9 +20,10 @@ declare(strict_types=1);
 //   /anwendungen/             -> normale Seite aus Bloecken (Buehne, "Anwendungsgruppe", "Kontakt");
 //                                Anwendungen haben keine eigenen Seiten (explizite Vorgabe).
 //
-// Produktkategorie-/Schlagwort-Archive und das Post-Type-Archiv gibt es nicht als eigene Seiten:
-// sie leiten per 301 auf die Produktuebersicht weiter (Kategorien direkt auf ihre Sektion,
-// `#<kategorie-slug>`, siehe Block "Produktkategorie").
+// Produkt-Archive gibt es nicht als eigene Seiten (deshalb auch kein woocommerce/archive-product.php):
+// das Post-Type-Archiv und JEDE Produkt-Taxonomie (Kategorien, Schlagwoerter, Marken
+// `product_brand`, oeffentliche Attribute) leiten per 301 auf die Produktuebersicht weiter
+// (Kategorien direkt auf ihre Sektion, `#<kategorie-slug>`, siehe Block "Produktkategorie").
 
 /**
  * Taxonomie "Anwendungen" am Produkt, hierarchisch: Ebene 1 = Gruppen (Sektionen der Seite
@@ -174,8 +175,11 @@ function hengegroup_theme_filter_request_product_child_pages(array $query_vars):
 add_filter('request', 'hengegroup_theme_filter_request_product_child_pages');
 
 /**
- * 301 von Produktkategorie-/Schlagwort-Archiven und dem Produkt-Archiv auf die Produktuebersicht --
- * Kategorien direkt auf ihre Sektion (`#<slug>`, Anker des Blocks "Produktkategorie").
+ * 301 von allen Produkt-Taxonomie-Archiven und dem Produkt-Archiv auf die Produktuebersicht --
+ * Kategorien direkt auf ihre Sektion (`#<slug>`, Anker des Blocks "Produktkategorie"). Alle
+ * Taxonomien am Post-Type `product` statt einer festen Liste, damit auch spaeter hinzukommende
+ * (z. B. WooCommerce-Marken `product_brand`, oeffentliche Attribute) nicht auf WooCommerces
+ * ungestyltem Standard-Archiv landen.
  */
 function hengegroup_theme_action_template_redirect_product_archives(): void
 {
@@ -187,7 +191,7 @@ function hengegroup_theme_action_template_redirect_product_archives(): void
         exit();
     }
 
-    if (is_tax('product_tag') || is_post_type_archive('product')) {
+    if (is_tax(get_object_taxonomies('product')) || is_post_type_archive('product')) {
         wp_safe_redirect(hengegroup_theme_get_products_page_url(), 301);
         exit();
     }
@@ -195,13 +199,12 @@ function hengegroup_theme_action_template_redirect_product_archives(): void
 add_action('template_redirect', 'hengegroup_theme_action_template_redirect_product_archives');
 
 /**
- * Produktkategorien/-schlagwoerter nicht in der XML-Sitemap -- es gibt keine eigenen Seiten dafuer.
+ * Keine Produkt-Taxonomien in der XML-Sitemap -- es gibt keine eigenen Seiten dafuer (siehe
+ * Weiterleitung oben).
  */
 function hengegroup_theme_filter_wp_sitemaps_taxonomies_products(array $taxonomies): array
 {
-    unset($taxonomies['product_cat'], $taxonomies['product_tag']);
-
-    return $taxonomies;
+    return array_diff_key($taxonomies, array_flip(get_object_taxonomies('product')));
 }
 add_filter('wp_sitemaps_taxonomies', 'hengegroup_theme_filter_wp_sitemaps_taxonomies_products');
 

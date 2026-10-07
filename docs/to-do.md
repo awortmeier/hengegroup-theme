@@ -1,14 +1,14 @@
 # To-Do
 
-Stand: 2026-08-07. Bestandsaufnahme, was in diesem Base Theme (als Vorlage fuer alle
+Stand: 2026-10-08. Bestandsaufnahme, was in diesem Base Theme (als Vorlage fuer alle
 zukuenftigen WordPress-Themes) noch fehlt, unausgereift ist oder bewusste Luecken hat, die frueher
 oder spaeter geschlossen werden sollten. Kein Auftrag, alles sofort umzusetzen — eine
 Priorisierungs-Grundlage. Bezieht sich durchgehend auf `CLAUDE.md`/`README.md`, nicht als Ersatz
 dafuer.
 
-Einordnung nach dem Phasenmodell aus `CLAUDE.md`: einiges hier gehoert in laufende Phase 1, einiges
-ist bewusst erst Phase 2/3-Thema und nur als Vormerkung gedacht, ein Teil liegt komplett ausserhalb
-des Drei-Phasen-Modells (Prozess/Tooling/WordPress-Grundgerüst).
+Einordnung nach dem Phasenmodell aus `CLAUDE.md`: Phase 1 ist abgeschlossen, aktuell laeuft
+Phase 2; einiges hier gehoert dorthin, einiges ist Phase-3-Vormerkung, ein Teil liegt komplett
+ausserhalb des Drei-Phasen-Modells (Prozess/Tooling/WordPress-Grundgerüst).
 
 Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als neuer Eintrag nach
 `docs/entscheidungen.md`; der Eintrag hier wird wie bisher als geloest markiert/entfernt (siehe
@@ -19,7 +19,7 @@ Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als ne
 | Prio    | Bereich                                                           |
 | ------- | ----------------------------------------------------------------- |
 | Mittel  | Kein automatisiertes a11y-Check trotz starker a11y-Kultur im Code |
-| Niedrig | `prefers-reduced-motion`-Token                                    |
+| Niedrig | Reduced-Motion-Pfad fuer Phase-2-Animationen                      |
 
 ---
 
@@ -31,16 +31,20 @@ Sobald ein hier gelisteter Punkt entschieden ist, wandert die Begruendung als ne
   Regel 10, `hengegroup_theme_warn_missing_aria_label()`) — das ist aktuell komplett auf manuelle/Agent-gestuetzte
   Review angewiesen. Ein automatisierter Check (`@axe-core/playwright` gegen die Showcase-Seite,
   gehostet ueber `@wordpress/env`/`wp-env` in CI) wuerde genau diese Investition absichern.
-- **Keine visuelle Regressionstestung.** Aktuell irrelevant (Phase 1 hat kein Styling), wird aber
-  mit Phase-2-Start relevant — sobald Tailwind-Klassen dazukommen, lohnt sich ein Snapshot-Tool
-  (Playwright) gegen genau dieselbe Showcase-Seite/denselben `wp-env`-Aufbau wie der a11y-Punkt
-  oben, nicht separat aufsetzen.
+- **Keine visuelle Regressionstestung.** Seit Phase 2 relevant: Base-Komponenten und Bloecke tragen
+  jetzt echtes Styling, Aenderungen daran fallen bisher nur beim manuellen Ansehen auf. Ein
+  Snapshot-Tool (Playwright) gegen genau dieselbe Showcase-Seite/denselben `wp-env`-Aufbau wie der
+  a11y-Punkt oben, nicht separat aufsetzen.
 
 ## 2. Barrierefreiheit (Ergaenzung zu docs/neue-komponente-erstellen.md Regel 5)
 
-- **Kein `prefers-reduced-motion`-Token in `tokens.css`.** Aktuell irrelevant, da Phase 1 keine
-  Animationen enthaelt (Regel 1) — sobald Phase 2 rein optische Transitions/Animationen einfuehrt,
-  sollte von Anfang an ein Reduced-Motion-Pfad mitgedacht werden, nicht nachtraeglich.
+- **Kein durchgaengiger Reduced-Motion-Pfad.** Phase 2 hat viele rein optische Transitions/
+  Animationen eingefuehrt (`transition-*`, Hover-Verschiebungen, Toast-Laufleiste, ...), fast
+  ueberall ohne `motion-reduce:`-Variante. Nur der Autoplay der Buehne beachtet
+  `prefers-reduced-motion` bisher (assets/js/template-parts/blocks/buehne.js). Offen: entweder
+  zentral (z. B. globale Regel in `app.css`, die Transitions/Animationen unter
+  `prefers-reduced-motion: reduce` abschaltet) oder je Komponente per `motion-reduce:`
+  nachziehen.
 
 ## 3. Phase 2 / Phase 3 Vorbereitung
 
@@ -86,10 +90,13 @@ Offen:
 - **Datenschutzerklaerung**: Bewerbungen und Produktanfragen (Speicherung im Backend, unbefristete
   Aufbewahrung, wer Zugriff hat) in der Datenschutzerklaerung beschreiben und die Seite unter
   Einstellungen > Datenschutz als Datenschutzseite setzen, damit die Checkboxen darauf verlinken.
-- **Bewerbungsdateien auf nginx schuetzen**: uploads/hengegroup-bewerbungen/ ist per `.htaccess`
-  gesperrt; laeuft der Server (auch) mit nginx als Auslieferer, greift das nicht -- dann eine
-  `location`-Regel ergaenzen (Plesk: "Zusaetzliche nginx-Anweisungen"). Pruefen: Datei-URL direkt
-  aufrufen, es muss 403 kommen.
+- **Bewerbungsunterlagen ausserhalb des Web-Roots** (optional): Das Theme legt sie dort ab, sobald
+  PHP darf; auf dev verhindert das Plesks `open_basedir` (nur `httpdocs/`), dann gilt die
+  `.htaccess`-Sperre unter uploads/ (auf dev geprueft: 403). Auf jeder neuen Instanz (v. a. live)
+  einmal pruefen: Testbewerbung mit Datei, Datei-URL unter
+  `wp-content/uploads/hengegroup-bewerbungen/` direkt aufrufen, es muss 403/404 kommen. Fuer den
+  Ordner ausserhalb in Plesk `open_basedir` auf `{WEBSPACEROOT}` erweitern. Siehe
+  `docs/entscheidungen.md` "Bewerbungsunterlagen ausserhalb des Web-Roots".
 - **Google Indexing API** (optional): neue/geaenderte/abgelaufene Stellen aktiv melden statt auf den
   naechsten Crawl zu warten; braucht ein Google-Cloud-Service-Konto.
 - **Einrichtung nach dem Deploy**: Seite "Karriere" (Slug `karriere`) mit Block "Offene Stellen"

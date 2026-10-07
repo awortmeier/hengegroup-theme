@@ -141,6 +141,20 @@ function hengegroup_theme_render_icon(array $icon_config): string
 }
 
 /**
+ * Renders a nested template-parts/base/typography.php call and returns its output as a string, for
+ * markup assembled as strings (sprintf templates in render helpers/blocks) -- same idiom as
+ * hengegroup_theme_render_icon()/hengegroup_theme_render_image(), instead of a hand-written
+ * `<h3 class="text-[19px] ...">` that bypasses the typography scale.
+ */
+function hengegroup_theme_render_typography(array $typography_config): string
+{
+    ob_start();
+    get_template_part('template-parts/base/typography', null, ['config' => $typography_config]);
+
+    return (string) ob_get_clean();
+}
+
+/**
  * Renders a nested template-parts/base/image.php call and returns its output as a string, for
  * components that need to know whether an image actually resolved (image.php renders nothing for
  * a missing/invalid file -- name/set is checked via is_file(), see that file's own header comment)
@@ -202,6 +216,69 @@ function hengegroup_theme_field_describedby(
     }
 
     return implode(' ', $ids);
+}
+
+/**
+ * Renders one form field through the Field family instead of hand-built wrapper/error markup:
+ * template-parts/base/field/field.php wrapping field-label.php + the caller's pre-rendered control +
+ * field-error.php (only when `error` is non-empty). Returns the HTML (buffered), so callers can
+ * echo it or place it in a grid. The control itself stays the caller's job (input.php/
+ * native-select.php/textarea.php/...), including `aria_invalid` and `aria-describedby` --
+ * hengegroup_theme_field_error_id($control_id) is the id field-error.php renders here (via its
+ * `for`), same wiring as described in field.php's header comment.
+ *
+ * Supported $field keys:
+ *   control_id    string   the control's `id` (label `for`, error id)
+ *   control       string   pre-rendered control HTML
+ *   label         string   visible label text (plain text, escaped); '' when `control` already
+ *                          brings its own label (e.g. a custom file picker)
+ *   error         string   error message; '' = valid (no field-error.php, no data-invalid)
+ *   label_class   string   appended to field-label.php's classes
+ *   error_class   string   appended to field-error.php's classes
+ *   class         string   appended to field.php's classes
+ */
+function hengegroup_theme_render_form_field(array $field): string
+{
+    $control_id = (string) ($field['control_id'] ?? '');
+    $label = trim((string) ($field['label'] ?? ''));
+    $error = trim((string) ($field['error'] ?? ''));
+
+    ob_start();
+
+    if ($label !== '') {
+        get_template_part('template-parts/base/field/field-label', null, [
+            'config' => [
+                'for' => $control_id,
+                'text' => $label,
+                'class' => (string) ($field['label_class'] ?? ''),
+            ],
+        ]);
+    }
+
+    echo (string) ($field['control'] ?? ''); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pre-rendered by base components.
+
+    if ($error !== '') {
+        get_template_part('template-parts/base/field/field-error', null, [
+            'config' => [
+                'for' => $control_id,
+                'text' => $error,
+                'class' => (string) ($field['error_class'] ?? ''),
+            ],
+        ]);
+    }
+
+    $content = (string) ob_get_clean();
+
+    ob_start();
+    get_template_part('template-parts/base/field/field', null, [
+        'config' => [
+            'content' => $content,
+            'invalid' => $error !== '',
+            'class' => (string) ($field['class'] ?? ''),
+        ],
+    ]);
+
+    return (string) ob_get_clean();
 }
 
 /**

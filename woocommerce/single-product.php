@@ -14,7 +14,11 @@ declare(strict_types=1);
 //   3. Anwendungsbereiche: zugeordnete Anwendungen (Taxonomie `produkt_anwendung`) als Karten, bewusst
 //      OHNE Link (explizite Vorgabe: Produkte zaehlen Anwendungen nur auf; die Seite "Anwendungen"
 //      verlinkt umgekehrt zu Produkten).
-//   4. Downloads (Tab "Technische Daten", Dateien aus der Mediathek; Format/Groesse automatisch).
+//   4. Downloads (Tab "Technische Daten", Dateien aus der Mediathek; Format/Groesse automatisch):
+//      je Datei template-parts/base/attachment/attachment.php (Icon, Titel, Format/Groesse,
+//      Download-Button als Icon-Button, Button-Text aus dem Backend als aria-label), der
+//      Beschreibungstext darunter per typography.php -- attachment.php hat dafuer nur eine
+//      einzeilige, abgeschnittene Beschreibungszeile (explizite Wahl 2026-10-08).
 //   5. Ansprechpartner + Anfrageformular (#kontakt): Ansprechpartner der Produktkategorie, sonst
 //      Standard aus Produkte > Einstellungen; Anfrage landet unter Produkte > Produktanfragen.
 //   6. Verwandte Produkte: WooCommerce "Up-Sells" (im Backend "Verwandte Produkte"), mit
@@ -131,10 +135,15 @@ while (have_posts()):
                     ? 'col-span-12 lg:col-span-6'
                     : 'col-span-12 lg:col-span-8',
             ); ?>">
-              <h2 class="mb-6 text-[26px] font-bold text-grey-light"><?php esc_html_e(
-                  'Chemische Analyse (typisch)',
-                  'hengegroup-theme',
-              ); ?></h2>
+              <?php get_template_part('template-parts/base/typography', null, [
+                  'config' => [
+                      'variant' => 'body-lg',
+                      'tag' => 'h2',
+                      'text' => __('Chemische Analyse (typisch)', 'hengegroup-theme'),
+                      'color' => 'light',
+                      'class' => 'mb-6 font-bold',
+                  ],
+              ]); ?>
               <dl>
                 <?php foreach ($data['analysis'] as $row): ?>
                   <div class="flex justify-between gap-6 border-b border-grey-light/15 py-3.5 text-[17px] text-grey-light">
@@ -154,10 +163,15 @@ while (have_posts()):
                     ? 'col-span-12 lg:col-span-6'
                     : 'col-span-12 lg:col-span-8',
             ); ?>">
-              <h2 class="mb-6 text-[26px] font-bold text-grey-light"><?php esc_html_e(
-                  'Lieferbare Körnungen',
-                  'hengegroup-theme',
-              ); ?></h2>
+              <?php get_template_part('template-parts/base/typography', null, [
+                  'config' => [
+                      'variant' => 'body-lg',
+                      'tag' => 'h2',
+                      'text' => __('Lieferbare Körnungen', 'hengegroup-theme'),
+                      'color' => 'light',
+                      'class' => 'mb-6 font-bold',
+                  ],
+              ]); ?>
               <ul>
                 <?php foreach ($data['grain_sizes'] as $grain_size): ?>
                   <li class="border-b border-grey-light/15 py-3.5 text-[17px] text-grey-light"><?php echo esc_html(
@@ -196,50 +210,47 @@ while (have_posts()):
             <?php $section_heading(__('Downloads', 'hengegroup-theme')); ?>
             <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <?php foreach ($data['downloads'] as $download): ?>
-                <li class="flex flex-col rounded-2xl bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-                  <div class="mb-3.5 flex items-center gap-3.5">
-                    <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-grey-light text-grey-dark">
-                      <?php $file_icon = hengegroup_theme_render_icon([
-                          'name' => 'file',
-                          'set' => 'lucide',
-                          'class' => 'size-5',
-                      ]); ?>
-                      <?php printf(
-                          '%s',
-                          $file_icon, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                      ); ?>
-                    </span>
-                    <div>
-                      <h3 class="text-[17px] leading-snug font-extrabold text-grey-dark"><?php echo esc_html(
-                          $download['title'],
-                      ); ?></h3>
-                      <?php if ($download['meta'] !== ''): ?>
-                        <p class="text-[13px] text-grey-dark/60"><?php echo esc_html(
-                            $download['meta'],
-                        ); ?></p>
-                      <?php endif; ?>
-                    </div>
-                  </div>
-                  <?php if ($download['description'] !== ''): ?>
-                    <p class="mb-5 text-[15px] leading-normal text-grey-dark"><?php echo esc_html(
-                        $download['description'],
-                    ); ?></p>
-                  <?php endif; ?>
-                  <div class="mt-auto">
-                    <?php get_template_part('template-parts/base/button', null, [
-                        'config' => [
-                            'text' =>
-                                $download['cta'] !== ''
-                                    ? $download['cta']
-                                    : __('Herunterladen', 'hengegroup-theme'),
-                            'href' => $download['url'],
-                            'variant' => 'grey-dark',
-                            'full_width' => true,
-                            'class' => '!font-semibold',
-                            'attributes' => ['download' => true],
-                        ],
-                    ]); ?>
-                  </div>
+                <?php
+                ob_start();
+                get_template_part('template-parts/base/button', null, [
+                    'config' => [
+                        'href' => $download['url'],
+                        'variant' => 'grey-dark',
+                        'size' => 'icon-lg',
+                        'icon' => ['name' => 'download', 'set' => 'lucide'],
+                        'aria_label' =>
+                            $download['cta'] !== ''
+                                ? $download['cta']
+                                : sprintf(
+                                    /* translators: %s: download title. */
+                                    __('%s herunterladen', 'hengegroup-theme'),
+                                    $download['title'],
+                                ),
+                        'attributes' => ['download' => true],
+                    ],
+                ]);
+                $download_action = (string) ob_get_clean();
+                ?>
+                <li class="flex flex-col gap-3">
+                  <?php get_template_part('template-parts/base/attachment/attachment', null, [
+                      'config' => [
+                          'title' => $download['title'],
+                          'description' => $download['meta'],
+                          'media' => [
+                              'icon' => ['name' => 'file', 'set' => 'lucide', 'class' => 'size-5'],
+                          ],
+                          'actions' => $download_action,
+                      ],
+                  ]); ?>
+                  <?php if ($download['description'] !== '') {
+                      get_template_part('template-parts/base/typography', null, [
+                          'config' => [
+                              'variant' => 'body-sm',
+                              'text' => $download['description'],
+                              'class' => 'px-1',
+                          ],
+                      ]);
+                  } ?>
                 </li>
               <?php endforeach; ?>
             </ul>

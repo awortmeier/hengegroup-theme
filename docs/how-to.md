@@ -207,6 +207,25 @@ in `inc/setup/theme-careers-seo.php`.
   Sanitizing und Footer-Ausgabe laufen automatisch mit. Das Tabler-Icon danach per
   `pnpm icons:tabler` synchronisieren (siehe "Ein weiteres Icon ergaenzen").
 
+### Ablageort der Bewerbungsunterlagen aendern
+
+Standard ist ein Ordner `hengegroup-bewerbungen` neben dem Website-Stammverzeichnis, also
+ausserhalb des Web-Roots (siehe `docs/entscheidungen.md` "Bewerbungsunterlagen ausserhalb des
+Web-Roots"). Ist er nicht beschreibbar, faellt das Theme auf uploads/hengegroup-bewerbungen/
+zurueck. Fuer einen anderen Pfad (z. B. einen gemounteten, gesicherten Speicher):
+
+```php
+add_filter("hengegroup_theme_application_storage_dir", function (string $directory): string {
+    return "/pfad/ausserhalb/des/webroots/bewerbungen";
+});
+```
+
+- Der Pfad sollte nicht per URL erreichbar sein; `.htaccess`/`index.php` legt das Theme zwar an,
+  sie schuetzen aber nur unter Apache.
+- Bereits gespeicherte Dateien werden nicht verschoben. Gefunden werden nur Dateien im aktuellen
+  Ordner und am alten Ort unter uploads/ -- bei einem Wechsel die vorhandenen Dateien von Hand
+  mitnehmen.
+
 ### SVG-Upload-Berechtigung anpassen
 
 `inc/setup/theme-svg-support.php` erlaubt SVG-Uploads standardmaessig nur fuer Nutzer mit

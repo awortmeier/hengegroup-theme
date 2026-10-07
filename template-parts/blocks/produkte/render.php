@@ -19,11 +19,9 @@ declare(strict_types=1);
 // .wrapper"). Kopfzeile (Ueberschrift/Text/Button) bekommt trotzdem `col-span-12` (volle Zeile,
 // gleiche Konvention wie jeder andere Block-Kopf) und wird per `max-w-2xl` optisch schmaler
 // gehalten -- ein Teil-`col-span` liesse die erste Produktkarte per CSS-Grid-Auto-Placement in die
-// auf dieser Zeile noch freien Spalten rutschen, statt in einer eigenen Zeile darunter zu beginnen
-// (gleiche Falle, die archive-product.php mit seinem eigenen vollspannigen Titel-`<div>` vor dem
-// Produkt-Loop vermeidet). Die Produktkarten selbst liegen als `<ul class="contents">`
-// (`display: contents`) direkt als Kind von `.wrapper` -- dieselbe Technik wie archive-product.php,
-// damit content-product.php's eigene `col-span-12 sm:col-span-6 lg:col-span-3` je `<li>` direkt
+// auf dieser Zeile noch freien Spalten rutschen, statt in einer eigenen Zeile darunter zu beginnen.
+// Die Produktkarten selbst liegen als `<ul class="contents">` (`display: contents`) direkt als
+// Kind von `.wrapper`, damit content-product.php's eigene `col-span-12 sm:col-span-6 lg:col-span-3` je `<li>` direkt
 // gegen DIESES `.wrapper`-Grid greift statt gegen ein zweites, verschachteltes.
 //
 // Dunkler Hintergrund (`bg-grey-dark`, siehe tokens.css) + `color: 'light'`-Typography -- gleiches

@@ -51,7 +51,7 @@ function Edit({ attributes, setAttributes }) {
                 </ToolbarGroup>
             </BlockControls>
             <section {...blockProps}>
-                <h2 className="mb-3 text-xl font-bold">{TYPES[type] || type}</h2>
+                <h2 className="mb-3 text-2xl leading-normal font-bold">{TYPES[type] || type}</h2>
                 {type === "benefits" && (
                     <p className="mb-2 text-sm text-neutral-500">
                         {__(

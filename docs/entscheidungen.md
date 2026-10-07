@@ -21,6 +21,85 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Formulare, Ueberschriften, Footer-Icons auf Base-Komponenten umgestellt (2026-10-08)
+
+Ausloeser: Audit (`docs/audit-2026-10-08.md` Punkte 4-6).
+
+- **Formularfelder ueber die Field-Familie** (field.php + field-label.php + field-error.php) statt
+  eigener Wrapper-/Fehler-Closures in beiden Formularen. Gebuendelt in
+  `hengegroup_theme_render_form_field()` (`inc/template-parts/helpers.php`), damit Anfrage- und
+  Bewerbungsformular denselben Aufbau nutzen. Folgen: Abstand Label/Feld ist field.php's `gap-3`
+  (vorher 6-8 px), Fehlermeldungen tragen `role="alert"`. Ausnahmen mit eigenem `<label>`: die
+  Datenschutz-Checkbox (Text mit Link, label.php escaped Text) und die Datei-Felder (als Button
+  gestaltetes Label).
+- **Ueberschriften/Texte ueber typography.php** statt eigener Pixelgroessen
+  (`text-[19px]`/`[21px]`/`[22px]`/`[26px]`, ...): auf die naechste Stufe der festen Skala gelegt
+  (19 px -> `body-base`/18, 21-26 px -> `body-lg`/24, 404-H1 `headline-sm` + `md:text-5xl` statt
+  `clamp()`), Gewicht/Schrift per `class`. Bewusst kein neuer Varianten-Satz in typography.php --
+  das haette die Skala nur um Einzelwerte aus dem Design aufgeweicht. Neuer Helfer
+  `hengegroup_theme_render_typography()` fuer String-Templates (gleiches Muster wie
+  `hengegroup_theme_render_icon()`). Kontaktkarten-Titel bleiben vorerst, sie werden mit Punkt 7
+  (gemeinsame Kontaktkarte) umgebaut.
+- **Social-Media-Icons im Footer ueber button.php** (`ghost`, `icon-lg`, durchscheinender Grund per
+  `class`). Hover ist ghost's eigener (helle Flaeche, dunkles Icon) statt der gruenen Flaeche aus
+  dem Design -- eine nur fuer den Footer gedachte Button-Variante ist den API-Zuwachs nicht wert.
+  Groesse 40 statt 36 px (`icon-lg`). Nur gueltige http(s)-URLs erzeugen einen Button.
+
+### Produktdetailseite: Downloads ueber attachment.php, Anwendungs-Chips ueber badge.php (2026-10-08)
+
+Ausloeser: Audit (`docs/audit-2026-10-08.md` Punkte 2 und 3) -- beide waren eigenes Markup, obwohl
+die Base-Komponente existiert.
+
+- **Downloads = attachment.php + Beschreibung darunter** (explizite Wahl aus drei Varianten):
+  Icon, Titel, Format/Groesse und Download-Button kommen aus attachment.php. Der Button ist ein
+  Icon-Button (attachment.php setzt Aktionen rechts neben den Titel, ein Text-Button wuerde den
+  Titel abschneiden); der im Backend gepflegte Button-Text bleibt als `aria-label` erhalten. Der
+  Beschreibungstext steht per typography.php unter der Zeile, weil attachment.php nur eine
+  einzeilige, abgeschnittene Beschreibungszeile hat -- dort steht Format/Groesse.
+- **Anwendungs-Chips = badge.php `outline` mit `href`**: gleiche Optik wie die Anwendungs-Badges in
+  der Produktbox statt eines eigenen Pill-Links mit Hex-Rahmenfarbe; Hover kommt aus badge.php.
+
+### Bewerbungsunterlagen ausserhalb des Web-Roots (2026-10-08)
+
+Ausloeser: Audit (`docs/audit-2026-10-08.md` Punkt 13) -- der Dev-Server antwortet mit
+`server: nginx`, die bisherige `.htaccess`-Sperre von uploads/hengegroup-bewerbungen/ greift dort
+nicht zuverlaessig.
+
+- **Ablage neben dem Website-Stammverzeichnis** (`get_home_path()` + `..`, z. B. neben
+  `httpdocs/`) statt unter uploads/ -- damit ist keine Datei per URL erreichbar, unabhaengig vom
+  Webserver und ohne Server-Konfiguration pro Instanz (eine nginx-`location`-Regel muesste auf
+  jeder Instanz von Hand gepflegt werden).
+- **Rueckfall auf uploads/**, wenn der Ordner darueber nicht beschreibbar ist oder ausserhalb von
+  `open_basedir` liegt (vorher geprueft, sonst eine PHP-Warnung je Aufruf); `.htaccess`/`index.php`
+  werden in beiden Faellen weiter geschrieben. **Auf dem Dev-Server greift dieser Rueckfall**:
+  Plesk beschraenkt `open_basedir` standardmaessig auf `httpdocs/`. Dort geprueft (2026-10-08,
+  Testbewerbung mit PDF): Plesk reicht die Anfrage von nginx an Apache durch, die `.htaccess`
+  greift, die Datei-URL liefert 403. Fuer den Ordner ausserhalb muesste `open_basedir` in Plesk
+  (PHP-Einstellungen) auf `{WEBSPACEROOT}` erweitert werden -- optional, siehe `docs/to-do.md`.
+- **Dateien am alten Ort werden weiter gefunden** (Download und Loeschen suchen in beiden
+  Verzeichnissen), es ist keine Migration noetig. Gespeichert wird nur der Dateiname, nicht der
+  Pfad -- deshalb funktioniert das auch, wenn PHP-FPM und wp-cli (Chroot) unterschiedliche
+  absolute Pfade sehen.
+- Filter `hengegroup_theme_application_storage_dir` fuer einen eigenen Pfad (`docs/how-to.md`).
+
+Details: Kopfkommentar von `hengegroup_theme_get_application_storage_dir()`
+(`inc/setup/theme-careers-application.php`).
+
+### Kein woocommerce/archive-product.php, Weiterleitung fuer alle Produkt-Taxonomien (2026-10-08)
+
+Ausloeser: Audit (`docs/audit-2026-10-08.md` Punkt 19). Das Override war nur noch ueber Archive
+erreichbar, die laut "Produktbereich: URLs" gar nicht existieren sollen -- bis auf eine Luecke: die
+Weiterleitung kannte nur `product_cat`/`product_tag`, waehrend WooCommerce inzwischen die oeffentliche
+Taxonomie `product_brand` (Marken) mitbringt.
+
+- **Weiterleitung und Sitemap-Ausschluss gelten jetzt fuer jede Taxonomie am Post-Type `product`**
+  (`get_object_taxonomies('product')`) statt einer festen Liste -- neue Taxonomien von WooCommerce
+  oder Plugins landen damit automatisch auf der Produktuebersicht statt auf einem ungestylten
+  Archiv.
+- **archive-product.php entfernt**: ohne erreichbares Archiv toter Code. Sollte es spaeter einen
+  Shop geben (siehe `docs/to-do.md` "Bestellbarkeit"), wird es neu nach dem dann gueltigen Design
+  gebaut.
+
 ### Karriere-Taxonomien: ungenutzte Felder entfernt, Unternehmensseite statt Website (2026-10-07)
 
 Explizite Nachfrage ("alle Felder entfernen, die nicht benoetigt werden"):
@@ -110,7 +189,8 @@ Auf expliziten Wunsch der komplette Produktbereich nach den Designs "Produktuebe
   von Hand gesetzt. Vorher lagen sie unter /produkt/<slug>/ (nur Testdaten, keine Weiterleitung
   noetig). Unterseiten von /produkte/ biegt ein `request`-Filter wie bei Karriere um.
 - **Keine Kategorie-/Schlagwort-/Shop-Archive**: 301 auf die Uebersicht, Kategorien direkt auf ihre
-  Sektion (`#<slug>`, Anker des Blocks "Produktkategorie"); raus aus der XML-Sitemap.
+  Sektion (`#<slug>`, Anker des Blocks "Produktkategorie"); raus aus der XML-Sitemap. Seit
+  2026-10-08 fuer jede Produkt-Taxonomie, siehe "Kein woocommerce/archive-product.php".
 
 ### Theme-/Plugin-Datei-Editor auch im normalen Site-Backend entfernt (2026-10-07)
 
@@ -138,9 +218,10 @@ Bewerbungsformular den Punkt "Versand per E-Mail statt Speicherung in WordPress"
   Beitrags-Rechte, Anlegen im Backend gesperrt (`create_posts => do_not_allow`).
 - **Nie automatisch loeschen** (explizite Vorgabe); beim endgueltigen Loeschen einer Bewerbung
   werden ihre Dateien mitgeloescht.
-- **Bewerbungsunterlagen nicht in der Mediathek** (dort oeffentlich abrufbar), sondern in
-  uploads/hengegroup-bewerbungen/ mit Zufallsnamen und `.htaccess`-Sperre; Download nur ueber
-  admin-post.php mit Rechte- und Nonce-Pruefung.
+- **Bewerbungsunterlagen nicht in der Mediathek** (dort oeffentlich abrufbar), sondern in einem
+  eigenen Ordner mit Zufallsnamen (seit 2026-10-08 ausserhalb des Web-Roots, siehe
+  "Bewerbungsunterlagen ausserhalb des Web-Roots"); Download nur ueber admin-post.php mit Rechte-
+  und Nonce-Pruefung.
 - **Gemeinsamer Unterbau** fuer Spam-Schutz und Fehler-Zwischenspeicher
   (`hengegroup_theme_is_form_bot()`, `hengegroup_theme_store_form_state()`,
   `hengegroup_theme_read_form_state()`), statt ihn im neuen Formular zu kopieren.
