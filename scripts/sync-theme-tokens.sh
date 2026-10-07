@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# macOS/Linux-Pendant zu sync-theme-tokens.ps1 (siehe docs/entscheidungen.md). Spiegelt die
-# Marken-Akzentfarbe aus assets/css/tokens.css (--color-henge-green) in theme.json
+# Spiegelt die Marken-Akzentfarbe aus assets/css/tokens.css (--color-henge-green) in theme.json
 # (settings.color.palette "accent"-Eintrag, Label "Henge Green" + styles.elements.link.color.text).
 # tokens.css ist die Single Source of Truth (siehe deren Kopfkommentar) — theme.json kann sie nicht
 # importieren (reines JSON, kein CSS-Pipeline-Zugriff), daher dieser Sync per Skript statt von Hand.

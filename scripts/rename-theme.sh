@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #
-# macOS/Linux-Pendant zu rename-theme.ps1 (siehe docs/entscheidungen.md). Automatisiert Schritt 2
-# (und optional 3/4) von "Neues Projekt aus dieser Vorlage starten" in README.md: benennt Slug/
-# Text-Domain und PHP-Funktions-Praefix im gesamten Code um.
+# Automatisiert Schritt 2 (und optional 3/4) von "Neues Projekt aus dieser Vorlage starten" in
+# README.md: benennt Slug/Text-Domain und PHP-Funktions-Praefix im gesamten Code um.
 #
 # --new-slug <slug>        Neuer kebab-case Slug, z. B. "acme-shop". Ersetzt jedes Vorkommen von
 #                           --old-slug (Text-Domain, Enqueue-Handles, i18n-Domain, package.json
@@ -81,16 +80,20 @@ if ! [[ "$new_prefix" =~ ^[a-z0-9_]+_$ ]]; then
     exit 1
 fi
 
-# Siehe rename-theme.ps1s Kopfkommentar fuer die ausfuehrliche Begruendung dieser Ausschlussliste
-# (kurz: dieses Skript selbst, pull-base-updates.(ps1|sh) und template-init.yml sind fixe,
-# wiederholbare Bootstrap/Update-Schritte, deren -OldSlug/-OldPrefix-Defaults nicht mitumbenannt
-# werden duerfen, sonst zeigen sie nach einem Rename ins Leere).
+# Dieses Skript selbst, pull-base-updates.sh und template-init.yml sind ausgeschlossen: alle drei
+# sind fixe, wiederholbare Bootstrap-/Update-Schritte. rename-theme.sh darf seine eigenen
+# --old-slug/--old-prefix-Default-Literale ("base-theme"/"base_theme_") nicht umschreiben, sonst
+# sucht ein spaeterer Lauf ohne explizites --old-slug/--old-prefix still nach dem falschen
+# "alten" Bezeichner. pull-base-updates.sh hat dasselbe Problem eine Ebene weiter: seine
+# Remote-/Basis-Defaults muessen auch nach dem Rename dieses Projekts auf das literale
+# base-theme-Repo zeigen, sonst wuerde es den eigenen Fork mit sich selbst mergen.
+# template-init.yml vergleicht den package.json-Namen *vor* dem Rename mit dem Literal
+# "base-theme" — bleibt ebenfalls unumbenannt (aktuell schon zufaellig geschuetzt, weil .yml nicht
+# in included_extensions steht, aber explizit gelistet, damit das so bleibt).
 excluded_directory_names=("node_modules" "dist" ".git" ".deploy-state" "vendor")
-included_extensions=(".php" ".css" ".js" ".mjs" ".json" ".md" ".ps1" ".sh" ".txt" ".xml")
+included_extensions=(".php" ".css" ".js" ".mjs" ".json" ".md" ".sh" ".txt" ".xml")
 excluded_relative_files=(
-    "scripts/rename-theme.ps1"
     "scripts/rename-theme.sh"
-    "scripts/pull-base-updates.ps1"
     "scripts/pull-base-updates.sh"
     ".github/workflows/template-init.yml"
 )

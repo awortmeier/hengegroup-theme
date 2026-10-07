@@ -21,6 +21,20 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Windows-/PowerShell-Unterstuetzung entfernt, nur noch macOS (2026-10-07)
+
+Auf expliziten Wunsch wird nur noch macOS als Entwicklungs-/Deploy-Plattform unterstuetzt. Alle
+`scripts/*.ps1` sowie der Plattform-Dispatcher `scripts/run.mjs` sind entfernt; die
+`package.json`-"scripts" rufen die `.sh`-Fassungen direkt per `bash scripts/<name>.sh` auf. Damit
+entfaellt die Pflicht, zwei verhaltensgleiche Skript-Fassungen parallel zu pflegen (siehe den
+abgeloesten Eintrag "Bash-Pendants zu allen `scripts/*.ps1`" unten), samt der
+`--kebab-case`/`-PascalCase`-Flag-Uebersetzung. Die `.sh`-Skripte bleiben kompatibel zu macOS'
+Standard-`/bin/bash` 3.2 (keine Bash-4-Features); Linux funktioniert damit in der Praxis ebenfalls
+(u. a. CI auf `ubuntu-latest`), ist aber kein ausdruecklich gepflegtes Ziel mehr.
+`rename-theme.sh` schliesst `.ps1` nicht mehr in die umzubenennenden Dateiendungen ein.
+
+---
+
 ### Stellenangebote: Custom-Post-Type angelegt (2026-09-23)
 
 Auf expliziten Wunsch ein neuer Custom Post Type `stellenangebote` (Karriere/Jobs) --
@@ -2531,6 +2545,10 @@ grundsaetzlich nur echte Theme-Templates als `*.php` liegen (Tooling-Config wie 
 ist kein `.php`).
 
 ### Bash-Pendants zu allen `scripts/*.ps1` fuer macOS/Linux, ueber `run.mjs` dispatcht (2026-08-28)
+
+> **Abgeloest** durch "Windows-/PowerShell-Unterstuetzung entfernt, nur noch macOS" (2026-10-07,
+> oben) — `.ps1`-Skripte und `run.mjs` existieren nicht mehr. Eintrag bleibt als Historie stehen;
+> die technischen Eckpunkte zu `node -e`/`xargs -P` gelten fuer die `.sh`-Skripte weiterhin.
 
 Alle zehn `scripts/*.ps1`-Skripte (`build`, `clean`, `deploy`, `deploy-changed`, `i18n-make-pot`,
 `pull-base-updates`, `rename-theme`, `sync-lucide-icons`, `sync-tabler-icons`,

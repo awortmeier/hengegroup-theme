@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# macOS/Linux-Pendant zu clean.ps1 (siehe docs/entscheidungen.md fuer die Begruendung, warum
-# beide Fassungen parallel gepflegt werden statt nur PowerShell Core vorauszusetzen). Verhalten
-# 1:1 identisch: dist/ leeren, aber nie ausserhalb des Repos loeschen.
+# Leert dist/, loescht aber nie ausserhalb des Repos.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

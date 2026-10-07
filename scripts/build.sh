@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# macOS/Linux-Pendant zu build.ps1 (siehe docs/entscheidungen.md). Verhalten identisch: dist/
-# leeren, Icons synchronisieren, Vite-Assets bauen, Theme-Dateien nach dist/ kopieren.
+# Baut das Theme-Paket: dist/ leeren, Icons synchronisieren, Vite-Assets bauen, Theme-Dateien
+# nach dist/ kopieren.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,7 +18,7 @@ theme_static_files=(
     "screenshot.jpg"
 )
 
-# "Quelle:Ziel"-Paare (relativ zum Repo-Root), analog zur $themeDirectories-Tabelle in build.ps1.
+# "Quelle:Ziel"-Paare (relativ zum Repo-Root).
 theme_directories=(
     "inc:inc"
     "template-parts:template-parts"

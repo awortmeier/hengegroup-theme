@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 #
-# macOS/Linux-Pendant zu deploy.ps1 (siehe docs/entscheidungen.md). Baut das Theme und laedt das
-# komplette dist/-Verzeichnis per FTP(S) hoch (curl --upload-file, bis zu 3 Uploads parallel).
+# Baut das Theme und laedt das komplette dist/-Verzeichnis per FTP(S) hoch (curl --upload-file,
+# bis zu 3 Uploads parallel).
 #
-# Abweichung zum PowerShell-Original: dort wird nach dem ersten fehlgeschlagenen Upload nicht mehr
-# nachgelegt (laufende Jobs werden noch fertig abgewartet, neue aber nicht mehr gestartet). Diese
-# Fassung nutzt `xargs -P` fuer die Parallelisierung (portabel, kein bash>=4 noetig fuer
-# Job-Kontrolle/`wait -n`) und laesst xargs dafuer alle bereits aufgereihten Uploads durchlaufen,
-# auch wenn einer scheitert — danach wird trotzdem mit Exit-Code 1 abgebrochen. Ergebnis
-# (Fehlschlag = nicht deployed) ist gleich, nur der Abbruchzeitpunkt etwas spaeter.
+# Parallelisierung ueber `xargs -P` (laeuft mit macOS' Standard-Bash 3.2, kein bash>=4 noetig fuer
+# Job-Kontrolle/`wait -n`). xargs laesst dabei alle bereits aufgereihten Uploads durchlaufen, auch
+# wenn einer scheitert — danach wird trotzdem mit Exit-Code 1 abgebrochen (Fehlschlag = nicht
+# deployed).
 #
-# Fortschrittsanzeige (Pendant zu Write-Progress im PowerShell-Original): in einem echten Terminal
+# Fortschrittsanzeige: in einem echten Terminal
 # (stdout ist ein TTY) eine sich per \r ueberschreibende Zeile "[erledigt/gesamt] X% - Datei";
 # ohne TTY (Log-Datei, CI) stattdessen eine Zeile pro Upload wie zuvor, damit das Log lesbar
 # bleibt statt voller Steuerzeichen.
 #
-# --skip-build: ueberspringt den Build-Schritt (Pendant zu -SkipBuild), z. B. wenn dist/ bereits
+# --skip-build: ueberspringt den Build-Schritt z. B. wenn dist/ bereits
 # frisch gebaut ist.
 set -euo pipefail
 

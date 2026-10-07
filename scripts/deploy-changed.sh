@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 #
-# macOS/Linux-Pendant zu deploy-changed.ps1 (siehe docs/entscheidungen.md). Wie deploy.sh, laedt
-# aber nur Dateien hoch, deren SHA-256-Hash sich seit dem letzten Deploy geaendert hat (Zustand in
-# .deploy-state/ftp-theme-state.json, gebunden an FTP_REMOTE_PATH). Gleiche Abweichung zum
-# PowerShell-Original wie deploy.sh: xargs -P statt Job-Kontrolle, siehe dort fuer die Begruendung.
-# Gleiche Fortschrittsanzeige (Write-Progress-Pendant) wie deploy.sh, siehe dort fuer Details.
+# Wie deploy.sh, laedt aber nur Dateien hoch, deren SHA-256-Hash sich seit dem letzten Deploy
+# geaendert hat (Zustand in .deploy-state/ftp-theme-state.json, gebunden an FTP_REMOTE_PATH).
+# Gleiche Parallelisierung (xargs -P) und Fortschrittsanzeige wie deploy.sh, siehe dort.
 #
-# --skip-build: ueberspringt den Build-Schritt (Pendant zu -SkipBuild).
+# --skip-build: ueberspringt den Build-Schritt.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -137,7 +135,7 @@ current_state="$(
 )"
 
 # Vorheriger Stand aus state_file_path, nur wenn er zum aktuellen FTP_REMOTE_PATH gehoert; sonst
-# leer (= alles gilt als geaendert), analog Get-StateMap in deploy-changed.ps1.
+# leer (= alles gilt als geaendert).
 previous_state="$(node -e '
     const fs = require("fs");
     const [stateFilePath, remoteBasePath] = process.argv.slice(1);
@@ -252,7 +250,7 @@ if [ -s "$fail_log" ]; then
     exit 1
 fi
 
-# Neuen Stand nur bei vollstaendigem Erfolg schreiben (gleiches Verhalten wie Save-StateMap: state
+# Neuen Stand nur bei vollstaendigem Erfolg schreiben (state
 # spiegelt immer den zuletzt tatsaechlich hochgeladenen dist/-Inhalt).
 mkdir -p "$(dirname "$state_file_path")"
 node -e '

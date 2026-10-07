@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# macOS/Linux-Pendant zu i18n-make-pot.ps1 (siehe docs/entscheidungen.md). Erzeugt die
-# languages/hengegroup-theme.pot ueber WP-CLI (`wp i18n make-pot`).
+# Erzeugt die languages/hengegroup-theme.pot ueber WP-CLI (`wp i18n make-pot`).
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -25,7 +25,7 @@
  *
  * --color-henge-green ist die primaere Marken-Akzentfarbe — der einzige Farbwert, der automatisiert
  * per `pnpm run sync-theme-tokens` nach theme.json uebernommen wird (siehe
- * scripts/sync-theme-tokens.ps1: sync't settings.color.palette "accent"-Eintrag/Label "Henge Green"
+ * scripts/sync-theme-tokens.sh: sync't settings.color.palette "accent"-Eintrag/Label "Henge Green"
  * + styles.elements.link). Der WP-Editor-Palette-Slug bleibt bewusst "accent" (aendert bereits
  * gespeicherte `has-accent-color`-Blockklassen sonst rueckwirkend) -- nur das CSS-Token selbst heisst
  * seit 2026-08-28 nicht mehr --color-accent (siehe docs/entscheidungen.md): der Name "accent" ist

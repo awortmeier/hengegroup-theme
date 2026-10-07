@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# macOS/Linux-Pendant zu sync-lucide-icons.ps1 (siehe docs/entscheidungen.md). Verhalten identisch:
 # find-lucide-icons.php ermittelt die benoetigten Icon-Namen (Templates + scripts/lucide-icons.json),
 # dieses Skript kopiert nur die tatsaechlich benoetigten SVGs aus node_modules/lucide-static.
 set -euo pipefail

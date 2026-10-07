@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# macOS/Linux-Pendant zu sync-tabler-icons.ps1 (siehe docs/entscheidungen.md). Verhalten identisch:
 # find-tabler-icons.php ermittelt Name+Variante (outline/filled) aus Templates +
 # scripts/tabler-icons.json, dieses Skript kopiert nur die benoetigten SVGs aus @tabler/icons.
 set -euo pipefail

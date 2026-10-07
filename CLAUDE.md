@@ -177,7 +177,7 @@ Freigabe gilt fuer den einen Anlass, nicht stillschweigend fuer alle folgenden A
   PR", o. ae.) — nicht automatisch am Ende einer Aufgabe, auch wenn Tests/Lint erfolgreich waren.
 - Lokale, nicht-oeffentliche Arbeitsschritte (`git init`, `git add`, `git status`, `git diff`,
   Branches/Commits in einem Wegwerf-Testklon wie bei der Verifikation von
-  `scripts/pull-base-updates.ps1`) sind davon unberuehrt — die Grenze ist nicht "irgendein
+  `scripts/pull-base-updates.sh`) sind davon unberuehrt — die Grenze ist nicht "irgendein
   Git-Befehl", sondern alles, was den Verlauf des tatsaechlichen Projekt-Repos veraendert
   (Commit) oder etwas an ein Remote sendet (Push).
 - Im Zweifel nachfragen oder den fertigen Stand beschreiben und explizit auf den ausstehenden

@@ -108,7 +108,7 @@ Konvention/Begruendung siehe `docs/entscheidungen.md` "Phase-3-Block-Architektur
    `wp-block-editor`/`wp-components`/`wp-i18n`, plus `wp-server-side-render` bei
    `ServerSideRender`-Nutzung) ueber `hengegroup_theme_get_vite_asset_path()`/`_uri()`, dann
    `register_block_type()` fuer den Block-Ordner.
-5. **Kein `build.ps1`/`build.sh`-Aenderungsbedarf** — `template-parts/`/`inc/` werden bereits
+5. **Kein `build.sh`-Aenderungsbedarf** — `template-parts/`/`inc/` werden bereits
    vollstaendig nach `dist/` kopiert, neue Dateien darin sind automatisch erfasst.
 
 ### Ein weiteres Icon ergaenzen

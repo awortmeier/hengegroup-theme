@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# macOS/Linux-Pendant zu sync-theme-version.ps1 (siehe docs/entscheidungen.md). Spiegelt die
-# Versionsnummer aus package.json ("version") in den style.css-WordPress-Theme-Header
+# Spiegelt die Versionsnummer aus package.json ("version") in den style.css-WordPress-Theme-Header
 # ("Version:"-Feld). package.json ist die Single Source of Truth (siehe README "Versionierung").
 #
 # Gedacht als "version"-Lifecycle-Script fuer `pnpm version <patch|minor|major>` (siehe
@@ -13,7 +12,7 @@
 # package.json geaenderte Version nachzuziehen, ohne `pnpm version` (inkl. Commit/Tag) auszuloesen.
 #
 # --no-git-add: ueberspringt `git add style.css` — nur fuer den manuellen Aufruf ausserhalb des
-# Versions-Lifecycles sinnvoll, wo kein automatischer Commit folgt. Pendant zu -NoGitAdd.
+# Versions-Lifecycles sinnvoll, wo kein automatischer Commit folgt.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

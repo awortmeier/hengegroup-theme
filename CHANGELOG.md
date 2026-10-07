@@ -9,6 +9,12 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ## [Unreleased]
 
+### Removed
+
+- Windows-/PowerShell-Unterstuetzung: alle `scripts/*.ps1` und der Plattform-Dispatcher
+  `scripts/run.mjs` entfernt. Die `pnpm`-Skripte rufen die Bash-Skripte direkt auf; unterstuetzt
+  wird nur noch macOS. Siehe `docs/entscheidungen.md`.
+
 ### Added
 
 - Neuer Custom Post Type "Stellenangebote" (`inc/setup/theme-careers.php`, Karriere/Jobs):

@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 #
-# macOS/Linux-Pendant zu pull-base-updates.ps1 (siehe docs/entscheidungen.md). Zieht spaetere
-# Aenderungen aus dem base-theme-Vorlagen-Repo in ein Projekt-Theme, das daraus gestartet wurde
-# (README "Neues Projekt aus dieser Vorlage starten"), oben auf dessen eigenen Slug/Praefix-Rename
-# (rename-theme.sh).
+# Zieht spaetere Aenderungen aus dem base-theme-Vorlagen-Repo in ein Projekt-Theme, das daraus
+# gestartet wurde (README "Neues Projekt aus dieser Vorlage starten"), oben auf dessen eigenen
+# Slug/Praefix-Rename (rename-theme.sh).
 #
 # Ein umbenanntes Projekt-Theme matcht textlich nicht mehr mit dem Basis-Repo (rename-theme.sh hat
 # jedes "base-theme"/"base_theme_"-Vorkommen durch den Projekt-eigenen Slug/Praefix ersetzt), daher
