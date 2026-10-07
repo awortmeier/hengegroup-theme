@@ -67,6 +67,21 @@ final class ProductsTest extends TestCase
         );
     }
 
+    public function test_anwendung_items_sort_by_group_then_order_then_name(): void
+    {
+        $sorted = hengegroup_theme_sort_anwendung_items([
+            ['group_order' => 2, 'order' => 0, 'name' => 'Baubranche'],
+            ['group_order' => 1, 'order' => 5, 'name' => 'Glasindustrie'],
+            ['group_order' => 1, 'order' => 1, 'name' => 'Schleifmittelindustrie'],
+            ['group_order' => 1, 'order' => 5, 'name' => 'Feuerfestindustrie'],
+        ]);
+
+        $this->assertSame(
+            ['Schleifmittelindustrie', 'Feuerfestindustrie', 'Glasindustrie', 'Baubranche'],
+            array_column($sorted, 'name'),
+        );
+    }
+
     private function inquiry(array $overrides = []): array
     {
         return array_merge(

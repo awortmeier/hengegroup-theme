@@ -12,7 +12,7 @@ declare(strict_types=1);
 // Bei Fehlern werden die Textfelder 15 Minuten in einem Transient gehalten (Schluessel im Redirect),
 // damit niemand alles neu tippen muss; Dateien muessen neu gewaehlt werden (Browser-Sicherheit).
 //
-// Die Bewerbung wird als Eintrag "Bewerbung" im Backend gespeichert (Karriere > Bewerbungen, siehe
+// Die Bewerbung wird als Eintrag "Bewerbung" im Backend gespeichert (Dashboard > Bewerbungen, siehe
 // inc/setup/theme-requests.php) -- es werden KEINE E-Mails versendet, weder an den Ansprechpartner
 // noch als Eingangsbestaetigung (explizite Vorgabe 2026-10-07, loest die fruehere Entscheidung
 // "Versand per E-Mail statt Speicherung" ab). Hochgeladene Dateien landen NICHT in der Mediathek
@@ -318,7 +318,7 @@ function hengegroup_theme_get_application_storage_dir(): string
 }
 
 /**
- * Speichert die Bewerbung als Eintrag (Karriere > Bewerbungen) und verschiebt die Dateien ins
+ * Speichert die Bewerbung als Eintrag (Dashboard > Bewerbungen) und verschiebt die Dateien ins
  * geschuetzte Verzeichnis (zufaelliger Name, Originalname nur als Meta). Keine E-Mails.
  */
 function hengegroup_theme_store_job_application(array $job, array $values, array $files): bool

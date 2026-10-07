@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// Produktbereich: Post-Type "anwendung", URL-Struktur und Weiterleitungen. Backend-Felder:
+// Produktbereich: Taxonomie "Anwendungen" (`produkt_anwendung`), URL-Struktur und Weiterleitungen. Backend-Felder:
 // inc/setup/theme-products-admin.php, Daten-/Render-Helfer: inc/template-parts/products.php.
 // Begruendung: docs/entscheidungen.md "Produktbereich: Datenmodell" und "Produktbereich: URLs".
 //
@@ -17,52 +17,55 @@ declare(strict_types=1);
 //                                des Post-Types `product` per Filter statt ueber die
 //                                WooCommerce-Permalink-Einstellung, damit die Struktur im Code
 //                                steht und nicht auf jeder Instanz von Hand gesetzt werden muss.
-//   /anwendungen/<anwendung>/ -> Anwendungsseite (single-anwendung.php).
+//   /anwendungen/             -> normale Seite aus Bloecken (Buehne, "Anwendungsgruppe", "Kontakt");
+//                                Anwendungen haben keine eigenen Seiten (explizite Vorgabe).
 //
 // Produktkategorie-/Schlagwort-Archive und das Post-Type-Archiv gibt es nicht als eigene Seiten:
 // sie leiten per 301 auf die Produktuebersicht weiter (Kategorien direkt auf ihre Sektion,
 // `#<kategorie-slug>`, siehe Block "Produktkategorie").
 
 /**
- * Post-Type "Anwendungen": eigene Seite je Anwendung (Gutenberg-Inhalt, Kurztext fuer die Karten
- * auf der Produktdetailseite, Beitragsbild, Icon). Die Zuordnung zu Produkten wird NUR am Produkt
- * gepflegt (theme-products-admin.php).
+ * Taxonomie "Anwendungen" am Produkt, hierarchisch: Ebene 1 = Gruppen (Sektionen der Seite
+ * /anwendungen/), Ebene 2 = Anwendungen. Nicht oeffentlich (keine Archivseiten, keine Sitemap) --
+ * angezeigt wird sie nur ueber den Block "Anwendungsgruppe", die Produktbox und die
+ * Produktdetailseite. Zuordnung im Produkt-Editor ueber eine eigene, nach Gruppen sortierte Box
+ * (theme-products-admin.php) sowie per Quick Edit/Massenbearbeitung in der Produktliste.
+ * Begruendung: docs/entscheidungen.md "Anwendungen: Taxonomie statt Post-Type, nur
+ * Uebersichtsseite".
  */
-function hengegroup_theme_register_anwendung_post_type(): void
+function hengegroup_theme_register_anwendung_taxonomy(): void
 {
-    register_post_type(HENGEGROUP_THEME_ANWENDUNG_POST_TYPE, [
+    register_taxonomy(HENGEGROUP_THEME_ANWENDUNG_TAXONOMY, 'product', [
         'labels' => [
             'name' => __('Anwendungen', 'hengegroup-theme'),
             'singular_name' => __('Anwendung', 'hengegroup-theme'),
-            'add_new' => __('Neu hinzufügen', 'hengegroup-theme'),
-            'add_new_item' => __('Neue Anwendung hinzufügen', 'hengegroup-theme'),
+            'menu_name' => __('Anwendungen', 'hengegroup-theme'),
+            'all_items' => __('Alle Anwendungen', 'hengegroup-theme'),
+            'add_new_item' => __('Neue Anwendung oder Gruppe hinzufügen', 'hengegroup-theme'),
             'edit_item' => __('Anwendung bearbeiten', 'hengegroup-theme'),
-            'new_item' => __('Neue Anwendung', 'hengegroup-theme'),
-            'view_item' => __('Anwendung ansehen', 'hengegroup-theme'),
-            'view_items' => __('Anwendungen ansehen', 'hengegroup-theme'),
             'search_items' => __('Anwendungen durchsuchen', 'hengegroup-theme'),
             'not_found' => __('Keine Anwendungen gefunden', 'hengegroup-theme'),
-            'not_found_in_trash' => __(
-                'Keine Anwendungen im Papierkorb gefunden',
-                'hengegroup-theme',
-            ),
-            'all_items' => __('Anwendungen', 'hengegroup-theme'),
-            'menu_name' => __('Anwendungen', 'hengegroup-theme'),
+            'parent_item' => __('Gruppe', 'hengegroup-theme'),
+            'parent_item_colon' => __('Gruppe:', 'hengegroup-theme'),
+            'back_to_items' => __('← Zurück zu den Anwendungen', 'hengegroup-theme'),
+            'filter_by_item' => __('Nach Anwendung filtern', 'hengegroup-theme'),
         ],
-        'public' => true,
-        'show_in_rest' => true,
-        // Unter "Produkte" statt als eigener Hauptmenuepunkt -- Anwendungen gehoeren inhaltlich
-        // zum Produktbereich.
-        'show_in_menu' => 'edit.php?post_type=product',
-        'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'revisions', 'page-attributes'],
-        'has_archive' => false,
-        'rewrite' => [
-            'slug' => 'anwendungen',
-            'with_front' => false,
-        ],
+        'hierarchical' => true,
+        'public' => false,
+        'publicly_queryable' => false,
+        'show_ui' => true,
+        'show_in_menu' => true,
+        'show_in_nav_menus' => false,
+        'show_in_rest' => false,
+        'show_tagcloud' => false,
+        'show_admin_column' => true,
+        'show_in_quick_edit' => true,
+        'meta_box_cb' => 'hengegroup_theme_render_product_anwendungen_meta_box',
+        'rewrite' => false,
+        'query_var' => false,
     ]);
 }
-add_action('init', 'hengegroup_theme_register_anwendung_post_type');
+add_action('init', 'hengegroup_theme_register_anwendung_taxonomy');
 
 /**
  * Produkte unter /produkte/<slug>/ und ohne eigenes Post-Type-Archiv (die Uebersicht ist eine
@@ -101,7 +104,7 @@ add_filter('woocommerce_get_shop_page_id', 'hengegroup_theme_filter_shop_page_id
  */
 function hengegroup_theme_action_init_flush_product_rewrites(): void
 {
-    $version = '2026-10-07';
+    $version = '2026-10-07-2';
 
     if (get_option('hengegroup_theme_product_rewrite_version') === $version) {
         return;
@@ -203,13 +206,12 @@ function hengegroup_theme_filter_wp_sitemaps_taxonomies_products(array $taxonomi
 add_filter('wp_sitemaps_taxonomies', 'hengegroup_theme_filter_wp_sitemaps_taxonomies_products');
 
 /**
- * Produkte und Anwendungen bekommen die bestehende SEO-Metabox (siehe docs/how-to.md "Ein weiteres,
+ * Produkte bekommen die bestehende SEO-Metabox (siehe docs/how-to.md "Ein weiteres,
  * Seiten-spezifisches SEO-Feld nutzen").
  */
 function hengegroup_theme_filter_seo_post_types_products(array $post_types): array
 {
     $post_types[] = 'product';
-    $post_types[] = HENGEGROUP_THEME_ANWENDUNG_POST_TYPE;
 
     return $post_types;
 }

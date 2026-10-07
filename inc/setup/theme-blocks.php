@@ -154,6 +154,11 @@ function hengegroup_theme_register_blocks(): void
         'js/blocks/produktkategorie-edit.js',
     );
     hengegroup_theme_register_theme_block(
+        'anwendungsgruppe',
+        'hengegroup-theme-anwendungsgruppe-editor',
+        'js/blocks/anwendungsgruppe-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
         'kontakt',
         'hengegroup-theme-kontakt-editor',
         'js/blocks/kontakt-edit.js',
@@ -255,6 +260,33 @@ function hengegroup_theme_enqueue_product_categories_for_editor(): void
     );
 }
 add_action('enqueue_block_editor_assets', 'hengegroup_theme_enqueue_product_categories_for_editor');
+
+/**
+ * Anwendungsgruppen (Ebene 1 der Taxonomie `produkt_anwendung`) fuer die Auswahl im Block
+ * "Anwendungsgruppe" -- gleiches Muster wie die Produktkategorien oben.
+ */
+function hengegroup_theme_enqueue_anwendung_groups_for_editor(): void
+{
+    $terms = get_terms([
+        'taxonomy' => HENGEGROUP_THEME_ANWENDUNG_TAXONOMY,
+        'parent' => 0,
+        'hide_empty' => false,
+    ]);
+    $groups = array_map(
+        static fn(WP_Term $term): array => [
+            'id' => (int) $term->term_id,
+            'name' => html_entity_decode($term->name),
+        ],
+        hengegroup_theme_sort_anwendung_terms(is_array($terms) ? $terms : []),
+    );
+
+    wp_add_inline_script(
+        'hengegroup-theme-anwendungsgruppe-editor',
+        'window.hengegroupThemeAnwendungGroups = ' . wp_json_encode($groups) . ';',
+        'before',
+    );
+}
+add_action('enqueue_block_editor_assets', 'hengegroup_theme_enqueue_anwendung_groups_for_editor');
 
 function hengegroup_theme_enqueue_editor_assets(): void
 {

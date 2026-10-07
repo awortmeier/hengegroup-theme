@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 // Backend-Felder des Produktbereichs (Daten-/Render-Helfer: inc/template-parts/products.php):
 //   - Produkt-Editor: Tab "Technische Daten" in WooCommerce' Produktdaten-Box (Recycling-Hinweis,
-//     chemische Analyse als freie Zeilen, Downloads aus der Mediathek) und eine Box "Anwendungen"
-//     (Checkbox-Liste, eine Meta-Zeile je Anwendung).
-//   - Anwendung-Editor: Box "Icon".
+//     chemische Analyse als freie Zeilen, Downloads aus der Mediathek) und die Box "Anwendungen"
+//     (Taxonomie `produkt_anwendung`, Checkboxen nach Gruppen sortiert).
+//   - Anwendungen (Produkte > Anwendungen): Felder fuer Gruppen (Kicker/Farbe/Ueberschrift) und
+//     Anwendungen (Kurztext/Bild/Icon), Reihenfolge fuer beide; schreibgeschuetzte Liste der
+//     zugeordneten Produkte. Zuordnung bewusst nur am Produkt (explizite Vorgabe), zusaetzlich per
+//     Quick Edit/Massenbearbeitung und Filter in der Produktliste.
 //   - Produktkategorien: Kicker, Farbe, Ueberschrift, Ansprechpartner (Term-Meta).
 //   - Produkte > Einstellungen: Uebersichtsseite und Standard-Ansprechpartner.
 //   - WooCommerce' "Up-Sells" heissen im Produkt-Editor "Verwandte Produkte" (das Feld steuert die
@@ -32,7 +35,7 @@ function hengegroup_theme_action_admin_enqueue_scripts_products(string $hook_suf
     $is_category_screen =
         in_array($hook_suffix, ['edit-tags.php', 'term.php'], true) &&
         $screen instanceof WP_Screen &&
-        $screen->taxonomy === 'product_cat';
+        in_array($screen->taxonomy, ['product_cat', HENGEGROUP_THEME_ANWENDUNG_TAXONOMY], true);
     $is_settings_page = $hook_suffix === 'product_page_hengegroup-theme-product-settings';
 
     if (!$is_product_editor && !$is_category_screen && !$is_settings_page) {
@@ -279,186 +282,413 @@ add_action(
 );
 
 /**
- * Box "Anwendungen" im Produkt-Editor.
+ * Box "Anwendungen" im Produkt-Editor (`meta_box_cb` der Taxonomie, siehe
+ * inc/setup/theme-products.php): Anwendungen als Checkboxen unter ihrer Gruppe; Gruppen selbst sind
+ * nicht anwaehlbar. Feldname `tax_input[produkt_anwendung][]` -- gespeichert von WordPress selbst
+ * (wie die Kategorien-Box), das versteckte `0` sorgt dafuer, dass "alles abgewaehlt" auch
+ * gespeichert wird.
  */
-function hengegroup_theme_action_add_meta_boxes_product_anwendungen(): void
-{
-    add_meta_box(
-        'hengegroup-theme-product-anwendungen',
-        __('Anwendungen', 'hengegroup-theme'),
-        'hengegroup_theme_render_product_anwendungen_meta_box',
-        'product',
-        'side',
-        'default',
-    );
-}
-add_action('add_meta_boxes', 'hengegroup_theme_action_add_meta_boxes_product_anwendungen');
-
 function hengegroup_theme_render_product_anwendungen_meta_box(WP_Post $post): void
 {
-    wp_nonce_field(
-        'hengegroup_theme_save_product_anwendungen',
-        'hengegroup_theme_product_anwendungen_nonce',
-    );
+    $taxonomy = HENGEGROUP_THEME_ANWENDUNG_TAXONOMY;
+    $selected = wp_get_object_terms($post->ID, $taxonomy, ['fields' => 'ids']);
+    $selected = is_array($selected) ? array_map('intval', $selected) : [];
+    $groups = get_terms(['taxonomy' => $taxonomy, 'parent' => 0, 'hide_empty' => false]);
+    $groups = hengegroup_theme_sort_anwendung_terms(is_array($groups) ? $groups : []);
 
-    $selected = array_map(
-        'intval',
-        (array) get_post_meta($post->ID, HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META, false),
-    );
-    $anwendungen = get_posts([
-        'post_type' => HENGEGROUP_THEME_ANWENDUNG_POST_TYPE,
-        'post_status' => ['publish', 'draft', 'pending', 'private', 'future'],
-        'posts_per_page' => -1,
-        'orderby' => 'title',
-        'order' => 'ASC',
-        'no_found_rows' => true,
-    ]);
+    printf('<input type="hidden" name="tax_input[%s][]" value="0">', esc_attr($taxonomy));
 
-    if ($anwendungen === []) {
+    if ($groups === []) {
         printf(
             '<p>%1$s <a href="%2$s">%3$s</a></p>',
             esc_html__('Noch keine Anwendungen angelegt.', 'hengegroup-theme'),
-            esc_url(admin_url('post-new.php?post_type=' . HENGEGROUP_THEME_ANWENDUNG_POST_TYPE)),
-            esc_html__('Anwendung anlegen', 'hengegroup-theme'),
+            esc_url(admin_url('edit-tags.php?taxonomy=' . $taxonomy . '&post_type=product')),
+            esc_html__('Anwendungen verwalten', 'hengegroup-theme'),
         );
 
         return;
     }
 
-    echo '<ul style="max-height:260px;overflow:auto;margin:0">';
+    echo '<div style="max-height:320px;overflow:auto">';
 
-    foreach ($anwendungen as $anwendung) {
-        printf(
-            '<li><label><input type="checkbox" name="hengegroup_theme_anwendungen[]" value="%1$d"%2$s> %3$s%4$s</label></li>',
-            (int) $anwendung->ID,
-            checked(in_array((int) $anwendung->ID, $selected, true), true, false),
-            esc_html(get_the_title($anwendung)),
-            $anwendung->post_status !== 'publish'
-                ? ' <em>(' . esc_html__('nicht veröffentlicht', 'hengegroup-theme') . ')</em>'
-                : '',
-        );
+    foreach ($groups as $group) {
+        $children = hengegroup_theme_get_group_anwendungen((int) $group->term_id);
+
+        printf('<p style="margin:10px 0 4px"><strong>%s</strong></p>', esc_html($group->name));
+
+        if ($children === []) {
+            printf(
+                '<p class="description">%s</p>',
+                esc_html__('— keine Anwendungen —', 'hengegroup-theme'),
+            );
+            continue;
+        }
+
+        echo '<ul style="margin:0">';
+
+        foreach ($children as $child) {
+            printf(
+                '<li><label><input type="checkbox" name="tax_input[%1$s][]" value="%2$d"%3$s> %4$s</label></li>',
+                esc_attr($taxonomy),
+                (int) $child->term_id,
+                checked(in_array((int) $child->term_id, $selected, true), true, false),
+                esc_html($child->name),
+            );
+        }
+
+        echo '</ul>';
     }
 
-    echo '</ul>';
+    echo '</div>';
     printf(
         '<p class="description">%s</p>',
         esc_html__(
-            'Erscheinen in der Produktbox und als "Anwendungsbereiche" auf der Produktseite (ohne Link). Die Anwendungsseite verlinkt umgekehrt auf dieses Produkt.',
+            'Erscheinen in der Produktbox und als "Anwendungsbereiche" auf der Produktseite (ohne Link). Auf der Seite "Anwendungen" erscheint dieses Produkt umgekehrt bei jeder gewählten Anwendung.',
             'hengegroup-theme',
         ),
     );
 }
-
-function hengegroup_theme_action_save_post_product_anwendungen(int $post_id): void
-{
-    if (
-        !isset($_POST['hengegroup_theme_product_anwendungen_nonce']) ||
-        !wp_verify_nonce(
-            sanitize_text_field(wp_unslash($_POST['hengegroup_theme_product_anwendungen_nonce'])),
-            'hengegroup_theme_save_product_anwendungen',
-        ) ||
-        (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) ||
-        !current_user_can('edit_post', $post_id)
-    ) {
-        return;
-    }
-
-    $ids = isset($_POST['hengegroup_theme_anwendungen'])
-        ? array_values(
-            array_unique(
-                array_filter(array_map('absint', (array) $_POST['hengegroup_theme_anwendungen'])),
-            ),
-        )
-        : [];
-    $ids = array_values(
-        array_filter(
-            $ids,
-            static fn(int $id): bool => get_post_type($id) === HENGEGROUP_THEME_ANWENDUNG_POST_TYPE,
-        ),
-    );
-
-    // Eine Meta-Zeile je Anwendung (abfragbar per meta_query, siehe
-    // hengegroup_theme_get_anwendung_product_ids()).
-    delete_post_meta($post_id, HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META);
-
-    foreach ($ids as $id) {
-        add_post_meta($post_id, HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META, (string) $id);
-    }
-}
-add_action('save_post_product', 'hengegroup_theme_action_save_post_product_anwendungen');
 
 /**
- * Box "Icon" im Anwendung-Editor.
+ * Filter "Nach Anwendung" in der Produktliste.
  */
-function hengegroup_theme_action_add_meta_boxes_anwendung_icon(): void
+function hengegroup_theme_action_restrict_manage_posts_anwendungen(string $post_type): void
 {
-    add_meta_box(
-        'hengegroup-theme-anwendung-icon',
-        __('Icon', 'hengegroup-theme'),
-        'hengegroup_theme_render_anwendung_icon_meta_box',
-        HENGEGROUP_THEME_ANWENDUNG_POST_TYPE,
-        'side',
-        'default',
-    );
+    if ($post_type !== 'product') {
+        return;
+    }
+
+    $taxonomy = HENGEGROUP_THEME_ANWENDUNG_TAXONOMY;
+    $current = isset($_GET[$taxonomy]) ? sanitize_title(wp_unslash($_GET[$taxonomy])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reiner Listenfilter.
+
+    wp_dropdown_categories([
+        'taxonomy' => $taxonomy,
+        'name' => $taxonomy,
+        'value_field' => 'slug',
+        'selected' => $current,
+        'hierarchical' => true,
+        'hide_empty' => false,
+        'show_option_all' => __('Alle Anwendungen', 'hengegroup-theme'),
+    ]);
 }
-add_action('add_meta_boxes', 'hengegroup_theme_action_add_meta_boxes_anwendung_icon');
+add_action('restrict_manage_posts', 'hengegroup_theme_action_restrict_manage_posts_anwendungen');
 
-function hengegroup_theme_render_anwendung_icon_meta_box(WP_Post $post): void
+/**
+ * Wertet den Filter "Nach Anwendung" aus (die Taxonomie hat keine `query_var`, deshalb von Hand).
+ */
+function hengegroup_theme_action_pre_get_posts_anwendung_filter(WP_Query $query): void
 {
-    wp_nonce_field('hengegroup_theme_save_anwendung_icon', 'hengegroup_theme_anwendung_icon_nonce');
+    $taxonomy = HENGEGROUP_THEME_ANWENDUNG_TAXONOMY;
 
-    $current = (string) get_post_meta($post->ID, '_hengegroup_theme_anwendung_icon', true);
+    if (!is_admin() || !$query->is_main_query() || $query->get('post_type') !== 'product') {
+        return;
+    }
 
-    echo '<select name="hengegroup_theme_anwendung_icon" class="widefat"><option value="">' .
-        esc_html__('— kein Icon —', 'hengegroup-theme') .
-        '</option>';
+    $slug = isset($_GET[$taxonomy]) ? sanitize_title(wp_unslash($_GET[$taxonomy])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reiner Listenfilter.
 
-    foreach (hengegroup_theme_get_anwendung_icons() as $key => [$label]) {
-        printf(
-            '<option value="%1$s"%2$s>%3$s</option>',
-            esc_attr($key),
-            selected($current, $key, false),
-            esc_html($label),
+    if ($slug === '' || $slug === '0') {
+        return;
+    }
+
+    $query->set('tax_query', [
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+        ['taxonomy' => $taxonomy, 'field' => 'slug', 'terms' => $slug],
+    ]);
+}
+add_action('pre_get_posts', 'hengegroup_theme_action_pre_get_posts_anwendung_filter');
+
+/**
+ * Zusatzfelder der Anwendungen: field => [Label, Typ, Beschreibung, Ebene]. Ebene: group (nur
+ * Gruppen), item (nur Anwendungen), both. Beim Bearbeiten erscheinen nur die Felder der Ebene des
+ * Terms; beim Anlegen blendet hengegroup_theme_action_admin_footer_anwendung_fields() je nach
+ * gewaehlter Gruppe ("uebergeordnet") die unpassenden aus.
+ */
+function hengegroup_theme_get_anwendung_fields(): array
+{
+    return [
+        'kicker' => [
+            __('Kicker', 'hengegroup-theme'),
+            'text',
+            __('Kleine Pill über der Überschrift, z. B. "Kominex / Imexco".', 'hengegroup-theme'),
+            'group',
+        ],
+        'variant' => [
+            __('Farbe', 'hengegroup-theme'),
+            'variant',
+            __('Farbe der Kicker-Pill.', 'hengegroup-theme'),
+            'group',
+        ],
+        'heading' => [
+            __('Überschrift', 'hengegroup-theme'),
+            'text',
+            __(
+                'Überschrift der Sektion auf der Seite "Anwendungen". Leer = Name. Der Text darunter ist die Beschreibung.',
+                'hengegroup-theme',
+            ),
+            'group',
+        ],
+        'short' => [
+            __('Kurztext', 'hengegroup-theme'),
+            'textarea',
+            __(
+                'Text der Karte "Anwendungsbereiche" auf Produktseiten. Leer = gekürzte Beschreibung. Die Beschreibung selbst erscheint auf der Seite "Anwendungen".',
+                'hengegroup-theme',
+            ),
+            'item',
+        ],
+        'image_id' => [
+            __('Bild', 'hengegroup-theme'),
+            'image',
+            __('Bild der Karte auf der Seite "Anwendungen".', 'hengegroup-theme'),
+            'item',
+        ],
+        'icon' => [
+            __('Icon', 'hengegroup-theme'),
+            'icon',
+            __('Icon der Karte "Anwendungsbereiche" auf Produktseiten.', 'hengegroup-theme'),
+            'item',
+        ],
+        'order' => [
+            __('Reihenfolge', 'hengegroup-theme'),
+            'number',
+            __(
+                'Kleinere Zahl = weiter oben (Gruppen untereinander bzw. Anwendungen innerhalb ihrer Gruppe).',
+                'hengegroup-theme',
+            ),
+            'both',
+        ],
+    ];
+}
+
+/**
+ * Steuerelement eines Anwendungs-Felds -- Text/Bild/Farbe wie bei den Karriere-Taxonomien
+ * (hengegroup_theme_get_job_term_field_control()), zusaetzlich Icon-Auswahl und Zahl.
+ */
+function hengegroup_theme_get_anwendung_field_control(
+    string $field,
+    string $type,
+    string $value,
+): string {
+    $id = 'hengegroup-theme-term-' . $field;
+    $name = 'hengegroup_theme_term[' . $field . ']';
+
+    if ($type === 'icon') {
+        $options = ['' => __('— kein Icon —', 'hengegroup-theme')];
+
+        foreach (hengegroup_theme_get_anwendung_icons() as $key => [$label]) {
+            $options[$key] = $label;
+        }
+
+        return hengegroup_theme_get_job_admin_select($id, $name, $options, $value);
+    }
+
+    if ($type === 'number') {
+        return sprintf(
+            '<input type="number" id="%1$s" name="%2$s" value="%3$s" class="small-text" step="1">',
+            esc_attr($id),
+            esc_attr($name),
+            esc_attr($value),
         );
     }
 
-    echo '</select>';
+    return hengegroup_theme_get_job_term_field_control($field, $type, $value);
+}
+
+function hengegroup_theme_render_anwendung_add_fields(): void
+{
+    wp_nonce_field('hengegroup_theme_save_anwendung', 'hengegroup_theme_anwendung_nonce');
+
+    foreach (
+        hengegroup_theme_get_anwendung_fields()
+        as $field => [$label, $type, $description, $scope]
+    ) {
+        printf(
+            '<div class="form-field" data-anwendung-scope="%5$s"><label for="%1$s">%2$s</label>%3$s%4$s</div>',
+            esc_attr('hengegroup-theme-term-' . $field),
+            esc_html($label),
+            hengegroup_theme_get_anwendung_field_control($field, $type, ''), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            '<p>' . esc_html($description) . '</p>',
+            esc_attr($scope),
+        );
+    }
+}
+
+/**
+ * True auf der Liste/dem Bearbeiten-Formular der Anwendungen (Produkte > Anwendungen).
+ */
+function hengegroup_theme_is_admin_anwendung_screen(): bool
+{
+    $screen = get_current_screen();
+
+    return $screen instanceof WP_Screen &&
+        in_array($screen->base, ['edit-tags', 'term'], true) &&
+        $screen->taxonomy === HENGEGROUP_THEME_ANWENDUNG_TAXONOMY;
+}
+
+/**
+ * Blendet auf Liste/Formular der Anwendungen das Feld "Titelform" (Slug) aus -- entsteht automatisch
+ * aus dem Namen und dient nur als Sprunganker auf /anwendungen/, Redakteure brauchen es nicht
+ * (explizite Nachfrage 2026-10-07: "alle Felder entfernen, die nicht benoetigt werden"). WordPress
+ * bietet dafuer keinen Filter, das Feld ist in edit-tags.php/edit-tag-form.php fest verdrahtet --
+ * deshalb rohes CSS statt Tailwind als Ausnahme (CLAUDE.md Regel 1), gleiche Begruendung wie
+ * hengegroup_theme_action_admin_head_hide_woocommerce_virtual_downloadable() (theme-admin-woocommerce.php):
+ * reines Backend-Feld-Ausblenden, kein Tailwind-Build in wp-admin. Ein leerer Slug wird beim
+ * Speichern wie gewohnt aus dem Namen erzeugt.
+ */
+function hengegroup_theme_action_admin_head_anwendung_fields(): void
+{
+    if (!hengegroup_theme_is_admin_anwendung_screen()) {
+        return;
+    }
+
+    echo '<style>.term-slug-wrap{display:none !important;}</style>';
+}
+add_action('admin_head', 'hengegroup_theme_action_admin_head_anwendung_fields');
+
+/**
+ * Beim Anlegen steht die Ebene erst mit der Auswahl "Gruppe" (uebergeordnet, `#parent`) fest:
+ * ohne Gruppe = neue Gruppe (nur Gruppen-Felder), mit Gruppe = Anwendung (nur Anwendungs-Felder).
+ * Kleines Inline-Skript statt eigener Datei -- betrifft nur dieses eine Formular.
+ */
+function hengegroup_theme_action_admin_footer_anwendung_fields(): void
+{
+    $screen = get_current_screen();
+
+    if (!hengegroup_theme_is_admin_anwendung_screen() || $screen->base !== 'edit-tags') {
+        return;
+    }
+
+    echo "<script>(function(){var parent=document.getElementById('parent');if(!parent){return;}function update(){var level=parent.value==='-1'||parent.value===''?'group':'item';document.querySelectorAll('[data-anwendung-scope]').forEach(function(row){var scope=row.getAttribute('data-anwendung-scope');row.style.display=scope==='both'||scope===level?'':'none';});}parent.addEventListener('change',update);update();})();</script>";
+}
+add_action('admin_footer', 'hengegroup_theme_action_admin_footer_anwendung_fields');
+
+/**
+ * Spalte "Titelform" in der Liste der Anwendungen ausblenden (siehe oben).
+ */
+function hengegroup_theme_filter_manage_anwendung_columns(array $columns): array
+{
+    unset($columns['slug']);
+
+    return $columns;
+}
+add_filter(
+    'manage_edit-' . HENGEGROUP_THEME_ANWENDUNG_TAXONOMY . '_columns',
+    'hengegroup_theme_filter_manage_anwendung_columns',
+);
+add_action(
+    HENGEGROUP_THEME_ANWENDUNG_TAXONOMY . '_add_form_fields',
+    'hengegroup_theme_render_anwendung_add_fields',
+);
+
+function hengegroup_theme_render_anwendung_edit_fields(WP_Term $term): void
+{
+    wp_nonce_field('hengegroup_theme_save_anwendung', 'hengegroup_theme_anwendung_nonce');
+
+    $level = $term->parent > 0 ? 'item' : 'group';
+
+    foreach (
+        hengegroup_theme_get_anwendung_fields()
+        as $field => [$label, $type, $description, $scope]
+    ) {
+        if ($scope !== 'both' && $scope !== $level) {
+            continue;
+        }
+
+        printf(
+            '<tr class="form-field"><th scope="row"><label for="%1$s">%2$s</label></th><td>%3$s%4$s</td></tr>',
+            esc_attr('hengegroup-theme-term-' . $field),
+            esc_html($label),
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- control markup is escaped field by field inside.
+            hengegroup_theme_get_anwendung_field_control(
+                $field,
+                $type,
+                (string) get_term_meta(
+                    $term->term_id,
+                    '_hengegroup_theme_anwendung_' . $field,
+                    true,
+                ),
+            ),
+            '<p class="description">' . esc_html($description) . '</p>',
+        );
+    }
+
+    if ($level !== 'item') {
+        return;
+    }
+
+    $links = array_map(
+        static fn(int $product_id): string => sprintf(
+            '<a href="%1$s">%2$s</a>',
+            esc_url((string) get_edit_post_link($product_id)),
+            esc_html(get_the_title($product_id)),
+        ),
+        hengegroup_theme_get_anwendung_product_ids((int) $term->term_id),
+    );
+
     printf(
-        '<p class="description">%s</p>',
+        '<tr class="form-field"><th scope="row">%1$s</th><td>%2$s<p class="description">%3$s</p></td></tr>',
+        esc_html__('Zugeordnete Produkte', 'hengegroup-theme'),
+        $links !== [] ? implode(', ', $links) : '—', // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above.
         esc_html__(
-            'Erscheint auf der Karte "Anwendungsbereiche" der Produktseiten. Der Text der Karte ist der Textauszug dieser Anwendung.',
+            'Nur zur Ansicht. Die Zuordnung wird im jeweiligen Produkt gepflegt (Box "Anwendungen") oder per Quick Edit in der Produktliste.',
             'hengegroup-theme',
         ),
     );
 }
+add_action(
+    HENGEGROUP_THEME_ANWENDUNG_TAXONOMY . '_edit_form_fields',
+    'hengegroup_theme_render_anwendung_edit_fields',
+);
 
-function hengegroup_theme_action_save_post_anwendung_icon(int $post_id): void
+function hengegroup_theme_action_save_anwendung(int $term_id): void
 {
     if (
-        !isset($_POST['hengegroup_theme_anwendung_icon_nonce']) ||
+        !isset($_POST['hengegroup_theme_anwendung_nonce']) ||
         !wp_verify_nonce(
-            sanitize_text_field(wp_unslash($_POST['hengegroup_theme_anwendung_icon_nonce'])),
-            'hengegroup_theme_save_anwendung_icon',
+            sanitize_text_field(wp_unslash($_POST['hengegroup_theme_anwendung_nonce'])),
+            'hengegroup_theme_save_anwendung',
         ) ||
-        (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) ||
-        !current_user_can('edit_post', $post_id)
+        !current_user_can('manage_product_terms')
     ) {
         return;
     }
 
-    $icon = isset($_POST['hengegroup_theme_anwendung_icon'])
-        ? sanitize_key(wp_unslash($_POST['hengegroup_theme_anwendung_icon']))
-        : '';
+    // Jeder Wert wird unten je Feldtyp einzeln sanitisiert. Felder, die auf der Bearbeitungsseite
+    // fuer diese Ebene nicht angezeigt werden, fehlen im POST und bleiben unangetastet.
+    $data =
+        isset($_POST['hengegroup_theme_term']) && is_array($_POST['hengegroup_theme_term'])
+            ? wp_unslash($_POST['hengegroup_theme_term']) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            : [];
 
-    if (isset(hengegroup_theme_get_anwendung_icons()[$icon])) {
-        update_post_meta($post_id, '_hengegroup_theme_anwendung_icon', $icon);
-    } else {
-        delete_post_meta($post_id, '_hengegroup_theme_anwendung_icon');
+    foreach (hengegroup_theme_get_anwendung_fields() as $field => [, $type]) {
+        if (!array_key_exists($field, $data)) {
+            continue;
+        }
+
+        $raw = (string) $data[$field];
+        $value = match ($type) {
+            'textarea' => trim(sanitize_textarea_field($raw)),
+            'image' => absint($raw) > 0 ? (string) absint($raw) : '',
+            'variant' => in_array($raw, hengegroup_theme_get_badge_variants(), true) ? $raw : '',
+            'icon' => isset(hengegroup_theme_get_anwendung_icons()[$raw]) ? $raw : '',
+            'number' => is_numeric(trim($raw)) ? (string) (int) $raw : '',
+            default => trim(sanitize_text_field($raw)),
+        };
+
+        if ($value === '') {
+            delete_term_meta($term_id, '_hengegroup_theme_anwendung_' . $field);
+        } else {
+            update_term_meta($term_id, '_hengegroup_theme_anwendung_' . $field, $value);
+        }
     }
 }
 add_action(
-    'save_post_' . HENGEGROUP_THEME_ANWENDUNG_POST_TYPE,
-    'hengegroup_theme_action_save_post_anwendung_icon',
+    'created_' . HENGEGROUP_THEME_ANWENDUNG_TAXONOMY,
+    'hengegroup_theme_action_save_anwendung',
+);
+add_action(
+    'edited_' . HENGEGROUP_THEME_ANWENDUNG_TAXONOMY,
+    'hengegroup_theme_action_save_anwendung',
 );
 
 /**

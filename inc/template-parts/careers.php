@@ -429,8 +429,12 @@ function hengegroup_theme_build_job_posting_schema(array $job, array $context): 
             'name' => $company['legal_name'] !== '' ? $company['legal_name'] : $company['name'],
         ];
 
-        if ($company['website'] !== '') {
-            $organization['sameAs'] = $company['website'];
+        // Unternehmensseite auf dieser Website (Karriere > Unternehmen, Seitenauswahl) als `url`
+        // des Arbeitgebers -- nicht `sameAs`, das ist fuer fremde Auftritte (eigene Domain,
+        // LinkedIn) gedacht; alle Firmen haben nur Unterseiten dieser Website (explizite Vorgabe
+        // 2026-10-07).
+        if (($company['url'] ?? '') !== '') {
+            $organization['url'] = $company['url'];
         }
 
         if (($context['logo_url'] ?? '') !== '') {
@@ -611,6 +615,16 @@ function hengegroup_theme_get_career_page_url(): string
     return home_url('/');
 }
 
+/**
+ * Permalink einer veroeffentlichten Seite, sonst '' (z. B. Seite geloescht oder Entwurf).
+ */
+function hengegroup_theme_get_published_page_url(int $page_id): string
+{
+    return $page_id > 0 && get_post_status($page_id) === 'publish'
+        ? (string) get_permalink($page_id)
+        : '';
+}
+
 function hengegroup_theme_get_job_company(int $term_id): ?array
 {
     $term = get_term($term_id, HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY);
@@ -628,14 +642,14 @@ function hengegroup_theme_get_job_company(int $term_id): ?array
         'legal_name' => trim(
             (string) get_term_meta($term->term_id, '_hengegroup_theme_company_legal_name', true),
         ),
-        'website' => trim(
-            (string) get_term_meta($term->term_id, '_hengegroup_theme_company_website', true),
+        'url' => hengegroup_theme_get_published_page_url(
+            (int) get_term_meta($term->term_id, '_hengegroup_theme_company_page_id', true),
         ),
-        'logo_id' => (int) get_term_meta($term->term_id, '_hengegroup_theme_company_logo_id', true),
-        'variant' => in_array($variant, $variants, true) ? $variant : $variants[0],
         'benefits' => hengegroup_theme_parse_job_list_lines(
             (string) get_term_meta($term->term_id, '_hengegroup_theme_company_benefits', true),
         ),
+        'logo_id' => (int) get_term_meta($term->term_id, '_hengegroup_theme_company_logo_id', true),
+        'variant' => in_array($variant, $variants, true) ? $variant : $variants[0],
         'contact' => [
             'name' => (string) get_term_meta(
                 $term->term_id,

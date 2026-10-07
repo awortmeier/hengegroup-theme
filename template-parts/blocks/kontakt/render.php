@@ -6,8 +6,12 @@ declare(strict_types=1);
 // "Kontakt") -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die allgemeine
 // Phase-3-Block-Konvention. Ueberschrift + Text, darunter links die Firmen-Kontaktkarte (Daten aus
 // Einstellungen > Footer, dieselbe Quelle wie der Footer), rechts das Anfrageformular mit PLZ/Ort
-// (template-parts/components/inquiry-form.php). Anfragen landen unter Produkte > Produktanfragen,
+// (template-parts/components/inquiry-form.php). Anfragen landen unter Dashboard > Produktanfragen,
 // es wird keine E-Mail versendet.
+//
+// Ueberschrift/Text als volle Rasterzeile mit `max-w-3xl` statt Teil-`col-span`, damit die
+// Kontaktkarte nicht per Grid-Auto-Placement daneben rutscht, sondern links neben dem Formular steht
+// (Bugfix 2026-10-07).
 //
 // `id="kontakt"` ist das Sprungziel der "Kontakt"-Links aus dem Design (Header-Button, Buehne) und
 // der Redirect nach dem Absenden -- deshalb nur einmal pro Seite erlaubt (`supports.multiple: false`).
@@ -29,7 +33,7 @@ echo '<section id="kontakt" class="scroll-mt-24 py-16 md:py-25" data-slot="konta
 echo '<div class="wrapper gap-y-12">';
 
 if ($heading !== '' || $text !== '') {
-    echo '<div class="col-span-12 lg:col-span-7">';
+    echo '<div class="col-span-12 max-w-3xl">';
 
     if ($heading !== '') {
         get_template_part('template-parts/base/typography', null, [

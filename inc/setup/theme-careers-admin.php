@@ -9,7 +9,7 @@ declare(strict_types=1);
 //     Profil"/"Deine Aufgaben" pflegt man im Inhalt als Block "Stellen-Liste"
 //     (template-parts/blocks/stellen-liste), nicht hier. Oben ein Hinweis, welche fuer Google Jobs wichtigen Angaben noch fehlen.
 //   - Zusatzfelder an den Taxonomie-Termen: Unternehmen (rechtlicher Name, Website, Logo, Farbe,
-//     Standard-Benefits, optionaler eigener Ansprechpartner), Standort (Adresse + Koordinaten).
+//     Unternehmensseite, Standard-Benefits, optionaler eigener Ansprechpartner), Standort (Adresse + Koordinaten).
 //   - "Karriere > Einstellungen": Karriereseite + Standard-Ansprechpartner (aktuell einer fuer alle
 //     Unternehmen, pro Unternehmen ueberschreibbar).
 // Klassische add_meta_box()-/Term-Formular-Felder wie die bestehende SEO-/Badge-Box
@@ -486,13 +486,11 @@ function hengegroup_theme_get_job_term_fields(string $taxonomy): array
                     'hengegroup-theme',
                 ),
             ],
-            'website' => [__('Website', 'hengegroup-theme'), 'url', ''],
-            'logo_id' => [__('Logo', 'hengegroup-theme'), 'image', ''],
-            'variant' => [
-                __('Farbe', 'hengegroup-theme'),
-                'variant',
+            'page_id' => [
+                __('Unternehmensseite', 'hengegroup-theme'),
+                'page',
                 __(
-                    'Farbe der Unternehmens-Pill und der Überschrift auf der Karriereseite.',
+                    'Unterseite dieser Website über das Unternehmen -- geht als Adresse des Arbeitgebers in die Google-Jobs-Daten.',
                     'hengegroup-theme',
                 ),
             ],
@@ -501,6 +499,15 @@ function hengegroup_theme_get_job_term_fields(string $taxonomy): array
                 'textarea',
                 __(
                     'Ein Punkt pro Zeile. Gilt für jede Stelle dieses Unternehmens ohne eigene Benefits.',
+                    'hengegroup-theme',
+                ),
+            ],
+            'logo_id' => [__('Logo', 'hengegroup-theme'), 'image', ''],
+            'variant' => [
+                __('Farbe', 'hengegroup-theme'),
+                'variant',
+                __(
+                    'Farbe der Unternehmens-Pill und der Überschrift auf der Karriereseite.',
                     'hengegroup-theme',
                 ),
             ],
@@ -577,6 +584,17 @@ function hengegroup_theme_get_job_term_field_control(
         hengegroup_theme_render_seo_image_picker_field($id, $name, (int) $value);
 
         return (string) ob_get_clean();
+    }
+
+    if ($type === 'page') {
+        return (string) wp_dropdown_pages([
+            'name' => esc_attr($name),
+            'id' => esc_attr($id),
+            'selected' => absint($value),
+            'show_option_none' => esc_html__('— keine —', 'hengegroup-theme'),
+            'option_none_value' => '0',
+            'echo' => false,
+        ]);
     }
 
     if ($type === 'variant') {
@@ -683,6 +701,7 @@ function hengegroup_theme_action_save_job_term(int $term_id, int $tt_id, string 
             'url' => esc_url_raw(trim($raw)),
             'email' => sanitize_email($raw),
             'image' => absint($raw) > 0 ? (string) absint($raw) : '',
+            'page' => get_post_type(absint($raw)) === 'page' ? (string) absint($raw) : '',
             'variant' => in_array($raw, hengegroup_theme_get_badge_variants(), true) ? $raw : '',
             default => trim(sanitize_text_field($raw)),
         };
@@ -722,6 +741,69 @@ function hengegroup_theme_register_job_term_field_hooks(): void
 hengegroup_theme_register_job_term_field_hooks();
 add_action('created_term', 'hengegroup_theme_action_save_job_term', 10, 3);
 add_action('edited_term', 'hengegroup_theme_action_save_job_term', 10, 3);
+
+/**
+ * Karriere-Taxonomien, deren Standardfelder "Titelform" (Slug) und "Beschreibung" nirgends gelesen
+ * werden: keine oeffentlichen Seiten (Slug egal, entsteht automatisch aus dem Namen), Stellen und
+ * JSON-LD nutzen nur Name + Zusatzfelder (Taetigkeitsbereich nur den Namen als
+ * `occupationalCategory`). Explizite Nachfrage 2026-10-07: "alle Felder entfernen, die nicht
+ * benoetigt werden".
+ */
+function hengegroup_theme_get_job_taxonomies_without_default_fields(): array
+{
+    return [
+        HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY,
+        HENGEGROUP_THEME_JOB_LOCATION_TAXONOMY,
+        HENGEGROUP_THEME_JOB_CATEGORY_TAXONOMY,
+    ];
+}
+
+/**
+ * Blendet "Titelform" und "Beschreibung" auf Liste/Formular der Karriere-Taxonomien aus. WordPress
+ * bietet dafuer keinen Filter (Felder fest in edit-tags.php/edit-tag-form.php) -- deshalb rohes CSS
+ * statt Tailwind als Ausnahme (CLAUDE.md Regel 1), gleiche Begruendung wie bei den Anwendungen
+ * (hengegroup_theme_action_admin_head_anwendung_fields(), theme-products-admin.php).
+ */
+function hengegroup_theme_action_admin_head_job_term_fields(): void
+{
+    $screen = get_current_screen();
+
+    if (
+        !($screen instanceof WP_Screen) ||
+        !in_array($screen->base, ['edit-tags', 'term'], true) ||
+        !in_array(
+            $screen->taxonomy,
+            hengegroup_theme_get_job_taxonomies_without_default_fields(),
+            true,
+        )
+    ) {
+        return;
+    }
+
+    echo '<style>.term-slug-wrap,.term-description-wrap{display:none !important;}</style>';
+}
+add_action('admin_head', 'hengegroup_theme_action_admin_head_job_term_fields');
+
+/**
+ * Spalten "Beschreibung"/"Titelform" in den Listen der Karriere-Taxonomien ausblenden (siehe oben).
+ */
+function hengegroup_theme_filter_manage_job_term_columns(array $columns): array
+{
+    unset($columns['description'], $columns['slug']);
+
+    return $columns;
+}
+
+function hengegroup_theme_register_job_term_column_filters(): void
+{
+    foreach (hengegroup_theme_get_job_taxonomies_without_default_fields() as $taxonomy) {
+        add_filter(
+            'manage_edit-' . $taxonomy . '_columns',
+            'hengegroup_theme_filter_manage_job_term_columns',
+        );
+    }
+}
+hengegroup_theme_register_job_term_column_filters();
 
 /**
  * Logo-Feld der Unternehmen nutzt dasselbe wp.media()-Bildauswahl-Widget wie die SEO-Box.

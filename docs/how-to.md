@@ -32,11 +32,18 @@ Volltonfarben-Vokabular, kein per Filter erweiterbarer Escape-Hatch wie das vorh
 
 ### Anwendungen anlegen und Produkten zuordnen
 
-Anwendungen sind ein eigener Post-Type (Produkte > Anwendungen, siehe `docs/entscheidungen.md`
-"Produktbereich: Datenmodell"). Anwendung anlegen: Titel, Inhalt (Bloecke), Textauszug (= Text der
-Karte "Anwendungsbereiche" auf Produktseiten), Beitragsbild, Icon (Box "Icon"). Zuordnung nur im
-Produkt-Editor ueber die Box "Anwendungen" -- die Anwendungsseite listet ihre Produkte danach
-automatisch. Ein weiteres Icon: Eintrag in `hengegroup_theme_get_anwendung_icons()`
+Anwendungen sind eine Taxonomie mit zwei Ebenen (Produkte > Anwendungen, siehe
+`docs/entscheidungen.md` "Anwendungen: Taxonomie statt Post-Type, nur Uebersichtsseite"):
+
+1. Gruppe anlegen (ohne uebergeordnete Gruppe): Name, Beschreibung, Kicker, Farbe, Ueberschrift,
+   Reihenfolge. Eine Gruppe = eine Sektion auf der Seite /anwendungen/ (Block "Anwendungsgruppe").
+2. Anwendung anlegen mit der Gruppe als "uebergeordnet": Beschreibung (Text auf /anwendungen/),
+   Kurztext (Karte auf Produktseiten), Bild, Icon, Reihenfolge.
+3. Zuordnung im Produkt-Editor (Box "Anwendungen") oder fuer mehrere Produkte per Quick Edit/
+   Massenbearbeitung in der Produktliste. Das Produkt erscheint danach automatisch bei der Anwendung
+   auf /anwendungen/.
+
+Ein weiteres Icon: Eintrag in `hengegroup_theme_get_anwendung_icons()`
 (`inc/template-parts/products.php`) ergaenzen und `pnpm icons:lucide` ausfuehren.
 
 ### Produktbereich einrichten / Produkt pflegen
@@ -51,7 +58,7 @@ automatisch. Ein weiteres Icon: Eintrag in `hengegroup_theme_get_anwendung_icons
    Tab "Eigenschaften" > Attribut "Koernung" fuer die lieferbaren Koernungen (Werte unter
    Produkte > Eigenschaften > Koernung, Reihenfolge per Drag & Drop); Tab "Verknuepfte Produkte" >
    "Verwandte Produkte" fuer bis zu 4 feste Empfehlungen.
-5. Eingaenge: Produkte > Produktanfragen bzw. Karriere > Bewerbungen; Status in der Seitenleiste
+5. Eingaenge: Dashboard > Produktanfragen bzw. Dashboard > Bewerbungen; Status in der Seitenleiste
    setzen, damit der Zaehler am Menue nur Neues zeigt.
 
 ### Ein weiteres JSON-LD-Schema ergaenzen (z. B. Product/JobPosting)

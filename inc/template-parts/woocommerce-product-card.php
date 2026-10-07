@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 // Rendering helpers for the product box (woocommerce/content-product.php) -- "Badge" meta data
 // model lives in inc/setup/theme-woocommerce-products.php, see that file's own header comment.
-// Anwendungen (hengegroup_theme_render_product_anwendung_badges() below) are the `anwendung`
-// custom post type again since 2026-10-07 (explicit request: Anwendungen get their own pages, see
-// docs/entscheidungen.md "Produktbereich: Datenmodell") -- read via
+// Anwendungen (hengegroup_theme_render_product_anwendung_badges() below) are terms of the
+// `produkt_anwendung` taxonomy since 2026-10-07 (see docs/entscheidungen.md "Anwendungen:
+// Taxonomie statt Post-Type, nur Uebersichtsseite") -- read via
 // hengegroup_theme_get_product_anwendungen() (inc/template-parts/products.php); `product_cat` is
-// now the real product category (sections of the product overview).
+// the real product category (sections of the product overview).
 //
 // hengegroup_theme_render_product_badge()/hengegroup_theme_render_product_anwendung_badges() call
 // get_post_meta()/get_the_terms()/get_template_part() against real template-parts/base files and
@@ -67,12 +67,12 @@ function hengegroup_theme_render_product_badge(int $product_id): string
 }
 
 /**
- * Renders the product's assigned Anwendungen (`anwendung` post type, see
+ * Renders the product's assigned Anwendungen (`produkt_anwendung` terms, see
  * hengegroup_theme_get_product_anwendungen()) as an "Anwendungen" eyebrow label (matches the
  * reference design's small-caps section heading above the badge row) followed by buffered
  * badge.php markup (neutral `outline` variant -- unlike the product badge above, Anwendungen carry
- * no brand color), each a plain <span> (no `href` given): products only LIST their Anwendungen,
- * only the Anwendung page links back to products (explicit request). Returns '' when the product
+ * no brand color), each a plain <span> (no `href` given): products only LIST their Anwendungen
+ * (explicit request), only the Anwendungen overview links to products. Returns '' when the product
  * has no Anwendungen, so callers can skip the wrapper (and the label with it) entirely.
  */
 function hengegroup_theme_render_product_anwendung_badges(int $product_id): string
@@ -89,7 +89,7 @@ function hengegroup_theme_render_product_anwendung_badges(int $product_id): stri
         ob_start();
         get_template_part('template-parts/base/badge', null, [
             'config' => [
-                'text' => get_the_title($anwendung),
+                'text' => $anwendung->name,
                 'variant' => 'outline',
             ],
         ]);

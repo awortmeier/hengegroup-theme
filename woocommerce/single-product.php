@@ -11,8 +11,9 @@ declare(strict_types=1);
 //   2. Technische Daten (dunkel): "Chemische Analyse (typisch)" (freie Zeilen, Tab "Technische
 //      Daten") und "Lieferbare Koernungen" (Attribut `pa_koernung` -- wird spaeter zur
 //      Variantenauswahl, sobald Produkte bestellbar sind).
-//   3. Anwendungsbereiche: zugeordnete Anwendungen als Karten, bewusst OHNE Link (explizite Vorgabe:
-//      Produkte zaehlen Anwendungen nur auf, die Anwendungsseite verlinkt zu Produkten).
+//   3. Anwendungsbereiche: zugeordnete Anwendungen (Taxonomie `produkt_anwendung`) als Karten, bewusst
+//      OHNE Link (explizite Vorgabe: Produkte zaehlen Anwendungen nur auf; die Seite "Anwendungen"
+//      verlinkt umgekehrt zu Produkten).
 //   4. Downloads (Tab "Technische Daten", Dateien aus der Mediathek; Format/Groesse automatisch).
 //   5. Ansprechpartner + Anfrageformular (#kontakt): Ansprechpartner der Produktkategorie, sonst
 //      Standard aus Produkte > Einstellungen; Anfrage landet unter Produkte > Produktanfragen.
@@ -56,7 +57,7 @@ while (have_posts()):
     ?>
   <article <?php wc_product_class('', $product); ?> data-slot="product-detail">
     <section class="pt-28 pb-16 sm:pt-32 lg:pt-36 lg:pb-25" aria-labelledby="produkt-titel">
-      <div class="wrapper items-center gap-y-10">
+      <div class="wrapper items-start gap-y-10">
         <div class="<?php echo esc_attr(
             $data['image_id'] > 0 ? 'col-span-12 lg:col-span-8' : 'col-span-12 lg:col-span-9',
         ); ?>">
@@ -86,7 +87,7 @@ while (have_posts()):
           <?php endif; ?>
 
           <?php if ($data['recycling'] !== ''): ?>
-            <p class="flex items-center gap-3 rounded-[14px] bg-henge-green/10 px-5 py-4 text-[15px] leading-normal text-grey-dark">
+            <p class="inline-flex max-w-full items-center gap-3 rounded-[14px] bg-henge-green/10 px-5 py-4 text-[15px] leading-normal text-grey-dark">
               <?php $recycling_icon = hengegroup_theme_render_icon([
                   'name' => 'recycle',
                   'set' => 'lucide',
@@ -250,7 +251,7 @@ while (have_posts()):
     <?php $contact_card = hengegroup_theme_render_product_contact_card($data['contact']); ?>
     <section id="kontakt" class="scroll-mt-24 bg-grey-dark py-16 md:py-25" aria-labelledby="kontakt-titel">
       <div class="wrapper gap-y-12">
-        <div class="col-span-12 lg:col-span-7">
+        <div class="col-span-12 max-w-3xl">
           <?php get_template_part('template-parts/base/typography', null, [
               'config' => [
                   'variant' => 'headline-sm',

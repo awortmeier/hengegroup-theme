@@ -21,6 +21,47 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Karriere-Taxonomien: ungenutzte Felder entfernt, Unternehmensseite statt Website (2026-10-07)
+
+Explizite Nachfrage ("alle Felder entfernen, die nicht benoetigt werden"):
+
+- **"Titelform"/"Beschreibung"** sind bei Unternehmen, Standorten und Taetigkeitsbereichen
+  ausgeblendet (Formular und Listenspalten) -- der Code liest sie nirgends, die Taxonomien haben
+  keine oeffentlichen Seiten. Gleiches fuer "Titelform" bei den Anwendungen. Rohes CSS im
+  Backend als begruendete Ausnahme (kein Filter fuer diese Kernfelder), siehe Kopfkommentare in
+  `inc/setup/theme-careers-admin.php`/`theme-products-admin.php`.
+- **Standard-Benefits bleiben** (nach Rueckfrage bewusst behalten): vier Stellen auf dev nutzen sie
+  ueber eine leere "Wir bieten dir"-Liste.
+- **"Website" -> "Unternehmensseite" (Seitenauswahl)**: Alle Firmen haben nur Unterseiten dieser
+  Website. Ausgegeben als `url` des Arbeitgebers im JobPosting statt `sameAs` (das ist fuer fremde
+  Auftritte wie eigene Domain/LinkedIn gedacht); die Unterseite statt der Startseite, damit Google
+  die Firmen der Gruppe nicht als eine Organisation zusammenfasst. Seitenauswahl statt URL-Feld,
+  damit nach Slug-Aenderungen nichts bricht.
+
+### Anwendungen: Taxonomie statt Post-Type, nur Uebersichtsseite (2026-10-07)
+
+Korrektur der Vorgabe vom selben Tag: Anwendungen haben **keine eigenen Seiten**, sondern nur die
+Uebersicht /anwendungen/ (Design "Anwendungen"). Loest den Anwendungen-Punkt von "Produktbereich:
+Datenmodell" (unten) ab. Details: Kopfkommentare von `inc/template-parts/products.php`,
+`inc/setup/theme-products.php`, `inc/setup/theme-products-admin.php`,
+`template-parts/blocks/anwendungsgruppe/render.php`.
+
+- **Hierarchische, nicht oeffentliche Taxonomie `produkt_anwendung` am Produkt** statt Post-Type:
+  ohne Einzelseite ist eine Anwendung ein Schlagwort mit Zusatzfeldern. Die Verknuepfung liegt
+  einmal in WordPress' Term-Zuordnung und ist in beide Richtungen abfragbar; Spalte, Filter,
+  Quick Edit und Massenbearbeitung in der Produktliste gibt es dazu ohne eigenen Code (Filter: ein
+  kleiner eigener Hook, weil die Taxonomie keine `query_var` hat). Eigene Taxonomie statt
+  `product_cat`, weil die Produktkategorien die Sektionen der Produktuebersicht bleiben.
+- **Ebene 1 = Gruppen** (Sektionen der Seite, Kicker/Farbe/Ueberschrift wie bei den
+  Produktkategorien), **Ebene 2 = Anwendungen** (Beschreibung, Kurztext, Bild, Icon, Reihenfolge).
+  Produkte bekommen nur Ebene 2; die Box im Produkt-Editor zeigt die Gruppen nur als Ueberschriften.
+- **Zuordnung nur am Produkt** (explizite Vorgabe "erstmal nur ueber die Produktseite"); an der
+  Anwendung stehen die zugeordneten Produkte nur zur Ansicht.
+- **Links nur in eine Richtung**: Die Seite /anwendungen/ verlinkt die Produkte (Chips, Design);
+  Produkte zaehlen ihre Anwendungen weiterhin nur auf (explizite Vorgabe).
+- **/anwendungen/ als Seite aus Bloecken** (Buehne, neuer Block "Anwendungsgruppe", "Kontakt"),
+  gleiches Muster wie /produkte/. `single-anwendung.php` entfaellt.
+
 ### Produktbereich: Datenmodell (2026-10-07)
 
 Auf expliziten Wunsch der komplette Produktbereich nach den Designs "Produktuebersicht" und
@@ -28,8 +69,9 @@ Auf expliziten Wunsch der komplette Produktbereich nach den Designs "Produktuebe
 `inc/setup/theme-products.php`, `inc/setup/theme-products-admin.php` und
 `woocommerce/single-product.php`; hier die Entscheidungen:
 
-- **Anwendungen wieder als eigener Post-Type `anwendung`** (loest "Anwendungen: Produktkategorie
-  statt eigenem Post-Type" ab): Anwendungen bekommen jetzt eigene Seiten (/anwendungen/<slug>/),
+- **Anwendungen wieder als eigener Post-Type `anwendung`** (inzwischen abgeloest durch "Anwendungen:
+  Taxonomie statt Post-Type, nur Uebersichtsseite" oben; loeste seinerseits "Anwendungen:
+  Produktkategorie statt eigenem Post-Type" ab): Anwendungen bekommen jetzt eigene Seiten (/anwendungen/<slug>/),
   dafuer ist ein Post-Type der richtige Ausgangspunkt. Zuordnung NUR am Produkt (Box
   "Anwendungen"), gespeichert als eine Meta-Zeile je Anwendung statt serialisiertem Array, damit
   die Anwendungsseite ihre Produkte per `meta_query` findet. Produkte zaehlen Anwendungen nur auf
@@ -78,9 +120,11 @@ Bewerbungsformular den Punkt "Versand per E-Mail statt Speicherung in WordPress"
 `inc/setup/theme-requests.php`, `inc/setup/theme-product-inquiries.php`,
 `inc/setup/theme-careers-application.php`.
 
-- **Zwei nicht-oeffentliche Post-Types** (`produktanfrage` unter Produkte, `bewerbung` unter
-  Karriere) mit gemeinsamer Registrierung, Status (neu / in Bearbeitung / erledigt),
-  schreibgeschuetzter Detailansicht und **Zaehler neuer Eintraege am Menuepunkt** -- ersetzt die
+- **Zwei nicht-oeffentliche Post-Types** (`produktanfrage`, `bewerbung`, beide unter "Dashboard",
+  urspruenglich unter Produkte/Karriere -- explizite Nachfrage: dort sieht man neue Eingaenge nach
+  dem Login zuerst) mit gemeinsamer Registrierung, Status (neu / in Bearbeitung / erledigt),
+  schreibgeschuetzter Detailansicht und **Zaehler neuer Eintraege am Menuepunkt** (Badge je Eintrag,
+  Summe an "Dashboard") -- ersetzt die
   Benachrichtigung, die vorher die E-Mail war.
 - **Sichtbar fuer alle Redakteure und Admins** (explizite Vorgabe "jeder darf sie sehen"): normale
   Beitrags-Rechte, Anlegen im Backend gesperrt (`create_posts => do_not_allow`).

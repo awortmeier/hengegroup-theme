@@ -15,8 +15,9 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
   Bewerbungen gespeichert (Unterlagen geschuetzt ausserhalb der Mediathek, Download nur im
   Backend); keine Eingangsbestaetigung mehr. Das Formular erscheint auch ohne gepflegte
   Ansprechpartner-E-Mail. Siehe `docs/entscheidungen.md`.
-- Anwendungen sind wieder ein eigener Post-Type mit eigener Seite (/anwendungen/<slug>/),
-  Produktkategorien sind echte Kategorien. Produkte liegen unter /produkte/<slug>/.
+- Anwendungen sind eine eigene Taxonomie (Gruppen + Anwendungen) mit Uebersichtsseite
+  /anwendungen/ (neuer Block "Anwendungsgruppe"), keine Einzelseiten; Produktkategorien sind echte
+  Kategorien. Produkte liegen unter /produkte/<slug>/.
 - Produktbox als Komponente `template-parts/components/product-card.php` (Varianten
   `default`/`minimal`).
 
@@ -33,9 +34,9 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 - Produktbereich nach Design: Produktuebersicht als Seite aus Bloecken mit den neuen Bloecken
   "Produktkategorie" und "Kontakt"; Produktdetailseite mit Intro, Technischen Daten (chemische
   Analyse, Koernungen), Anwendungsbereichen, Downloads, Ansprechpartner + Anfrageformular und
-  verwandten Produkten (manuell + automatisch aufgefuellt); Anwendungsseiten; Produktdaten-Tab
+  verwandten Produkten (manuell + automatisch aufgefuellt); Anwendungen-Uebersicht; Produktdaten-Tab
   "Technische Daten", Kategorie-Felder und Produkte > Einstellungen. Anfragen landen unter
-  Produkte > Produktanfragen (keine E-Mail). Siehe `docs/entscheidungen.md`.
+  Dashboard > Produktanfragen (keine E-Mail). Siehe `docs/entscheidungen.md`.
 
 - Footer nach Design: Logo + Adresse, Kontakt (E-Mail/Telefon als Link, Fax), Social Media,
   Links (Menue-Position "Footermenü"), Marken-Verlaufslinie und Copyright. Kontaktdaten und

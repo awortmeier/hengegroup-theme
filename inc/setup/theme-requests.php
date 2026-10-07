@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 // Eingaenge aus Website-Formularen als Backend-Eintraege statt E-Mails (explizite Vorgabe
 // 2026-10-07: "keine echten E-Mails, sondern Eintraege im Backend"):
-//   - `produktanfrage` (Produkte > Produktanfragen): Kontaktformulare der Produktuebersicht
+//   - `produktanfrage` (Dashboard > Produktanfragen): Kontaktformulare der Produktuebersicht
 //     (Block "Kontakt") und der Produktdetailseite, Handler inc/setup/theme-product-inquiries.php.
-//   - `bewerbung` (Karriere > Bewerbungen): Bewerbungsformular der Stellenseite, Handler
+//   - `bewerbung` (Dashboard > Bewerbungen): Bewerbungsformular der Stellenseite, Handler
 //     inc/setup/theme-careers-application.php, Dateien geschuetzt ausserhalb der Mediathek.
 //
 // Beide Typen teilen sich hier Registrierung, Status (neu / in Bearbeitung / erledigt), Spalten,
 // die schreibgeschuetzte Detailansicht und den Zaehler neuer Eintraege am Menuepunkt (es kommt ja
-// keine E-Mail mehr, die auf neue Eingaenge hinweist). Eintraege werden nie automatisch geloescht
+// keine E-Mail mehr, die auf neue Eingaenge hinweist). Beide liegen unter "Dashboard" statt unter
+// Produkte/Karriere (explizite Nachfrage 2026-10-07) -- der Ort, den man nach dem Login zuerst
+// sieht; der Zaehler steht am jeweiligen Eintrag und als Summe am Menuepunkt "Dashboard". Eintraege werden nie automatisch geloescht
 // (explizite Vorgabe); sichtbar fuer alle, die fremde Beitraege bearbeiten duerfen (Redakteure und
 // Administratoren -- explizite Vorgabe "jeder darf sie sehen"). Neu anlegen kann man sie im Backend
 // nicht (`create_posts => do_not_allow`), sie entstehen nur ueber die Formulare.
@@ -105,7 +107,7 @@ function hengegroup_theme_register_request_post_types(): void
                 'all_items' => __('Produktanfragen', 'hengegroup-theme'),
                 'menu_name' => __('Produktanfragen', 'hengegroup-theme'),
             ],
-            'show_in_menu' => 'edit.php?post_type=product',
+            'show_in_menu' => 'index.php',
         ]),
     );
 
@@ -122,7 +124,7 @@ function hengegroup_theme_register_request_post_types(): void
                 'all_items' => __('Bewerbungen', 'hengegroup-theme'),
                 'menu_name' => __('Bewerbungen', 'hengegroup-theme'),
             ],
-            'show_in_menu' => 'edit.php?post_type=' . HENGEGROUP_THEME_JOB_POST_TYPE,
+            'show_in_menu' => 'index.php',
         ]),
     );
 }
@@ -479,45 +481,57 @@ function hengegroup_theme_count_new_requests(string $post_type): int
 }
 
 /**
- * Zaehler neuer Eingaenge an den Untermenuepunkten "Produktanfragen"/"Bewerbungen" und an den
- * Hauptmenuepunkten "Produkte"/"Karriere" -- ersetzt die E-Mail-Benachrichtigung.
+ * Badge-Markup im Stil von WordPress' eigenen Zaehlern (Kommentare, Updates).
+ */
+function hengegroup_theme_get_admin_count_bubble(int $count): string
+{
+    return sprintf(
+        ' <span class="awaiting-mod count-%1$d"><span class="pending-count">%1$d</span></span>',
+        $count,
+    );
+}
+
+/**
+ * Zaehler neuer Eingaenge (Status "neu") an "Dashboard > Produktanfragen"/"Dashboard >
+ * Bewerbungen" und als Summe am Menuepunkt "Dashboard" -- ersetzt die E-Mail-Benachrichtigung.
+ * Ohne neue Eingaenge erscheint kein Badge.
  */
 function hengegroup_theme_action_admin_menu_request_counts(): void
 {
     global $menu, $submenu;
 
-    $targets = [
-        HENGEGROUP_THEME_INQUIRY_POST_TYPE => 'edit.php?post_type=product',
-        HENGEGROUP_THEME_APPLICATION_POST_TYPE =>
-            'edit.php?post_type=' . HENGEGROUP_THEME_JOB_POST_TYPE,
-    ];
+    if (!current_user_can('edit_others_posts')) {
+        return;
+    }
 
-    foreach ($targets as $post_type => $parent) {
-        if (!current_user_can('edit_others_posts')) {
-            continue;
-        }
+    $total = 0;
 
+    foreach (
+        [HENGEGROUP_THEME_INQUIRY_POST_TYPE, HENGEGROUP_THEME_APPLICATION_POST_TYPE]
+        as $post_type
+    ) {
         $count = hengegroup_theme_count_new_requests($post_type);
 
         if ($count <= 0) {
             continue;
         }
 
-        $bubble = sprintf(
-            ' <span class="awaiting-mod count-%1$d"><span class="pending-count">%1$d</span></span>',
-            $count,
-        );
+        $total += $count;
 
-        foreach ($submenu[$parent] ?? [] as $index => $item) {
+        foreach ($submenu['index.php'] ?? [] as $index => $item) {
             if (($item[2] ?? '') === 'edit.php?post_type=' . $post_type) {
-                $submenu[$parent][$index][0] .= $bubble; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+                $submenu['index.php'][$index][0] .= hengegroup_theme_get_admin_count_bubble($count); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
             }
         }
+    }
 
-        foreach ($menu as $index => $item) {
-            if (($item[2] ?? '') === $parent) {
-                $menu[$index][0] .= $bubble; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
-            }
+    if ($total <= 0) {
+        return;
+    }
+
+    foreach ($menu as $index => $item) {
+        if (($item[2] ?? '') === 'index.php') {
+            $menu[$index][0] .= hengegroup_theme_get_admin_count_bubble($total); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
         }
     }
 }

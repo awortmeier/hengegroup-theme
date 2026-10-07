@@ -5,7 +5,7 @@ declare(strict_types=1);
 // Produktbox (Design `Produktbox.dc.html`) als Komponente -- aus woocommerce/content-product.php
 // herausgeloest, damit dieselbe Box in zwei Auspraegungen existiert statt als zwei Kopien:
 //   - `default`: Bild + Badge, Name, Kurzbeschreibung, Trenner + "Anwendungen"-Chips, Button
-//     (Produktuebersicht, Produkte-Block, Anwendungsseite, alle WooCommerce-Loops).
+//     (Produktuebersicht, Produkte-Block, alle WooCommerce-Loops).
 //   - `minimal`: dieselbe Box ohne Anwendungen/Trenner, niedrigeres Bild (160 statt 180 px) --
 //     Abschnitt "Verwandte Produkte" der Produktdetailseite (Design "Produktdetailseite").
 //

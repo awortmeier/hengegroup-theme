@@ -114,5 +114,6 @@ Datenmodell, Uebersicht, Detailseite, Anwendungen und Produktanfragen sind umges
 - **Product-JSON-LD** (optional): WooCommerce' eigenes Product-Schema entsteht nicht, weil die
   Detailseite dessen Hooks nicht ausloest; ohne Preis/Bewertungen bringt es fuer Rich Results wenig,
   fuer KI-Suchen (GEO) waere ein schlankes Product-Schema mit Beschreibung/Kategorie/Bild sinnvoll.
-- **Design fuer die Anwendungsseite**: `single-anwendung.php` ist aus den Bausteinen der
-  Produktdetailseite zusammengesetzt, es gibt noch kein eigenes Design.
+- **Anwendungen von der Anwendung aus zuordnen** (optional): aktuell nur am Produkt bzw. per Quick
+  Edit in der Produktliste (explizite Vorgabe "erstmal"); bei Bedarf eine Produktauswahl auf der
+  Bearbeitungsseite der Anwendung, die dieselbe Term-Zuordnung schreibt.

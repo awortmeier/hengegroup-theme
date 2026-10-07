@@ -36,7 +36,7 @@ function Edit({ attributes, setAttributes }) {
         <Fragment>
             <section {...blockProps}>
                 <div className="wrapper mb-12">
-                    <div className="col-span-12 lg:col-span-7">
+                    <div className="col-span-12 max-w-3xl">
                         <RichText
                             tagName="h2"
                             className="mb-5 text-4xl leading-tight font-semibold lg:text-[42px]"

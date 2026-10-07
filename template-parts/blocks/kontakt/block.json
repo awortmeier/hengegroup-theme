@@ -5,7 +5,7 @@
     "title": "Kontakt",
     "category": "henge",
     "icon": "email",
-    "description": "Kontakt-Sektion mit Firmen-Kontaktkarte (Daten aus Einstellungen > Footer) und Anfrageformular. Anfragen landen unter Produkte > Produktanfragen.",
+    "description": "Kontakt-Sektion mit Firmen-Kontaktkarte (Daten aus Einstellungen > Footer) und Anfrageformular. Anfragen landen unter Dashboard > Produktanfragen.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "heading": {

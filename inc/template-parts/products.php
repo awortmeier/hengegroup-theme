@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 // Daten- und Render-Helfer fuer den Produktbereich: Produktdetailseite
-// (woocommerce/single-product.php), Anwendungen (Custom Post Type `anwendung`, single-anwendung.php),
-// Block "Produktkategorie" und die Ansprechpartner-Karte. Post-Type/Routing:
+// (woocommerce/single-product.php), Anwendungen (Taxonomie `produkt_anwendung`, Block
+// "Anwendungsgruppe"), Block "Produktkategorie" und die Ansprechpartner-Karte. Post-Type/Routing:
 // inc/setup/theme-products.php, Backend-Felder: inc/setup/theme-products-admin.php.
 //
 // Gleiche Aufteilung wie inc/template-parts/careers.php: nur Funktionen, keine Hooks beim Einbinden,
@@ -12,16 +12,20 @@ declare(strict_types=1);
 // Monkey testbar bleiben (tests/Unit/ProductsTest.php).
 //
 // Datenmodell (siehe docs/entscheidungen.md "Produktbereich: Datenmodell"):
-//   - Anwendungen: eigener Post-Type, Zuordnung NUR am Produkt (eine Meta-Zeile je Anwendung,
-//     HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META -- abfragbar per meta_query, kein serialisiertes Array).
+//   - Anwendungen: hierarchische, nicht oeffentliche Taxonomie `produkt_anwendung` am Produkt --
+//     Ebene 1 = Gruppen (Sektionen der Seite /anwendungen/, Kicker/Farbe/Ueberschrift wie bei den
+//     Produktkategorien), Ebene 2 = Anwendungen (Beschreibung, Bild, Icon, Reihenfolge). Produkte
+//     bekommen nur Anwendungen der Ebene 2; die Verknuepfung liegt einmal in WordPress' eigener
+//     Term-Zuordnung und ist in beide Richtungen abfragbar (Produkt -> Anwendungen per
+//     get_the_terms(), Anwendung -> Produkte per tax_query). Keine Einzelseiten (explizite Vorgabe
+//     2026-10-07: Anwendungen haben nur eine Uebersichtsseite).
 //   - Produktkategorien (`product_cat`): Sektionen der Produktuebersicht, mit Kicker/Farbe/
 //     Ueberschrift/Ansprechpartner als Term-Meta.
 //   - Koernungen: globales WooCommerce-Attribut `pa_koernung` -- wird spaeter, sobald Produkte
 //     bestellbar sind, zur Variantenauswahl ("Fuer Variationen verwenden").
 //   - Chemische Analyse/Downloads/Recycling-Hinweis: Produkt-Meta aus dem Tab "Technische Daten".
 
-const HENGEGROUP_THEME_ANWENDUNG_POST_TYPE = 'anwendung';
-const HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META = '_hengegroup_theme_anwendung_id';
+const HENGEGROUP_THEME_ANWENDUNG_TAXONOMY = 'produkt_anwendung';
 const HENGEGROUP_THEME_PRODUCT_OPTION = 'hengegroup_theme_product_options';
 const HENGEGROUP_THEME_GRAIN_ATTRIBUTE = 'koernung';
 const HENGEGROUP_THEME_RELATED_PRODUCTS_LIMIT = 4;
@@ -39,8 +43,7 @@ function hengegroup_theme_get_product_meta_keys(): array
 }
 
 /**
- * Icon-Auswahl fuer Anwendungen (Karten "Anwendungsbereiche" auf der Produktdetailseite und Kopf
- * der Anwendungsseite). Literale Konfigurationen, damit scripts/find-lucide-icons.php sie beim
+ * Icon-Auswahl fuer Anwendungen (Karten "Anwendungsbereiche" auf der Produktdetailseite). Literale Konfigurationen, damit scripts/find-lucide-icons.php sie beim
  * Build findet.
  */
 function hengegroup_theme_get_anwendung_icons(): array
@@ -164,14 +167,17 @@ function hengegroup_theme_merge_related_product_ids(
 
 /**
  * IDs der verwandten Produkte (siehe hengegroup_theme_merge_related_product_ids()). Die Auffuellung
- * kommt aus WooCommerce' eigener Zufallsauswahl `wc_get_related_products()` (gleiche
- * Produktkategorie/-schlagwoerter, gecacht und gemischt).
+ * kommt zuerst aus WooCommerce' eigener Zufallsauswahl `wc_get_related_products()` (gleiche
+ * Produktkategorie/-schlagwoerter, gecacht und gemischt); reicht das nicht fuer 4 (z. B. kleine
+ * Kategorie), wird mit zufaelligen anderen veroeffentlichten Produkten aufgefuellt -- explizite
+ * Vorgabe: bei weniger als 4 gesetzten immer auf 4 auffuellen.
  *
  * @return int[]
  */
 function hengegroup_theme_get_related_product_ids(WC_Product $product): array
 {
     $limit = HENGEGROUP_THEME_RELATED_PRODUCTS_LIMIT;
+    $self_id = $product->get_id();
     $manual = array_values(
         array_filter(
             array_map('intval', $product->get_upsell_ids()),
@@ -182,53 +188,173 @@ function hengegroup_theme_get_related_product_ids(WC_Product $product): array
         count($manual) < $limit && function_exists('wc_get_related_products')
             ? array_map(
                 'intval',
-                wc_get_related_products($product->get_id(), $limit, array_merge($manual, [0])),
+                wc_get_related_products($self_id, $limit, array_merge($manual, [0])),
             )
             : [];
+    $ids = hengegroup_theme_merge_related_product_ids($manual, $fallback, $self_id, $limit);
 
-    return hengegroup_theme_merge_related_product_ids(
-        $manual,
-        $fallback,
-        $product->get_id(),
-        $limit,
-    );
+    if (count($ids) < $limit) {
+        $random = get_posts([
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => $limit,
+            'fields' => 'ids',
+            'orderby' => 'rand',
+            'no_found_rows' => true,
+            'post__not_in' => array_merge($ids, [$self_id]), // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in
+        ]);
+        $ids = hengegroup_theme_merge_related_product_ids(
+            $ids,
+            array_map('intval', $random),
+            $self_id,
+            $limit,
+        );
+    }
+
+    return $ids;
 }
 
 /**
- * Veroeffentlichte Anwendungen eines Produkts, alphabetisch.
+ * Sortiert Anwendungen (Arrays mit `group_order`, `order`, `name`) nach Gruppe, dann Reihenfolge,
+ * dann Name -- reine Funktion, unit-getestet (tests/Unit/ProductsTest.php).
  *
- * @return WP_Post[]
+ * @param list<array{group_order: int, order: int, name: string}> $items
+ * @return list<array{group_order: int, order: int, name: string}>
+ */
+function hengegroup_theme_sort_anwendung_items(array $items): array
+{
+    usort(
+        $items,
+        static fn(array $a, array $b): int => [$a['group_order'], $a['order']] <=> [
+            $b['group_order'],
+            $b['order'],
+        ] ?:
+        strnatcasecmp($a['name'], $b['name']),
+    );
+
+    return $items;
+}
+
+/**
+ * Reihenfolge-Feld eines Anwendungs-Terms (Gruppe oder Anwendung), 0 wenn leer.
+ */
+function hengegroup_theme_get_anwendung_order(int $term_id): int
+{
+    return (int) get_term_meta($term_id, '_hengegroup_theme_anwendung_order', true);
+}
+
+/**
+ * Normalisierte Daten einer Anwendung (Term der Ebene 2). `short` = Kurztext fuer die Karte auf der
+ * Produktdetailseite, faellt auf die gekuerzte Beschreibung zurueck.
+ */
+function hengegroup_theme_get_anwendung_data(WP_Term $term): array
+{
+    $meta = static fn(string $field): string => trim(
+        (string) get_term_meta($term->term_id, '_hengegroup_theme_anwendung_' . $field, true),
+    );
+    $description = trim(wp_strip_all_tags((string) $term->description));
+    $short = $meta('short');
+
+    return [
+        'term_id' => (int) $term->term_id,
+        'slug' => $term->slug,
+        'name' => $term->name,
+        'description' => $description,
+        'short' => $short !== '' ? $short : wp_trim_words($description, 20),
+        'image_id' => (int) $meta('image_id'),
+        'icon' => $meta('icon'),
+        'order' => (int) $meta('order'),
+    ];
+}
+
+/**
+ * Normalisierte Daten einer Anwendungsgruppe (Term der Ebene 1) -- gleiche Felder wie
+ * hengegroup_theme_get_product_category_data().
+ */
+function hengegroup_theme_get_anwendung_group_data(WP_Term $term): array
+{
+    $meta = static fn(string $field): string => trim(
+        (string) get_term_meta($term->term_id, '_hengegroup_theme_anwendung_' . $field, true),
+    );
+    $variant = $meta('variant');
+    $variants = hengegroup_theme_get_badge_variants();
+    $heading = $meta('heading');
+
+    return [
+        'term_id' => (int) $term->term_id,
+        'slug' => $term->slug,
+        'name' => $term->name,
+        'kicker' => $meta('kicker'),
+        'variant' => in_array($variant, $variants, true) ? $variant : $variants[0],
+        'heading' => $heading !== '' ? $heading : $term->name,
+        'description' => trim(wp_strip_all_tags((string) $term->description)),
+    ];
+}
+
+/**
+ * Anwendungen (Ebene 2) einer Gruppe, sortiert nach Reihenfolge, dann Name.
+ *
+ * @return WP_Term[]
+ */
+function hengegroup_theme_get_group_anwendungen(int $group_id): array
+{
+    $terms = get_terms([
+        'taxonomy' => HENGEGROUP_THEME_ANWENDUNG_TAXONOMY,
+        'parent' => $group_id,
+        'hide_empty' => false,
+    ]);
+
+    return hengegroup_theme_sort_anwendung_terms(is_array($terms) ? $terms : []);
+}
+
+/**
+ * Sortiert Anwendungs-Terms nach Gruppe (deren Reihenfolge), eigener Reihenfolge, Name.
+ *
+ * @param WP_Term[] $terms
+ * @return WP_Term[]
+ */
+function hengegroup_theme_sort_anwendung_terms(array $terms): array
+{
+    $items = array_map(
+        static fn(WP_Term $term): array => [
+            'term' => $term,
+            'group_order' =>
+                $term->parent > 0 ? hengegroup_theme_get_anwendung_order((int) $term->parent) : 0,
+            'order' => hengegroup_theme_get_anwendung_order((int) $term->term_id),
+            'name' => $term->name,
+        ],
+        $terms,
+    );
+
+    return array_column(hengegroup_theme_sort_anwendung_items($items), 'term');
+}
+
+/**
+ * Anwendungen eines Produkts (nur Ebene 2 -- versehentlich zugeordnete Gruppen fallen weg),
+ * sortiert wie auf der Seite /anwendungen/.
+ *
+ * @return WP_Term[]
  */
 function hengegroup_theme_get_product_anwendungen(int $product_id): array
 {
-    $ids = array_filter(
-        array_map(
-            'intval',
-            (array) get_post_meta($product_id, HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META, false),
-        ),
-    );
+    $terms = get_the_terms($product_id, HENGEGROUP_THEME_ANWENDUNG_TAXONOMY);
 
-    if ($ids === []) {
+    if (!is_array($terms)) {
         return [];
     }
 
-    return get_posts([
-        'post_type' => HENGEGROUP_THEME_ANWENDUNG_POST_TYPE,
-        'post_status' => 'publish',
-        'post__in' => $ids,
-        'posts_per_page' => count($ids),
-        'orderby' => 'title',
-        'order' => 'ASC',
-        'no_found_rows' => true,
-    ]);
+    return hengegroup_theme_sort_anwendung_terms(
+        array_values(array_filter($terms, static fn(WP_Term $term): bool => $term->parent > 0)),
+    );
 }
 
 /**
- * Veroeffentlichte Produkte einer Anwendung (Gegenrichtung der Zuordnung am Produkt).
+ * Veroeffentlichte Produkte einer Anwendung (Gegenrichtung der Zuordnung am Produkt), in der
+ * Reihenfolge der Produktuebersicht.
  *
  * @return int[]
  */
-function hengegroup_theme_get_anwendung_product_ids(int $anwendung_id): array
+function hengegroup_theme_get_anwendung_product_ids(int $term_id): array
 {
     return array_map(
         'intval',
@@ -239,8 +365,15 @@ function hengegroup_theme_get_anwendung_product_ids(int $anwendung_id): array
             'fields' => 'ids',
             'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
             'no_found_rows' => true,
-            'meta_key' => HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-            'meta_value' => (string) $anwendung_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+            'tax_query' => [
+                [
+                    'taxonomy' => HENGEGROUP_THEME_ANWENDUNG_TAXONOMY,
+                    'field' => 'term_id',
+                    'terms' => $term_id,
+                    'include_children' => false,
+                ],
+            ],
         ]),
     );
 }
@@ -409,7 +542,10 @@ function hengegroup_theme_get_product_data(WC_Product $product): array
             'cta' => trim((string) ($download['cta'] ?? '')),
             'meta' => implode(
                 ' · ',
-                array_filter([$extension, $size > 0 ? size_format($size, 1) : '']),
+                array_filter([
+                    $extension,
+                    $size > 0 ? size_format($size, $size >= KB_IN_BYTES ? 1 : 0) : '',
+                ]),
             ),
         ];
     }
@@ -445,27 +581,23 @@ function hengegroup_theme_get_product_data(WC_Product $product): array
 /**
  * Icon einer Anwendung als SVG-Markup (leer, wenn keins gewaehlt ist).
  */
-function hengegroup_theme_render_anwendung_icon(int $anwendung_id, string $class): string
+function hengegroup_theme_render_anwendung_icon(string $key, string $class): string
 {
-    $key = (string) get_post_meta($anwendung_id, '_hengegroup_theme_anwendung_icon', true);
     $icons = hengegroup_theme_get_anwendung_icons();
 
-    if (!isset($icons[$key])) {
-        return '';
-    }
-
-    return hengegroup_theme_render_icon($icons[$key][1] + ['class' => $class]);
+    return isset($icons[$key])
+        ? hengegroup_theme_render_icon($icons[$key][1] + ['class' => $class])
+        : '';
 }
 
 /**
  * Karte "Anwendungsbereich" (Design "Produktdetailseite"): Icon-Kachel in Produktfarbe, Titel,
- * Kurztext. Bewusst OHNE Link -- Produkte zaehlen Anwendungen nur auf (explizite Vorgabe), erst die
- * Anwendungsseite verlinkt zu Produkten.
+ * Kurztext. Bewusst OHNE Link -- Produkte zaehlen Anwendungen nur auf (explizite Vorgabe).
  */
-function hengegroup_theme_render_anwendung_card(WP_Post $anwendung, string $variant): string
+function hengegroup_theme_render_anwendung_card(WP_Term $term, string $variant): string
 {
-    $icon = hengegroup_theme_render_anwendung_icon($anwendung->ID, 'size-[22px]');
-    $text = trim(wp_strip_all_tags(get_the_excerpt($anwendung)));
+    $anwendung = hengegroup_theme_get_anwendung_data($term);
+    $icon = hengegroup_theme_render_anwendung_icon($anwendung['icon'], 'size-[22px]');
 
     return sprintf(
         '<li class="rounded-2xl bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" data-slot="anwendung-card"><div class="mb-4 flex items-center gap-3.5">%1$s<h3 class="text-[19px] leading-snug font-extrabold text-grey-dark">%2$s</h3></div>%3$s</li>',
@@ -476,10 +608,67 @@ function hengegroup_theme_render_anwendung_card(WP_Post $anwendung, string $vari
                 $icon,
             )
             : '',
-        esc_html(get_the_title($anwendung)),
-        $text !== ''
-            ? '<p class="text-base leading-normal text-grey-dark">' . esc_html($text) . '</p>'
+        esc_html($anwendung['name']),
+        $anwendung['short'] !== ''
+            ? '<p class="text-base leading-normal text-grey-dark">' .
+                esc_html($anwendung['short']) .
+                '</p>'
             : '',
+    );
+}
+
+/**
+ * Querkarte einer Anwendung auf der Seite /anwendungen/ (Design "Anwendungen"): Bild links (240 px,
+ * mobil oben), rechts Titel, Beschreibung und die zugeordneten Produkte als Chips. Die Chips
+ * verlinken auf die Produktseiten (Design) -- die Gegenrichtung (Produkt -> Anwendung) bleibt
+ * ohne Link. `id` = Slug der Anwendung als Sprungziel.
+ */
+function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
+{
+    $anwendung = hengegroup_theme_get_anwendung_data($term);
+    $image_config = [
+        'alt' => $anwendung['name'],
+        'class' => 'absolute inset-0 size-full object-cover',
+    ];
+    $image_config +=
+        $anwendung['image_id'] > 0
+            ? ['attachment_id' => $anwendung['image_id'], 'size' => 'medium_large']
+            : [
+                'src' => function_exists('wc_placeholder_img_src')
+                    ? wc_placeholder_img_src('medium')
+                    : '',
+            ];
+
+    $chips = '';
+
+    foreach (hengegroup_theme_get_anwendung_product_ids($anwendung['term_id']) as $product_id) {
+        $chips .= sprintf(
+            '<li><a class="inline-block max-w-full rounded-2xl border border-[#e2e0dc] px-3 py-1.5 text-sm font-medium break-words text-grey-dark no-underline transition-colors hover:border-grey-dark hover:bg-grey-dark hover:text-grey-light focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none" href="%1$s">%2$s</a></li>',
+            esc_url((string) get_permalink($product_id)),
+            esc_html(get_the_title($product_id)),
+        );
+    }
+
+    $products =
+        $chips !== ''
+            ? sprintf(
+                '<p class="mb-2.5 text-sm font-medium tracking-wider text-grey-dark uppercase">%1$s</p><ul class="flex flex-wrap gap-2">%2$s</ul>',
+                esc_html__('Produkte', 'hengegroup-theme'),
+                $chips,
+            )
+            : '';
+
+    return sprintf(
+        '<li id="%1$s" class="grid scroll-mt-24 overflow-hidden rounded-[20px] bg-neutral-50 shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:grid-cols-[240px_1fr]" data-slot="anwendung-overview-card"><div class="relative min-h-45">%2$s</div><div class="flex flex-col px-7 py-6"><h3 class="mb-2.5 text-[21px] leading-snug font-extrabold text-grey-dark">%3$s</h3>%4$s%5$s</div></li>',
+        esc_attr($anwendung['slug']),
+        hengegroup_theme_render_image($image_config),
+        esc_html($anwendung['name']),
+        $anwendung['description'] !== ''
+            ? '<p class="mb-4.5 text-base leading-[1.55] text-grey-dark">' .
+                esc_html($anwendung['description']) .
+                '</p>'
+            : '',
+        $products,
     );
 }
 

@@ -167,9 +167,10 @@ final class CareersTest extends TestCase
             $schema['hiringOrganization']['name'],
         );
         $this->assertSame(
-            'https://www.hengegroup.com/kominex',
-            $schema['hiringOrganization']['sameAs'],
+            'https://www.hengegroup.com/unternehmen/kominex/',
+            $schema['hiringOrganization']['url'],
         );
+        $this->assertArrayNotHasKey('sameAs', $schema['hiringOrganization']);
         $this->assertSame('https://example.com/logo.svg', $schema['hiringOrganization']['logo']);
         $this->assertSame(
             'HENGEGROUP',
@@ -386,7 +387,7 @@ final class CareersTest extends TestCase
                     'term_id' => 3,
                     'name' => 'KOMINEX',
                     'legal_name' => 'KOMINEX Minerals + Processing GmbH & Co. KG',
-                    'website' => 'https://www.hengegroup.com/kominex',
+                    'url' => 'https://www.hengegroup.com/unternehmen/kominex/',
                     'logo_id' => 9,
                     'variant' => 'henge-blue',
                     'benefits' => [],

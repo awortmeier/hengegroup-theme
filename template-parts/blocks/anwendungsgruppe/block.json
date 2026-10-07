@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/anwendungsgruppe",
+    "title": "Anwendungsgruppe",
+    "category": "henge",
+    "icon": "screenoptions",
+    "description": "Sektion einer Anwendungsgruppe: Kicker, Überschrift und Beschreibung aus der Gruppe, darunter automatisch alle Anwendungen der Gruppe mit ihren Produkten.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "groupId": {
+            "type": "number",
+            "default": 0
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted"],
+            "default": "light"
+        }
+    },
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-anwendungsgruppe-editor",
+    "render": "file:./render.php"
+}
