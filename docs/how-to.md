@@ -58,7 +58,7 @@ Ein weiteres Icon: Eintrag in `hengegroup_theme_get_anwendung_icons()`
    Tab "Eigenschaften" > Attribut "Koernung" fuer die lieferbaren Koernungen (Werte unter
    Produkte > Eigenschaften > Koernung, Reihenfolge per Drag & Drop); Tab "Verknuepfte Produkte" >
    "Verwandte Produkte" fuer bis zu 4 feste Empfehlungen.
-5. Eingaenge: Dashboard > Produktanfragen bzw. Dashboard > Bewerbungen; Status in der Seitenleiste
+5. Eingaenge: Menuepunkt "Produktanfragen" bzw. Menuepunkt "Bewerbungen"; Status in der Seitenleiste
    setzen, damit der Zaehler am Menue nur Neues zeigt.
 
 ### Ein weiteres JSON-LD-Schema ergaenzen (z. B. Product/JobPosting)

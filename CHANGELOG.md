@@ -36,7 +36,7 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
   Analyse, Koernungen), Anwendungsbereichen, Downloads, Ansprechpartner + Anfrageformular und
   verwandten Produkten (manuell + automatisch aufgefuellt); Anwendungen-Uebersicht; Produktdaten-Tab
   "Technische Daten", Kategorie-Felder und Produkte > Einstellungen. Anfragen landen unter
-  Dashboard > Produktanfragen (keine E-Mail). Siehe `docs/entscheidungen.md`.
+  Menuepunkt "Produktanfragen" (keine E-Mail). Siehe `docs/entscheidungen.md`.
 
 - Footer nach Design: Logo + Adresse, Kontakt (E-Mail/Telefon als Link, Fax), Social Media,
   Links (Menue-Position "Footermenü"), Marken-Verlaufslinie und Copyright. Kontaktdaten und

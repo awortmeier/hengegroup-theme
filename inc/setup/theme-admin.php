@@ -60,6 +60,10 @@ function hengegroup_theme_action_admin_menu_cleanup(): void
     remove_submenu_page('options-general.php', 'options-discussion.php');
     remove_submenu_page('options-general.php', 'options-writing.php');
     remove_menu_page('post-new.php');
+    // Datei-Editoren fuer Theme/Plugins: Code-Aenderungen laufen ausschliesslich ueber Repo + Deploy
+    // (explizite Nachfrage 2026-10-07, siehe docs/entscheidungen.md).
+    remove_submenu_page('themes.php', 'theme-editor.php');
+    remove_submenu_page('plugins.php', 'plugin-editor.php');
 
     foreach ($theme_submenu_pages as $theme_submenu_page) {
         remove_submenu_page('themes.php', $theme_submenu_page);
@@ -143,11 +147,8 @@ function hengegroup_theme_action_block_hidden_admin_pages(): void
         exit();
     }
 
-    if (
-        is_network_admin() &&
-        ($pagenow === 'theme-editor.php' || $pagenow === 'plugin-editor.php')
-    ) {
-        wp_safe_redirect(network_admin_url());
+    if ($pagenow === 'theme-editor.php' || $pagenow === 'plugin-editor.php') {
+        wp_safe_redirect(is_network_admin() ? network_admin_url() : admin_url());
         exit();
     }
 }

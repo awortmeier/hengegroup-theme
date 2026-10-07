@@ -9,7 +9,7 @@ declare(strict_types=1);
 // Gleicher Ablauf wie das Bewerbungsformular (inc/setup/theme-careers-application.php): klassisches
 // POST an admin-post.php, danach Redirect zurueck auf die Seite (#kontakt) mit Status
 // (Post/Redirect/Get), bei Fehlern Eingaben 15 Minuten per Transient; Spam-Schutz ueber Nonce,
-// Honeypot und Mindest-Ausfuellzeit. Die Anfrage wird als Eintrag unter Dashboard > Produktanfragen
+// Honeypot und Mindest-Ausfuellzeit. Die Anfrage wird als Eintrag im Menuepunkt "Produktanfragen"
 // gespeichert (inc/setup/theme-requests.php) -- es wird KEINE E-Mail versendet (explizite Vorgabe).
 
 const HENGEGROUP_THEME_INQUIRY_ACTION = 'hengegroup_theme_product_inquiry';

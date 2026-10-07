@@ -112,6 +112,15 @@ Auf expliziten Wunsch der komplette Produktbereich nach den Designs "Produktuebe
 - **Keine Kategorie-/Schlagwort-/Shop-Archive**: 301 auf die Uebersicht, Kategorien direkt auf ihre
   Sektion (`#<slug>`, Anker des Blocks "Produktkategorie"); raus aus der XML-Sitemap.
 
+### Theme-/Plugin-Datei-Editor auch im normalen Site-Backend entfernt (2026-10-07)
+
+Bisher nur im Netzwerk-Admin ausgeblendet. Jetzt auch unter "Design"/"Plugins" per
+`remove_submenu_page()` raus, direkte Aufrufe von `theme-editor.php`/`plugin-editor.php` leitet
+`hengegroup_theme_action_block_hidden_admin_pages()` aufs Dashboard um
+(`inc/setup/theme-admin.php`). Code-Aenderungen laufen ausschliesslich ueber Repo + Deploy; ein
+Live-Editor wuerde Server und Repo auseinanderlaufen lassen. Bewusst kein `DISALLOW_FILE_EDIT` in
+`wp-config.php` -- das liegt ausserhalb des Themes und muesste pro Instanz gepflegt werden.
+
 ### Formulare: Eintraege im Backend statt E-Mail (2026-10-07)
 
 Explizite Vorgabe: Kontaktformulare erzeugen Eintraege "Produktanfragen", Bewerbungen Eintraege
@@ -120,11 +129,10 @@ Bewerbungsformular den Punkt "Versand per E-Mail statt Speicherung in WordPress"
 `inc/setup/theme-requests.php`, `inc/setup/theme-product-inquiries.php`,
 `inc/setup/theme-careers-application.php`.
 
-- **Zwei nicht-oeffentliche Post-Types** (`produktanfrage`, `bewerbung`, beide unter "Dashboard",
-  urspruenglich unter Produkte/Karriere -- explizite Nachfrage: dort sieht man neue Eingaenge nach
-  dem Login zuerst) mit gemeinsamer Registrierung, Status (neu / in Bearbeitung / erledigt),
-  schreibgeschuetzter Detailansicht und **Zaehler neuer Eintraege am Menuepunkt** (Badge je Eintrag,
-  Summe an "Dashboard") -- ersetzt die
+- **Zwei nicht-oeffentliche Post-Types** (`produktanfrage`, `bewerbung`, eigene Hauptmenuepunkte direkt
+  unter "Dashboard", urspruenglich unter Produkte/Karriere -- explizite Nachfrage: dort sieht man
+  neue Eingaenge nach dem Login zuerst) mit gemeinsamer Registrierung, Status (neu / in Bearbeitung / erledigt),
+  schreibgeschuetzter Detailansicht und **Zaehler neuer Eintraege am Menuepunkt** (Badge am Menuepunkt) -- ersetzt die
   Benachrichtigung, die vorher die E-Mail war.
 - **Sichtbar fuer alle Redakteure und Admins** (explizite Vorgabe "jeder darf sie sehen"): normale
   Beitrags-Rechte, Anlegen im Backend gesperrt (`create_posts => do_not_allow`).
@@ -662,6 +670,13 @@ Auf expliziten Wunsch (`inc/setup/theme-admin-woocommerce.php`):
   `product_brand`-Taxonomie). Reviews brauchten keinen aequivalenten Nachtrag -- dort greift keine
   WC-Metabox-Sonderlocke, das Backend-Deaktivieren des Reviews-Features (WooCommerce-Einstellung)
   allein reicht bereits.
+- **Nachtrag (2026-10-07): der "Marken"-Menuepunkt blieb trotzdem sichtbar** -- WordPress-Core
+  registriert Taxonomie-Untermenues mit HTML-kodiertem Slug
+  (`edit-tags.php?taxonomy=product_brand&amp;post_type=product`, siehe `$edit_tags_file` in
+  `wp-admin/menu.php`), `remove_submenu_page()` vergleicht exakt. Slug auf `&amp;` korrigiert.
+- **Nachtrag (2026-10-07): "Marketing" komplett ausgeblendet** (vorher nur dessen
+  Uebersichts-Untermenue) -- `remove_menu_page('woocommerce-marketing')` ueber
+  `hengegroup_theme_get_woocommerce_menu_pages_to_remove()`.
 
 ### `badge.php`: `outline`-Randfarbe jetzt `neutral-500` direkt, kein eigener Token (2026-09-23)
 

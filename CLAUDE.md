@@ -166,6 +166,32 @@ in `docs/how-to.md` bei jeder wiederkehrenden Erweiterungs-Anleitung fuer einen 
 (Filter/Hook/Config-Key), den ein spaeteres Projekt-Theme voraussichtlich nutzen wird — nicht bei
 jeder Implementierungsdetail-Entscheidung, die schon aus dem Diff/Kopfkommentar ersichtlich ist.
 
+## Dev-Server (dev.hengegroup.com)
+
+Claude Code darf und soll den Dev-Server direkt nutzen, um Stand/Konfiguration zu pruefen und
+Inhalte/Einstellungen per wp-cli zu setzen, statt den Nutzer um Screenshots oder Klickanleitungen
+zu bitten:
+
+- **Verbindung:** `ssh hengegroup` (Alias in der lokalen `~/.ssh/config`, Chroot-Umgebung).
+  WordPress-Root: `/dev.hengegroup.com/httpdocs`, Theme: `wp-content/themes/hengegroup`.
+- **wp-cli:** kein globales `wp`; Aufruf ueber `php /tmp/wp-cli.phar ...` im WordPress-Root. Fehlt
+  die Datei (`/tmp` wird ggf. geleert), neu laden von
+  `https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar`. Fuer groessere
+  Skripte: Datei per `scp` hochladen, dann `wp eval-file`.
+- **Lesen** (Plugins, Optionen, Terms, Theme-Dateien vergleichen, WooCommerce-Quellcode
+  nachschlagen, ...) ist jederzeit erlaubt.
+- **Schreiben** (Inhalte, Optionen, Terms, Theme-Dateien) nur im Rahmen des aktuellen Auftrags --
+  es ist eine Entwicklungsinstanz, aber kein Wegwerf-System. Nichts loeschen, was nicht
+  ausdruecklich verlangt wurde.
+- **Theme-Code** entsteht immer zuerst im Repo (Lint/Tests wie unter Regel 11), nie nur auf dem
+  Server. Deploy regulaer per `pnpm deploy:changed` (FTP, Zugangsdaten in `.env`). Ein einzelner
+  `scp` einer geaenderten PHP-Datei ist fuer schnelle Pruefung erlaubt -- vorher die Server-Datei
+  gegen den lokalen Stand diffen, damit nichts ueberschrieben wird; der naechste
+  `deploy:changed` laedt sie dann einfach erneut hoch.
+- Theme-Funktionalitaet (Menue-Bereinigung, Feature-Schalter, ...) gehoert in den Theme-Code, nicht
+  als einmalige wp-cli-Aenderung in die Datenbank -- sonst fehlt sie auf jeder weiteren Instanz.
+- Nur der Dev-Server; Live-Systeme werden nicht angefasst.
+
 ## Git-Workflow
 
 Claude Code committet und pusht **niemals ungefragt**, unabhaengig davon, wie klar/abgeschlossen

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 // Eingaenge aus Website-Formularen als Backend-Eintraege statt E-Mails (explizite Vorgabe
 // 2026-10-07: "keine echten E-Mails, sondern Eintraege im Backend"):
-//   - `produktanfrage` (Dashboard > Produktanfragen): Kontaktformulare der Produktuebersicht
+//   - `produktanfrage` (Hauptmenuepunkt "Produktanfragen"): Kontaktformulare der Produktuebersicht
 //     (Block "Kontakt") und der Produktdetailseite, Handler inc/setup/theme-product-inquiries.php.
-//   - `bewerbung` (Dashboard > Bewerbungen): Bewerbungsformular der Stellenseite, Handler
+//   - `bewerbung` (Hauptmenuepunkt "Bewerbungen"): Bewerbungsformular der Stellenseite, Handler
 //     inc/setup/theme-careers-application.php, Dateien geschuetzt ausserhalb der Mediathek.
 //
 // Beide Typen teilen sich hier Registrierung, Status (neu / in Bearbeitung / erledigt), Spalten,
 // die schreibgeschuetzte Detailansicht und den Zaehler neuer Eintraege am Menuepunkt (es kommt ja
-// keine E-Mail mehr, die auf neue Eingaenge hinweist). Beide liegen unter "Dashboard" statt unter
-// Produkte/Karriere (explizite Nachfrage 2026-10-07) -- der Ort, den man nach dem Login zuerst
-// sieht; der Zaehler steht am jeweiligen Eintrag und als Summe am Menuepunkt "Dashboard". Eintraege werden nie automatisch geloescht
+// keine E-Mail mehr, die auf neue Eingaenge hinweist). Beide sind eigene Hauptmenuepunkte direkt
+// unter "Dashboard" statt Unterpunkte von Produkte/Karriere (explizite Nachfrage 2026-10-07) --
+// dort sieht man sie nach dem Login zuerst; der Zaehler steht direkt am Menuepunkt. Eintraege werden nie automatisch geloescht
 // (explizite Vorgabe); sichtbar fuer alle, die fremde Beitraege bearbeiten duerfen (Redakteure und
 // Administratoren -- explizite Vorgabe "jeder darf sie sehen"). Neu anlegen kann man sie im Backend
 // nicht (`create_posts => do_not_allow`), sie entstehen nur ueber die Formulare.
@@ -26,6 +26,7 @@ declare(strict_types=1);
 const HENGEGROUP_THEME_INQUIRY_POST_TYPE = 'produktanfrage';
 const HENGEGROUP_THEME_APPLICATION_POST_TYPE = 'bewerbung';
 const HENGEGROUP_THEME_REQUEST_META_PREFIX = '_hengegroup_theme_request_';
+const HENGEGROUP_THEME_REQUESTS_MENU_SEPARATOR = 'separator-hengegroup-theme-requests';
 
 /**
  * Status eines Eingangs.
@@ -107,7 +108,8 @@ function hengegroup_theme_register_request_post_types(): void
                 'all_items' => __('Produktanfragen', 'hengegroup-theme'),
                 'menu_name' => __('Produktanfragen', 'hengegroup-theme'),
             ],
-            'show_in_menu' => 'index.php',
+            'show_in_menu' => true,
+            'menu_icon' => 'dashicons-email-alt',
         ]),
     );
 
@@ -124,7 +126,8 @@ function hengegroup_theme_register_request_post_types(): void
                 'all_items' => __('Bewerbungen', 'hengegroup-theme'),
                 'menu_name' => __('Bewerbungen', 'hengegroup-theme'),
             ],
-            'show_in_menu' => 'index.php',
+            'show_in_menu' => true,
+            'menu_icon' => 'dashicons-id-alt',
         ]),
     );
 }
@@ -492,19 +495,16 @@ function hengegroup_theme_get_admin_count_bubble(int $count): string
 }
 
 /**
- * Zaehler neuer Eingaenge (Status "neu") an "Dashboard > Produktanfragen"/"Dashboard >
- * Bewerbungen" und als Summe am Menuepunkt "Dashboard" -- ersetzt die E-Mail-Benachrichtigung.
- * Ohne neue Eingaenge erscheint kein Badge.
+ * Zaehler neuer Eingaenge (Status "neu") direkt an den Hauptmenuepunkten "Produktanfragen"/
+ * "Bewerbungen" -- ersetzt die E-Mail-Benachrichtigung. Ohne neue Eingaenge erscheint kein Badge.
  */
 function hengegroup_theme_action_admin_menu_request_counts(): void
 {
-    global $menu, $submenu;
+    global $menu;
 
     if (!current_user_can('edit_others_posts')) {
         return;
     }
-
-    $total = 0;
 
     foreach (
         [HENGEGROUP_THEME_INQUIRY_POST_TYPE, HENGEGROUP_THEME_APPLICATION_POST_TYPE]
@@ -516,23 +516,49 @@ function hengegroup_theme_action_admin_menu_request_counts(): void
             continue;
         }
 
-        $total += $count;
-
-        foreach ($submenu['index.php'] ?? [] as $index => $item) {
+        foreach ($menu as $index => $item) {
             if (($item[2] ?? '') === 'edit.php?post_type=' . $post_type) {
-                $submenu['index.php'][$index][0] .= hengegroup_theme_get_admin_count_bubble($count); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+                $menu[$index][0] .= hengegroup_theme_get_admin_count_bubble($count); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
             }
-        }
-    }
-
-    if ($total <= 0) {
-        return;
-    }
-
-    foreach ($menu as $index => $item) {
-        if (($item[2] ?? '') === 'index.php') {
-            $menu[$index][0] .= hengegroup_theme_get_admin_count_bubble($total); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
         }
     }
 }
 add_action('admin_menu', 'hengegroup_theme_action_admin_menu_request_counts', 1000);
+
+/**
+ * Eigener Menue-Trenner zwischen "Dashboard" und den Eingaengen (explizite Nachfrage 2026-10-07:
+ * gleicher Abstand wie zwischen "Bewerbungen" und "Medien", das ist WordPress' `separator1`).
+ * Gleiche Struktur wie WordPress' eigene Trenner in wp-admin/menu.php; die Position setzt
+ * hengegroup_theme_filter_menu_order_requests().
+ */
+function hengegroup_theme_action_admin_menu_requests_separator(): void
+{
+    global $menu;
+
+    $menu[] = ['', 'read', HENGEGROUP_THEME_REQUESTS_MENU_SEPARATOR, '', 'wp-menu-separator']; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+}
+add_action('admin_menu', 'hengegroup_theme_action_admin_menu_requests_separator', 1000);
+
+/**
+ * Setzt "Produktanfragen" und "Bewerbungen" direkt hinter "Dashboard", abgesetzt durch den eigenen
+ * Trenner davor (siehe hengegroup_theme_action_admin_menu_requests_separator()); danach folgt
+ * WordPress' `separator1`. Ueber `menu_order` statt `menu_position`, weil zwischen Dashboard (2) und
+ * dem ersten Trenner (4) nur Platz fuer einen Eintrag mit ganzzahliger Position ist -- ein zweiter
+ * wuerde von WordPress hinter "Beitraege" geschoben.
+ */
+function hengegroup_theme_filter_menu_order_requests(array $menu_order): array
+{
+    $requests = [
+        HENGEGROUP_THEME_REQUESTS_MENU_SEPARATOR,
+        'edit.php?post_type=' . HENGEGROUP_THEME_INQUIRY_POST_TYPE,
+        'edit.php?post_type=' . HENGEGROUP_THEME_APPLICATION_POST_TYPE,
+    ];
+    $menu_order = array_values(array_diff($menu_order, $requests));
+    $position = array_search('index.php', $menu_order, true);
+
+    array_splice($menu_order, $position === false ? 0 : (int) $position + 1, 0, $requests);
+
+    return $menu_order;
+}
+add_filter('custom_menu_order', '__return_true');
+add_filter('menu_order', 'hengegroup_theme_filter_menu_order_requests');

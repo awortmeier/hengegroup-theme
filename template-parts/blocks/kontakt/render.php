@@ -6,7 +6,7 @@ declare(strict_types=1);
 // "Kontakt") -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die allgemeine
 // Phase-3-Block-Konvention. Ueberschrift + Text, darunter links die Firmen-Kontaktkarte (Daten aus
 // Einstellungen > Footer, dieselbe Quelle wie der Footer), rechts das Anfrageformular mit PLZ/Ort
-// (template-parts/components/inquiry-form.php). Anfragen landen unter Dashboard > Produktanfragen,
+// (template-parts/components/inquiry-form.php). Anfragen landen im Menuepunkt "Produktanfragen",
 // es wird keine E-Mail versendet.
 //
 // Ueberschrift/Text als volle Rasterzeile mit `max-w-3xl` statt Teil-`col-span`, damit die

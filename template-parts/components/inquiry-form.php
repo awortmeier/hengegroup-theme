@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 // Produkt-Kontaktformular (Designs "Produktuebersicht", Abschnitt "Kontakt", und
 // "Produktdetailseite", Abschnitt "Ihr Ansprechpartner im Vertrieb"), verarbeitet von
-// inc/setup/theme-product-inquiries.php -- Eintrag unter Dashboard > Produktanfragen, keine E-Mail.
+// inc/setup/theme-product-inquiries.php -- Eintrag im Menuepunkt "Produktanfragen", keine E-Mail.
 //
 // Gleiche Bauweise wie template-parts/components/job-application-form.php (Basis-Felder aus
 // template-parts/base/, Fehler je Feld mit `aria-describedby`, Zusammenfassung oben mit

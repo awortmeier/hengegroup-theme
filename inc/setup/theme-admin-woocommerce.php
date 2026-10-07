@@ -17,10 +17,6 @@ function hengegroup_theme_get_woocommerce_submenu_pages_to_remove(): array
             'parent' => 'wc-admin&path=/analytics/overview',
             'slug' => 'wc-admin&path=/analytics/downloads',
         ],
-        [
-            'parent' => 'woocommerce-marketing',
-            'slug' => 'admin.php?page=wc-admin&path=/marketing',
-        ],
         // Rezensionen und Marken bleiben als Feature/Taxonomie aktiv (Frontend unangetastet), nur
         // die Backend-Verwaltungsseiten unter "Produkte" verschwinden (explizite Nachfrage
         // 2026-09-23, siehe docs/entscheidungen.md).
@@ -28,11 +24,23 @@ function hengegroup_theme_get_woocommerce_submenu_pages_to_remove(): array
             'parent' => 'edit.php?post_type=product',
             'slug' => 'product-reviews',
         ],
+        // `&amp;` statt `&`: WordPress-Core legt Taxonomie-Untermenues mit HTML-kodiertem Slug an
+        // (wp-admin/menu.php, `$edit_tags_file`), remove_submenu_page() vergleicht exakt -- mit
+        // `&` griff die Entfernung nie (Korrektur 2026-10-07, siehe docs/entscheidungen.md).
         [
             'parent' => 'edit.php?post_type=product',
-            'slug' => 'edit-tags.php?taxonomy=product_brand&post_type=product',
+            'slug' => 'edit-tags.php?taxonomy=product_brand&amp;post_type=product',
         ],
     ];
+}
+
+/**
+ * Komplette Top-Level-Menues von WooCommerce, die in diesem Projekt nicht genutzt werden
+ * (explizite Nachfrage 2026-10-07: "Marketing" ganz ausblenden, nicht nur dessen Uebersicht).
+ */
+function hengegroup_theme_get_woocommerce_menu_pages_to_remove(): array
+{
+    return ['woocommerce-marketing'];
 }
 
 /**
@@ -203,6 +211,10 @@ function hengegroup_theme_action_admin_menu_cleanup_woocommerce(): void
         }
 
         remove_submenu_page($parent, $slug);
+    }
+
+    foreach (hengegroup_theme_get_woocommerce_menu_pages_to_remove() as $menu_slug) {
+        remove_menu_page($menu_slug);
     }
 }
 
