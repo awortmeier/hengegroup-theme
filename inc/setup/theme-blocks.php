@@ -111,6 +111,11 @@ function hengegroup_theme_register_blocks(): void
         'hengegroup-theme-offene-stellen-editor',
         'js/blocks/offene-stellen-edit.js',
     );
+    // Vorschau-Zwilling von offene-stellen (Stellenliste/Ansprechpartner-Karte getrennt), gleicher
+    // Fall wie produkte-raster: offene-stellen/edit.jsx registriert ihn clientseitig mit.
+    register_block_type(
+        get_template_directory() . '/template-parts/blocks/offene-stellen-vorschau',
+    );
     hengegroup_theme_register_theme_block(
         'karriere-teaser',
         'hengegroup-theme-karriere-teaser-editor',
@@ -120,8 +125,77 @@ function hengegroup_theme_register_blocks(): void
     // Gleicher Vorschau-Zwilling-Fall wie produkte-raster oben: kein eigenes Editor-Bundle,
     // karriere-teaser/edit.jsx registriert ihn clientseitig mit.
     register_block_type(get_template_directory() . '/template-parts/blocks/karriere-teaser-liste');
+
+    hengegroup_theme_register_theme_block(
+        'benefits',
+        'hengegroup-theme-benefits-editor',
+        'js/blocks/benefits-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
+        'auszeichnungen',
+        'hengegroup-theme-auszeichnungen-editor',
+        'js/blocks/auszeichnungen-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
+        'galerie',
+        'hengegroup-theme-galerie-editor',
+        'js/blocks/galerie-edit.js',
+    );
+
+    hengegroup_theme_register_theme_block(
+        'stellen-liste',
+        'hengegroup-theme-stellen-liste-editor',
+        'js/blocks/stellen-liste-edit.js',
+    );
+
+    // Kind-Bloecke (je Karte/Benefit ein Block, InnerBlocks) -- kein eigenes Editor-Bundle,
+    // auszeichnungen/edit.jsx bzw. benefits/edit.jsx registrieren sie clientseitig mit.
+    register_block_type(get_template_directory() . '/template-parts/blocks/auszeichnung');
+    register_block_type(get_template_directory() . '/template-parts/blocks/benefit');
 }
 add_action('init', 'hengegroup_theme_register_blocks');
+
+/**
+ * Icon-Auswahl des Benefits-Blocks inkl. fertig gerendertem SVG je Icon fuer die Editor-Vorschau --
+ * aus hengegroup_theme_get_benefit_icons(), damit Editor und Frontend dieselbe Liste und dieselben
+ * SVGs nutzen (siehe benefits/edit.jsx). Erst bei enqueue_block_editor_assets, damit die Icons nur
+ * im Editor gerendert werden, nicht bei jedem Seitenaufruf.
+ */
+function hengegroup_theme_enqueue_benefit_icons_for_editor(): void
+{
+    $icons = [];
+
+    foreach (hengegroup_theme_get_benefit_icons() as $key => $icon) {
+        $icons[$key] = [
+            'label' => (string) $icon[0],
+            'svg' => hengegroup_theme_render_benefit_icon((string) $key),
+        ];
+    }
+
+    wp_add_inline_script(
+        'hengegroup-theme-benefits-editor',
+        'window.hengegroupThemeBenefitIcons = ' . wp_json_encode($icons) . ';',
+        'before',
+    );
+}
+add_action('enqueue_block_editor_assets', 'hengegroup_theme_enqueue_benefit_icons_for_editor');
+
+/**
+ * Ueberschriften der drei Stellen-Listen-Typen fuer den Editor -- aus
+ * hengegroup_theme_get_job_list_types(), dieselben Texte wie im Frontend (siehe
+ * stellen-liste/edit.jsx).
+ */
+function hengegroup_theme_enqueue_job_list_types_for_editor(): void
+{
+    wp_add_inline_script(
+        'hengegroup-theme-stellen-liste-editor',
+        'window.hengegroupThemeJobListTypes = ' .
+            wp_json_encode(hengegroup_theme_get_job_list_types()) .
+            ';',
+        'before',
+    );
+}
+add_action('enqueue_block_editor_assets', 'hengegroup_theme_enqueue_job_list_types_for_editor');
 
 function hengegroup_theme_enqueue_editor_assets(): void
 {

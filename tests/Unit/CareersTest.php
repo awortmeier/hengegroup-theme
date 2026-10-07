@@ -228,6 +228,152 @@ final class CareersTest extends TestCase
         $this->assertArrayNotHasKey('jobStartDate', $schema);
     }
 
+    public function test_extract_job_lists_reads_list_items_per_type(): void
+    {
+        $item = static fn(string $html, array $inner = []): array => [
+            'blockName' => 'core/list-item',
+            'attrs' => [],
+            'innerBlocks' => $inner,
+            'innerHTML' => '<li>' . $html . '</li>',
+        ];
+        $list = static fn(array $items): array => [
+            'blockName' => 'core/list',
+            'attrs' => [],
+            'innerBlocks' => $items,
+            'innerHTML' => '<ul class="wp-block-list"></ul>',
+        ];
+        $section = static fn(string $type, array $lists): array => [
+            'blockName' => 'hengegroup-theme/stellen-liste',
+            'attrs' => $type === '' ? [] : ['type' => $type],
+            'innerBlocks' => $lists,
+            'innerHTML' => '',
+        ];
+
+        $lists = hengegroup_theme_extract_job_lists([
+            [
+                'blockName' => 'core/paragraph',
+                'attrs' => [],
+                'innerBlocks' => [],
+                'innerHTML' => '<p>Intro</p>',
+            ],
+            $section('', [$list([$item('27 Urlaubstage'), $item('JobRad &amp; Obst')])]),
+            $section('profile', [
+                $list([$item('<strong>Teamgeist</strong>', [$list([$item('Unterpunkt')])])]),
+            ]),
+            $section('tasks', [$list([$item('   ')])]),
+            $section('unbekannt', [$list([$item('ignoriert')])]),
+            [
+                'blockName' => 'core/group',
+                'attrs' => [],
+                'innerHTML' => '',
+                'innerBlocks' => [$section('tasks', [$list([$item('Verschachtelt in Gruppe')])])],
+            ],
+        ]);
+
+        $this->assertSame(['27 Urlaubstage', 'JobRad & Obst'], $lists['benefits']);
+        $this->assertSame(['Teamgeist', 'Unterpunkt'], $lists['profile']);
+        $this->assertSame(['Verschachtelt in Gruppe'], $lists['tasks']);
+    }
+
+    public function test_extract_job_lists_supports_legacy_list_markup(): void
+    {
+        $lists = hengegroup_theme_extract_job_lists([
+            [
+                'blockName' => 'hengegroup-theme/stellen-liste',
+                'attrs' => ['type' => 'tasks'],
+                'innerBlocks' => [
+                    [
+                        'blockName' => 'core/list',
+                        'attrs' => [],
+                        'innerBlocks' => [],
+                        'innerHTML' => "<ul><li>Eins</li>\n<li class=\"x\">Zwei</li></ul>",
+                    ],
+                ],
+                'innerHTML' => '',
+            ],
+        ]);
+
+        $this->assertSame(['Eins', 'Zwei'], $lists['tasks']);
+        $this->assertSame([], $lists['benefits']);
+    }
+
+    public function test_validate_job_application_accepts_complete_input(): void
+    {
+        $this->assertSame([], hengegroup_theme_validate_job_application($this->application()));
+    }
+
+    public function test_validate_job_application_reports_each_invalid_field(): void
+    {
+        $errors = hengegroup_theme_validate_job_application([
+            'name' => ' ',
+            'age' => '12',
+            'email' => 'keine-mail',
+            'phone' => 'abc',
+            'experience' => 'ewig',
+            'contact_method' => 'brief',
+            'contact_time' => 'nachts',
+            'message' => str_repeat('a', 5001),
+            'privacy' => '',
+        ]);
+
+        $this->assertSame(
+            [
+                'name',
+                'age',
+                'email',
+                'phone',
+                'experience',
+                'contact_method',
+                'contact_time',
+                'message',
+                'privacy',
+            ],
+            array_keys($errors),
+        );
+    }
+
+    public function test_validate_job_application_requires_phone_for_phone_contact(): void
+    {
+        $errors = hengegroup_theme_validate_job_application(
+            $this->application(['phone' => '', 'contact_method' => 'phone']),
+        );
+
+        $this->assertSame(['phone'], array_keys($errors));
+    }
+
+    public function test_validate_job_application_allows_optional_fields_empty(): void
+    {
+        $errors = hengegroup_theme_validate_job_application(
+            $this->application([
+                'phone' => '',
+                'experience' => '',
+                'contact_method' => '',
+                'contact_time' => '',
+                'message' => '',
+            ]),
+        );
+
+        $this->assertSame([], $errors);
+    }
+
+    private function application(array $overrides = []): array
+    {
+        return array_merge(
+            [
+                'name' => 'Muster, Erika',
+                'age' => '34',
+                'email' => 'erika@example.com',
+                'phone' => '+49 (0) 6348 98380',
+                'experience' => '3-5',
+                'contact_method' => 'email',
+                'contact_time' => 'morning',
+                'message' => 'Hallo!',
+                'privacy' => '1',
+            ],
+            $overrides,
+        );
+    }
+
     private function job(array $overrides = []): array
     {
         return array_merge(

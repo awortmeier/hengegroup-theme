@@ -3,8 +3,16 @@
 declare(strict_types=1);
 
 // Einzelseite einer Stelle unter /karriere/<slug>/ (Design "Stellenangebot einzelseite"):
-// Firmen-Pill, H1, Standortzeile, Faktenleiste, Einleitung (Gutenberg-Inhalt), die drei Listen,
-// Bewerbungs-Abschnitt, Ansprechpartner. Alle Daten aus hengegroup_theme_get_job_data()
+// Firmen-Pill, H1, Standortzeile, Faktenleiste mit Ansprechpartner-Karte rechts daneben, Inhalt
+// (Gutenberg: Einleitung + "Stellen-Liste"-Bloecke fuer Wir bieten dir/Profil/Aufgaben, siehe
+// template-parts/blocks/stellen-liste), Bewerbungs-Abschnitt.
+//
+// Layout (explizite Nachfrage 2026-10-07): breiter `.wrapper`; der gesamte Inhalt (Kopf,
+// Faktenleiste, Text, Bewerbung) bleibt linksbuendig in 8 von 12 Spalten -- so breit wie die
+// Faktenleiste --, die Ansprechpartner-Karte steht ab `lg` rechts daneben in den uebrigen 4 Spalten
+// (mobil zwischen Faktenleiste und Text). Die Karte spannt ueber zwei Rasterzeilen
+// (`lg:row-span-2`), damit der Text direkt unter der Faktenleiste beginnt statt erst unter der
+// (hoeheren) Karte; Faktenleiste und Karte richten sich jeweils nach ihrem eigenen Inhalt. Alle Daten aus hengegroup_theme_get_job_data()
 // (inc/template-parts/careers.php) -- derselben Quelle wie das JobPosting-JSON-LD
 // (inc/setup/theme-careers-seo.php), damit sichtbarer Inhalt und strukturierte Daten
 // uebereinstimmen.
@@ -13,8 +21,9 @@ declare(strict_types=1);
 // Ergaenzung zum Design: Gehalt/Anstellungsart/Ablauf stehen im JSON-LD und muessen laut Google
 // auch sichtbar sein; als echtes <dl> sind sie ausserdem fuer KI-Suchen sauber als Fakten lesbar.
 //
-// Bewerbung laeuft vorerst per E-Mail an den Ansprechpartner -- das Bewerbungsformular aus dem
-// Design ist ein eigener, spaeterer Schritt (Versand, Datei-Upload, DSGVO), siehe docs/to-do.md.
+// Bewerbung ueber das Formular aus dem Design (template-parts/components/job-application-form.php,
+// Verarbeitung inc/setup/theme-careers-application.php), E-Mail an den Ansprechpartner bleibt als
+// Alternative darunter.
 //
 // Der Header ist `fixed` und liegt ueber dem Inhalt (siehe header.php) -- daher der groessere
 // obere Abstand des ersten Abschnitts.
@@ -97,8 +106,8 @@ while (have_posts()):
     $application_email = $job['contact']['email'];
     ?>
   <article <?php post_class('bg-grey-light'); ?> data-slot="job-posting">
-    <header class="wrapper-small pt-28 pb-10 sm:pt-32 lg:pt-36">
-      <div class="col-span-12">
+    <header class="wrapper pt-28 pb-10 sm:pt-32 lg:pt-36">
+      <div class="col-span-12 lg:col-span-8">
         <?php if (hengegroup_theme_is_job_expired((int) get_the_ID())): ?>
           <p class="mb-6 rounded-xl border border-henge-blue/30 bg-white px-5 py-4 text-base text-grey-dark" role="status">
             <?php esc_html_e(
@@ -147,9 +156,9 @@ while (have_posts()):
       </div>
     </header>
 
-    <div class="wrapper-small gap-y-10 pb-20">
+    <div class="wrapper gap-y-10 pb-20">
       <?php if ($facts !== []): ?>
-        <dl class="col-span-12 grid gap-4 rounded-2xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)] sm:grid-cols-2 lg:grid-cols-3">
+        <dl class="col-span-12 grid content-start gap-4 self-start rounded-2xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)] sm:grid-cols-2 lg:col-span-8 xl:grid-cols-3">
           <?php foreach ($facts as $fact): ?>
             <div class="flex items-start gap-3">
               <span class="mt-0.5 text-henge-green">
@@ -177,32 +186,38 @@ while (have_posts()):
         </dl>
       <?php endif; ?>
 
-      <div class="col-span-12 text-base leading-relaxed text-grey-dark [&_a]:text-henge-green [&_a]:underline [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_li]:leading-[1.7] [&_ol]:mb-3.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3.5 [&_ul]:mb-3.5 [&_ul]:list-disc [&_ul]:pl-5">
+      <?php $contact_card = hengegroup_theme_render_job_contact_card(
+          $job['contact'],
+          __('Ansprechpartner', 'hengegroup-theme'),
+      ); ?>
+      <?php if ($contact_card !== ''): ?>
+        <aside class="col-span-12 self-start lg:col-span-4 lg:col-start-9 lg:row-span-2 lg:row-start-1" aria-label="<?php esc_attr_e(
+            'Ansprechpartner',
+            'hengegroup-theme',
+        ); ?>">
+          <?php printf(
+              '%s',
+              $contact_card, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+          ); ?>
+        </aside>
+      <?php endif; ?>
+
+      <div class="col-span-12 text-base leading-relaxed text-grey-dark lg:col-span-8 [&_a]:text-henge-green [&_a]:underline [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_li]:leading-[1.7] [&_ol]:mb-3.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3.5 [&_ul]:mb-3.5 [&_ul]:list-disc [&_ul]:pl-5">
         <?php the_content(); ?>
 
-        <?php foreach (hengegroup_theme_get_job_list_sections($job) as $section): ?>
-          <section class="my-6">
-            <h2 class="mb-3 text-xl font-bold"><?php echo esc_html($section['heading']); ?></h2>
-            <ul>
-              <?php foreach ($section['items'] as $item): ?>
-                <li><?php echo esc_html($item); ?></li>
-              <?php endforeach; ?>
-            </ul>
-          </section>
-        <?php endforeach; ?>
       </div>
     </div>
   </article>
 
   <?php if ($application_email !== ''): ?>
     <section id="bewerbung" class="bg-grey-dark py-16 md:py-24" aria-labelledby="bewerbung-titel">
-      <div class="wrapper-small">
-        <div class="col-span-12">
+      <div class="wrapper">
+        <div class="col-span-12 lg:col-span-8">
           <?php get_template_part('template-parts/base/typography', null, [
               'config' => [
                   'variant' => 'headline-sm',
                   'tag' => 'h2',
-                  'text' => __('Jetzt bewerben', 'hengegroup-theme'),
+                  'text' => __('Bewerbungsformular', 'hengegroup-theme'),
                   'color' => 'light',
                   'class' => 'mb-3',
                   'attributes' => ['id' => 'bewerbung-titel'],
@@ -220,68 +235,37 @@ while (have_posts()):
                   'class' => 'mb-6 opacity-70',
               ],
           ]); ?>
-          <?php get_template_part('template-parts/base/typography', null, [
-              'config' => [
-                  'variant' => 'body-base',
-                  'text' => sprintf(
-                      /* translators: %s: application e-mail address. */
-                      __(
-                          'Schick uns deinen Lebenslauf und deine Zeugnisse (PDF) per E-Mail an %s – gern mit einem kurzen Satz, ab wann du starten kannst.',
-                          'hengegroup-theme',
-                      ),
-                      antispambot($application_email),
-                  ),
-                  'color' => 'light',
-                  'class' => 'mb-8 max-w-2xl',
-              ],
+          <?php get_template_part('template-parts/components/job-application-form', null, [
+              'job' => $job,
           ]); ?>
-          <?php get_template_part('template-parts/base/button', null, [
-              'config' => [
-                  'text' => __('Bewerbung per E-Mail senden', 'hengegroup-theme'),
-                  'href' =>
-                      'mailto:' .
-                      $application_email .
-                      '?subject=' .
-                      rawurlencode(
-                          sprintf(
-                              /* translators: 1: job title, 2: reference number. */
-                              __('Bewerbung: %1$s (%2$s)', 'hengegroup-theme'),
-                              get_the_title(),
-                              $job['reference'],
-                          ),
-                      ),
-                  'variant' => 'henge-green',
-                  'size' => 'lg',
-                  'icon' => ['name' => 'mail', 'set' => 'lucide'],
-              ],
-          ]); ?>
+          <p class="mt-8 text-sm text-grey-light/70">
+            <?php printf(
+                /* translators: %s: application e-mail address (link). */
+                esc_html__('Lieber per E-Mail? Schick deine Unterlagen an %s.', 'hengegroup-theme'),
+                '<a class="text-grey-light underline underline-offset-4" href="' .
+                    esc_url(
+                        'mailto:' .
+                            $application_email .
+                            '?subject=' .
+                            rawurlencode(
+                                sprintf(
+                                    /* translators: 1: job title, 2: reference number. */
+                                    __('Bewerbung: %1$s (%2$s)', 'hengegroup-theme'),
+                                    get_the_title(),
+                                    $job['reference'],
+                                ),
+                            ),
+                    ) .
+                    '">' .
+                    esc_html(antispambot($application_email)) .
+                    '</a>',
+            ); ?>
+          </p>
         </div>
       </div>
     </section>
   <?php endif; ?>
 
-  <?php $contact_card = hengegroup_theme_render_job_contact_card($job['contact']); ?>
-  <?php if ($contact_card !== ''): ?>
-    <section class="py-16 md:py-20" aria-labelledby="ansprechpartner-titel">
-      <div class="wrapper-small">
-        <div class="col-span-12 sm:col-span-8 lg:col-span-6">
-          <?php get_template_part('template-parts/base/typography', null, [
-              'config' => [
-                  'variant' => 'headline-xs',
-                  'tag' => 'h2',
-                  'text' => __('Ansprechpartner', 'hengegroup-theme'),
-                  'class' => 'mb-5',
-                  'attributes' => ['id' => 'ansprechpartner-titel'],
-              ],
-          ]); ?>
-          <?php printf(
-              '%s',
-              $contact_card, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-          ); ?>
-        </div>
-      </div>
-    </section>
-  <?php endif; ?>
 <?php
 endwhile;
 get_footer();

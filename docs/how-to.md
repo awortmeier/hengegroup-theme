@@ -166,13 +166,26 @@ in `inc/setup/theme-careers-seo.php`.
    Startseite nutzt den Block "Karriere-Teaser".
 3. Neue Stelle: Titel, Einleitung im Editor, Auszug optional (wird Meta-Description), dann die
    "Stellendetails"-Box ausfuellen. Der gelbe Hinweis oben in der Box nennt fehlende Angaben fuer
-   Google Jobs.
+   Google Jobs. Die Listen "Wir bieten dir"/"Dein Profil"/"Deine Aufgaben" stehen als Bloecke
+   "Stellen-Liste" schon in der Vorlage; "Wir bieten dir" leer lassen = Standard-Benefits des
+   Unternehmens.
 4. Stelle beenden: "Gueltig bis" setzen oder "Stelle ist besetzt" anhaken -- nicht loeschen, dann
    greift die 301-Weiterleitung auf die Karriereseite.
 5. Neues JobPosting-Feld: in `hengegroup_theme_get_job_data()` lesen, in
    `hengegroup_theme_build_job_posting_schema()` ausgeben (beide `inc/template-parts/careers.php`),
    sichtbar in `single-stellenangebote.php` rendern und einen Fall in `tests/Unit/CareersTest.php`
    ergaenzen.
+
+### Footer-Inhalte pflegen / weiteres Social-Media-Netzwerk ergaenzen
+
+- Adresse, E-Mail, Telefon, Fax und Social-Media-URLs: Einstellungen > Footer. Leere Felder werden
+  im Footer ausgeblendet.
+- Spalte "Links": Design > Menues, Menue der Position "Footermenü" zuweisen (nur oberste Ebene).
+- Weiteres Netzwerk: in `hengegroup_theme_get_footer_social_networks()`
+  (`inc/setup/theme-footer-admin.php`) einen Eintrag `'<netz>_url' => [label, icon]` ergaenzen und
+  den Key mit Default `''` in `hengegroup_theme_get_footer_options()` aufnehmen. Settings-Feld,
+  Sanitizing und Footer-Ausgabe laufen automatisch mit. Das Tabler-Icon danach per
+  `pnpm icons:tabler` synchronisieren (siehe "Ein weiteres Icon ergaenzen").
 
 ### SVG-Upload-Berechtigung anpassen
 

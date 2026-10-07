@@ -66,7 +66,7 @@
                 <?php get_template_part('template-parts/base/button', null, [
                     'config' => [
                         'text' => __('Kontakt', 'hengegroup-theme'),
-                        'href' => '#kontakt',
+                        'href' => home_url('/kontakt/'),
                         'variant' => 'grey-light',
                     ],
                 ]); ?>

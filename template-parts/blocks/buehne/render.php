@@ -123,7 +123,6 @@ foreach ($slides as $slide) {
     $title = trim((string) ($slide['title'] ?? ''));
     $text = trim((string) ($slide['text'] ?? ''));
     $accent = trim((string) ($slide['accent'] ?? 'henge-green'));
-    $show_primary_button = !empty($slide['showPrimaryButton'] ?? true);
     $primary_button_text = trim((string) ($slide['primaryButtonText'] ?? ''));
     $primary_button_url = trim((string) ($slide['primaryButtonUrl'] ?? ''));
     $secondary_button_text = trim((string) ($slide['secondaryButtonText'] ?? ''));
@@ -190,7 +189,10 @@ foreach ($slides as $slide) {
         ]);
     }
 
-    $has_primary_button = $show_primary_button && $primary_button_text !== '';
+    // Ein Button erscheint genau dann, wenn sein Text gepflegt ist -- kein eigener An/Aus-Schalter
+    // mehr (explizite Nachfrage 2026-10-07). Das alte `showPrimaryButton`-Attribut bestehender
+    // Folien wird bewusst ignoriert.
+    $has_primary_button = $primary_button_text !== '';
 
     if ($has_primary_button || $secondary_button_text !== '') {
         // Unter sm: Buttons volle Breite + untereinander (flex-col); ab sm zurueck zur
@@ -308,7 +310,12 @@ if ($carousel_items === '') {
 
 $carousel_data_attributes = ['block' => 'buehne'];
 
-if ($autoplay) {
+// Bei nur einer Folie gibt es nichts umzuschalten: kein Autoplay und kein Folien-Picker unten
+// (explizite Nachfrage 2026-10-07). assets/js/template-parts/blocks/buehne.js bricht ohne
+// [data-buehne-dots] selbst ab, die einzige Folie ist bereits als aktiv gerendert.
+$has_multiple_slides = $index > 1;
+
+if ($autoplay && $has_multiple_slides) {
     $carousel_data_attributes['autoplay'] = 'true';
     $carousel_data_attributes['autoplay-interval'] = (string) $autoplay_interval;
 }
@@ -324,6 +331,15 @@ get_template_part('template-parts/base/carousel/carousel', null, [
     ],
 ]);
 $carousel_markup = (string) ob_get_clean();
+
+if (!$has_multiple_slides) {
+    printf(
+        '<div class="relative">%s</div>',
+        $carousel_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    );
+
+    return;
+}
 
 printf(
     '<div class="relative">%1$s<div class="absolute inset-x-0 bottom-7 z-10 mx-auto flex ' .

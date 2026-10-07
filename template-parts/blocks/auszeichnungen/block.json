@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/auszeichnungen",
+    "title": "Auszeichnungen",
+    "category": "henge",
+    "icon": "star-filled",
+    "description": "Überschrift und Karten mit Siegel/Logo, Titel, Text und Link – z. B. für Auszeichnungen und Mitgliedschaften. Karten direkt im Block hinzufügen.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        }
+    },
+    "allowedBlocks": ["hengegroup-theme/auszeichnung"],
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-auszeichnungen-editor",
+    "render": "file:./render.php"
+}

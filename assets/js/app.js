@@ -19,6 +19,7 @@ import { initNavigationMenu } from "./template-parts/base/navigation-menu.js";
 import { initPopover } from "./template-parts/base/popover.js";
 import { initDataTable } from "./template-parts/base/data-table.js";
 import { initBuehne } from "./template-parts/blocks/buehne.js";
+import { initJobApplication } from "./components/job-application.js";
 
 onDomReady(() => {
     initHeader();
@@ -39,4 +40,5 @@ onDomReady(() => {
     initPopover();
     initDataTable();
     initBuehne();
+    initJobApplication();
 });

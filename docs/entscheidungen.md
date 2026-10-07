@@ -21,6 +21,21 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Footer: Kontaktdaten als eigene Einstellungsseite, Links aus dem Footermenue (2026-10-07)
+
+Umsetzung nach dem Claude-Design-Footer (Kopfkommentar in `footer.php`). Kontaktdaten und
+Social-Media-URLs sind redaktionelle Firmendaten und liegen deshalb unter Einstellungen > Footer
+(`inc/setup/theme-footer-admin.php`) statt hartkodiert im Template. Nicht im Customizer, weil
+`theme-admin.php` den Customizer bewusst ausblendet; gleiches Muster wie Einstellungen > SEO. Die
+Spalte "Links" kommt aus der bereits registrierten Menue-Position `footer`, aus demselben Grund wie
+beim Header ("Navigationsinhalt aus wp_nav_menu statt hartkodiert"). Leere Felder blenden Zeile,
+Icon oder ganze Spalte aus, damit live keine `#`-Platzhalter-Links entstehen. Die Social-URLs
+starten deshalb leer; die Kontaktdaten haben die Werte aus dem Design als Default.
+Der "Kontakt"-Button im Header verlinkt auf die spaetere Kontaktseite (`/kontakt/`), nicht auf
+den Footer. Logo wie im Header ueber `the_custom_logo()`.
+
+---
+
 ### Windows-/PowerShell-Unterstuetzung entfernt, nur noch macOS (2026-10-07)
 
 Auf expliziten Wunsch wird nur noch macOS als Entwicklungs-/Deploy-Plattform unterstuetzt. Alle
@@ -32,6 +47,108 @@ abgeloesten Eintrag "Bash-Pendants zu allen `scripts/*.ps1`" unten), samt der
 Standard-`/bin/bash` 3.2 (keine Bash-4-Features); Linux funktioniert damit in der Praxis ebenfalls
 (u. a. CI auf `ubuntu-latest`), ist aber kein ausdruecklich gepflegtes Ziel mehr.
 `rename-theme.sh` schliesst `.ps1` nicht mehr in die umzubenennenden Dateiendungen ein.
+
+---
+
+### Bewerbungsformular auf der Stellenseite (2026-10-07)
+
+Auf explizite Nachfrage, nach dem Design ("Stellenangebot einzelseite"), exklusiv fuer die angezeigte
+Stelle. Details in den Kopfkommentaren von `template-parts/components/job-application-form.php` und
+`inc/setup/theme-careers-application.php`; die Entscheidungen:
+
+- **Versand per E-Mail statt Speicherung in WordPress**: die Bewerbung geht mit Anhaengen an den
+  Ansprechpartner der Stelle, der Bewerber bekommt eine Eingangsbestaetigung. Keine Bewerberdaten
+  oder Dateien in Datenbank/Mediathek -- deutlich weniger Datenschutz-Aufwand (Loeschfristen,
+  Zugriffsrechte, Backups). Nachteil: geht eine Mail verloren, ist die Bewerbung weg -- deshalb die
+  Fehlermeldung mit Hinweis auf die E-Mail-Adresse, wenn `wp_mail()` scheitert.
+- **Klassisches POST + Redirect (PRG) statt AJAX**: funktioniert ohne JavaScript, kein doppeltes
+  Absenden beim Neuladen; Eingaben bleiben bei Fehlern 15 Minuten per Transient erhalten. Ein kleines
+  Script (`assets/js/components/job-application.js`) ergaenzt Dateinamen-Anzeige,
+  Groessenpruefung vorab und Schutz vor Doppelklick.
+- **Spam-Schutz ohne Captcha/Drittanbieter**: Nonce, Honeypot-Feld, Mindest-Ausfuellzeit (3 s).
+  Erkannte Bots bekommen dieselbe Erfolgsmeldung wie Menschen.
+- **Ergaenzt gegenueber dem Design**: Pflicht-Checkbox fuer die Datenschutzhinweise (verlinkt auf die
+  WordPress-Datenschutzseite, falls gesetzt); keine Stellen-Auswahl, weil das Formular immer zur
+  angezeigten Stelle gehoert.
+- **Dateigroesse folgt dem Server**: 5 MB laut Design, aber nie mehr als PHP annimmt
+  (`wp_max_upload_size()`); ueberschreitet eine Anfrage `post_max_size`, kommt eine eigene Meldung
+  statt eines irrefuehrenden "Formular abgelaufen".
+- **JSON-LD `directApply: true`**, weil man sich jetzt direkt auf der Seite bewerben kann.
+- Formatierungs-Hinweis: im HTML-Teil von PHP-Templates keine Bloecke, die nur aus einem Kommentar
+  bestehen, und kein `if/else` in alternativer Syntax um grosse Bereiche mit Kommentaren --
+  `@prettier/plugin-php` verschiebt und vervielfacht Kommentare dort bei jedem Lauf.
+
+---
+
+### Stellenangebote: Listen als Block "Stellen-Liste" statt Textfelder (2026-10-07)
+
+Auf explizite Nachfrage: "Wir bieten dir"/"Dein Profil"/"Deine Aufgaben" werden im Editor als
+normale Gutenberg-Listen gepflegt statt als "ein Punkt pro Zeile"-Textfelder in der
+"Stellendetails"-Box. Gewaehlt wurde die Variante **mit Struktur**: ein Block
+`hengegroup-theme/stellen-liste` mit Typ (feste Ueberschrift je Typ), darin eine `core/list`
+(Kopfkommentar `template-parts/blocks/stellen-liste/render.php`). So bleibt maschinenlesbar,
+welche Liste welche ist:
+
+- **JSON-LD** fuellt weiterhin `jobBenefits`/`qualifications`/`responsibilities`
+  (`hengegroup_theme_extract_job_lists()` liest die Bloecke aus `parse_blocks()`, unit-getestet).
+  Die Beschreibung (`description`) ist jetzt einfach der gerenderte Inhalt -- die Listen werden
+  nicht mehr zusaetzlich angehaengt.
+- **Leere "Wir bieten dir"-Liste** zeigt weiter die Standard-Benefits des Unternehmens.
+- **Neue Stellen** starten mit einer (nicht gesperrten) Block-Vorlage: Einleitung + die drei
+  Listen (`template` des Post-Types).
+- Die fuenf bestehenden Beispielstellen wurden per WP-CLI umgestellt (Meta-Felder -> Bloecke, Meta
+  danach geloescht).
+
+Die einfachere Variante (nur Ueberschrift + Liste ohne eigenen Block) wurde verworfen, weil sie die
+Zuordnung fuer JSON-LD und den Benefits-Rueckgriff verloren haette.
+
+---
+
+### Buehne: kein Picker bei einer Folie, Buttons ohne An/Aus-Schalter (2026-10-07)
+
+Auf explizite Nachfrage (Kopfkommentare `template-parts/blocks/buehne/render.php` und
+`assets/js/blocks/buehne/edit.jsx`):
+
+- **Nur eine Folie** -> kein Folien-Picker unten und kein Autoplay; das Frontend-Script bricht ohne
+  Picker selbst ab.
+- **Buttons erscheinen, sobald ihr Text gepflegt ist** -- der Schalter "Primaeren Button anzeigen"
+  entfaellt, primaerer und sekundaerer Button verhalten sich gleich. Das alte
+  `showPrimaryButton`-Feld bestehender Folien wird ignoriert (keine Migration noetig).
+- **Button-Felder als Gruppe** (Text und Seite nebeneinander unter "Primaerer/Sekundaerer Button").
+- Akzentfarben heissen im Editor wie die Marken-Tokens ("Henge Gruen/Blau/Grau").
+
+---
+
+### Karriereseite: Bloecke Benefits, Auszeichnungen, Galerie (2026-10-07)
+
+Die drei restlichen Abschnitte des Karriereseiten-Designs als eigene Bloecke
+(`template-parts/blocks/benefits|auszeichnungen|galerie/`), allgemein genug fuer andere Seiten.
+
+- **Auszeichnungen/Benefits: jede Karte ein eigener Kind-Block (InnerBlocks)** statt einer
+  Sidebar-Liste mit Modal (explizite Nachfrage 2026-10-07: Ueberschrift samt H1-H6-Auswahl und die
+  Boxen direkt in der Canvas bearbeiten). Hinzufuegen ueber eine eigene Kachel im Raster,
+  Verschieben/Duplizieren/Loeschen/Kopieren ueber Gutenbergs eigene Block-Werkzeuge; Bild, Bildform,
+  Link bzw. Icon ueber die Toolbar der jeweiligen Karte. Die Canvas wird clientseitig mit denselben
+  Tailwind-Klassen wie die `render.php`-Dateien gebaut (kein `ServerSideRender`), damit `RichText`
+  moeglich ist. Die Buehne behaelt Sidebar+Modal, weil dort immer nur eine Folie sichtbar ist.
+  Bestehende Inhalte im alten Format (`items`-Attribut) wurden einmalig per WP-CLI umgestellt;
+  ein JS-`deprecated`-Eintrag dafuer wurde bewusst nicht gebaut, weil es keine weiteren Inhalte im
+  alten Format gibt.
+- **Galerie direkt in der Canvas** (explizite Nachfrage 2026-10-07): Ueberschrift samt H1-H6-Auswahl,
+  Bilder hinzufuegen ("+ Bilder hinzufuegen", Mehrfachauswahl), je Bild verschieben/entfernen; der
+  Mediathek-Galerie-Dialog bleibt zusaetzlich ueber die Toolbar erreichbar (Sortieren per Drag &
+  Drop).
+- **Benefit-Icons als feste Auswahl** (`hengegroup_theme_get_benefit_icons()`, Lucide) statt
+  SVG-Upload: einheitliche Optik, und die Liste geht per Inline-Script an den Editor -- eine Quelle
+  fuer Frontend und Auswahlfeld.
+- **Galerie als Bento-Raster** (explizite Vorgabe 2026-10-07: "immer ein Quadrat"/buendig statt
+  Mauerwerk mit unebenem Rand): Kacheln in 1x1/2x1/1x2/3x1, die bei jeder Bildanzahl volle Reihen
+  ergeben (je 8 Bilder ein fester 3x4-Block, Rest mit passenden Formen,
+  `hengegroup_theme_get_bento_tile_shapes()` + gleiche Logik in `assets/js/blocks/galerie/layout.js`
+  fuer den Editor, beide getestet). Bilder werden per `object-cover` zugeschnitten; mobil eine
+  Spalte im 4:3-Format. Alternativtexte kommen aus der Mediathek.
+- **Auszeichnungen**: Links auf fremde Domains oeffnen in neuem Tab (Besucher bleibt auf der
+  Karriereseite).
 
 ---
 
@@ -48,8 +165,9 @@ in den Kopfkommentaren von `inc/setup/theme-careers.php`, `theme-careers-admin.p
   `public => false` (keine duennen Archivseiten im Index) und ohne Block-Editor-Panel -- Zuordnung
   ueber die "Stellendetails"-Box (Unternehmen als Einzelauswahl).
 - **Klassische Metabox statt Gutenberg-Sidebar-Bundle** fuer die Stellenfelder: gleiches Muster wie
-  SEO-/Badge-Box, kein weiteres JS-Bundle; Listen (Aufgaben/Profil/Benefits) als "ein Punkt pro
-  Zeile"-Textfelder statt Repeater.
+  SEO-/Badge-Box, kein weiteres JS-Bundle. (Die Listen Aufgaben/Profil/Benefits waren hier
+  urspruenglich Textfelder -- inzwischen Bloecke im Inhalt, siehe "Stellenangebote: Listen als
+  Block "Stellen-Liste"".)
 - **Kein ACF**: Das Theme hatte bisher keine Plugin-Abhaengigkeit fuer Felder, eine fuer diesen einen
   Fall waere mehr Pflegeaufwand als Ersparnis.
 - **Ansprechpartner**: ein Standard fuer alle Unternehmen (Karriere > Einstellungen), pro Unternehmen

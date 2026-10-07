@@ -47,6 +47,23 @@ function hengegroup_theme_register_stellenangebote_post_type(): void
         'show_in_rest' => true,
         'menu_icon' => 'dashicons-businessman',
         'supports' => ['title', 'editor', 'excerpt', 'revisions'],
+        // Vorlage fuer neue Stellen: Einleitung + die drei Listen als "Stellen-Liste"-Bloecke
+        // (Typ je Block, normale Gutenberg-Liste darin) -- siehe template-parts/blocks/stellen-liste.
+        // Nicht gesperrt: Redakteure duerfen Bloecke ergaenzen, umsortieren oder entfernen.
+        'template' => [
+            [
+                'core/paragraph',
+                [
+                    'placeholder' => __(
+                        'Einleitung: Wer seid ihr, wen sucht ihr, wo und ab wann?',
+                        'hengegroup-theme',
+                    ),
+                ],
+            ],
+            ['hengegroup-theme/stellen-liste', ['type' => 'benefits']],
+            ['hengegroup-theme/stellen-liste', ['type' => 'profile']],
+            ['hengegroup-theme/stellen-liste', ['type' => 'tasks']],
+        ],
         'has_archive' => false,
         'rewrite' => [
             'slug' => 'karriere',

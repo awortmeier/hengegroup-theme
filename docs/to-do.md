@@ -79,12 +79,15 @@ Datenmodell, JSON-LD, Ablauf und die Bloecke "Offene Stellen"/"Karriere-Teaser" 
 (siehe `docs/entscheidungen.md` "Stellenangebote: Datenmodell, Google-Jobs-JSON-LD und Ablauf").
 Offen:
 
-- **Bewerbungsformular** aus dem Design (Name, Alter, Berufserfahrung, Kontaktweg/-zeit,
-  Lebenslauf/Zeugnisse als Upload, Nachricht): Versand/Speicherung, Datei-Upload-Absicherung,
-  DSGVO-Einwilligung/Loeschfristen. Danach im JSON-LD `directApply: true` setzen
-  (`hengegroup_theme_get_job_posting_schema_for_post()`).
-- **Karriereseite: Abschnitte "Auszeichnungen & Mitgliedschaften", "Benefits" (Icon-Raster) und
-  "Galerie"** aus dem Design als eigene Bloecke -- aktuell nur mit Core-Bloecken nachbaubar.
+- **Upload-Grenze pro Anfrage pruefen**: Der Webserver erlaubt 5 MB je Datei (geprueft auf dev).
+  Ob `post_max_size` fuer Lebenslauf + bis zu 5 Zeugnisse (bis ~30 MB) reicht, ist unbekannt -- in
+  Plesk (PHP-Einstellungen) pruefen, ggf. auf mind. 40M setzen. Ist sie zu klein, zeigt das Formular
+  eine passende Meldung ("Dateien zusammen zu gross").
+- **Datenschutzerklaerung**: Bewerbungen (Formular, E-Mail-Versand, Aufbewahrung) in der
+  Datenschutzerklaerung beschreiben und die Seite unter Einstellungen > Datenschutz als
+  Datenschutzseite setzen, damit die Checkbox im Formular darauf verlinkt.
+- **E-Mail-Zustellung**: Bewerbungen laufen ueber `wp_mail()` (PHP-Mail des Hosters). Fuer
+  verlaessliche Zustellung mit Anhaengen ggf. SMTP (z. B. ueber ein SMTP-Plugin) einrichten.
 - **Google Indexing API** (optional): neue/geaenderte/abgelaufene Stellen aktiv melden statt auf den
   naechsten Crawl zu warten; braucht ein Google-Cloud-Service-Konto.
 - **Einrichtung nach dem Deploy**: Seite "Karriere" (Slug `karriere`) mit Block "Offene Stellen"

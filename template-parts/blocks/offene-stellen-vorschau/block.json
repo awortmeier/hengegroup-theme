@@ -1,0 +1,22 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/offene-stellen-vorschau",
+    "title": "Offene Stellen (interne Editor-Vorschau)",
+    "category": "henge",
+    "icon": "businessman",
+    "description": "Nur fuer die Editor-Vorschau des Offene-Stellen-Blocks -- rendert entweder die Stellenliste oder die Ansprechpartner-Karte, kein eigener Insertable Block.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "part": {
+            "type": "string",
+            "enum": ["list", "contact"],
+            "default": "list"
+        }
+    },
+    "supports": {
+        "inserter": false,
+        "html": false
+    },
+    "render": "file:./render.php"
+}

@@ -19,9 +19,21 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Added
 
+- Footer nach Design: Logo + Adresse, Kontakt (E-Mail/Telefon als Link, Fax), Social Media,
+  Links (Menue-Position "Footermenü"), Marken-Verlaufslinie und Copyright. Kontaktdaten und
+  Social-Media-URLs unter Einstellungen > Footer pflegbar; leere Eintraege/Spalten werden
+  ausgeblendet. Siehe `docs/entscheidungen.md`.
+- Bewerbungsformular auf der Stellen-Einzelseite nach Design (exklusiv fuer die angezeigte Stelle):
+  Versand per E-Mail mit Anhaengen an den Ansprechpartner, Eingangsbestaetigung an den Bewerber,
+  Datenschutz-Checkbox, Spam-Schutz ohne Captcha, Fehlerdarstellung je Feld. Siehe
+  `docs/entscheidungen.md`.
+- Neue Bloecke "Benefits" (Icon-Raster auf dunklem Grund), "Auszeichnungen" (Karten mit
+  Siegel/Logo, Text und Link; Karten direkt im Block hinzufuegen/bearbeiten) und "Galerie" (Bento-Raster, schliesst immer buendig ab) fuer die Karriereseite. Siehe
+  `docs/entscheidungen.md`.
 - Stellenangebote fuer die Google-Jobsuche ausgebaut: Taxonomien Unternehmen/Standort/
   Taetigkeitsbereich mit Zusatzfeldern, "Stellendetails"-Box (Anstellungsart, Gueltig bis, Eintritt,
-  Gehalt, Arbeitsmodell, Erfahrung/Abschluss, Aufgaben/Profil/Benefits, besetzt, alte Stellen-ID),
+  Gehalt, Arbeitsmodell, Erfahrung/Abschluss, besetzt, alte Stellen-ID), Block "Stellen-Liste" fuer
+  Wir bieten dir/Profil/Aufgaben als normale Gutenberg-Listen,
   Karriere-Einstellungen (Karriereseite, Standard-Ansprechpartner), JobPosting- und
   BreadcrumbList-JSON-LD, automatischer Title/Description, Einzelseite nach Design mit Faktenleiste
   und Bewerbung per E-Mail, neue Bloecke "Offene Stellen" (Karriereseite) und "Karriere-Teaser"
@@ -131,6 +143,14 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Changed
 
+- Header: "Kontakt"-Button verlinkt auf die Kontaktseite `/kontakt/` statt auf den Anker `#kontakt`.
+
+- Stellen-Einzelseite: breiter Wrapper, Inhalt linksbuendig so breit wie die Faktenbox,
+  Ansprechpartner-Karte rechts neben der Faktenbox (statt eigenem Abschnitt unten); der Text beginnt
+  direkt unter der Faktenbox.
+- Buehne: bei nur einer Folie kein Folien-Picker und kein Autoplay; Buttons erscheinen, sobald ihr
+  Text gepflegt ist (Schalter "Primaeren Button anzeigen" entfaellt); Button-Text und -Seite im
+  Editor nebeneinander.
 - Block "Ueberschrift & Text": Ueberschrift-Element (H1-H6 oder Absatz, Default jetzt `p` statt
   `h2`) ist ueber die Block-Toolbar waehlbar statt fest verdrahtet; die "Ausrichten"-Toolbar-
   Kontrolle ist entfernt (`supports.align`/das `align`-Attribut raus aus `block.json`, die volle

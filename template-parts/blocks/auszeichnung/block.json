@@ -1,0 +1,47 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/auszeichnung",
+    "title": "Auszeichnung",
+    "category": "henge",
+    "icon": "star-filled",
+    "description": "Eine Karte im Block „Auszeichnungen“: Siegel/Logo, Titel, Text und Link.",
+    "textdomain": "hengegroup-theme",
+    "parent": ["hengegroup-theme/auszeichnungen"],
+    "attributes": {
+        "imageId": {
+            "type": "number",
+            "default": 0
+        },
+        "imageAlt": {
+            "type": "string",
+            "default": ""
+        },
+        "imageShape": {
+            "type": "string",
+            "enum": ["circle", "rounded"],
+            "default": "circle"
+        },
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "text": {
+            "type": "string",
+            "default": ""
+        },
+        "buttonText": {
+            "type": "string",
+            "default": ""
+        },
+        "buttonUrl": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false
+    },
+    "render": "file:./render.php"
+}

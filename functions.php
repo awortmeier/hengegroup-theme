@@ -25,7 +25,9 @@ require_once get_template_directory() . '/inc/setup/theme-woocommerce-products.p
 require_once get_template_directory() . '/inc/setup/theme-careers.php';
 require_once get_template_directory() . '/inc/setup/theme-careers-admin.php';
 require_once get_template_directory() . '/inc/setup/theme-careers-seo.php';
+require_once get_template_directory() . '/inc/setup/theme-careers-application.php';
 require_once get_template_directory() . '/inc/setup/theme-seo-admin.php';
+require_once get_template_directory() . '/inc/setup/theme-footer-admin.php';
 require_once get_template_directory() . '/inc/setup/theme-seo-output.php';
 require_once get_template_directory() . '/inc/setup/theme-hardening.php';
 require_once get_template_directory() . '/inc/setup/theme-hardening-woocommerce.php';

@@ -41,9 +41,6 @@ function hengegroup_theme_get_job_meta_keys(): array
         'work_model' => '_hengegroup_theme_job_work_model',
         'experience_months' => '_hengegroup_theme_job_experience_months',
         'education' => '_hengegroup_theme_job_education',
-        'tasks' => '_hengegroup_theme_job_tasks',
-        'profile' => '_hengegroup_theme_job_profile',
-        'benefits' => '_hengegroup_theme_job_benefits',
         'filled' => '_hengegroup_theme_job_filled',
         'legacy_id' => '_hengegroup_theme_job_legacy_id',
     ];
@@ -128,6 +125,106 @@ function hengegroup_theme_get_job_experience_options(): array
         36 => __('Mind. 3 Jahre', 'hengegroup-theme'),
         60 => __('Mind. 5 Jahre', 'hengegroup-theme'),
     ];
+}
+
+/**
+ * Die drei Listen einer Stellenanzeige (Block "Stellen-Liste", template-parts/blocks/stellen-liste)
+ * mit ihrer sichtbaren Ueberschrift, in Design-Reihenfolge. Der Typ bestimmt auch das
+ * schema.org-Feld im JSON-LD (jobBenefits/qualifications/responsibilities) und dass leere
+ * "Wir bieten dir"-Listen die Standard-Benefits des Unternehmens zeigen.
+ */
+function hengegroup_theme_get_job_list_types(): array
+{
+    return [
+        'benefits' => __('Wir bieten dir:', 'hengegroup-theme'),
+        'profile' => __('Dein Profil:', 'hengegroup-theme'),
+        'tasks' => __('Deine Aufgaben:', 'hengegroup-theme'),
+    ];
+}
+
+/**
+ * Liest die Eintraege aller "Stellen-Liste"-Bloecke aus bereits geparsten Bloecken
+ * (parse_blocks()) -- reine Funktion, damit die Zuordnung unit-getestet ist. Unterstuetzt
+ * core/list mit core/list-item-Kindbloecken (WordPress >= 6.1) und das aeltere Format ohne
+ * Kindbloecke (nur <li> im HTML). Verschachtelte Unterlisten werden mit eingesammelt.
+ */
+function hengegroup_theme_extract_job_lists(array $blocks): array
+{
+    $lists = ['benefits' => [], 'profile' => [], 'tasks' => []];
+
+    foreach ($blocks as $block) {
+        if (!is_array($block)) {
+            continue;
+        }
+
+        $inner_blocks = is_array($block['innerBlocks'] ?? null) ? $block['innerBlocks'] : [];
+
+        if (($block['blockName'] ?? '') === 'hengegroup-theme/stellen-liste') {
+            $type = (string) ($block['attrs']['type'] ?? 'benefits');
+
+            if (isset($lists[$type])) {
+                $lists[$type] = array_merge(
+                    $lists[$type],
+                    hengegroup_theme_collect_list_item_texts($inner_blocks),
+                );
+            }
+
+            continue;
+        }
+
+        foreach (hengegroup_theme_extract_job_lists($inner_blocks) as $type => $items) {
+            $lists[$type] = array_merge($lists[$type], $items);
+        }
+    }
+
+    return $lists;
+}
+
+function hengegroup_theme_collect_list_item_texts(array $blocks): array
+{
+    $items = [];
+    $to_text = static fn(string $html): string => trim(
+        (string) preg_replace(
+            '/\s+/u',
+            ' ',
+            html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+        ),
+    );
+
+    foreach ($blocks as $block) {
+        if (!is_array($block)) {
+            continue;
+        }
+
+        $name = $block['blockName'] ?? '';
+        $inner_blocks = is_array($block['innerBlocks'] ?? null) ? $block['innerBlocks'] : [];
+
+        if ($name === 'core/list-item') {
+            $text = $to_text((string) ($block['innerHTML'] ?? ''));
+
+            if ($text !== '') {
+                $items[] = $text;
+            }
+        } elseif ($name === 'core/list' && $inner_blocks === []) {
+            preg_match_all(
+                '/<li[^>]*>(.*?)<\/li>/is',
+                (string) ($block['innerHTML'] ?? ''),
+                $matches,
+            );
+
+            foreach ($matches[1] as $html) {
+                $text = $to_text($html);
+
+                if ($text !== '') {
+                    $items[] = $text;
+                }
+            }
+        }
+
+        $items = array_merge($items, hengegroup_theme_collect_list_item_texts($inner_blocks));
+    }
+
+    return $items;
 }
 
 /**
@@ -468,8 +565,7 @@ function hengegroup_theme_build_job_posting_schema(array $job, array $context): 
         }
     }
 
-    // Kein Bewerbungsformular auf der Seite (noch nicht gebaut, siehe docs/to-do.md) -- Bewerbung
-    // laeuft per E-Mail, Google soll deshalb kein "Direkt bewerben" anzeigen.
+    // true, sobald man sich direkt auf der Stellenseite bewerben kann (Bewerbungsformular).
     $schema['directApply'] = !empty($context['direct_apply']);
 
     return $schema;
@@ -643,8 +739,10 @@ function hengegroup_theme_get_job_data(int $post_id): array
 
     $salary_unit = $meta('salary_unit');
     $experience = $meta('experience_months');
-    $benefits = hengegroup_theme_parse_job_list_lines($meta('benefits'));
     $legacy_id = $meta('legacy_id');
+    $lists = hengegroup_theme_extract_job_lists(
+        parse_blocks((string) get_post_field('post_content', $post_id)),
+    );
 
     return [
         'id' => $post_id,
@@ -679,9 +777,9 @@ function hengegroup_theme_get_job_data(int $post_id): array
         )
             ? $meta('education')
             : '',
-        'tasks' => hengegroup_theme_parse_job_list_lines($meta('tasks')),
-        'profile' => hengegroup_theme_parse_job_list_lines($meta('profile')),
-        'benefits' => $benefits !== [] ? $benefits : $company['benefits'] ?? [],
+        'tasks' => $lists['tasks'],
+        'profile' => $lists['profile'],
+        'benefits' => $lists['benefits'] !== [] ? $lists['benefits'] : $company['benefits'] ?? [],
         'filled' => $meta('filled') === '1',
         'legacy_id' => $legacy_id,
         'reference' => $legacy_id !== '' ? $legacy_id : 'job-' . $post_id,
@@ -787,6 +885,9 @@ function hengegroup_theme_get_job_company_text_class(string $variant): string
  * Eine klickbare Stellen-Zeile (weisse Karte, Titel, Pfeil) als `<li>` -- Design "Startseite"/
  * "Karriereseite". Mit `$with_company_badge` steht die Firmen-Pill vor dem Titel (Startseite); auf
  * der Karriereseite gruppiert die Ueberschrift bereits nach Unternehmen.
+ *
+ * Die Textfarbe sitzt zusaetzlich am inneren <span> (auch in der Kontaktkarte): Im Block-Editor
+ * gewinnt sonst die Link-Farbe aus theme.json (`styles.elements.link`) gegen die Klasse am <a>.
  */
 function hengegroup_theme_render_job_row(array $job, bool $with_company_badge): string
 {
@@ -798,11 +899,11 @@ function hengegroup_theme_render_job_row(array $job, bool $with_company_badge): 
     $arrow = hengegroup_theme_render_icon([
         'name' => 'arrow-right',
         'set' => 'lucide',
-        'class' => 'size-5 shrink-0 transition-transform group-hover:translate-x-1',
+        'class' => 'size-5 shrink-0 text-grey-dark transition-transform group-hover:translate-x-1',
     ]);
 
     return sprintf(
-        '<li><a class="group flex items-center justify-between gap-4 rounded-2xl bg-white px-6 py-5 text-grey-dark no-underline shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none" href="%1$s"><span class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">%2$s<span class="text-lg leading-snug font-semibold">%3$s</span></span>%4$s</a></li>',
+        '<li><a class="group flex items-center justify-between gap-4 rounded-2xl bg-white px-6 py-5 text-grey-dark no-underline shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none" href="%1$s"><span class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">%2$s<span class="text-lg leading-snug font-semibold text-grey-dark">%3$s</span></span>%4$s</a></li>',
         esc_url($job['url']),
         $badge,
         esc_html($job['title']),
@@ -812,10 +913,15 @@ function hengegroup_theme_render_job_row(array $job, bool $with_company_badge): 
 
 /**
  * Ansprechpartner-Karte (dunkel, Design "Karriereseite"/"Stellenangebot"). Leerer String, wenn
- * weder Name noch E-Mail gepflegt sind.
+ * weder Name noch E-Mail gepflegt sind. `$label` setzt eine kleine Ueberschrift in die Karte (z. B.
+ * auf der Stellen-Einzelseite, wo die Karte ohne eigene Abschnitts-Ueberschrift neben der
+ * Faktenleiste steht), `$class` haengt Klassen an (z. B. `h-full`).
  */
-function hengegroup_theme_render_job_contact_card(array $contact): string
-{
+function hengegroup_theme_render_job_contact_card(
+    array $contact,
+    string $label = '',
+    string $class = '',
+): string {
     if (trim($contact['name'] ?? '') === '' && trim($contact['email'] ?? '') === '') {
         return '';
     }
@@ -845,7 +951,7 @@ function hengegroup_theme_render_job_contact_card(array $contact): string
                 'class' => 'size-4 shrink-0',
             ]),
             sprintf(
-                '<a class="text-grey-light underline-offset-4 hover:underline" href="mailto:%1$s">%2$s</a>',
+                '<a class="text-grey-light underline-offset-4 hover:underline" href="mailto:%1$s"><span class="text-grey-light">%2$s</span></a>',
                 esc_attr(antispambot($contact['email'])),
                 esc_html(antispambot($contact['email'])),
             ),
@@ -861,7 +967,7 @@ function hengegroup_theme_render_job_contact_card(array $contact): string
                 'class' => 'size-4 shrink-0',
             ]),
             sprintf(
-                '<a class="text-grey-light underline-offset-4 hover:underline" href="tel:%1$s">%2$s</a>',
+                '<a class="text-grey-light underline-offset-4 hover:underline" href="tel:%1$s"><span class="text-grey-light">%2$s</span></a>',
                 esc_attr((string) preg_replace('/[^\d+]/', '', $contact['phone'])),
                 esc_html($contact['phone']),
             ),
@@ -869,9 +975,18 @@ function hengegroup_theme_render_job_contact_card(array $contact): string
     }
 
     return sprintf(
-        '<div class="rounded-[20px] bg-grey-dark px-8 py-7 shadow-[0_8px_24px_rgba(0,0,0,0.12)]" data-slot="job-contact"><p class="mb-3.5 text-xl font-extrabold text-grey-light">%1$s</p><ul class="flex flex-col gap-2.5">%2$s</ul></div>',
+        '<div class="%3$s" data-slot="job-contact">%4$s<p class="mb-3.5 text-xl font-extrabold text-grey-light">%1$s</p><ul class="flex flex-col gap-2.5">%2$s</ul></div>',
         esc_html($contact['name'] ?? ''),
         $rows,
+        esc_attr(
+            trim(
+                'rounded-[20px] bg-grey-dark px-8 py-7 shadow-[0_8px_24px_rgba(0,0,0,0.12)] ' .
+                    $class,
+            ),
+        ),
+        $label !== ''
+            ? '<p class="mb-2 text-sm text-grey-light/60">' . esc_html($label) . '</p>'
+            : '',
     );
 }
 
@@ -970,4 +1085,218 @@ function hengegroup_theme_render_job_teaser_list(int $limit): string
     );
 
     return $rows !== '' ? '<ul class="flex flex-col gap-3">' . $rows . '</ul>' : '';
+}
+
+/**
+ * Icon-Auswahl fuer den Benefits-Block (template-parts/blocks/benefits): Schluessel => Label +
+ * icon.php-Konfiguration. Literale Konfigurationen, damit scripts/find-lucide-icons.php sie beim
+ * Build findet. Die Labels gehen per Inline-Script an den Block-Editor (inc/setup/theme-blocks.php)
+ * -- eine Quelle fuer Frontend und Editor-Auswahl.
+ */
+function hengegroup_theme_get_benefit_icons(): array
+{
+    return [
+        'coins' => [
+            __('Geld / Vorsorge', 'hengegroup-theme'),
+            ['name' => 'coins', 'set' => 'lucide'],
+        ],
+        'euro' => [__('Euro', 'hengegroup-theme'), ['name' => 'euro', 'set' => 'lucide']],
+        'sun' => [__('Sonne / Urlaub', 'hengegroup-theme'), ['name' => 'sun', 'set' => 'lucide']],
+        'tree-palm' => [
+            __('Palme / Urlaub', 'hengegroup-theme'),
+            ['name' => 'tree-palm', 'set' => 'lucide'],
+        ],
+        'snowflake' => [
+            __('Klima', 'hengegroup-theme'),
+            ['name' => 'snowflake', 'set' => 'lucide'],
+        ],
+        'coffee' => [__('Kaffee', 'hengegroup-theme'), ['name' => 'coffee', 'set' => 'lucide']],
+        'utensils' => [__('Essen', 'hengegroup-theme'), ['name' => 'utensils', 'set' => 'lucide']],
+        'party-popper' => [
+            __('Events', 'hengegroup-theme'),
+            ['name' => 'party-popper', 'set' => 'lucide'],
+        ],
+        'graduation-cap' => [
+            __('Weiterbildung', 'hengegroup-theme'),
+            ['name' => 'graduation-cap', 'set' => 'lucide'],
+        ],
+        'heart-pulse' => [
+            __('Gesundheit', 'hengegroup-theme'),
+            ['name' => 'heart-pulse', 'set' => 'lucide'],
+        ],
+        'dumbbell' => [__('Sport', 'hengegroup-theme'), ['name' => 'dumbbell', 'set' => 'lucide']],
+        'clipboard-check' => [
+            __('Onboarding', 'hengegroup-theme'),
+            ['name' => 'clipboard-check', 'set' => 'lucide'],
+        ],
+        'monitor' => [
+            __('Arbeitsplatz', 'hengegroup-theme'),
+            ['name' => 'monitor', 'set' => 'lucide'],
+        ],
+        'bike' => [__('Fahrrad', 'hengegroup-theme'), ['name' => 'bike', 'set' => 'lucide']],
+        'car' => [__('Auto', 'hengegroup-theme'), ['name' => 'car', 'set' => 'lucide']],
+        'clock' => [__('Arbeitszeit', 'hengegroup-theme'), ['name' => 'clock', 'set' => 'lucide']],
+        'scale' => [
+            __('Work-Life-Balance', 'hengegroup-theme'),
+            ['name' => 'scale', 'set' => 'lucide'],
+        ],
+        'baby' => [__('Familie', 'hengegroup-theme'), ['name' => 'baby', 'set' => 'lucide']],
+        'users' => [
+            __('Team / Empfehlung', 'hengegroup-theme'),
+            ['name' => 'users', 'set' => 'lucide'],
+        ],
+        'handshake' => [
+            __('Zusammenarbeit', 'hengegroup-theme'),
+            ['name' => 'handshake', 'set' => 'lucide'],
+        ],
+        'medal' => [
+            __('Auszeichnung / Treue', 'hengegroup-theme'),
+            ['name' => 'medal', 'set' => 'lucide'],
+        ],
+        'gift' => [
+            __('Geschenk / Prämie', 'hengegroup-theme'),
+            ['name' => 'gift', 'set' => 'lucide'],
+        ],
+    ];
+}
+
+/**
+ * Linke Spalte des "Offene Stellen"-Blocks: gruppierte Stellen oder -- wenn keine aktiv ist -- ein
+ * Hinweis mit Initiativbewerbungs-Adresse. Geteilt zwischen offene-stellen/render.php (Frontend)
+ * und dem Editor-Vorschau-Zwilling offene-stellen-vorschau/render.php.
+ */
+function hengegroup_theme_render_open_jobs_list(): string
+{
+    $groups_markup = hengegroup_theme_render_jobs_grouped();
+
+    if ($groups_markup !== '') {
+        return $groups_markup;
+    }
+
+    $contact = hengegroup_theme_get_job_contact(null);
+
+    ob_start();
+    get_template_part('template-parts/base/typography', null, [
+        'config' => [
+            'variant' => 'body-base',
+            'text' =>
+                $contact['email'] !== ''
+                    ? sprintf(
+                        /* translators: %s: application e-mail address. */
+                        __(
+                            'Aktuell sind keine Stellen ausgeschrieben. Initiativbewerbungen sind jederzeit willkommen: %s',
+                            'hengegroup-theme',
+                        ),
+                        $contact['email'],
+                    )
+                    : __('Aktuell sind keine Stellen ausgeschrieben.', 'hengegroup-theme'),
+        ],
+    ]);
+
+    return (string) ob_get_clean();
+}
+
+/**
+ * SVG eines Benefit-Icons in der Kachel-Groesse/-Farbe des Designs -- geteilt zwischen
+ * benefit/render.php (Frontend) und der Icon-Vorschau im Block-Editor (inc/setup/theme-blocks.php
+ * reicht die fertigen SVGs per Inline-Script an benefits/edit.jsx).
+ */
+function hengegroup_theme_render_benefit_icon(string $key): string
+{
+    $icons = hengegroup_theme_get_benefit_icons();
+    $icon_config = $icons[$key][1] ?? reset($icons)[1];
+    $icon_config['class'] = 'size-5.5 text-grey-light';
+
+    return hengegroup_theme_render_icon($icon_config);
+}
+
+/**
+ * Auswahlwerte des Bewerbungsformulars (Design "Stellenangebot einzelseite"): Wert => Label.
+ * Geteilt zwischen Formular (template-parts/components/job-application-form.php), Pruefung
+ * (hengegroup_theme_validate_job_application()) und Bewerbungs-E-Mail.
+ */
+function hengegroup_theme_get_job_application_options(): array
+{
+    return [
+        'experience' => [
+            'entry' => __('Berufseinsteiger*in', 'hengegroup-theme'),
+            '1-3' => __('1–3 Jahre', 'hengegroup-theme'),
+            '3-5' => __('3–5 Jahre', 'hengegroup-theme'),
+            '5+' => __('Mehr als 5 Jahre', 'hengegroup-theme'),
+        ],
+        'contact_method' => [
+            'phone' => __('Telefon', 'hengegroup-theme'),
+            'email' => __('E-Mail', 'hengegroup-theme'),
+        ],
+        'contact_time' => [
+            'morning' => __('Vormittags', 'hengegroup-theme'),
+            'afternoon' => __('Nachmittags', 'hengegroup-theme'),
+        ],
+    ];
+}
+
+/**
+ * Prueft die (bereits sanitisierten) Textfelder einer Bewerbung -- reine Funktion, unit-getestet
+ * (tests/Unit/CareersTest.php). Dateien prueft der Formular-Handler separat
+ * (inc/setup/theme-careers-application.php), weil das WordPress' Dateityp-Erkennung braucht.
+ * Rueckgabe: Feldname => Fehlermeldung, leer = alles gueltig.
+ */
+function hengegroup_theme_validate_job_application(array $values): array
+{
+    $errors = [];
+    $options = hengegroup_theme_get_job_application_options();
+
+    if (trim((string) ($values['name'] ?? '')) === '') {
+        $errors['name'] = __('Bitte gib deinen Namen an.', 'hengegroup-theme');
+    }
+
+    $age = trim((string) ($values['age'] ?? ''));
+
+    if ($age === '' || !ctype_digit($age) || (int) $age < 14 || (int) $age > 99) {
+        $errors['age'] = __(
+            'Bitte gib dein Alter als Zahl zwischen 14 und 99 an.',
+            'hengegroup-theme',
+        );
+    }
+
+    if (filter_var(trim((string) ($values['email'] ?? '')), FILTER_VALIDATE_EMAIL) === false) {
+        $errors['email'] = __('Bitte gib eine gültige E-Mail-Adresse an.', 'hengegroup-theme');
+    }
+
+    $phone = trim((string) ($values['phone'] ?? ''));
+
+    if ($phone !== '' && preg_match('/^[0-9 +()\/\-]{5,30}$/', $phone) !== 1) {
+        $errors['phone'] = __('Bitte gib eine gültige Telefonnummer an.', 'hengegroup-theme');
+    }
+
+    foreach (['experience', 'contact_method', 'contact_time'] as $field) {
+        $value = (string) ($values[$field] ?? '');
+
+        if ($value !== '' && !isset($options[$field][$value])) {
+            $errors[$field] = __('Bitte wähle einen Eintrag aus der Liste.', 'hengegroup-theme');
+        }
+    }
+
+    if (($values['contact_method'] ?? '') === 'phone' && $phone === '') {
+        $errors['phone'] = __(
+            'Bitte gib eine Telefonnummer an, wenn wir dich telefonisch kontaktieren sollen.',
+            'hengegroup-theme',
+        );
+    }
+
+    if (mb_strlen((string) ($values['message'] ?? '')) > 5000) {
+        $errors['message'] = __(
+            'Die Nachricht darf höchstens 5.000 Zeichen lang sein.',
+            'hengegroup-theme',
+        );
+    }
+
+    if (empty($values['privacy'])) {
+        $errors['privacy'] = __(
+            'Bitte bestätige, dass du die Datenschutzhinweise gelesen hast.',
+            'hengegroup-theme',
+        );
+    }
+
+    return $errors;
 }

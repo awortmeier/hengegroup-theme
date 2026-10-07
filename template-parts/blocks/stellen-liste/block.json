@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/stellen-liste",
+    "title": "Stellen-Liste",
+    "category": "henge",
+    "icon": "editor-ul",
+    "description": "Liste einer Stellenanzeige mit fester Überschrift: „Wir bieten dir“, „Dein Profil“ oder „Deine Aufgaben“. Darin eine normale Liste.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "type": {
+            "type": "string",
+            "enum": ["benefits", "profile", "tasks"],
+            "default": "benefits"
+        }
+    },
+    "usesContext": ["postId"],
+    "allowedBlocks": ["core/list"],
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-stellen-liste-editor",
+    "render": "file:./render.php"
+}

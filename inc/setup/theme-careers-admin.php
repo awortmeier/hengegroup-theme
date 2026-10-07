@@ -5,8 +5,9 @@ declare(strict_types=1);
 // Backend fuer Stellenangebote (siehe inc/setup/theme-careers.php fuer Post-Type/Taxonomien):
 //   - "Stellendetails"-Box im Stellen-Editor: Unternehmen (Einzelauswahl), Standorte,
 //     Taetigkeitsbereich, Anstellungsart, Gueltig bis, Eintritt, Gehalt, Arbeitsmodell,
-//     Erfahrung/Abschluss, Aufgaben/Profil/Benefits (ein Punkt pro Zeile), "Stelle besetzt", alte
-//     Stellen-ID. Oben ein Hinweis, welche fuer Google Jobs wichtigen Angaben noch fehlen.
+//     Erfahrung/Abschluss, "Stelle besetzt", alte Stellen-ID. Die Listen "Wir bieten dir"/"Dein
+//     Profil"/"Deine Aufgaben" pflegt man im Inhalt als Block "Stellen-Liste"
+//     (template-parts/blocks/stellen-liste), nicht hier. Oben ein Hinweis, welche fuer Google Jobs wichtigen Angaben noch fehlen.
 //   - Zusatzfelder an den Taxonomie-Termen: Unternehmen (rechtlicher Name, Website, Logo, Farbe,
 //     Standard-Benefits, optionaler eigener Ansprechpartner), Standort (Adresse + Koordinaten).
 //   - "Karriere > Einstellungen": Karriereseite + Standard-Ansprechpartner (aktuell einer fuer alle
@@ -314,39 +315,6 @@ function hengegroup_theme_render_job_details_meta_box(WP_Post $post): void
         'hengegroup-theme-job-education',
     );
 
-    $keys = hengegroup_theme_get_job_meta_keys();
-    $textareas = [
-        'benefits' => [
-            __('Wir bieten dir', 'hengegroup-theme'),
-            __(
-                'Ein Punkt pro Zeile. Leer = Standard-Benefits des Unternehmens.',
-                'hengegroup-theme',
-            ),
-        ],
-        'profile' => [
-            __('Dein Profil', 'hengegroup-theme'),
-            __('Ein Punkt pro Zeile.', 'hengegroup-theme'),
-        ],
-        'tasks' => [
-            __('Deine Aufgaben', 'hengegroup-theme'),
-            __('Ein Punkt pro Zeile.', 'hengegroup-theme'),
-        ],
-    ];
-
-    foreach ($textareas as $field => [$label, $description]) {
-        hengegroup_theme_render_job_admin_row(
-            $label,
-            sprintf(
-                '<textarea id="hengegroup-theme-job-%1$s" name="%2$s" rows="6" class="large-text">%3$s</textarea>',
-                esc_attr($field),
-                esc_attr($name($field)),
-                esc_textarea((string) get_post_meta($post->ID, $keys[$field], true)),
-            ),
-            $description,
-            'hengegroup-theme-job-' . $field,
-        );
-    }
-
     hengegroup_theme_render_job_admin_row(
         __('Status', 'hengegroup-theme'),
         sprintf(
@@ -483,14 +451,6 @@ function hengegroup_theme_action_save_post_job_details(int $post_id): void
             $post_id,
             $keys[$field],
             in_array($value, $allowed, true) ? $value : '',
-        );
-    }
-
-    foreach (['tasks', 'profile', 'benefits'] as $field) {
-        hengegroup_theme_update_or_delete_post_meta(
-            $post_id,
-            $keys[$field],
-            trim(sanitize_textarea_field((string) ($data[$field] ?? ''))),
         );
     }
 

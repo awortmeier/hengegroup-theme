@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/galerie",
+    "title": "Galerie",
+    "category": "henge",
+    "icon": "format-gallery",
+    "description": "Überschrift und Bilder im Mauerwerk-Raster (Masonry), Bildformate bleiben erhalten.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        },
+        "imageIds": {
+            "type": "array",
+            "default": [],
+            "items": {
+                "type": "number"
+            }
+        }
+    },
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-galerie-editor",
+    "render": "file:./render.php"
+}

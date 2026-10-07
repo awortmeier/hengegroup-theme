@@ -290,3 +290,50 @@ function hengegroup_theme_floating_position_classes(
 
     return $primary_axis_class . ' ' . $cross_axis_class;
 }
+
+/**
+ * Kachelformen fuer ein Bento-Raster mit 3 Spalten, das bei JEDER Anzahl buendig als Rechteck
+ * abschliesst (Galerie-Block, explizite Vorgabe 2026-10-07). Je 8 Bilder bilden einen festen
+ * 3x4-Block (hoch, quadrat, quadrat, breit, quadrat, quadrat, hoch, breit = 12 Zellen); der Rest
+ * (1-7 Bilder) bekommt Formen, die ebenfalls volle Reihen ergeben -- mit `grid-flow-dense` landen sie
+ * luckenlos. Rueckgabe je Bild: 'square' (1x1), 'wide' (2x1), 'tall' (1x2) oder 'full' (3x1).
+ * Muss mit assets/js/blocks/galerie/layout.js uebereinstimmen (Editor-Vorschau), beide getestet.
+ */
+function hengegroup_theme_get_bento_tile_shapes(int $count): array
+{
+    $block = ['tall', 'square', 'square', 'wide', 'square', 'square', 'tall', 'wide'];
+    $tails = [
+        0 => [],
+        1 => ['full'],
+        2 => ['wide', 'square'],
+        3 => ['square', 'square', 'square'],
+        4 => ['tall', 'square', 'square', 'wide'],
+        5 => ['tall', 'square', 'square', 'wide', 'full'],
+        6 => ['tall', 'square', 'square', 'wide', 'wide', 'square'],
+        7 => ['tall', 'square', 'square', 'wide', 'square', 'square', 'square'],
+    ];
+
+    if ($count <= 0) {
+        return [];
+    }
+
+    $shapes = [];
+
+    for ($i = 0; $i < intdiv($count, 8); $i++) {
+        array_push($shapes, ...$block);
+    }
+
+    return array_merge($shapes, $tails[$count % 8]);
+}
+
+/**
+ * Turns a human-formatted phone number ("+49 (0) 63 48 / 98 38-0") into a tel: URI. The German
+ * trunk prefix "(0)" after the country code must be dropped, otherwise the dialled number is wrong.
+ */
+function hengegroup_theme_phone_href(string $phone): string
+{
+    $phone = preg_replace('/\(0\)/', '', $phone) ?? $phone;
+    $digits = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+
+    return $digits === '' ? '' : 'tel:' . $digits;
+}

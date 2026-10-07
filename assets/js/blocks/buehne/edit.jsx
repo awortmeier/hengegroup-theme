@@ -34,6 +34,10 @@
 // durchsuchbare `ComboboxControl`-Liste an; gespeichert wird weiterhin nur die fertige Permalink-
 // URL in `primaryButtonUrl`/`secondaryButtonUrl` -- render.php und das Attribut-Schema bleiben
 // dadurch unveraendert, nur die Editor-UI aendert sich.
+//
+// Buttons: kein "Primaeren Button anzeigen"-Schalter mehr, ein Button erscheint, sobald sein Text
+// gepflegt ist; Text und Seite stehen je Button nebeneinander (ButtonFields, explizite Nachfrage
+// 2026-10-07). Bei nur einer Folie blendet render.php den Folien-Picker unten aus.
 import { createElement as el, Fragment, useState } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {
@@ -43,10 +47,13 @@ import {
     useBlockProps,
 } from "@wordpress/block-editor";
 import {
+    BaseControl,
     Button,
     Card,
     CardBody,
     ComboboxControl,
+    Flex,
+    FlexBlock,
     Modal,
     PanelBody,
     PanelRow,
@@ -66,9 +73,9 @@ import metadata from "../../../../template-parts/blocks/buehne/block.json";
 // Gleiches Akzentfarben-Vokabular wie template-parts/base/button.php/badge.php's `variant` (siehe
 // deren Kopfkommentare) -- keine freie Farbauswahl, siehe docs/entscheidungen.md.
 const ACCENT_OPTIONS = [
-    { label: __("Grün", "hengegroup-theme"), value: "henge-green" },
-    { label: __("Blau", "hengegroup-theme"), value: "henge-blue" },
-    { label: __("Grau", "hengegroup-theme"), value: "henge-grey" },
+    { label: __("Henge Grün", "hengegroup-theme"), value: "henge-green" },
+    { label: __("Henge Blau", "hengegroup-theme"), value: "henge-blue" },
+    { label: __("Henge Grau", "hengegroup-theme"), value: "henge-grey" },
 ];
 
 function createSlide() {
@@ -82,7 +89,6 @@ function createSlide() {
         title: "",
         text: "",
         accent: "henge-green",
-        showPrimaryButton: true,
         primaryButtonText: "",
         primaryButtonUrl: "",
         secondaryButtonText: "",
@@ -165,12 +171,45 @@ function PageLinkControl({ label, help, value, onChange }) {
     return (
         <ComboboxControl
             __nextHasNoMarginBottom
+            __next40pxDefaultSize
             label={label}
             help={help}
             value={value}
             onChange={(nextValue) => onChange(nextValue || "")}
             options={options}
         />
+    );
+}
+
+// Ein Button als Feldgruppe: Text und Zielseite nebeneinander (explizite Nachfrage 2026-10-07).
+// Kein An/Aus-Schalter -- ohne Text erscheint der Button nicht (render.php). <fieldset>/<legend>
+// gruppiert die beiden Felder auch fuer Screenreader unter "Primaerer/Sekundaerer Button".
+// Inline-Style setzt nur Browser-Defaults des <fieldset> zurueck (wp-admin-UI ausserhalb des
+// Iframes, kein Theme-Styling, siehe Kopfkommentar).
+function ButtonFields({ legend, text, url, onChange }) {
+    return (
+        <fieldset style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
+            <BaseControl.VisualLabel as="legend">{legend}</BaseControl.VisualLabel>
+            <Flex align="flex-start" gap={4}>
+                <FlexBlock>
+                    <TextControl
+                        __nextHasNoMarginBottom
+                        __next40pxDefaultSize
+                        label={__("Text", "hengegroup-theme")}
+                        help={__("Leer = Button wird nicht angezeigt.", "hengegroup-theme")}
+                        value={text}
+                        onChange={(value) => onChange(value, url)}
+                    />
+                </FlexBlock>
+                <FlexBlock>
+                    <PageLinkControl
+                        label={__("Seite", "hengegroup-theme")}
+                        value={url}
+                        onChange={(value) => onChange(text, value)}
+                    />
+                </FlexBlock>
+            </Flex>
+        </fieldset>
     );
 }
 
@@ -266,37 +305,21 @@ function SlideFields({ slide, onChange }) {
                 options={ACCENT_OPTIONS}
                 onChange={(value) => onChange({ accent: value })}
             />
-            <ToggleControl
-                __nextHasNoMarginBottom
-                label={__("Primären Button anzeigen", "hengegroup-theme")}
-                checked={slide.showPrimaryButton}
-                onChange={(value) => onChange({ showPrimaryButton: value })}
+            <ButtonFields
+                legend={__("Primärer Button", "hengegroup-theme")}
+                text={slide.primaryButtonText}
+                url={slide.primaryButtonUrl}
+                onChange={(text, url) =>
+                    onChange({ primaryButtonText: text, primaryButtonUrl: url })
+                }
             />
-            {slide.showPrimaryButton && (
-                <TextControl
-                    __nextHasNoMarginBottom
-                    label={__("Primärer Button: Text", "hengegroup-theme")}
-                    value={slide.primaryButtonText}
-                    onChange={(value) => onChange({ primaryButtonText: value })}
-                />
-            )}
-            {slide.showPrimaryButton && (
-                <PageLinkControl
-                    label={__("Primärer Button: Seite", "hengegroup-theme")}
-                    value={slide.primaryButtonUrl}
-                    onChange={(value) => onChange({ primaryButtonUrl: value })}
-                />
-            )}
-            <TextControl
-                __nextHasNoMarginBottom
-                label={__("Sekundärer Button: Text", "hengegroup-theme")}
-                value={slide.secondaryButtonText}
-                onChange={(value) => onChange({ secondaryButtonText: value })}
-            />
-            <PageLinkControl
-                label={__("Sekundärer Button: Seite", "hengegroup-theme")}
-                value={slide.secondaryButtonUrl}
-                onChange={(value) => onChange({ secondaryButtonUrl: value })}
+            <ButtonFields
+                legend={__("Sekundärer Button", "hengegroup-theme")}
+                text={slide.secondaryButtonText}
+                url={slide.secondaryButtonUrl}
+                onChange={(text, url) =>
+                    onChange({ secondaryButtonText: text, secondaryButtonUrl: url })
+                }
             />
         </VStack>
     );

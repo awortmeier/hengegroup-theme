@@ -16,7 +16,8 @@ declare(strict_types=1);
 
 /**
  * Sichtbarer Inhalt der Stelle als HTML fuer `description` -- derselbe Inhalt, den
- * single-stellenangebote.php rendert (Einleitung + Listen), auf die von Google erlaubten Tags
+ * single-stellenangebote.php rendert (Einleitung + "Stellen-Liste"-Bloecke inkl. Rueckgriff auf die
+ * Unternehmens-Benefits, siehe stellen-liste/render.php), auf die von Google erlaubten Tags
  * reduziert.
  */
 function hengegroup_theme_get_job_description_html(array $job): string
@@ -25,19 +26,7 @@ function hengegroup_theme_get_job_description_html(array $job): string
         'the_content',
         (string) get_post_field('post_content', $job['id']),
     );
-    $html = $content;
-
-    foreach (hengegroup_theme_get_job_list_sections($job) as $section) {
-        $html .= '<h3>' . esc_html($section['heading']) . '</h3><ul>';
-
-        foreach ($section['items'] as $item) {
-            $html .= '<li>' . esc_html($item) . '</li>';
-        }
-
-        $html .= '</ul>';
-    }
-
-    $html = wp_kses($html, [
+    $html = wp_kses($content, [
         'p' => [],
         'br' => [],
         'ul' => [],
@@ -55,23 +44,6 @@ function hengegroup_theme_get_job_description_html(array $job): string
     return trim((string) preg_replace('/\s+/', ' ', $html));
 }
 
-/**
- * Die drei Listen in Design-Reihenfolge ("Wir bieten dir", "Dein Profil", "Deine Aufgaben"), leere
- * ausgelassen -- geteilt zwischen Einzelseite und JSON-LD-Beschreibung.
- */
-function hengegroup_theme_get_job_list_sections(array $job): array
-{
-    $sections = [
-        ['heading' => __('Wir bieten dir:', 'hengegroup-theme'), 'items' => $job['benefits']],
-        ['heading' => __('Dein Profil:', 'hengegroup-theme'), 'items' => $job['profile']],
-        ['heading' => __('Deine Aufgaben:', 'hengegroup-theme'), 'items' => $job['tasks']],
-    ];
-
-    return array_values(
-        array_filter($sections, static fn(array $section): bool => $section['items'] !== []),
-    );
-}
-
 function hengegroup_theme_get_job_posting_schema_for_post(int $post_id): array
 {
     $job = hengegroup_theme_get_job_data($post_id);
@@ -87,7 +59,8 @@ function hengegroup_theme_get_job_posting_schema_for_post(int $post_id): array
         'site_url' => home_url('/'),
         'timezone_offset' => wp_date('P'),
         'logo_url' => $logo_url,
-        'direct_apply' => false,
+        // Bewerbungsformular direkt auf der Stellenseite (job-application-form.php).
+        'direct_apply' => true,
     ]);
 }
 

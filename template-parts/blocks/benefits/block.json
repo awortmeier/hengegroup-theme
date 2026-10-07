@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/benefits",
+    "title": "Benefits",
+    "category": "henge",
+    "icon": "awards",
+    "description": "Dunkle Sektion mit Überschrift, Einleitung und einem Raster aus Benefits (Icon, Titel, Text). Benefits direkt im Block hinzufügen.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        },
+        "text": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "allowedBlocks": ["hengegroup-theme/benefit"],
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-benefits-editor",
+    "render": "file:./render.php"
+}

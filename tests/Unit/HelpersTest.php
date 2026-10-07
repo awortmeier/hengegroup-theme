@@ -326,4 +326,37 @@ final class HelpersTest extends TestCase
             hengegroup_theme_floating_position_classes('bottom'),
         );
     }
+
+    public function test_bento_tile_shapes_always_fill_complete_rows(): void
+    {
+        $cells = ['square' => 1, 'wide' => 2, 'tall' => 2, 'full' => 3];
+
+        for ($count = 0; $count <= 25; $count++) {
+            $shapes = hengegroup_theme_get_bento_tile_shapes($count);
+
+            $this->assertCount($count, $shapes);
+            $this->assertSame(
+                0,
+                array_sum(array_map(static fn(string $shape): int => $cells[$shape], $shapes)) % 3,
+            );
+        }
+    }
+
+    public function test_bento_tile_shapes_match_the_editor_pattern(): void
+    {
+        $this->assertSame(
+            ['tall', 'square', 'square', 'wide', 'square', 'square', 'tall', 'wide', 'full'],
+            hengegroup_theme_get_bento_tile_shapes(9),
+        );
+    }
+
+    public function test_phone_href_drops_german_trunk_prefix_and_formatting(): void
+    {
+        $this->assertSame(
+            'tel:+496348983850',
+            hengegroup_theme_phone_href('+49 (0) 63 48 / 98 38-50'),
+        );
+        $this->assertSame('tel:063489838', hengegroup_theme_phone_href('06348 / 98 38'));
+        $this->assertSame('', hengegroup_theme_phone_href(' - '));
+    }
 }
