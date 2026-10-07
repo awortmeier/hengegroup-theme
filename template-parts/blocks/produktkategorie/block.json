@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/produktkategorie",
+    "title": "Produktkategorie",
+    "category": "henge",
+    "icon": "category",
+    "description": "Sektion einer Produktkategorie: Kicker, Überschrift und Beschreibung aus der Kategorie, darunter automatisch alle Produkte dieser Kategorie.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "categoryId": {
+            "type": "number",
+            "default": 0
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted"],
+            "default": "light"
+        }
+    },
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-produktkategorie-editor",
+    "render": "file:./render.php"
+}

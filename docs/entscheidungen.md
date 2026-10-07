@@ -21,6 +21,82 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Produktbereich: Datenmodell (2026-10-07)
+
+Auf expliziten Wunsch der komplette Produktbereich nach den Designs "Produktuebersicht" und
+"Produktdetailseite". Details in den Kopfkommentaren von `inc/template-parts/products.php`,
+`inc/setup/theme-products.php`, `inc/setup/theme-products-admin.php` und
+`woocommerce/single-product.php`; hier die Entscheidungen:
+
+- **Anwendungen wieder als eigener Post-Type `anwendung`** (loest "Anwendungen: Produktkategorie
+  statt eigenem Post-Type" ab): Anwendungen bekommen jetzt eigene Seiten (/anwendungen/<slug>/),
+  dafuer ist ein Post-Type der richtige Ausgangspunkt. Zuordnung NUR am Produkt (Box
+  "Anwendungen"), gespeichert als eine Meta-Zeile je Anwendung statt serialisiertem Array, damit
+  die Anwendungsseite ihre Produkte per `meta_query` findet. Produkte zaehlen Anwendungen nur auf
+  (Chips in der Box, Karten auf der Detailseite, ohne Link), Anwendungen verlinken zu Produkten
+  (explizite Vorgabe). Auf dev gab es keine Daten zu migrieren (nur 4 Testprodukte, einzige
+  Kategorie "Schleifmittel").
+- **`product_cat` = echte Produktkategorien** = Sektionen der Uebersicht, mit Kicker/Farbe/
+  Ueberschrift/Ansprechpartner als Term-Meta. Nebeneffekt: WooCommerce' eigene Zufallsauswahl
+  verwandter Produkte (gleiche Kategorie) liefert dadurch sinnvolle Treffer.
+- **Koernungen als globales Attribut `pa_koernung`** (wird einmalig automatisch angelegt), nicht als
+  freie Zeilen: sobald Produkte bestellbar sind, werden sie ohne Datenumbau per "Fuer Variationen
+  verwenden" zur Variantenauswahl ("die Tabellen soll man spaeter auswaehlen koennen").
+- **Chemische Analyse als freie Zeilen** (explizite Vorgabe) in einem eigenen Produktdaten-Tab
+  "Technische Daten", nicht als Attribute -- reine Information, wuerde spaeter die Varianten-/
+  Filteroberflaeche zumuellen. Dort auch Downloads (Mediathek-Dateien, Format/Groesse automatisch)
+  und der optionale Recycling-Hinweis.
+- **Badge**: das vorhandene Badge-Feld pro Produkt bleibt die einzige Quelle (explizite Vorgabe),
+  auch im Intro der Detailseite und in der Minimal-Box.
+- **Verwandte Produkte = WooCommerce "Up-Sells"** (im Produkt-Editor per `gettext` in "Verwandte
+  Produkte" umbenannt), aufgefuellt auf 4 mit `wc_get_related_products()`. Cross-Sells bleiben fuer
+  den spaeteren Warenkorb frei.
+- **Produktbox als Komponente** `template-parts/components/product-card.php` mit `variant`
+  `default`/`minimal` statt einer zweiten Kopie; `woocommerce/content-product.php` liefert nur noch
+  den `<li>`-Rahmen der WooCommerce-Loops.
+- **Ansprechpartner** wie bei Karriere: Standard unter Produkte > Einstellungen, pro Kategorie
+  ueberschreibbar, hier zusaetzlich mit Foto (Design).
+
+### Produktbereich: URLs (2026-10-07)
+
+- **/produkte/ ist eine normale Seite aus Bloecken** (explizite Vorgabe), gleiches Muster wie
+  /karriere/: Buehne + neue Bloecke "Produktkategorie" (je Kategorie eine Sektion, Produkte
+  automatisch) und "Kontakt". Damit WooCommerce die Seite nicht als Shop-Archiv kapert, liefert
+  `woocommerce_get_shop_page_id` -1 -- es gibt keine Shop-Seite, solange nichts bestellbar ist.
+- **Produkte unter /produkte/<slug>/** per Filter auf `woocommerce_register_post_type_product`
+  statt ueber die WooCommerce-Permalink-Einstellung -- die Struktur steht im Code statt pro Instanz
+  von Hand gesetzt. Vorher lagen sie unter /produkt/<slug>/ (nur Testdaten, keine Weiterleitung
+  noetig). Unterseiten von /produkte/ biegt ein `request`-Filter wie bei Karriere um.
+- **Keine Kategorie-/Schlagwort-/Shop-Archive**: 301 auf die Uebersicht, Kategorien direkt auf ihre
+  Sektion (`#<slug>`, Anker des Blocks "Produktkategorie"); raus aus der XML-Sitemap.
+
+### Formulare: Eintraege im Backend statt E-Mail (2026-10-07)
+
+Explizite Vorgabe: Kontaktformulare erzeugen Eintraege "Produktanfragen", Bewerbungen Eintraege
+"Bewerbungen" -- es werden keine E-Mails versendet (auch keine Eingangsbestaetigung). Loest beim
+Bewerbungsformular den Punkt "Versand per E-Mail statt Speicherung in WordPress" ab. Details:
+`inc/setup/theme-requests.php`, `inc/setup/theme-product-inquiries.php`,
+`inc/setup/theme-careers-application.php`.
+
+- **Zwei nicht-oeffentliche Post-Types** (`produktanfrage` unter Produkte, `bewerbung` unter
+  Karriere) mit gemeinsamer Registrierung, Status (neu / in Bearbeitung / erledigt),
+  schreibgeschuetzter Detailansicht und **Zaehler neuer Eintraege am Menuepunkt** -- ersetzt die
+  Benachrichtigung, die vorher die E-Mail war.
+- **Sichtbar fuer alle Redakteure und Admins** (explizite Vorgabe "jeder darf sie sehen"): normale
+  Beitrags-Rechte, Anlegen im Backend gesperrt (`create_posts => do_not_allow`).
+- **Nie automatisch loeschen** (explizite Vorgabe); beim endgueltigen Loeschen einer Bewerbung
+  werden ihre Dateien mitgeloescht.
+- **Bewerbungsunterlagen nicht in der Mediathek** (dort oeffentlich abrufbar), sondern in
+  uploads/hengegroup-bewerbungen/ mit Zufallsnamen und `.htaccess`-Sperre; Download nur ueber
+  admin-post.php mit Rechte- und Nonce-Pruefung.
+- **Gemeinsamer Unterbau** fuer Spam-Schutz und Fehler-Zwischenspeicher
+  (`hengegroup_theme_is_form_bot()`, `hengegroup_theme_store_form_state()`,
+  `hengegroup_theme_read_form_state()`), statt ihn im neuen Formular zu kopieren.
+- Das Bewerbungsformular erscheint jetzt auch ohne gepflegte Ansprechpartner-E-Mail; die
+  E-Mail-Alternative darunter nur, wenn eine gepflegt ist.
+
+---
+
 ### Footer: Kontaktdaten als eigene Einstellungsseite, Links aus dem Footermenue (2026-10-07)
 
 Umsetzung nach dem Claude-Design-Footer (Kopfkommentar in `footer.php`). Kontaktdaten und
@@ -51,6 +127,9 @@ Standard-`/bin/bash` 3.2 (keine Bash-4-Features); Linux funktioniert damit in de
 ---
 
 ### Bewerbungsformular auf der Stellenseite (2026-10-07)
+
+> **Teilweise abgeloest** durch "Formulare: Eintraege im Backend statt E-Mail" (oben): keine
+> E-Mails mehr, Bewerbungen werden gespeichert.
 
 Auf explizite Nachfrage, nach dem Design ("Stellenangebot einzelseite"), exklusiv fuer die angezeigte
 Stelle. Details in den Kopfkommentaren von `template-parts/components/job-application-form.php` und
@@ -468,6 +547,9 @@ Vollbild/die erweiterte zweite Toolbar-Zeile nutzen koennen.
   Nachfrage betraf ausschliesslich Produktbeschreibung/-kurzbeschreibung.
 
 ### Anwendungen: Produktkategorie statt eigenem Post-Type (2026-09-23)
+
+> **Abgeloest** durch "Produktbereich: Datenmodell" (2026-10-07): Anwendungen sind wieder ein
+> eigener Post-Type mit eigenen Seiten, `product_cat` sind echte Produktkategorien.
 
 Auf expliziten Wunsch bilden "Anwendungen" jetzt WooCommerce's eigene `product_cat`-Taxonomie ab,
 statt wie zuvor ein eigener `anwendung`-Post-Type + `_anwendungen`-Produkt-Meta-Beziehung (siehe
@@ -3242,3 +3324,14 @@ mit `manage_options` **und** serverseitiges Sanitizing jeder hochgeladenen Datei
   `wp_get_attachment_image_src()`/damit `template-parts/base/image.php`'s
   `attachment_id`-Aufloesung kein `width`/`height` fuer SVG-Attachments (WordPresss eigene
   `getimagesize()`-basierte Metadaten-Generierung versteht kein SVG).
+
+### Seitenhintergrund grey-light kommt vom `body`, nicht pro Sektion (2026-10-07)
+
+`assets/css/app.css`s `body`-Regel setzt jetzt `bg-grey-light` statt `bg-background`; Sektionen
+(Bloecke `offene-stellen`/`karriere-teaser`, `single-stellenangebote.php`s `<article>`) setzen
+`bg-grey-light` nicht mehr selbst. Grund: der helle Grund soll ueberall vorhanden sein, auch
+zwischen/unter Sektionen und auf Seiten ohne eigene Sektion, ohne dass jede neue Sektion ihn
+wiederholen muss. `--color-background` bleibt bewusst weiss (Inputs, Karten, Outline-Button) --
+deshalb eine Klasse auf dem `body` statt einer Aenderung des Tokens. Sektionen setzen eine
+Hintergrundfarbe nur noch, wenn sie davon abweichen (z. B. Bewerbungsformular `bg-neutral-200`,
+Footer `bg-grey-dark`).

@@ -1,0 +1,16 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/kontakt-vorschau",
+    "title": "Kontakt (interne Editor-Vorschau)",
+    "category": "henge",
+    "icon": "email",
+    "description": "Nur fuer die Editor-Vorschau des Kontakt-Blocks -- rendert Kontaktkarte und Formular ohne Ueberschrift, kein eigener Insertable Block.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {},
+    "supports": {
+        "inserter": false,
+        "html": false
+    },
+    "render": "file:./render.php"
+}

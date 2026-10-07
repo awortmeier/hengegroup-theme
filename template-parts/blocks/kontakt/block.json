@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/kontakt",
+    "title": "Kontakt",
+    "category": "henge",
+    "icon": "email",
+    "description": "Kontakt-Sektion mit Firmen-Kontaktkarte (Daten aus Einstellungen > Footer) und Anfrageformular. Anfragen landen unter Produkte > Produktanfragen.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": "Kontakt"
+        },
+        "text": {
+            "type": "string",
+            "default": "Sie haben einen bestimmten Wunsch oder Fragen zu unserem Leistungsspektrum? Dann nehmen Sie einfach über das Formular oder per Telefon Kontakt mit uns auf. Wir freuen uns auf Ihre Anfrage."
+        }
+    },
+    "supports": {
+        "html": false,
+        "multiple": false
+    },
+    "editorScript": "hengegroup-theme-kontakt-editor",
+    "render": "file:./render.php"
+}

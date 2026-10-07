@@ -9,6 +9,17 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ## [Unreleased]
 
+### Changed
+
+- Bewerbungen werden nicht mehr per E-Mail verschickt, sondern als Eintraege unter Karriere >
+  Bewerbungen gespeichert (Unterlagen geschuetzt ausserhalb der Mediathek, Download nur im
+  Backend); keine Eingangsbestaetigung mehr. Das Formular erscheint auch ohne gepflegte
+  Ansprechpartner-E-Mail. Siehe `docs/entscheidungen.md`.
+- Anwendungen sind wieder ein eigener Post-Type mit eigener Seite (/anwendungen/<slug>/),
+  Produktkategorien sind echte Kategorien. Produkte liegen unter /produkte/<slug>/.
+- Produktbox als Komponente `template-parts/components/product-card.php` (Varianten
+  `default`/`minimal`).
+
 ### Removed
 
 - `archive-stellenangebote.php`: /karriere/ ist jetzt eine normale, mit Bloecken gebaute Seite
@@ -19,13 +30,19 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Added
 
+- Produktbereich nach Design: Produktuebersicht als Seite aus Bloecken mit den neuen Bloecken
+  "Produktkategorie" und "Kontakt"; Produktdetailseite mit Intro, Technischen Daten (chemische
+  Analyse, Koernungen), Anwendungsbereichen, Downloads, Ansprechpartner + Anfrageformular und
+  verwandten Produkten (manuell + automatisch aufgefuellt); Anwendungsseiten; Produktdaten-Tab
+  "Technische Daten", Kategorie-Felder und Produkte > Einstellungen. Anfragen landen unter
+  Produkte > Produktanfragen (keine E-Mail). Siehe `docs/entscheidungen.md`.
+
 - Footer nach Design: Logo + Adresse, Kontakt (E-Mail/Telefon als Link, Fax), Social Media,
   Links (Menue-Position "Footermenü"), Marken-Verlaufslinie und Copyright. Kontaktdaten und
   Social-Media-URLs unter Einstellungen > Footer pflegbar; leere Eintraege/Spalten werden
   ausgeblendet. Siehe `docs/entscheidungen.md`.
 - Bewerbungsformular auf der Stellen-Einzelseite nach Design (exklusiv fuer die angezeigte Stelle):
-  Versand per E-Mail mit Anhaengen an den Ansprechpartner, Eingangsbestaetigung an den Bewerber,
-  Datenschutz-Checkbox, Spam-Schutz ohne Captcha, Fehlerdarstellung je Feld. Siehe
+  Speicherung als Backend-Eintrag (siehe "Changed"), Datenschutz-Checkbox, Spam-Schutz ohne Captcha, Fehlerdarstellung je Feld. Siehe
   `docs/entscheidungen.md`.
 - Neue Bloecke "Benefits" (Icon-Raster auf dunklem Grund), "Auszeichnungen" (Karten mit
   Siegel/Logo, Text und Link; Karten direkt im Block hinzufuegen/bearbeiten) und "Galerie" (Bento-Raster, schliesst immer buendig ab) fuer die Karriereseite. Siehe

@@ -30,16 +30,29 @@ Ein weiterer Farbwert im Dropdown braucht eine Code-Aenderung
 Volltonfarben-Vokabular, kein per Filter erweiterbarer Escape-Hatch wie das vorherige
 `firma`-Datenmodell.
 
-### Anwendungen einem Produkt zuordnen
+### Anwendungen anlegen und Produkten zuordnen
 
-Anwendungen sind seit 2026-09-23 dieselben Produktkategorien (`product_cat`, WooCommerce-eigene
-Taxonomie), kein theme-eigenes Datenmodell mehr (siehe `docs/entscheidungen.md` "Anwendungen:
-Produktkategorie statt eigenem Post-Type") -- im Produkt-Editor unter "Produktkategorien"
-zuordnen, kein eigenes Metabox-Feld dafuer. Zugeordnete Kategorien erscheinen automatisch als
-neutrale (nicht verlinkende) Badges unter dem "Anwendungen"-Label in der Produktbox
-(`hengegroup_theme_render_product_anwendung_badges()`, `inc/template-parts/woocommerce-product-card.php`)
--- kein weiterer Schritt noetig. Die WooCommerce-eigene Default-Kategorie ("Unkategorisiert")
-wird dabei automatisch ausgeblendet.
+Anwendungen sind ein eigener Post-Type (Produkte > Anwendungen, siehe `docs/entscheidungen.md`
+"Produktbereich: Datenmodell"). Anwendung anlegen: Titel, Inhalt (Bloecke), Textauszug (= Text der
+Karte "Anwendungsbereiche" auf Produktseiten), Beitragsbild, Icon (Box "Icon"). Zuordnung nur im
+Produkt-Editor ueber die Box "Anwendungen" -- die Anwendungsseite listet ihre Produkte danach
+automatisch. Ein weiteres Icon: Eintrag in `hengegroup_theme_get_anwendung_icons()`
+(`inc/template-parts/products.php`) ergaenzen und `pnpm icons:lucide` ausfuehren.
+
+### Produktbereich einrichten / Produkt pflegen
+
+1. Produkte > Kategorien: je Sektion der Uebersicht eine Kategorie mit Beschreibung, Kicker, Farbe,
+   Ueberschrift und ggf. eigenem Ansprechpartner.
+2. Produkte > Einstellungen: Uebersichtsseite und Standard-Ansprechpartner (inkl. Foto).
+3. Seite /produkte/: Buehne, je Kategorie ein Block "Produktkategorie" (Hintergrund Hell/Grau im
+   Wechsel), am Ende der Block "Kontakt". Kontaktdaten der Karte kommen aus Einstellungen > Footer.
+4. Produkt: Beschreibung (Intro), Kurzbeschreibung (Box), Beitragsbild, Badge, Kategorie,
+   Anwendungen; Tab "Technische Daten" fuer Analyse-Zeilen, Downloads und Recycling-Hinweis;
+   Tab "Eigenschaften" > Attribut "Koernung" fuer die lieferbaren Koernungen (Werte unter
+   Produkte > Eigenschaften > Koernung, Reihenfolge per Drag & Drop); Tab "Verknuepfte Produkte" >
+   "Verwandte Produkte" fuer bis zu 4 feste Empfehlungen.
+5. Eingaenge: Produkte > Produktanfragen bzw. Karriere > Bewerbungen; Status in der Seitenleiste
+   setzen, damit der Zaehler am Menue nur Neues zeigt.
 
 ### Ein weiteres JSON-LD-Schema ergaenzen (z. B. Product/JobPosting)
 

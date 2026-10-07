@@ -113,4 +113,4 @@
         </div>
     </header>
 
-    <main class="min-h-1000">
+    <main>

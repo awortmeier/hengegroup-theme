@@ -22,6 +22,7 @@
             <file>inc/template-parts/helpers.php</file>
             <file>inc/template-parts/woocommerce-product-card.php</file>
             <file>inc/template-parts/careers.php</file>
+            <file>inc/template-parts/products.php</file>
         </include>
     </source>
 </phpunit>

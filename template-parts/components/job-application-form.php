@@ -8,10 +8,10 @@ declare(strict_types=1);
 // (siehe dort fuer Ablauf, Spam-Schutz und Datenschutz-Entscheidung).
 //
 // Komposition aus template-parts/base/: label.php, input.php, native-select.php, textarea.php,
-// checkbox.php, button.php -- die Basis-Felder sind weiss und stehen hier wie im Design auf dunklem
-// Grund; nur die Beschriftungen bekommen helle Schrift. Fehler stehen je Feld darunter
-// (`aria-describedby` + `aria-invalid`, IDs ueber hengegroup_theme_field_error_id()), zusaetzlich
-// eine Zusammenfassung oben mit `role="alert"`.
+// checkbox.php, button.php -- die Basis-Felder sind weiss und stehen auf dem hellgrauen Grund der
+// Bewerbungs-Sektion (neutral-200, single-stellenangebote.php); Beschriftungen in grey-dark.
+// Fehler stehen je Feld darunter (`aria-describedby` + `aria-invalid`, IDs ueber
+// hengegroup_theme_field_error_id()), zusaetzlich eine Zusammenfassung oben mit `role="alert"`.
 //
 // Ergaenzt gegenueber dem Design: Pflicht-Checkbox fuer die Datenschutzhinweise (Bewerbungsdaten
 // sind personenbezogen, Art. 13 DSGVO) und ein unsichtbares Honeypot-Feld gegen Spam (fuer Menschen
@@ -45,7 +45,7 @@ $label = static function (string $for, string $text, bool $required = false): vo
         'config' => [
             'for' => $for,
             'text' => $required ? $text . ' *' : $text,
-            'class' => 'text-sm font-semibold text-grey-light',
+            'class' => 'text-sm font-semibold text-grey-dark',
         ],
     ]);
 };
@@ -56,7 +56,7 @@ $error = static function (string $control_id, string $field) use ($errors): void
     }
 
     printf(
-        '<p id="%1$s" class="text-sm text-red-300">%2$s</p>',
+        '<p id="%1$s" class="text-sm text-destructive">%2$s</p>',
         esc_attr(hengegroup_theme_field_error_id($control_id)),
         esc_html((string) $errors[$field]),
     );
@@ -90,7 +90,7 @@ $file_field = static function (
         : '';
 
     printf(
-        '<div class="flex flex-col gap-2"><span id="%1$s-label" class="text-sm font-semibold text-grey-light">%2$s</span><div class="flex flex-wrap items-center gap-3"><label class="inline-flex h-10 cursor-pointer items-center rounded-full bg-grey-light px-5 text-sm font-semibold whitespace-nowrap text-grey-dark transition-colors hover:bg-white has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50">%3$s<input class="sr-only" type="file" id="%1$s" name="%4$s" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"%5$s aria-labelledby="%1$s-label"%6$s%7$s data-max-bytes="%8$d" data-application-file></label><span class="text-sm text-grey-light/70" data-application-file-name="%1$s">%9$s</span></div></div>',
+        '<div class="flex flex-col gap-2"><span id="%1$s-label" class="text-sm font-semibold text-grey-dark">%2$s</span><div class="flex flex-wrap items-center gap-3"><label class="inline-flex h-10 cursor-pointer items-center rounded-full bg-grey-light px-5 text-sm font-semibold whitespace-nowrap text-grey-dark transition-colors hover:bg-white has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50">%3$s<input class="sr-only" type="file" id="%1$s" name="%4$s" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"%5$s aria-labelledby="%1$s-label"%6$s%7$s data-max-bytes="%8$d" data-application-file></label><span class="text-sm text-grey-dark/70" data-application-file-name="%1$s">%9$s</span></div></div>',
         esc_attr($control_id),
         esc_html($label_text),
         esc_html__('Datei auswählen', 'hengegroup-theme'),
@@ -133,7 +133,7 @@ $privacy_label =
                 'Ich habe die %s gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Bewerbung einverstanden. *',
                 'hengegroup-theme',
             ),
-            '<a class="text-grey-light underline underline-offset-4" href="' .
+            '<a class="text-grey-dark underline underline-offset-4" href="' .
                 esc_url($privacy_url) .
                 '" target="_blank" rel="noopener">' .
                 esc_html__('Datenschutzhinweise', 'hengegroup-theme') .
@@ -159,7 +159,7 @@ $privacy_label =
     data-application-form
   >
     <?php if ($state['message'] !== ''): ?>
-      <div class="rounded-2xl border border-red-300/60 bg-red-950/40 px-6 py-4 text-base text-grey-light" role="alert" tabindex="-1" data-application-status>
+      <div class="rounded-2xl border border-destructive/40 bg-red-50 px-6 py-4 text-base text-grey-dark" role="alert" tabindex="-1" data-application-status>
         <p class="font-semibold"><?php echo esc_html($state['message']); ?></p>
         <?php if ($errors !== []): ?>
           <ul class="mt-2 list-disc pl-5 text-sm">
@@ -373,7 +373,7 @@ $privacy_label =
         ]); ?>
         <label for="<?php echo esc_attr(
             $form_id . '-privacy',
-        ); ?>" class="text-sm leading-normal text-grey-light">
+        ); ?>" class="text-sm leading-normal text-grey-dark">
           <?php echo wp_kses_post($privacy_label); ?>
         </label>
       </div>
@@ -381,7 +381,7 @@ $privacy_label =
     </div>
 
     <div class="flex flex-col-reverse items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <p class="text-sm text-grey-light/70"><?php esc_html_e(
+      <p class="text-sm text-grey-dark/70"><?php esc_html_e(
           '* Pflichtfelder',
           'hengegroup-theme',
       ); ?></p>

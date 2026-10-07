@@ -12,17 +12,23 @@ declare(strict_types=1);
 // Bei Fehlern werden die Textfelder 15 Minuten in einem Transient gehalten (Schluessel im Redirect),
 // damit niemand alles neu tippen muss; Dateien muessen neu gewaehlt werden (Browser-Sicherheit).
 //
-// Die Bewerbung geht per E-Mail mit Anhaengen an den Ansprechpartner der Stelle (Unternehmen bzw.
-// Karriere > Einstellungen), der Bewerber bekommt eine Eingangsbestaetigung. Bewusst KEINE
-// Speicherung in WordPress (keine Bewerberdaten/Dateien in Datenbank oder Mediathek) -- weniger
-// Datenschutz-Aufwand (Loeschfristen, Zugriffsrechte); hochgeladene Dateien liegen nur waehrend des
-// Versands im temporaeren Verzeichnis. Siehe docs/entscheidungen.md "Bewerbungsformular".
+// Die Bewerbung wird als Eintrag "Bewerbung" im Backend gespeichert (Karriere > Bewerbungen, siehe
+// inc/setup/theme-requests.php) -- es werden KEINE E-Mails versendet, weder an den Ansprechpartner
+// noch als Eingangsbestaetigung (explizite Vorgabe 2026-10-07, loest die fruehere Entscheidung
+// "Versand per E-Mail statt Speicherung" ab). Hochgeladene Dateien landen NICHT in der Mediathek
+// (dort waeren sie oeffentlich abrufbar), sondern in einem eigenen, per .htaccess gesperrten
+// Verzeichnis unter uploads/ mit zufaelligen Dateinamen; heruntergeladen werden sie nur ueber
+// hengegroup_theme_handle_application_file_download() mit Rechte- und Nonce-Pruefung. Beim
+// endgueltigen Loeschen einer Bewerbung werden ihre Dateien mitgeloescht; automatisch geloescht wird
+// nichts (explizite Vorgabe). Siehe docs/entscheidungen.md "Formulare: Eintraege im Backend statt
+// E-Mail".
 //
 // Spam-Schutz ohne Captcha/Drittanbieter: Nonce, Honeypot-Feld und Mindest-Ausfuellzeit.
 
 const HENGEGROUP_THEME_APPLICATION_ACTION = 'hengegroup_theme_job_application';
 const HENGEGROUP_THEME_APPLICATION_MAX_FILE_BYTES = 5 * 1024 * 1024;
 const HENGEGROUP_THEME_APPLICATION_MAX_CERTIFICATES = 5;
+const HENGEGROUP_THEME_APPLICATION_FILE_ACTION = 'hengegroup_theme_application_file';
 
 /**
  * Tatsaechliche Obergrenze je Datei: 5 MB laut Design, aber nie mehr, als PHP auf dem Server
@@ -53,7 +59,7 @@ function hengegroup_theme_get_application_status_messages(): array
 {
     return [
         'gesendet' => __(
-            'Vielen Dank! Deine Bewerbung ist bei uns eingegangen. Du erhältst in Kürze eine Bestätigung per E-Mail.',
+            'Vielen Dank! Deine Bewerbung ist bei uns eingegangen. Wir melden uns so bald wie möglich bei dir.',
             'hengegroup-theme',
         ),
         'fehler' => __('Bitte prüfe die markierten Angaben.', 'hengegroup-theme'),
@@ -66,7 +72,7 @@ function hengegroup_theme_get_application_status_messages(): array
             'hengegroup-theme',
         ),
         'versand' => __(
-            'Deine Bewerbung konnte gerade nicht versendet werden. Bitte versuche es später erneut oder schreib uns direkt per E-Mail.',
+            'Deine Bewerbung konnte gerade nicht gespeichert werden. Bitte versuche es später erneut oder schreib uns direkt per E-Mail.',
             'hengegroup-theme',
         ),
     ];
@@ -219,7 +225,7 @@ function hengegroup_theme_handle_job_application(): void
 
     // Bots fuellen das unsichtbare Feld aus oder schicken in unter 3 Sekunden ab -- sie bekommen
     // dieselbe Erfolgsmeldung wie echte Bewerber, damit sie nicht lernen, was sie verraten hat.
-    if ($honeypot !== '' || $started <= 0 || time() - $started < 3) {
+    if (hengegroup_theme_is_form_bot($honeypot, $started)) {
         hengegroup_theme_redirect_after_application($job_id, ['bewerbung' => 'gesendet']);
     }
 
@@ -255,26 +261,20 @@ function hengegroup_theme_handle_job_application(): void
     }
 
     if ($errors !== []) {
-        $token = wp_generate_password(20, false);
-        set_transient(
-            'hg_application_' . $token,
-            ['values' => $values, 'errors' => $errors],
-            15 * MINUTE_IN_SECONDS,
-        );
         hengegroup_theme_redirect_after_application($job_id, [
             'bewerbung' => 'fehler',
-            'eingabe' => $token,
+            'eingabe' => hengegroup_theme_store_form_state('hg_application_', $values, $errors),
         ]);
     }
 
-    $sent = hengegroup_theme_send_job_application(
+    $stored = hengegroup_theme_store_job_application(
         hengegroup_theme_get_job_data($job_id),
         $values,
         array_merge($cv_files, $certificate_files),
     );
 
     hengegroup_theme_redirect_after_application($job_id, [
-        'bewerbung' => $sent ? 'gesendet' : 'versand',
+        'bewerbung' => $stored ? 'gesendet' : 'versand',
     ]);
 }
 add_action(
@@ -287,122 +287,208 @@ add_action(
 );
 
 /**
- * Versendet die Bewerbung an den Ansprechpartner der Stelle (Fallback: Admin-E-Mail) und eine
- * Eingangsbestaetigung an den Bewerber. Dateien werden unter ihrem Originalnamen in ein eigenes
- * temporaeres Verzeichnis kopiert (sonst kaemen sie als "phpXYZ.tmp" an) und danach geloescht.
+ * Geschuetztes Ablageverzeichnis fuer Bewerbungsunterlagen (uploads/hengegroup-bewerbungen/), wird
+ * bei Bedarf angelegt und per .htaccess (Apache) gesperrt; index.php verhindert Verzeichnislisten.
+ * Auf nginx greift .htaccess nicht -- dort schuetzen die zufaelligen Dateinamen, eine
+ * Server-Regel fuer dieses Verzeichnis ist trotzdem empfehlenswert (siehe docs/to-do.md).
+ * Leerer String, wenn das Verzeichnis nicht angelegt werden kann.
  */
-function hengegroup_theme_send_job_application(array $job, array $values, array $files): bool
+function hengegroup_theme_get_application_storage_dir(): string
 {
-    $options = hengegroup_theme_get_job_application_options();
-    $recipient =
-        $job['contact']['email'] !== '' ? $job['contact']['email'] : get_option('admin_email');
-    $temp_dir = trailingslashit(get_temp_dir()) . 'hg-bewerbung-' . wp_generate_password(12, false);
-    $attachments = [];
+    $uploads = wp_upload_dir(null, false);
+    $directory = trailingslashit((string) $uploads['basedir']) . 'hengegroup-bewerbungen';
 
-    if ($files !== [] && wp_mkdir_p($temp_dir)) {
-        foreach ($files as $file) {
-            $target = trailingslashit($temp_dir) . wp_unique_filename($temp_dir, $file['name']);
+    if (!wp_mkdir_p($directory)) {
+        return '';
+    }
 
-            if (move_uploaded_file($file['tmp_name'], $target)) {
-                $attachments[] = $target;
-            }
+    $protect = [
+        '.htaccess' =>
+            "Require all denied\n<IfModule !mod_authz_core.c>\nDeny from all\n</IfModule>\n",
+        'index.php' => "<?php\n// Silence is golden.\n",
+    ];
+
+    foreach ($protect as $file => $content) {
+        if (!is_file($directory . '/' . $file)) {
+            file_put_contents($directory . '/' . $file, $content); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
         }
     }
 
-    $label = static fn(string $field, string $value): string => $options[$field][$value] ?? '—';
-    $lines = [
-        sprintf(__('Stelle: %s', 'hengegroup-theme'), $job['title']),
-        sprintf(__('Referenz: %s', 'hengegroup-theme'), $job['reference']),
-        sprintf(__('Link: %s', 'hengegroup-theme'), $job['url']),
-        '',
-        sprintf(__('Name: %s', 'hengegroup-theme'), $values['name']),
-        sprintf(__('Alter: %s', 'hengegroup-theme'), $values['age']),
-        sprintf(
-            __('Berufserfahrung: %s', 'hengegroup-theme'),
-            $label('experience', $values['experience']),
-        ),
-        sprintf(__('E-Mail: %s', 'hengegroup-theme'), $values['email']),
-        sprintf(
-            __('Telefon: %s', 'hengegroup-theme'),
-            $values['phone'] !== '' ? $values['phone'] : '—',
-        ),
-        sprintf(
-            __('Kontakt bevorzugt per: %s', 'hengegroup-theme'),
-            $label('contact_method', $values['contact_method']),
-        ),
-        sprintf(
-            __('Erreichbar: %s', 'hengegroup-theme'),
-            $label('contact_time', $values['contact_time']),
-        ),
-        '',
-        __('Nachricht:', 'hengegroup-theme'),
-        $values['message'] !== '' ? $values['message'] : '—',
-        '',
-        sprintf(
-            /* translators: %d: number of attached files. */
-            __('Anhänge: %d', 'hengegroup-theme'),
-            count($attachments),
-        ),
-    ];
+    return $directory;
+}
 
-    $sent = wp_mail(
-        $recipient,
+/**
+ * Speichert die Bewerbung als Eintrag (Karriere > Bewerbungen) und verschiebt die Dateien ins
+ * geschuetzte Verzeichnis (zufaelliger Name, Originalname nur als Meta). Keine E-Mails.
+ */
+function hengegroup_theme_store_job_application(array $job, array $values, array $files): bool
+{
+    $options = hengegroup_theme_get_job_application_options();
+    $label = static fn(string $field, string $value): string => $options[$field][$value] ?? '';
+
+    $post_id = hengegroup_theme_create_request(
+        HENGEGROUP_THEME_APPLICATION_POST_TYPE,
         sprintf(
-            /* translators: 1: job title, 2: applicant name. */
-            __('Bewerbung: %1$s – %2$s', 'hengegroup-theme'),
-            $job['title'],
+            /* translators: 1: applicant name, 2: job title. */
+            __('%1$s – %2$s', 'hengegroup-theme'),
             $values['name'],
+            $job['title'],
         ),
-        implode("\n", $lines),
-        // Anzeigename in Anfuehrungszeichen: "Name, Vorname" enthaelt ein Komma, das den Header
-        // sonst in zwei Adressen zerlegen wuerde.
         [
-            'Reply-To: "' .
-            str_replace(['"', "\r", "\n"], '', $values['name']) .
-            '" <' .
-            $values['email'] .
-            '>',
+            'job_id' => (int) $job['id'],
+            'name' => $values['name'],
+            'age' => $values['age'],
+            'experience' => $label('experience', $values['experience']),
+            'email' => $values['email'],
+            'phone' => $values['phone'],
+            'contact_method' => $label('contact_method', $values['contact_method']),
+            'contact_time' => $label('contact_time', $values['contact_time']),
+            'message' => $values['message'],
         ],
-        $attachments,
     );
 
-    foreach ($attachments as $attachment) {
-        wp_delete_file($attachment);
+    if ($post_id <= 0) {
+        return false;
     }
 
-    if (is_dir($temp_dir)) {
-        rmdir($temp_dir); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir
+    $directory = $files !== [] ? hengegroup_theme_get_application_storage_dir() : '';
+    $stored_files = [];
+
+    foreach ($directory !== '' ? $files : [] as $file) {
+        $stored_name = $post_id . '-' . wp_generate_password(24, false) . '-' . $file['name'];
+        $target = trailingslashit($directory) . $stored_name;
+
+        if (move_uploaded_file($file['tmp_name'], $target)) {
+            $stored_files[] = [
+                'name' => $file['name'],
+                'file' => $stored_name,
+                'size' => (int) $file['size'],
+            ];
+        }
     }
 
-    if ($sent) {
-        wp_mail(
-            $values['email'],
-            sprintf(
-                /* translators: %s: job title. */
-                __('Deine Bewerbung: %s', 'hengegroup-theme'),
-                $job['title'],
+    if ($stored_files !== []) {
+        update_post_meta($post_id, HENGEGROUP_THEME_REQUEST_META_PREFIX . 'files', $stored_files);
+    }
+
+    return true;
+}
+
+/**
+ * Download-Links der Unterlagen einer Bewerbung fuer das Backend.
+ */
+function hengegroup_theme_render_application_file_links(int $post_id, array $files): string
+{
+    if ($files === []) {
+        return '—';
+    }
+
+    $links = [];
+
+    foreach (array_values($files) as $index => $file) {
+        $url = wp_nonce_url(
+            add_query_arg(
+                [
+                    'action' => HENGEGROUP_THEME_APPLICATION_FILE_ACTION,
+                    'post' => $post_id,
+                    'file' => $index,
+                ],
+                admin_url('admin-post.php'),
             ),
-            implode("\n", [
-                __('Hallo,', 'hengegroup-theme'),
-                '',
-                sprintf(
-                    /* translators: %s: job title. */
-                    __(
-                        'vielen Dank für deine Bewerbung als %s. Sie ist bei uns eingegangen, wir melden uns so bald wie möglich bei dir.',
-                        'hengegroup-theme',
-                    ),
-                    $job['title'],
-                ),
-                '',
-                __('Viele Grüße', 'hengegroup-theme'),
-                $job['contact']['name'] !== '' ? $job['contact']['name'] : get_bloginfo('name'),
-            ]),
-            $job['contact']['email'] !== '' ? ['Reply-To: ' . $job['contact']['email']] : [],
+            HENGEGROUP_THEME_APPLICATION_FILE_ACTION . '_' . $post_id,
+        );
+
+        $links[] = sprintf(
+            '<a href="%1$s">%2$s</a> (%3$s)',
+            esc_url($url),
+            esc_html((string) ($file['name'] ?? '')),
+            esc_html(size_format((int) ($file['size'] ?? 0))),
         );
     }
 
-    return $sent;
+    return implode('<br>', $links);
 }
+
+/**
+ * Liefert eine Bewerbungsdatei aus -- nur fuer angemeldete Nutzer, die die Bewerbung bearbeiten
+ * duerfen, mit Nonce.
+ */
+function hengegroup_theme_handle_application_file_download(): void
+{
+    $post_id = isset($_GET['post']) ? absint($_GET['post']) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce direkt darunter.
+    $index = isset($_GET['file']) ? absint($_GET['file']) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+    check_admin_referer(HENGEGROUP_THEME_APPLICATION_FILE_ACTION . '_' . $post_id);
+
+    if (
+        get_post_type($post_id) !== HENGEGROUP_THEME_APPLICATION_POST_TYPE ||
+        !current_user_can('edit_post', $post_id)
+    ) {
+        wp_die(esc_html__('Keine Berechtigung.', 'hengegroup-theme'), '', ['response' => 403]);
+    }
+
+    $files = array_values(
+        (array) get_post_meta($post_id, HENGEGROUP_THEME_REQUEST_META_PREFIX . 'files', true),
+    );
+    $file = $files[$index] ?? null;
+    $directory = hengegroup_theme_get_application_storage_dir();
+    $path =
+        is_array($file) && $directory !== ''
+            ? trailingslashit($directory) . wp_basename((string) ($file['file'] ?? ''))
+            : '';
+
+    if ($path === '' || !is_file($path)) {
+        wp_die(esc_html__('Datei nicht gefunden.', 'hengegroup-theme'), '', ['response' => 404]);
+    }
+
+    $type = wp_check_filetype($path, hengegroup_theme_get_application_mime_types());
+
+    nocache_headers();
+    header(
+        'Content-Type: ' . ($type['type'] !== false ? $type['type'] : 'application/octet-stream'),
+    );
+    header(
+        'Content-Disposition: attachment; filename="' .
+            str_replace(['"', "\r", "\n"], '', (string) $file['name']) .
+            '"',
+    );
+    header('Content-Length: ' . (string) filesize($path));
+    header('X-Content-Type-Options: nosniff');
+    readfile($path); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+    exit();
+}
+add_action(
+    'admin_post_' . HENGEGROUP_THEME_APPLICATION_FILE_ACTION,
+    'hengegroup_theme_handle_application_file_download',
+);
+
+/**
+ * Loescht die Unterlagen mit, wenn eine Bewerbung endgueltig geloescht wird (Papierkorb leeren).
+ */
+function hengegroup_theme_action_before_delete_post_application_files(int $post_id): void
+{
+    if (get_post_type($post_id) !== HENGEGROUP_THEME_APPLICATION_POST_TYPE) {
+        return;
+    }
+
+    $directory = hengegroup_theme_get_application_storage_dir();
+
+    if ($directory === '') {
+        return;
+    }
+
+    foreach (
+        (array) get_post_meta($post_id, HENGEGROUP_THEME_REQUEST_META_PREFIX . 'files', true)
+        as $file
+    ) {
+        $path = trailingslashit($directory) . wp_basename((string) ($file['file'] ?? ''));
+
+        if (is_array($file) && is_file($path)) {
+            wp_delete_file($path);
+        }
+    }
+}
+add_action('before_delete_post', 'hengegroup_theme_action_before_delete_post_application_files');
 
 /**
  * Status und ggf. zwischengespeicherte Eingaben fuer das Formular nach dem Redirect. Der Transient
@@ -410,23 +496,9 @@ function hengegroup_theme_send_job_application(array $job, array $values, array 
  */
 function hengegroup_theme_get_application_state(): array
 {
-    // phpcs:disable WordPress.Security.NonceVerification.Recommended -- nur Anzeige-Status, keine Aktion.
-    $status = isset($_GET['bewerbung']) ? sanitize_key(wp_unslash($_GET['bewerbung'])) : '';
-    $token = isset($_GET['eingabe']) ? sanitize_key(wp_unslash($_GET['eingabe'])) : '';
-    // phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-    $stored = $token !== '' ? get_transient('hg_application_' . $token) : false;
-
-    if ($token !== '') {
-        delete_transient('hg_application_' . $token);
-    }
-
-    $messages = hengegroup_theme_get_application_status_messages();
-
-    return [
-        'status' => isset($messages[$status]) ? $status : '',
-        'message' => $messages[$status] ?? '',
-        'values' => is_array($stored) ? (array) ($stored['values'] ?? []) : [],
-        'errors' => is_array($stored) ? (array) ($stored['errors'] ?? []) : [],
-    ];
+    return hengegroup_theme_read_form_state(
+        'hg_application_',
+        'bewerbung',
+        hengegroup_theme_get_application_status_messages(),
+    );
 }

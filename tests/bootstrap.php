@@ -27,3 +27,4 @@ require_once __DIR__ . '/../inc/template-parts/careers.php';
 // early would hit "Call to undefined function add_filter()". See
 // tests/Unit/SvgSupportTest.php's own setUp() for where it's required instead (after
 // parent::setUp() has run Brain\Monkey\setUp() at least once).
+require_once __DIR__ . '/../inc/template-parts/products.php';

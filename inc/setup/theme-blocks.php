@@ -148,6 +148,20 @@ function hengegroup_theme_register_blocks(): void
         'js/blocks/stellen-liste-edit.js',
     );
 
+    hengegroup_theme_register_theme_block(
+        'produktkategorie',
+        'hengegroup-theme-produktkategorie-editor',
+        'js/blocks/produktkategorie-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
+        'kontakt',
+        'hengegroup-theme-kontakt-editor',
+        'js/blocks/kontakt-edit.js',
+    );
+    // Vorschau-Zwilling von kontakt (Karte + Formular ohne Ueberschrift), gleicher Fall wie
+    // offene-stellen-vorschau: kontakt/edit.jsx registriert ihn clientseitig mit.
+    register_block_type(get_template_directory() . '/template-parts/blocks/kontakt-vorschau');
+
     // Kind-Bloecke (je Karte/Benefit ein Block, InnerBlocks) -- kein eigenes Editor-Bundle,
     // auszeichnungen/edit.jsx bzw. benefits/edit.jsx registrieren sie clientseitig mit.
     register_block_type(get_template_directory() . '/template-parts/blocks/auszeichnung');
@@ -196,6 +210,51 @@ function hengegroup_theme_enqueue_job_list_types_for_editor(): void
     );
 }
 add_action('enqueue_block_editor_assets', 'hengegroup_theme_enqueue_job_list_types_for_editor');
+
+/**
+ * Produktkategorien fuer die Auswahl im Block "Produktkategorie" (ohne WooCommerce'
+ * "Unkategorisiert"), hierarchisch eingerueckt -- per Inline-Script statt REST-Abfrage, gleiches
+ * Muster wie die Benefit-Icons oben.
+ */
+function hengegroup_theme_enqueue_product_categories_for_editor(): void
+{
+    $terms = get_terms([
+        'taxonomy' => 'product_cat',
+        'hide_empty' => false,
+        'exclude' => [(int) get_option('default_product_cat', 0)],
+    ]);
+    $categories = [];
+
+    if (is_array($terms)) {
+        $by_parent = [];
+
+        foreach ($terms as $term) {
+            $by_parent[(int) $term->parent][] = $term;
+        }
+
+        $walk = static function (int $parent, int $depth) use (
+            &$walk,
+            &$categories,
+            $by_parent,
+        ): void {
+            foreach ($by_parent[$parent] ?? [] as $term) {
+                $categories[] = [
+                    'id' => (int) $term->term_id,
+                    'name' => str_repeat('— ', $depth) . html_entity_decode($term->name),
+                ];
+                $walk((int) $term->term_id, $depth + 1);
+            }
+        };
+        $walk(0, 0);
+    }
+
+    wp_add_inline_script(
+        'hengegroup-theme-produktkategorie-editor',
+        'window.hengegroupThemeProductCategories = ' . wp_json_encode($categories) . ';',
+        'before',
+    );
+}
+add_action('enqueue_block_editor_assets', 'hengegroup_theme_enqueue_product_categories_for_editor');
 
 function hengegroup_theme_enqueue_editor_assets(): void
 {

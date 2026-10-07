@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 // Rendering helpers for the product box (woocommerce/content-product.php) -- "Badge" meta data
 // model lives in inc/setup/theme-woocommerce-products.php, see that file's own header comment.
-// Anwendungen (hengegroup_theme_render_product_anwendung_badges() below) are this project's
-// regular WooCommerce `product_cat` terms, not a theme-specific data model anymore (explicit
-// request 2026-09-23, see docs/entscheidungen.md "Anwendungen: Produktkategorie statt eigenem
-// Post-Type") -- nothing to look up outside WordPress/WooCommerce's own `get_the_terms()`.
+// Anwendungen (hengegroup_theme_render_product_anwendung_badges() below) are the `anwendung`
+// custom post type again since 2026-10-07 (explicit request: Anwendungen get their own pages, see
+// docs/entscheidungen.md "Produktbereich: Datenmodell") -- read via
+// hengegroup_theme_get_product_anwendungen() (inc/template-parts/products.php); `product_cat` is
+// now the real product category (sections of the product overview).
 //
 // hengegroup_theme_render_product_badge()/hengegroup_theme_render_product_anwendung_badges() call
 // get_post_meta()/get_the_terms()/get_template_part() against real template-parts/base files and
@@ -66,44 +67,29 @@ function hengegroup_theme_render_product_badge(int $product_id): string
 }
 
 /**
- * Renders the product's assigned categories (`product_cat`, standard WooCommerce taxonomy -- this
- * project's stand-in for "Anwendungen", see docs/entscheidungen.md "Anwendungen: Produktkategorie
- * statt eigenem Post-Type") as an "Anwendungen" eyebrow label (matches the reference design's
- * small-caps section heading above the badge row) followed by buffered badge.php markup (neutral
- * `outline` variant -- unlike the `firma` badges above, Anwendungen carry no brand color), each a
- * plain <span> (no `href` given), matching the explicit request that Anwendungs-Badges never link
- * anywhere, only display. Returns '' when the product has no categories assigned, so callers can
- * skip the wrapper (and the label with it) entirely.
+ * Renders the product's assigned Anwendungen (`anwendung` post type, see
+ * hengegroup_theme_get_product_anwendungen()) as an "Anwendungen" eyebrow label (matches the
+ * reference design's small-caps section heading above the badge row) followed by buffered
+ * badge.php markup (neutral `outline` variant -- unlike the product badge above, Anwendungen carry
+ * no brand color), each a plain <span> (no `href` given): products only LIST their Anwendungen,
+ * only the Anwendung page links back to products (explicit request). Returns '' when the product
+ * has no Anwendungen, so callers can skip the wrapper (and the label with it) entirely.
  */
 function hengegroup_theme_render_product_anwendung_badges(int $product_id): string
 {
-    $terms = get_the_terms($product_id, 'product_cat');
+    $anwendungen = hengegroup_theme_get_product_anwendungen($product_id);
 
-    if (!is_array($terms) || $terms === []) {
+    if ($anwendungen === []) {
         return '';
     }
-
-    // WooCommerce auto-assigns every product WITHOUT an explicit category its own "Unkategorisiert"
-    // default term (`get_option('default_product_cat', 0)`, WC 3.3+) -- filtered out here so an
-    // uncategorized product shows no Anwendungen section at all instead of a spurious single badge.
-    $default_term_id = (int) get_option('default_product_cat', 0);
-    $terms = array_values(
-        array_filter($terms, static fn(WP_Term $term): bool => $term->term_id !== $default_term_id),
-    );
-
-    if ($terms === []) {
-        return '';
-    }
-
-    usort($terms, static fn(WP_Term $a, WP_Term $b): int => strnatcasecmp($a->name, $b->name));
 
     $badges_markup = '';
 
-    foreach ($terms as $term) {
+    foreach ($anwendungen as $anwendung) {
         ob_start();
         get_template_part('template-parts/base/badge', null, [
             'config' => [
-                'text' => $term->name,
+                'text' => get_the_title($anwendung),
                 'variant' => 'outline',
             ],
         ]);

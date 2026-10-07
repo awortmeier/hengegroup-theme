@@ -41,6 +41,11 @@ declare(strict_types=1);
 // (col-span-* is a no-op without a CSS grid ancestor), so this stays safe for any other WC loop
 // context (related products, [products] shortcode, ...) that doesn't use `.wrapper`.
 //
+// Das eigentliche Box-Markup lebt seit 2026-10-07 in template-parts/components/product-card.php
+// (Varianten `default`/`minimal`, letztere fuer "Verwandte Produkte" auf der Produktdetailseite) --
+// diese Datei liefert nur noch den `<li>`-Rahmen fuer WooCommerce-Loops. Die Begruendungen unten
+// gelten fuer die Komponente unveraendert weiter.
+//
 // No price/add-to-cart yet -- buying comes in a later phase (see docs/entscheidungen.md). The
 // product link lives on a single "Produkt ansehen" button at the bottom instead of a
 // ganzflaechigen Karten-Link (explicit request 2026-09-22, matches the reference design's
@@ -85,111 +90,14 @@ if (empty($product) || !$product->is_visible()) {
     return;
 }
 
-$product_id = $product->get_id();
 $product_classes = function_exists('wc_get_product_class')
     ? implode(' ', wc_get_product_class('', $product))
     : 'product';
 $product_classes .= ' col-span-12 sm:col-span-6 lg:col-span-3';
 ?>
 <li class="<?php echo esc_attr($product_classes); ?>">
-  <article
-    class="flex h-full flex-col rounded-2xl bg-neutral-50 shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
-    data-product-id="<?php echo esc_attr((string) $product_id); ?>"
-  >
-    <?php
-    $image_id = $product->get_image_id();
-    $image_config =
-        $image_id > 0
-            ? [
-                'attachment_id' => $image_id,
-                'size' => 'woocommerce_thumbnail',
-                'alt' => $product->get_name(),
-                'class' => 'h-full w-full rounded-xl object-cover',
-            ]
-            : [
-                'src' => wc_placeholder_img_src('woocommerce_thumbnail'),
-                'alt' => $product->get_name(),
-                'class' => 'h-full w-full rounded-xl object-cover',
-            ];
-
-    $badge_markup = hengegroup_theme_render_product_badge($product_id);
-    ?>
-    <div class="relative h-50 p-3 pb-0">
-      <?php printf(
-          '%s',
-          hengegroup_theme_render_image($image_config), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-      ); ?>
-      <?php if ($badge_markup !== ''): ?>
-        <div class="absolute top-5.5 left-5.5">
-          <?php printf(
-              '%s',
-              $badge_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-          ); ?>
-        </div>
-      <?php endif; ?>
-    </div>
-
-    <div class="flex flex-1 flex-col p-3 pb-4">
-      <?php
-      get_template_part('template-parts/base/typography', null, [
-          'config' => [
-              'variant' => 'body-base',
-              'tag' => 'h3',
-              'text' => $product->get_name(),
-              'class' => 'mb-1 font-bold leading-tight',
-          ],
-      ]);
-
-      // Kurzbeschreibung (WCs post_excerpt), nicht die lange Produktbeschreibung -- explizite
-      // Nachfrage 2026-09-22, siehe docs/entscheidungen.md. wp_strip_all_tags() vor
-      // wp_trim_words(): die Kurzbeschreibung kann einfaches HTML enthalten (WCs eigener Editor
-      // erlaubt das), die Karte zeigt reinen Text. 24 Woerter reichen fuer die im Referenz-Design
-      // gezeigten 2-3 Zeilen, ohne bei einer laenger gepflegten Kurzbeschreibung die Kartenhoehe
-      // im Grid zu sprengen.
-      $short_description = wp_strip_all_tags((string) $product->get_short_description());
-      $description = $short_description !== '' ? wp_trim_words($short_description, 24) : '';
-
-      if ($description !== '') {
-          get_template_part('template-parts/base/typography', null, [
-              'config' => [
-                  'variant' => 'body-sm',
-                  'text' => $description,
-                  'class' => 'mb-2 text-pretty',
-              ],
-          ]);
-      }
-
-      $anwendung_badges_markup = hengegroup_theme_render_product_anwendung_badges($product_id);
-
-      if ($anwendung_badges_markup !== '') {
-          // separator.php's own defaults (decorative, weight 'default') -- explicit request to
-          // visually split the description from the Anwendungen section; only rendered when
-          // there's actually an Anwendungen block to separate from.
-          get_template_part('template-parts/base/separator/separator', null, [
-              'config' => [
-                  'class' => 'mb-2',
-              ],
-          ]);
-
-          printf(
-              '<div class="mb-2">%s</div>',
-              $anwendung_badges_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-          );
-      }
-      ?>
-
-      <div class="mt-auto">
-        <?php get_template_part('template-parts/base/button', null, [
-            'config' => [
-                'text' => __('Produkt ansehen', 'hengegroup-theme'),
-                'href' => get_permalink($product_id),
-                'variant' => 'grey-dark',
-                'size' => 'lg',
-                'full_width' => true,
-                'class' => 'mt-2 !font-semibold',
-            ],
-        ]); ?>
-      </div>
-    </div>
-  </article>
+  <?php get_template_part('template-parts/components/product-card', null, [
+      'product' => $product,
+      'variant' => 'default',
+  ]); ?>
 </li>

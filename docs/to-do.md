@@ -83,14 +83,36 @@ Offen:
   Ob `post_max_size` fuer Lebenslauf + bis zu 5 Zeugnisse (bis ~30 MB) reicht, ist unbekannt -- in
   Plesk (PHP-Einstellungen) pruefen, ggf. auf mind. 40M setzen. Ist sie zu klein, zeigt das Formular
   eine passende Meldung ("Dateien zusammen zu gross").
-- **Datenschutzerklaerung**: Bewerbungen (Formular, E-Mail-Versand, Aufbewahrung) in der
-  Datenschutzerklaerung beschreiben und die Seite unter Einstellungen > Datenschutz als
-  Datenschutzseite setzen, damit die Checkbox im Formular darauf verlinkt.
-- **E-Mail-Zustellung**: Bewerbungen laufen ueber `wp_mail()` (PHP-Mail des Hosters). Fuer
-  verlaessliche Zustellung mit Anhaengen ggf. SMTP (z. B. ueber ein SMTP-Plugin) einrichten.
+- **Datenschutzerklaerung**: Bewerbungen und Produktanfragen (Speicherung im Backend, unbefristete
+  Aufbewahrung, wer Zugriff hat) in der Datenschutzerklaerung beschreiben und die Seite unter
+  Einstellungen > Datenschutz als Datenschutzseite setzen, damit die Checkboxen darauf verlinken.
+- **Bewerbungsdateien auf nginx schuetzen**: uploads/hengegroup-bewerbungen/ ist per `.htaccess`
+  gesperrt; laeuft der Server (auch) mit nginx als Auslieferer, greift das nicht -- dann eine
+  `location`-Regel ergaenzen (Plesk: "Zusaetzliche nginx-Anweisungen"). Pruefen: Datei-URL direkt
+  aufrufen, es muss 403 kommen.
 - **Google Indexing API** (optional): neue/geaenderte/abgelaufene Stellen aktiv melden statt auf den
   naechsten Crawl zu warten; braucht ein Google-Cloud-Service-Konto.
 - **Einrichtung nach dem Deploy**: Seite "Karriere" (Slug `karriere`) mit Block "Offene Stellen"
   anlegen bzw. unter Karriere > Einstellungen waehlen, Standard-Ansprechpartner pflegen,
   Unternehmen/Standorte anlegen, alte Anzeigen mit "Alte Stellen-ID" uebernehmen. Danach mit dem
   Google Rich Results Test pruefen.
+
+## 6. Produktbereich (`inc/setup/theme-products.php`)
+
+Datenmodell, Uebersicht, Detailseite, Anwendungen und Produktanfragen sind umgesetzt (siehe
+`docs/entscheidungen.md` "Produktbereich: ..."). Offen:
+
+- **Einrichtung nach dem Deploy**: siehe `docs/how-to.md` "Produktbereich einrichten". Falls die
+  Seite /produkte/ bisher als WooCommerce-Shop-Seite eingetragen war, ist das unschaedlich (der
+  Theme-Filter schaltet die Shop-Seite ab), kann aber unter WooCommerce > Einstellungen > Produkte
+  geleert werden.
+- **Bestellbarkeit (spaeter)**: Produkte mit Koernungen auf "Variables Produkt" umstellen, Attribut
+  "Koernung" fuer Variationen verwenden, Preise je Variante; Koernungs-Tabelle der Detailseite zur
+  Auswahl + Warenkorb-Button machen; Warenkorb/Kasse einrichten (die vom Theme deaktivierten
+  WooCommerce-Skripte in `theme-hardening-woocommerce.php` pruefen); "Zurueck zum Shop"-Links auf
+  die Produktuebersicht zeigen lassen.
+- **Product-JSON-LD** (optional): WooCommerce' eigenes Product-Schema entsteht nicht, weil die
+  Detailseite dessen Hooks nicht ausloest; ohne Preis/Bewertungen bringt es fuer Rich Results wenig,
+  fuer KI-Suchen (GEO) waere ein schlankes Product-Schema mit Beschreibung/Kategorie/Bild sinnvoll.
+- **Design fuer die Anwendungsseite**: `single-anwendung.php` ist aus den Bausteinen der
+  Produktdetailseite zusammengesetzt, es gibt noch kein eigenes Design.

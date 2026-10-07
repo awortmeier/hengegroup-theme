@@ -1,0 +1,741 @@
+<?php
+
+declare(strict_types=1);
+
+// Daten- und Render-Helfer fuer den Produktbereich: Produktdetailseite
+// (woocommerce/single-product.php), Anwendungen (Custom Post Type `anwendung`, single-anwendung.php),
+// Block "Produktkategorie" und die Ansprechpartner-Karte. Post-Type/Routing:
+// inc/setup/theme-products.php, Backend-Felder: inc/setup/theme-products-admin.php.
+//
+// Gleiche Aufteilung wie inc/template-parts/careers.php: nur Funktionen, keine Hooks beim Einbinden,
+// damit die reinen Logik-Helfer (Analyse-Zeilen, Auffuellen der verwandten Produkte) per Brain
+// Monkey testbar bleiben (tests/Unit/ProductsTest.php).
+//
+// Datenmodell (siehe docs/entscheidungen.md "Produktbereich: Datenmodell"):
+//   - Anwendungen: eigener Post-Type, Zuordnung NUR am Produkt (eine Meta-Zeile je Anwendung,
+//     HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META -- abfragbar per meta_query, kein serialisiertes Array).
+//   - Produktkategorien (`product_cat`): Sektionen der Produktuebersicht, mit Kicker/Farbe/
+//     Ueberschrift/Ansprechpartner als Term-Meta.
+//   - Koernungen: globales WooCommerce-Attribut `pa_koernung` -- wird spaeter, sobald Produkte
+//     bestellbar sind, zur Variantenauswahl ("Fuer Variationen verwenden").
+//   - Chemische Analyse/Downloads/Recycling-Hinweis: Produkt-Meta aus dem Tab "Technische Daten".
+
+const HENGEGROUP_THEME_ANWENDUNG_POST_TYPE = 'anwendung';
+const HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META = '_hengegroup_theme_anwendung_id';
+const HENGEGROUP_THEME_PRODUCT_OPTION = 'hengegroup_theme_product_options';
+const HENGEGROUP_THEME_GRAIN_ATTRIBUTE = 'koernung';
+const HENGEGROUP_THEME_RELATED_PRODUCTS_LIMIT = 4;
+
+/**
+ * Produkt-Meta-Keys des Tabs "Technische Daten".
+ */
+function hengegroup_theme_get_product_meta_keys(): array
+{
+    return [
+        'recycling' => '_hengegroup_theme_recycling_text',
+        'analysis' => '_hengegroup_theme_analysis',
+        'downloads' => '_hengegroup_theme_downloads',
+    ];
+}
+
+/**
+ * Icon-Auswahl fuer Anwendungen (Karten "Anwendungsbereiche" auf der Produktdetailseite und Kopf
+ * der Anwendungsseite). Literale Konfigurationen, damit scripts/find-lucide-icons.php sie beim
+ * Build findet.
+ */
+function hengegroup_theme_get_anwendung_icons(): array
+{
+    return [
+        'disc' => [
+            __('Scheibe / Schleifen', 'hengegroup-theme'),
+            ['name' => 'disc', 'set' => 'lucide'],
+        ],
+        'flame' => [
+            __('Flamme / Hitze', 'hengegroup-theme'),
+            ['name' => 'flame', 'set' => 'lucide'],
+        ],
+        'spray-can' => [
+            __('Strahlen / Spruehen', 'hengegroup-theme'),
+            ['name' => 'spray-can', 'set' => 'lucide'],
+        ],
+        'droplets' => [
+            __('Wasser / Schneiden', 'hengegroup-theme'),
+            ['name' => 'droplets', 'set' => 'lucide'],
+        ],
+        'gem' => [__('Praezision', 'hengegroup-theme'), ['name' => 'gem', 'set' => 'lucide']],
+        'factory' => [
+            __('Industrie', 'hengegroup-theme'),
+            ['name' => 'factory', 'set' => 'lucide'],
+        ],
+        'hammer' => [
+            __('Werkzeug / Bearbeitung', 'hengegroup-theme'),
+            ['name' => 'hammer', 'set' => 'lucide'],
+        ],
+        'building' => [__('Bau', 'hengegroup-theme'), ['name' => 'building-2', 'set' => 'lucide']],
+        'recycle' => [
+            __('Recycling', 'hengegroup-theme'),
+            ['name' => 'recycle', 'set' => 'lucide'],
+        ],
+        'flask' => [
+            __('Labor / Analyse', 'hengegroup-theme'),
+            ['name' => 'flask-conical', 'set' => 'lucide'],
+        ],
+        'truck' => [__('Logistik', 'hengegroup-theme'), ['name' => 'truck', 'set' => 'lucide']],
+        'layers' => [
+            __('Oberflaeche', 'hengegroup-theme'),
+            ['name' => 'layers', 'set' => 'lucide'],
+        ],
+    ];
+}
+
+/**
+ * Hintergrundklasse je Badge-Farbe (hengegroup_theme_get_badge_variants()) -- fuer Flaechen in
+ * Produktfarbe (Icon-Kacheln der Anwendungsbereiche).
+ */
+function hengegroup_theme_get_variant_background_class(string $variant): string
+{
+    return [
+        'henge-blue' => 'bg-henge-blue text-henge-blue-foreground',
+        'henge-green' => 'bg-henge-green text-henge-green-foreground',
+        'henge-grey' => 'bg-henge-grey text-henge-grey-foreground',
+        'grey-dark' => 'bg-grey-dark text-grey-dark-foreground',
+    ][$variant] ?? 'bg-grey-dark text-grey-dark-foreground';
+}
+
+/**
+ * Bereinigt die Zeilen der chemischen Analyse aus den parallelen Formular-Arrays (Bezeichnung[] /
+ * Wert[]) -- Zeilen ohne Bezeichnung UND Wert fallen weg, Reihenfolge bleibt erhalten.
+ *
+ * @param array<int, mixed> $labels
+ * @param array<int, mixed> $values
+ * @return list<array{label: string, value: string}>
+ */
+function hengegroup_theme_normalize_analysis_rows(array $labels, array $values): array
+{
+    $rows = [];
+
+    foreach (array_values($labels) as $index => $label) {
+        $label = trim((string) $label);
+        $value = trim((string) (array_values($values)[$index] ?? ''));
+
+        if ($label === '' && $value === '') {
+            continue;
+        }
+
+        $rows[] = ['label' => $label, 'value' => $value];
+    }
+
+    return $rows;
+}
+
+/**
+ * Verwandte Produkte: zuerst die manuell gesetzten (WooCommerce "Up-Sells", im Backend als
+ * "Verwandte Produkte" beschriftet), dann mit passenden Zufallsprodukten auf `$limit` aufgefuellt.
+ * Ohne Duplikate und ohne das Produkt selbst.
+ *
+ * @param int[] $manual_ids
+ * @param int[] $fallback_ids
+ * @return int[]
+ */
+function hengegroup_theme_merge_related_product_ids(
+    array $manual_ids,
+    array $fallback_ids,
+    int $self_id,
+    int $limit,
+): array {
+    $ids = [];
+
+    foreach (array_merge($manual_ids, $fallback_ids) as $id) {
+        $id = (int) $id;
+
+        if ($id <= 0 || $id === $self_id || in_array($id, $ids, true)) {
+            continue;
+        }
+
+        $ids[] = $id;
+
+        if (count($ids) >= $limit) {
+            break;
+        }
+    }
+
+    return $ids;
+}
+
+/**
+ * IDs der verwandten Produkte (siehe hengegroup_theme_merge_related_product_ids()). Die Auffuellung
+ * kommt aus WooCommerce' eigener Zufallsauswahl `wc_get_related_products()` (gleiche
+ * Produktkategorie/-schlagwoerter, gecacht und gemischt).
+ *
+ * @return int[]
+ */
+function hengegroup_theme_get_related_product_ids(WC_Product $product): array
+{
+    $limit = HENGEGROUP_THEME_RELATED_PRODUCTS_LIMIT;
+    $manual = array_values(
+        array_filter(
+            array_map('intval', $product->get_upsell_ids()),
+            static fn(int $id): bool => get_post_status($id) === 'publish',
+        ),
+    );
+    $fallback =
+        count($manual) < $limit && function_exists('wc_get_related_products')
+            ? array_map(
+                'intval',
+                wc_get_related_products($product->get_id(), $limit, array_merge($manual, [0])),
+            )
+            : [];
+
+    return hengegroup_theme_merge_related_product_ids(
+        $manual,
+        $fallback,
+        $product->get_id(),
+        $limit,
+    );
+}
+
+/**
+ * Veroeffentlichte Anwendungen eines Produkts, alphabetisch.
+ *
+ * @return WP_Post[]
+ */
+function hengegroup_theme_get_product_anwendungen(int $product_id): array
+{
+    $ids = array_filter(
+        array_map(
+            'intval',
+            (array) get_post_meta($product_id, HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META, false),
+        ),
+    );
+
+    if ($ids === []) {
+        return [];
+    }
+
+    return get_posts([
+        'post_type' => HENGEGROUP_THEME_ANWENDUNG_POST_TYPE,
+        'post_status' => 'publish',
+        'post__in' => $ids,
+        'posts_per_page' => count($ids),
+        'orderby' => 'title',
+        'order' => 'ASC',
+        'no_found_rows' => true,
+    ]);
+}
+
+/**
+ * Veroeffentlichte Produkte einer Anwendung (Gegenrichtung der Zuordnung am Produkt).
+ *
+ * @return int[]
+ */
+function hengegroup_theme_get_anwendung_product_ids(int $anwendung_id): array
+{
+    return array_map(
+        'intval',
+        get_posts([
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
+            'no_found_rows' => true,
+            'meta_key' => HENGEGROUP_THEME_PRODUCT_ANWENDUNG_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+            'meta_value' => (string) $anwendung_id, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+        ]),
+    );
+}
+
+/**
+ * Produkte einer Kategorie (inkl. Unterkategorien) in der Reihenfolge "Menue-Reihenfolge, dann
+ * Name" -- wie WooCommerce' eigene Standardsortierung.
+ *
+ * @return int[]
+ */
+function hengegroup_theme_get_category_product_ids(int $term_id): array
+{
+    return array_map(
+        'intval',
+        get_posts([
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
+            'no_found_rows' => true,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+            'tax_query' => [
+                [
+                    'taxonomy' => 'product_cat',
+                    'field' => 'term_id',
+                    'terms' => $term_id,
+                    'include_children' => true,
+                ],
+            ],
+        ]),
+    );
+}
+
+/**
+ * Zusatzfelder einer Produktkategorie (Term-Meta, gepflegt unter Produkte > Kategorien). `heading`
+ * faellt auf den Kategorienamen zurueck, `description` ist WordPress' eigene Term-Beschreibung.
+ */
+function hengegroup_theme_get_product_category_data(WP_Term $term): array
+{
+    $meta = static fn(string $field): string => trim(
+        (string) get_term_meta($term->term_id, '_hengegroup_theme_category_' . $field, true),
+    );
+    $variant = $meta('variant');
+    $variants = hengegroup_theme_get_badge_variants();
+    $heading = $meta('heading');
+
+    return [
+        'term_id' => (int) $term->term_id,
+        'slug' => $term->slug,
+        'name' => $term->name,
+        'kicker' => $meta('kicker'),
+        'variant' => in_array($variant, $variants, true) ? $variant : $variants[0],
+        'heading' => $heading !== '' ? $heading : $term->name,
+        'description' => trim(wp_strip_all_tags((string) $term->description)),
+        'contact' => [
+            'name' => $meta('contact_name'),
+            'role' => $meta('contact_role'),
+            'email' => $meta('contact_email'),
+            'phone' => $meta('contact_phone'),
+            'photo_id' => (int) $meta('contact_photo_id'),
+        ],
+    ];
+}
+
+/**
+ * Einstellungen unter Produkte > Einstellungen, ueber die Standardwerte gemischt.
+ */
+function hengegroup_theme_get_product_options(): array
+{
+    $stored = get_option(HENGEGROUP_THEME_PRODUCT_OPTION, []);
+
+    return array_merge(
+        [
+            'overview_page_id' => 0,
+            'contact_name' => '',
+            'contact_role' => '',
+            'contact_email' => '',
+            'contact_phone' => '',
+            'contact_photo_id' => 0,
+        ],
+        is_array($stored) ? $stored : [],
+    );
+}
+
+/**
+ * URL der Produktuebersicht: die unter Produkte > Einstellungen gewaehlte Seite, sonst die Seite mit
+ * Slug "produkte", sonst die Startseite.
+ */
+function hengegroup_theme_get_products_page_url(): string
+{
+    $page_id = (int) hengegroup_theme_get_product_options()['overview_page_id'];
+
+    if ($page_id <= 0) {
+        $page = get_page_by_path('produkte');
+        $page_id = $page instanceof WP_Post ? (int) $page->ID : 0;
+    }
+
+    if ($page_id > 0 && get_post_status($page_id) === 'publish') {
+        return (string) get_permalink($page_id);
+    }
+
+    return home_url('/');
+}
+
+/**
+ * Ansprechpartner eines Produkts: der bei seiner (ersten) Kategorie hinterlegte, falls Name ODER
+ * E-Mail gepflegt sind, sonst der Standard aus Produkte > Einstellungen -- gleiches Muster wie
+ * hengegroup_theme_get_job_contact().
+ */
+function hengegroup_theme_get_product_contact(int $product_id): array
+{
+    $terms = get_the_terms($product_id, 'product_cat');
+    $default_term_id = (int) get_option('default_product_cat', 0);
+
+    foreach (is_array($terms) ? $terms : [] as $term) {
+        if ($term->term_id === $default_term_id) {
+            continue;
+        }
+
+        $contact = hengegroup_theme_get_product_category_data($term)['contact'];
+
+        if ($contact['name'] !== '' || $contact['email'] !== '') {
+            return $contact;
+        }
+    }
+
+    $options = hengegroup_theme_get_product_options();
+
+    return [
+        'name' => trim((string) $options['contact_name']),
+        'role' => trim((string) $options['contact_role']),
+        'email' => trim((string) $options['contact_email']),
+        'phone' => trim((string) $options['contact_phone']),
+        'photo_id' => (int) $options['contact_photo_id'],
+    ];
+}
+
+/**
+ * Normalisierte Produktdaten fuer die Detailseite -- eine Quelle fuer alle Abschnitte.
+ */
+function hengegroup_theme_get_product_data(WC_Product $product): array
+{
+    $id = $product->get_id();
+    $keys = hengegroup_theme_get_product_meta_keys();
+    $analysis = get_post_meta($id, $keys['analysis'], true);
+    $downloads = [];
+
+    foreach ((array) get_post_meta($id, $keys['downloads'], true) as $download) {
+        $attachment_id = (int) ($download['attachment_id'] ?? 0);
+        $url = $attachment_id > 0 ? wp_get_attachment_url($attachment_id) : false;
+
+        if ($url === false) {
+            continue;
+        }
+
+        $file = get_attached_file($attachment_id);
+        $extension = strtoupper((string) pathinfo((string) $file, PATHINFO_EXTENSION));
+        $size = is_string($file) && is_file($file) ? (int) filesize($file) : 0;
+        $title = trim((string) ($download['title'] ?? ''));
+
+        $downloads[] = [
+            'url' => (string) $url,
+            'title' => $title !== '' ? $title : get_the_title($attachment_id),
+            'description' => trim((string) ($download['description'] ?? '')),
+            'cta' => trim((string) ($download['cta'] ?? '')),
+            'meta' => implode(
+                ' · ',
+                array_filter([$extension, $size > 0 ? size_format($size, 1) : '']),
+            ),
+        ];
+    }
+
+    $grain_sizes = taxonomy_exists('pa_' . HENGEGROUP_THEME_GRAIN_ATTRIBUTE)
+        ? wc_get_product_terms($id, 'pa_' . HENGEGROUP_THEME_GRAIN_ATTRIBUTE, [
+            'fields' => 'names',
+        ])
+        : [];
+
+    return [
+        'id' => $id,
+        'name' => $product->get_name(),
+        'description' => (string) $product->get_description(),
+        'image_id' => (int) $product->get_image_id(),
+        'badge_variant' => in_array(
+            (string) get_post_meta($id, '_badge_variant', true),
+            hengegroup_theme_get_badge_variants(),
+            true,
+        )
+            ? (string) get_post_meta($id, '_badge_variant', true)
+            : hengegroup_theme_get_badge_variants()[0],
+        'recycling' => trim((string) get_post_meta($id, $keys['recycling'], true)),
+        'analysis' => is_array($analysis) ? $analysis : [],
+        'grain_sizes' => array_values(array_map('strval', (array) $grain_sizes)),
+        'downloads' => $downloads,
+        'anwendungen' => hengegroup_theme_get_product_anwendungen($id),
+        'contact' => hengegroup_theme_get_product_contact($id),
+        'related_ids' => hengegroup_theme_get_related_product_ids($product),
+    ];
+}
+
+/**
+ * Icon einer Anwendung als SVG-Markup (leer, wenn keins gewaehlt ist).
+ */
+function hengegroup_theme_render_anwendung_icon(int $anwendung_id, string $class): string
+{
+    $key = (string) get_post_meta($anwendung_id, '_hengegroup_theme_anwendung_icon', true);
+    $icons = hengegroup_theme_get_anwendung_icons();
+
+    if (!isset($icons[$key])) {
+        return '';
+    }
+
+    return hengegroup_theme_render_icon($icons[$key][1] + ['class' => $class]);
+}
+
+/**
+ * Karte "Anwendungsbereich" (Design "Produktdetailseite"): Icon-Kachel in Produktfarbe, Titel,
+ * Kurztext. Bewusst OHNE Link -- Produkte zaehlen Anwendungen nur auf (explizite Vorgabe), erst die
+ * Anwendungsseite verlinkt zu Produkten.
+ */
+function hengegroup_theme_render_anwendung_card(WP_Post $anwendung, string $variant): string
+{
+    $icon = hengegroup_theme_render_anwendung_icon($anwendung->ID, 'size-[22px]');
+    $text = trim(wp_strip_all_tags(get_the_excerpt($anwendung)));
+
+    return sprintf(
+        '<li class="rounded-2xl bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" data-slot="anwendung-card"><div class="mb-4 flex items-center gap-3.5">%1$s<h3 class="text-[19px] leading-snug font-extrabold text-grey-dark">%2$s</h3></div>%3$s</li>',
+        $icon !== ''
+            ? sprintf(
+                '<span class="flex size-11 shrink-0 items-center justify-center rounded-xl %1$s">%2$s</span>',
+                esc_attr(hengegroup_theme_get_variant_background_class($variant)),
+                $icon,
+            )
+            : '',
+        esc_html(get_the_title($anwendung)),
+        $text !== ''
+            ? '<p class="text-base leading-normal text-grey-dark">' . esc_html($text) . '</p>'
+            : '',
+    );
+}
+
+/**
+ * Helle Ansprechpartner-Karte mit Foto (Design "Produktdetailseite", Abschnitt "Ihr Ansprechpartner
+ * im Vertrieb"). Leerer String, wenn weder Name noch E-Mail gepflegt sind.
+ */
+function hengegroup_theme_render_product_contact_card(array $contact): string
+{
+    if (trim($contact['name'] ?? '') === '' && trim($contact['email'] ?? '') === '') {
+        return '';
+    }
+
+    $photo =
+        (int) ($contact['photo_id'] ?? 0) > 0
+            ? hengegroup_theme_render_image([
+                'attachment_id' => (int) $contact['photo_id'],
+                'size' => 'medium_large',
+                'alt' => (string) ($contact['name'] ?? ''),
+                'class' => 'h-55 w-full object-cover',
+            ])
+            : '';
+
+    $rows = '';
+    $row_template =
+        '<li class="flex min-w-0 items-center gap-2.5 text-sm text-grey-dark">%1$s<span class="min-w-0 break-all">%2$s</span></li>';
+
+    if (($contact['email'] ?? '') !== '') {
+        $rows .= sprintf(
+            $row_template,
+            hengegroup_theme_render_icon([
+                'name' => 'mail',
+                'set' => 'lucide',
+                'class' => 'size-4 shrink-0',
+            ]),
+            sprintf(
+                '<a class="text-grey-dark underline-offset-4 hover:underline" href="mailto:%1$s">%2$s</a>',
+                esc_attr(antispambot($contact['email'])),
+                esc_html(antispambot($contact['email'])),
+            ),
+        );
+    }
+
+    if (($contact['phone'] ?? '') !== '') {
+        $rows .= sprintf(
+            $row_template,
+            hengegroup_theme_render_icon([
+                'name' => 'phone',
+                'set' => 'lucide',
+                'class' => 'size-4 shrink-0',
+            ]),
+            sprintf(
+                '<a class="text-grey-dark underline-offset-4 hover:underline" href="%1$s">%2$s</a>',
+                esc_url(hengegroup_theme_phone_href($contact['phone']), ['tel']),
+                esc_html($contact['phone']),
+            ),
+        );
+    }
+
+    return sprintf(
+        '<div class="overflow-hidden rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.12)]" data-slot="product-contact">%1$s<div class="bg-white px-7 py-6"><p class="mb-1 text-[19px] font-extrabold text-grey-dark">%2$s</p>%3$s<ul class="flex flex-col gap-2.5">%4$s</ul></div></div>',
+        $photo,
+        esc_html($contact['name'] ?? ''),
+        ($contact['role'] ?? '') !== ''
+            ? '<p class="mb-4.5 text-sm text-grey-dark/60">' . esc_html($contact['role']) . '</p>'
+            : '<div class="mb-3.5"></div>',
+        $rows,
+    );
+}
+
+/**
+ * Firmen-Kontaktkarte (Design "Produktuebersicht", Abschnitt "Kontakt"): grauer Kopf mit
+ * E-Mail/Telefon/Fax, weisser Teil mit Adresse -- Daten aus Einstellungen > Footer, dieselbe Quelle
+ * wie footer.php.
+ */
+function hengegroup_theme_render_company_contact_card(): string
+{
+    $options = hengegroup_theme_get_footer_options();
+    $rows = '';
+    $row_template =
+        '<li class="flex items-center gap-2.5 text-[15px] text-grey-light">%1$s%2$s</li>';
+    $icon = static fn(string $name): string => hengegroup_theme_render_icon([
+        'name' => $name,
+        'set' => 'lucide',
+        'class' => 'size-[18px] shrink-0',
+    ]);
+
+    if ((string) $options['email'] !== '') {
+        $rows .= sprintf(
+            $row_template,
+            $icon('mail'),
+            sprintf(
+                '<a class="text-grey-light underline-offset-4 hover:underline" href="mailto:%1$s">%2$s</a>',
+                esc_attr(antispambot((string) $options['email'])),
+                esc_html(antispambot((string) $options['email'])),
+            ),
+        );
+    }
+
+    if ((string) $options['phone'] !== '') {
+        $rows .= sprintf(
+            $row_template,
+            $icon('phone'),
+            sprintf(
+                '<a class="text-grey-light underline-offset-4 hover:underline" href="%1$s">%2$s</a>',
+                esc_url(hengegroup_theme_phone_href((string) $options['phone']), ['tel']),
+                esc_html((string) $options['phone']),
+            ),
+        );
+    }
+
+    if ((string) $options['fax'] !== '') {
+        $rows .= sprintf(
+            $row_template,
+            $icon('printer'),
+            '<span><span class="sr-only">' .
+                esc_html__('Fax:', 'hengegroup-theme') .
+                ' </span>' .
+                esc_html((string) $options['fax']) .
+                '</span>',
+        );
+    }
+
+    $address_lines = array_filter(
+        array_map('trim', explode("\n", (string) $options['address'])),
+        static fn(string $line): bool => $line !== '',
+    );
+
+    $address =
+        $address_lines !== []
+            ? sprintf(
+                '<div class="bg-white px-7 py-6"><p class="mb-3.5 text-[19px] font-extrabold text-grey-dark">%1$s</p><address class="flex items-start gap-2.5 text-[15px] leading-[1.7] text-grey-dark not-italic">%2$s<span>%3$s</span></address></div>',
+                esc_html__('Adresse', 'hengegroup-theme'),
+                hengegroup_theme_render_icon([
+                    'name' => 'map-pin',
+                    'set' => 'lucide',
+                    'class' => 'mt-0.5 size-5 shrink-0 text-grey-dark/80',
+                ]),
+                implode('<br>', array_map('esc_html', $address_lines)),
+            )
+            : '';
+
+    return sprintf(
+        '<div class="overflow-hidden rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.12)]" data-slot="company-contact">%1$s%2$s</div>',
+        $rows !== ''
+            ? sprintf(
+                '<div class="bg-henge-grey px-7 py-6"><p class="mb-3.5 text-[19px] font-extrabold text-grey-light">%1$s</p><ul class="flex flex-col gap-2.5">%2$s</ul></div>',
+                esc_html__('Kontakt', 'hengegroup-theme'),
+                $rows,
+            )
+            : '',
+        $address,
+    );
+}
+
+/**
+ * Produktkarten als `<ul class="contents">` (Kinder greifen direkt ins umgebende `.wrapper`-Grid),
+ * in der Variante `default` oder `minimal` (template-parts/components/product-card.php). Leerer
+ * String, wenn keine ID zu einem veroeffentlichten Produkt gehoert.
+ *
+ * @param int[] $product_ids
+ */
+function hengegroup_theme_render_product_cards(
+    array $product_ids,
+    string $variant = 'default',
+): string {
+    $markup = '';
+
+    foreach ($product_ids as $product_id) {
+        $product = function_exists('wc_get_product') ? wc_get_product((int) $product_id) : null;
+
+        if (!($product instanceof WC_Product) || !$product->is_visible()) {
+            continue;
+        }
+
+        ob_start();
+        echo '<li class="col-span-12 sm:col-span-6 lg:col-span-3">';
+        get_template_part('template-parts/components/product-card', null, [
+            'product' => $product,
+            'variant' => $variant,
+        ]);
+        echo '</li>';
+        $markup .= (string) ob_get_clean();
+    }
+
+    return $markup !== '' ? '<ul class="contents">' . $markup . '</ul>' : '';
+}
+
+/**
+ * Prueft die (bereits sanitisierten) Felder einer Produktanfrage -- reine Funktion, unit-getestet
+ * (tests/Unit/ProductsTest.php). `$with_location`: PLZ/Ort sind Pflicht (Formular der
+ * Produktuebersicht), auf der Produktdetailseite gibt es die Felder nicht.
+ * Rueckgabe: Feldname => Fehlermeldung, leer = alles gueltig.
+ */
+function hengegroup_theme_validate_product_inquiry(array $values, bool $with_location): array
+{
+    $errors = [];
+    $required = [
+        'company' => __('Bitte geben Sie Ihre Firma an.', 'hengegroup-theme'),
+        'name' => __('Bitte geben Sie Ihren Namen an.', 'hengegroup-theme'),
+    ];
+
+    if ($with_location) {
+        $required['postal_code'] = __('Bitte geben Sie Ihre Postleitzahl an.', 'hengegroup-theme');
+        $required['city'] = __('Bitte geben Sie Ihren Ort an.', 'hengegroup-theme');
+    }
+
+    foreach ($required as $field => $message) {
+        if (trim((string) ($values[$field] ?? '')) === '') {
+            $errors[$field] = $message;
+        }
+    }
+
+    if (filter_var(trim((string) ($values['email'] ?? '')), FILTER_VALIDATE_EMAIL) === false) {
+        $errors['email'] = __(
+            'Bitte geben Sie eine gültige E-Mail-Adresse an.',
+            'hengegroup-theme',
+        );
+    }
+
+    $phone = trim((string) ($values['phone'] ?? ''));
+
+    if ($phone !== '' && preg_match('/^[0-9 +()\/\-]{5,30}$/', $phone) !== 1) {
+        $errors['phone'] = __('Bitte geben Sie eine gültige Telefonnummer an.', 'hengegroup-theme');
+    }
+
+    if (($values['privacy'] ?? '') !== '1') {
+        $errors['privacy'] = __(
+            'Bitte bestätigen Sie die Datenschutzhinweise.',
+            'hengegroup-theme',
+        );
+    }
+
+    return $errors;
+}
+
+/**
+ * Zeile "Kontaktkarte + Anfrageformular" des Blocks "Kontakt" (zwei Rasterspalten fuer ein
+ * umgebendes `.wrapper`) -- geteilt mit dessen Editor-Vorschau-Zwilling kontakt-vorschau.
+ */
+function hengegroup_theme_render_company_contact_row(): string
+{
+    $card = hengegroup_theme_render_company_contact_card();
+
+    ob_start();
+    get_template_part('template-parts/components/inquiry-form', null, [
+        'product_id' => 0,
+        'with_location' => true,
+        'tone' => 'light',
+    ]);
+    $form = (string) ob_get_clean();
+
+    return ($card !== ''
+        ? '<div class="col-span-12 self-start sm:col-span-6 lg:col-span-3">' . $card . '</div>'
+        : '') .
+        '<div class="col-span-12 lg:col-span-9">' .
+        $form .
+        '</div>';
+}

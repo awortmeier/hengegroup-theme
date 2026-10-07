@@ -30,7 +30,7 @@ $button_url = trim((string) ($attributes['buttonUrl'] ?? ''));
 $limit = (int) ($attributes['limit'] ?? 4);
 $list_markup = hengegroup_theme_render_job_teaser_list($limit);
 
-echo '<section class="bg-grey-light py-16 md:py-24 lg:py-25">';
+echo '<section class="py-16 md:py-24 lg:py-25">';
 echo '<div class="wrapper items-start gap-y-10">';
 echo '<div class="col-span-12 lg:col-span-6 lg:pr-8">';
 

@@ -30,7 +30,7 @@ $contact_markup = $show_contact
     : '';
 $list_span = $contact_markup !== '' ? 'lg:col-span-8' : '';
 
-echo '<section id="stellen" class="bg-grey-light py-16 md:py-20 lg:py-25">';
+echo '<section id="stellen" class="py-16 md:py-20 lg:py-25">';
 echo '<div class="wrapper items-start gap-y-12">';
 printf('<div class="col-span-12 %s">', esc_attr($list_span));
 echo $list_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

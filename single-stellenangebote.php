@@ -22,7 +22,8 @@ declare(strict_types=1);
 // auch sichtbar sein; als echtes <dl> sind sie ausserdem fuer KI-Suchen sauber als Fakten lesbar.
 //
 // Bewerbung ueber das Formular aus dem Design (template-parts/components/job-application-form.php,
-// Verarbeitung inc/setup/theme-careers-application.php), E-Mail an den Ansprechpartner bleibt als
+// Verarbeitung inc/setup/theme-careers-application.php -- landet als Eintrag unter Karriere >
+// Bewerbungen, keine E-Mail). Die E-Mail-Adresse des Ansprechpartners steht, falls gepflegt, als
 // Alternative darunter.
 //
 // Der Header ist `fixed` und liegt ueber dem Inhalt (siehe header.php) -- daher der groessere
@@ -105,7 +106,7 @@ while (have_posts()):
     $facts = array_filter($facts, static fn(array $fact): bool => $fact['value'] !== '');
     $application_email = $job['contact']['email'];
     ?>
-  <article <?php post_class('bg-grey-light'); ?> data-slot="job-posting">
+  <article <?php post_class(); ?> data-slot="job-posting">
     <header class="wrapper pt-28 pb-10 sm:pt-32 lg:pt-36">
       <div class="col-span-12 lg:col-span-8">
         <?php if (hengegroup_theme_is_job_expired((int) get_the_ID())): ?>
@@ -209,16 +210,14 @@ while (have_posts()):
     </div>
   </article>
 
-  <?php if ($application_email !== ''): ?>
-    <section id="bewerbung" class="bg-grey-dark py-16 md:py-24" aria-labelledby="bewerbung-titel">
-      <div class="wrapper">
-        <div class="col-span-12 lg:col-span-8">
+  <section id="bewerbung" class="bg-neutral-200 py-16 md:py-24" aria-labelledby="bewerbung-titel">
+      <div class="wrapper-small">
+        <div class="col-span-12">
           <?php get_template_part('template-parts/base/typography', null, [
               'config' => [
                   'variant' => 'headline-sm',
                   'tag' => 'h2',
                   'text' => __('Bewerbungsformular', 'hengegroup-theme'),
-                  'color' => 'light',
                   'class' => 'mb-3',
                   'attributes' => ['id' => 'bewerbung-titel'],
               ],
@@ -231,18 +230,18 @@ while (have_posts()):
                       __('Bewerbung für: %s', 'hengegroup-theme'),
                       get_the_title(),
                   ),
-                  'color' => 'light',
                   'class' => 'mb-6 opacity-70',
               ],
           ]); ?>
           <?php get_template_part('template-parts/components/job-application-form', null, [
               'job' => $job,
           ]); ?>
-          <p class="mt-8 text-sm text-grey-light/70">
+          <?php if ($application_email !== ''): ?>
+          <p class="mt-8 text-sm text-grey-dark/70">
             <?php printf(
                 /* translators: %s: application e-mail address (link). */
                 esc_html__('Lieber per E-Mail? Schick deine Unterlagen an %s.', 'hengegroup-theme'),
-                '<a class="text-grey-light underline underline-offset-4" href="' .
+                '<a class="text-grey-dark underline underline-offset-4" href="' .
                     esc_url(
                         'mailto:' .
                             $application_email .
@@ -261,10 +260,10 @@ while (have_posts()):
                     '</a>',
             ); ?>
           </p>
+          <?php endif; ?>
         </div>
       </div>
     </section>
-  <?php endif; ?>
 
 <?php
 endwhile;

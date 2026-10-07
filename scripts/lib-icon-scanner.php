@@ -13,7 +13,9 @@ function collect_php_files(string $repo_root): array
 {
     $files = glob($repo_root . '/*.php') ?: [];
 
-    foreach (['inc', 'template-parts'] as $directory) {
+    // `woocommerce/` (Template-Overrides) seit 2026-10-07: single-product.php nutzt als erstes
+    // Override Icons -- ohne diesen Eintrag fehlten deren SVGs nach dem Sync stillschweigend.
+    foreach (['inc', 'template-parts', 'woocommerce'] as $directory) {
         $absolute_directory = $repo_root . '/' . $directory;
 
         if (!is_dir($absolute_directory)) {

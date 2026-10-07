@@ -28,18 +28,16 @@ declare(strict_types=1);
 //
 // Dunkler Hintergrund (`bg-grey-dark`, siehe tokens.css) + `color: 'light'`-Typography -- gleiches
 // "weisser Text auf dunklem Grund"-Muster wie buehne/render.php's Content-Box. Der
-// "Alle Produkte"-Button faellt ohne eigene `buttonUrl` auf die WooCommerce-Shop-Seite zurueck
-// (`wc_get_page_permalink('shop')`), damit der Block auch ohne manuelle Verlinkung sofort
-// funktioniert.
+// "Alle Produkte"-Button faellt ohne eigene `buttonUrl` auf die Produktuebersicht zurueck
+// (hengegroup_theme_get_products_page_url(), Produkte > Einstellungen bzw. Seite "produkte" -- seit
+// 2026-10-07 keine WooCommerce-Shop-Seite mehr, siehe inc/setup/theme-products.php), damit der Block
+// auch ohne manuelle Verlinkung sofort funktioniert.
 
 if (!is_array($attributes ?? null)) {
     return;
 }
 
-if (
-    !function_exists('wc_get_page_permalink') ||
-    !function_exists('hengegroup_theme_render_produkte_grid')
-) {
+if (!function_exists('hengegroup_theme_render_produkte_grid')) {
     return;
 }
 
@@ -89,12 +87,10 @@ if ($text !== '') {
 }
 
 if ($button_text !== '') {
-    $shop_url = (string) wc_get_page_permalink('shop');
-
     get_template_part('template-parts/base/button', null, [
         'config' => [
             'text' => $button_text,
-            'href' => $button_url !== '' ? $button_url : $shop_url,
+            'href' => $button_url !== '' ? $button_url : hengegroup_theme_get_products_page_url(),
             'variant' => 'grey-light',
             'size' => 'lg',
         ],
