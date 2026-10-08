@@ -6,7 +6,7 @@ declare(strict_types=1);
 // "Offene Stellen") -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die
 // allgemeine Phase-3-Block-Konvention. Links alle aktiven Stellen gruppiert nach Unternehmen
 // (hengegroup_theme_render_jobs_grouped(), inc/template-parts/careers.php), rechts die
-// Ansprechpartner-Karte (Standard-Ansprechpartner aus Karriere > Einstellungen). Abgelaufene
+// Ansprechpartner-Karte (Standard-Ansprechpartner aus Stellenangebote > Einstellungen). Abgelaufene
 // Stellen filtert die gemeinsame Abfrage bereits heraus, der Block braucht dafuer keine eigene
 // Logik.
 //
@@ -26,7 +26,9 @@ $show_contact = !empty($attributes['showContact'] ?? true);
 $contact_heading = trim((string) ($attributes['contactHeading'] ?? ''));
 $list_markup = hengegroup_theme_render_open_jobs_list();
 $contact_markup = $show_contact
-    ? hengegroup_theme_render_job_contact_card(hengegroup_theme_get_job_contact(null))
+    ? hengegroup_theme_render_contact_card(hengegroup_theme_get_job_contact(null), [
+        'variant' => 'dark',
+    ])
     : '';
 $list_span = $contact_markup !== '' ? 'lg:col-span-8' : '';
 

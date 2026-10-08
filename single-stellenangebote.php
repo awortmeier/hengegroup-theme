@@ -159,7 +159,8 @@ while (have_posts()):
 
     <div class="wrapper gap-y-10 pb-20">
       <?php if ($facts !== []): ?>
-        <dl class="col-span-12 grid content-start gap-4 self-start rounded-2xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)] sm:grid-cols-2 lg:col-span-8 xl:grid-cols-3">
+        <?php ob_start(); ?>
+        <dl class="grid content-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <?php foreach ($facts as $fact): ?>
             <div class="flex items-start gap-3">
               <span class="mt-0.5 text-henge-green">
@@ -185,12 +186,20 @@ while (have_posts()):
             </div>
           <?php endforeach; ?>
         </dl>
+        <?php
+        $facts_markup = (string) ob_get_clean();
+        get_template_part('template-parts/base/card', null, [
+            'config' => [
+                'content' => $facts_markup,
+                'class' => 'col-span-12 self-start lg:col-span-8',
+            ],
+        ]);
+        ?>
       <?php endif; ?>
 
-      <?php $contact_card = hengegroup_theme_render_job_contact_card(
-          $job['contact'],
-          __('Ansprechpartner', 'hengegroup-theme'),
-      ); ?>
+      <?php $contact_card = hengegroup_theme_render_contact_card($job['contact'], [
+          'variant' => 'dark',
+      ]); ?>
       <?php if ($contact_card !== ''): ?>
         <aside class="col-span-12 self-start lg:col-span-4 lg:col-start-9 lg:row-span-2 lg:row-start-1" aria-label="<?php esc_attr_e(
             'Ansprechpartner',

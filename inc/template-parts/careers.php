@@ -430,7 +430,7 @@ function hengegroup_theme_build_job_posting_schema(array $job, array $context): 
             'name' => $company['legal_name'] !== '' ? $company['legal_name'] : $company['name'],
         ];
 
-        // Unternehmensseite auf dieser Website (Karriere > Unternehmen, Seitenauswahl) als `url`
+        // Unternehmensseite auf dieser Website (Stellenangebote > Unternehmen, Seitenauswahl) als `url`
         // des Arbeitgebers -- nicht `sameAs`, das ist fuer fremde Auftritte (eigene Domain,
         // LinkedIn) gedacht; alle Firmen haben nur Unterseiten dieser Website (explizite Vorgabe
         // 2026-10-07).
@@ -897,7 +897,8 @@ function hengegroup_theme_get_job_company_text_class(string $variant): string
 }
 
 /**
- * Eine klickbare Stellen-Zeile (weisse Karte, Titel, Pfeil) als `<li>` -- Design "Startseite"/
+ * Eine klickbare Stellen-Zeile (template-parts/base/card.php, flach, mit `href`: Titel, Pfeil) als
+ * `<li>` -- Design "Startseite"/
  * "Karriereseite". Mit `$with_company_badge` steht die Firmen-Pill vor dem Titel (Startseite); auf
  * der Karriereseite gruppiert die Ueberschrift bereits nach Unternehmen.
  *
@@ -917,92 +918,18 @@ function hengegroup_theme_render_job_row(array $job, bool $with_company_badge): 
         'class' => 'size-5 shrink-0 text-grey-dark transition-transform group-hover:translate-x-1',
     ]);
 
-    return sprintf(
-        '<li><a class="group flex items-center justify-between gap-4 rounded-2xl bg-white px-6 py-5 text-grey-dark no-underline shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-shadow hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none" href="%1$s"><span class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">%2$s<span class="text-lg leading-snug font-semibold text-grey-dark">%3$s</span></span>%4$s</a></li>',
-        esc_url($job['url']),
-        $badge,
-        esc_html($job['title']),
-        $arrow,
-    );
-}
-
-/**
- * Ansprechpartner-Karte (dunkel, Design "Karriereseite"/"Stellenangebot"). Leerer String, wenn
- * weder Name noch E-Mail gepflegt sind. `$label` setzt eine kleine Ueberschrift in die Karte (z. B.
- * auf der Stellen-Einzelseite, wo die Karte ohne eigene Abschnitts-Ueberschrift neben der
- * Faktenleiste steht), `$class` haengt Klassen an (z. B. `h-full`).
- */
-function hengegroup_theme_render_job_contact_card(
-    array $contact,
-    string $label = '',
-    string $class = '',
-): string {
-    if (trim($contact['name'] ?? '') === '' && trim($contact['email'] ?? '') === '') {
-        return '';
-    }
-
-    $rows = '';
-    $row_template =
-        '<li class="flex items-center gap-2.5 text-base text-grey-light">%1$s<span>%2$s</span></li>';
-
-    if (($contact['role'] ?? '') !== '') {
-        $rows .= sprintf(
-            $row_template,
-            hengegroup_theme_render_icon([
-                'name' => 'users',
-                'set' => 'lucide',
-                'class' => 'size-4 shrink-0',
-            ]),
-            esc_html($contact['role']),
-        );
-    }
-
-    if (($contact['email'] ?? '') !== '') {
-        $rows .= sprintf(
-            $row_template,
-            hengegroup_theme_render_icon([
-                'name' => 'mail',
-                'set' => 'lucide',
-                'class' => 'size-4 shrink-0',
-            ]),
-            sprintf(
-                '<a class="text-grey-light underline-offset-4 hover:underline" href="mailto:%1$s"><span class="text-grey-light">%2$s</span></a>',
-                esc_attr(antispambot($contact['email'])),
-                esc_html(antispambot($contact['email'])),
+    return '<li>' .
+        hengegroup_theme_render_card([
+            'href' => $job['url'],
+            'content' => sprintf(
+                '<span class="flex items-center justify-between gap-4"><span class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">%1$s<span class="text-lg leading-snug font-semibold text-grey-dark">%2$s</span></span>%3$s</span>',
+                $badge,
+                esc_html($job['title']),
+                $arrow,
             ),
-        );
-    }
-
-    if (($contact['phone'] ?? '') !== '') {
-        $rows .= sprintf(
-            $row_template,
-            hengegroup_theme_render_icon([
-                'name' => 'phone',
-                'set' => 'lucide',
-                'class' => 'size-4 shrink-0',
-            ]),
-            sprintf(
-                '<a class="text-grey-light underline-offset-4 hover:underline" href="tel:%1$s"><span class="text-grey-light">%2$s</span></a>',
-                esc_attr((string) preg_replace('/[^\d+]/', '', $contact['phone'])),
-                esc_html($contact['phone']),
-            ),
-        );
-    }
-
-    return sprintf(
-        '<div class="%3$s" data-slot="job-contact">%4$s<p class="mb-3.5 text-xl font-extrabold text-grey-light">%1$s</p><ul class="flex flex-col gap-2.5">%2$s</ul></div>',
-        esc_html($contact['name'] ?? ''),
-        $rows,
-        esc_attr(
-            trim(
-                'rounded-[20px] bg-grey-dark px-8 py-7 shadow-[0_8px_24px_rgba(0,0,0,0.12)] ' .
-                    $class,
-            ),
-        ),
-        $label !== ''
-            ? '<p class="mb-2 text-sm text-grey-light/60">' . esc_html($label) . '</p>'
-            : '',
-    );
+            'class' => 'group text-grey-dark',
+        ]) .
+        '</li>';
 }
 
 /**

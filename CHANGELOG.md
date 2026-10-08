@@ -11,6 +11,11 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
 
 ### Changed
 
+- Backend: Menuepunkte "WooCommerce" und "Zahlungen" ausgeblendet (aktuell nur Produkte noetig);
+  Menuepunkt "Karriere" heisst jetzt "Stellenangebote".
+- WooCommerce-Versand deaktiviert (aktuell kein Shop, keine Versandarten noetig).
+- Doku: `WP_DEFAULT_THEME` auf `hengegroup` in der `wp-config.php` jeder Instanz setzen
+  (`docs/how-to.md`), damit der Website-Zustand kein fehlendes Standard-Theme mehr meldet.
 - Bewerbungsunterlagen liegen jetzt ausserhalb des Web-Roots (Ordner neben dem
   Website-Stammverzeichnis) statt unter uploads/, damit sie auch unter nginx nicht per URL
   abrufbar sind; vorhandene Dateien am alten Ort werden weiter gefunden. Neuer Filter
@@ -22,8 +27,15 @@ nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung"
   (`hengegroup_theme_render_form_field()`), Ueberschriften/Texte in Karten, Bloecken, Footer und
   404 ueber `typography.php` (`hengegroup_theme_render_typography()`), Social-Media-Icons im Footer
   ueber `button.php`.
-- Produktdetailseite: Downloads als `attachment.php` (Icon-Button zum Herunterladen, Beschreibung
-  darunter); Produkt-Chips auf der Seite /anwendungen/ als `badge.php` (`outline`).
+- Karten vereinheitlicht: zwei Stufen (flach/erhoeht) als Tokens in `tokens.css`, `card.php` ist
+  die Standard-Karte (neu: `elevation`, `size: lg`, `icon`, `title_variant`,
+  `orientation: horizontal`, `tag: li`) fuer Anwendungskarten, Anwendungs-Uebersicht, Faktenleiste,
+  Stellen-Zeilen und Auszeichnungen. `card.php` hat dadurch keinen Rahmen mehr.
+- Kontaktkarten von Produktdetailseite, Karriere (Stellenangebot, Block "Offene Stellen") und
+  Block "Kontakt" sind jetzt eine Komponente `contact-card.php` mit den Varianten hell, dunkel und
+  zweigeteilt (Kontakt + Adresse), im Aufbau der bisherigen Produkt-Kontaktkarte, ohne Foto.
+- Produktdetailseite: Downloads als `attachment.php` in der neuen Variante `card` (Karte mit
+  Icon, Titel, Format/Groesse, Beschreibung und vollem Download-Button, nach Design); Produkt-Chips auf der Seite /anwendungen/ als `badge.php` (`outline`).
 
 - Bewerbungen werden nicht mehr per E-Mail verschickt, sondern als Eintraege unter Karriere >
   Bewerbungen gespeichert (Unterlagen geschuetzt ausserhalb der Mediathek, Download nur im

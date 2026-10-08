@@ -41,7 +41,7 @@ function hengegroup_theme_register_stellenangebote_post_type(): void
                 'hengegroup-theme',
             ),
             'all_items' => __('Alle Stellenangebote', 'hengegroup-theme'),
-            'menu_name' => __('Karriere', 'hengegroup-theme'),
+            'menu_name' => __('Stellenangebote', 'hengegroup-theme'),
         ],
         'public' => true,
         'show_in_rest' => true,

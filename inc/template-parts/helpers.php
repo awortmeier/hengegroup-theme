@@ -155,6 +155,19 @@ function hengegroup_theme_render_typography(array $typography_config): string
 }
 
 /**
+ * Renders a nested template-parts/base/card.php call and returns its output as a string -- same
+ * idiom as hengegroup_theme_render_typography(), for project templates that assemble markup as
+ * strings (render helpers in inc/template-parts/, block render.php files).
+ */
+function hengegroup_theme_render_card(array $card_config): string
+{
+    ob_start();
+    get_template_part('template-parts/base/card', null, ['config' => $card_config]);
+
+    return (string) ob_get_clean();
+}
+
+/**
  * Renders a nested template-parts/base/image.php call and returns its output as a string, for
  * components that need to know whether an image actually resolved (image.php renders nothing for
  * a missing/invalid file -- name/set is checked via is_file(), see that file's own header comment)
@@ -401,6 +414,27 @@ function hengegroup_theme_get_bento_tile_shapes(int $count): array
     }
 
     return array_merge($shapes, $tails[$count % 8]);
+}
+
+/**
+ * Renders template-parts/components/contact-card.php and returns its output as a string (empty
+ * when neither name nor e-mail is set) -- callers check for '' before rendering a wrapper.
+ *
+ * @param array $contact { name, role, email, phone }
+ * @param array $args    { variant: light|dark, label, class } -- see the component's header
+ */
+function hengegroup_theme_render_contact_card(array $contact, array $args = []): string
+{
+    ob_start();
+    get_template_part(
+        'template-parts/components/contact-card',
+        null,
+        [
+            'contact' => $contact,
+        ] + $args,
+    );
+
+    return trim((string) ob_get_clean());
 }
 
 /**

@@ -13,7 +13,10 @@ if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_
 }
 
 if (($attributes['part'] ?? 'list') === 'contact') {
-    echo hengegroup_theme_render_job_contact_card(hengegroup_theme_get_job_contact(null)); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo hengegroup_theme_render_contact_card(hengegroup_theme_get_job_contact(null), [
+        'variant' => 'dark',
+    ]);
     return;
 }
 

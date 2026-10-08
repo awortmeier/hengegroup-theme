@@ -16,6 +16,19 @@ Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird
 
 ---
 
+### Neue WordPress-Instanz einrichten (wp-config.php)
+
+In der `wp-config.php` jeder Instanz (Dev, Live, ...) zwischen "Add any custom values" und "stop
+editing" ergaenzen:
+
+```php
+define("WP_DEFAULT_THEME", "hengegroup");
+```
+
+Sonst meldet der Website-Zustand "Ein Standard-Theme zur Verfuegung haben", weil WordPress
+`twentytwentyfive` erwartet und das nicht installiert ist. Das Theme kann die Konstante nicht
+selbst setzen, weil WordPress sie schon vor dem Laden des Themes definiert.
+
 ### Produkt-Badge setzen
 
 Das Badge im Produktbox-Bild ist ein einfaches Feld-Paar im Produkt-Editor (Metabox "Badge",
@@ -179,8 +192,8 @@ in `inc/setup/theme-careers-seo.php`.
 
 ### Stellenangebot anlegen / Karriereseite einrichten
 
-1. Einmalig unter Karriere > Unternehmen und Karriere > Standorte die Stammdaten anlegen (rechtlicher
-   Name, Logo, Farbe, Adresse; Koordinaten optional) und unter Karriere > Einstellungen Karriereseite
+1. Einmalig unter Stellenangebote > Unternehmen und Stellenangebote > Standorte die Stammdaten anlegen (rechtlicher
+   Name, Logo, Farbe, Adresse; Koordinaten optional) und unter Stellenangebote > Einstellungen Karriereseite
    und Standard-Ansprechpartner pflegen.
 2. Die Karriereseite ist eine normale Seite unter /karriere/ mit dem Block "Offene Stellen"; die
    Startseite nutzt den Block "Karriere-Teaser".

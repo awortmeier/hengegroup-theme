@@ -93,6 +93,28 @@ declare(strict_types=1);
 //     not a structurally different composition.
 //   - `page-component-showcase-card.php` new, analog to the other showcase pages.
 //
+// Project card (Audit 2026-10-08 Punkt 1, explicit request 2026-10-08): this file is now the ONE
+// card the project's own templates use (Anwendungskarte, Anwendungs-Uebersicht, Faktenleiste
+// Stellenangebot, Stellen-Zeile, Auszeichnung) instead of each carrying its own literal
+// `rounded-*`/`bg-white`/`shadow-[...]` markup. Changes for that:
+//   - `elevation: flat | raised` replaces the stock `border border-border shadow-sm` look with the
+//     two card steps from tokens.css (`shadow-card-flat`/`rounded-card-flat` = 16px,
+//     `shadow-card-raised`/`rounded-card-raised` = 20px). No border any more -- none of the
+//     project's cards have one.
+//   - `href` hover: `shadow-card-hover` (flat) / `shadow-lg` (raised) instead of shadow + lift --
+//     the Stellen-Zeile's own design has no lift (its arrow moves instead, via the caller's
+//     `group` class), plus a visible focus ring the old version lacked.
+//   - `size: lg` (28px padding) -- the design references' most common card padding (contact card,
+//     Anwendungskarte, Download-Karte), alongside `default` (24px) and `sm` (16px).
+//   - `icon` + `icon_class`: a 44px icon box left of the title (Anwendungskarte; same box as
+//     attachment.php's `variant: 'card'`).
+//   - `title_variant`: typography.php variant for the title (default body-lg); title weight is
+//     `font-extrabold` (every project card's title), not shadcn's `font-semibold`.
+//   - `orientation: horizontal`: media as a full-height column on the left (240px from `sm` up,
+//     stacked on top below), header/content/footer in a padded body column on the right
+//     (Anwendungs-Uebersicht). A small inline logo (Auszeichnung) is NOT media -- that stays
+//     caller `content`.
+//
 // Supported config:
 //   title          string   optional. Visible title, rendered via typography.php (variant
 //                             'body-lg', data_slot 'card-title')
@@ -125,12 +147,20 @@ declare(strict_types=1);
 //                             `tag` (shadcn asChild/Slot analog, same idiom as button.php's/
 //                             badge.php's own `href`) -- makes the WHOLE card one clickable target,
 //                             with a hover-lift affordance (see the Phase 2 note above)
-//   tag            string   div (default) | article | section -- semantic root element override,
-//                             e.g. `article` for an independent card within a list/grid of cards;
+//   tag            string   div (default) | article | section | li -- semantic root element
+//                             override, e.g. `article` for an independent card, `li` for a card
+//                             that is itself the item of a caller's `<ul>`;
 //                             ignored when `href` is given (forced to `a` instead)
-//   size           string   default | sm -- sets data-size on the outer element AND now drives
-//                             real spacing (gap/padding one Tailwind stop down for `sm`, see the
-//                             Phase 2 note above)
+//   size           string   default | sm | lg -- sets data-size on the outer element AND drives
+//                             spacing: sm 16px, default 24px, lg 28px padding (see the notes above)
+//   elevation      string   flat (default) | raised -- shadow + radius step from tokens.css
+//   orientation    string   vertical (default) | horizontal -- see the project-card note above
+//   icon           string   optional. Pre-rendered icon HTML (e.g. hengegroup_theme_render_icon())
+//                             shown in a 44px box left of the title -- only with a `title`
+//   icon_class     string   classes for that box (default `bg-muted text-foreground`), e.g. a
+//                             brand background + foreground color
+//   title_variant  string   body-lg (default) | body-base | body-sm -- typography.php variant of
+//                             the title
 //   class / attributes / data_attributes   passthrough onto the outer <div data-slot="card">
 //
 // Header (title/description/action) is only rendered when at least one of the three is given --
@@ -156,6 +186,11 @@ $footer_divider = !empty($config['footer_divider']);
 $href = trim((string) ($config['href'] ?? ''));
 $tag = strtolower(trim((string) ($config['tag'] ?? 'div')));
 $size = trim((string) ($config['size'] ?? 'default'));
+$elevation = trim((string) ($config['elevation'] ?? 'flat'));
+$orientation = trim((string) ($config['orientation'] ?? 'vertical'));
+$icon = (string) ($config['icon'] ?? '');
+$icon_class = trim((string) ($config['icon_class'] ?? ''));
+$title_variant = trim((string) ($config['title_variant'] ?? 'body-lg'));
 $class_name = trim((string) ($config['class'] ?? ''));
 $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : [];
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
@@ -166,7 +201,7 @@ if (!in_array($title_tag, $allowed_title_tags, true)) {
     $title_tag = 'h3';
 }
 
-$allowed_tags = ['div', 'article', 'section'];
+$allowed_tags = ['div', 'article', 'section', 'li'];
 
 if (!in_array($tag, $allowed_tags, true)) {
     $tag = 'div';
@@ -176,11 +211,29 @@ if ($href !== '') {
     $tag = 'a';
 }
 
-$allowed_sizes = ['default', 'sm'];
+$allowed_sizes = ['default', 'sm', 'lg'];
 
 if (!in_array($size, $allowed_sizes, true)) {
     $size = 'default';
 }
+
+if (!in_array($elevation, ['flat', 'raised'], true)) {
+    $elevation = 'flat';
+}
+
+if (!in_array($orientation, ['vertical', 'horizontal'], true)) {
+    $orientation = 'vertical';
+}
+
+if (!in_array($title_variant, ['body-lg', 'body-base', 'body-sm'], true)) {
+    $title_variant = 'body-lg';
+}
+
+if ($icon_class === '') {
+    $icon_class = 'bg-muted text-foreground';
+}
+
+$horizontal = $orientation === 'horizontal';
 
 // Size -> spacing map (Phase 2, see file header): `sm` steps every gap/padding down one real
 // Tailwind stop from `default` instead of an arbitrary/guessed value.
@@ -203,6 +256,15 @@ $size_classes = [
         'media_mt' => '-mt-4',
         'footer_divider_pt' => 'pt-4',
     ],
+    'lg' => [
+        'outer_gap' => 'gap-4',
+        'outer_py' => 'py-7',
+        'section_px' => 'px-7',
+        'header_gap' => 'gap-2',
+        'footer_gap' => 'gap-3',
+        'media_mt' => '-mt-7',
+        'footer_divider_pt' => 'pt-6',
+    ],
 ];
 $s = $size_classes[$size];
 
@@ -220,9 +282,19 @@ if ($image_config !== null) {
                 )
                 : '';
 
+        // Vertical: bleeds edge-to-edge over the outer padding, rounded top corners matching the
+        // card's own radius step. Horizontal: a full-height left column (the outer element's
+        // `overflow-hidden` rounds it), the caller's image typically `absolute inset-0 size-full
+        // object-cover`.
+        $media_class = $horizontal
+            ? 'min-h-45'
+            : $s['media_mt'] .
+                ' overflow-hidden ' .
+                ($elevation === 'raised' ? 'rounded-t-card-raised' : 'rounded-t-card-flat');
+
         $media_markup = sprintf(
-            '<div class="relative %1$s overflow-hidden rounded-t-2xl" data-slot="card-media">%2$s%3$s</div>',
-            $s['media_mt'],
+            '<div class="relative %1$s" data-slot="card-media">%2$s%3$s</div>',
+            $media_class,
             $image_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             $media_badge_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         );
@@ -235,14 +307,15 @@ if ($title !== '') {
     ob_start();
     get_template_part('template-parts/base/typography', null, [
         'config' => [
-            'variant' => 'body-lg',
+            'variant' => $title_variant,
             'tag' => $title_tag,
             'text' => $title,
             'data_slot' => 'card-title',
-            // shadcn's own CardTitle is `leading-none font-semibold` -- body-lg is font-normal by
-            // default (see typography.php), added here the same way leading-none is, since neither
-            // is part of body-lg's own shared scale.
-            'class' => 'leading-none font-semibold',
+            // shadcn's own CardTitle is `leading-none font-semibold`; the project's cards all use
+            // extrabold titles (see the project-card note above). Line height stays typography.php's
+            // own `leading-normal` -- a second `leading-*` class here would compete with it (no
+            // tailwind-merge in PHP).
+            'class' => 'font-extrabold',
         ],
     ]);
     $title_markup = (string) ob_get_clean();
@@ -273,6 +346,20 @@ $action_markup =
             $action, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         )
         : '';
+
+// Icon box left of the title: title (+ icon) become one row in the header grid's first cell.
+if ($title_markup !== '' && trim($icon) !== '') {
+    $title_markup = sprintf(
+        '<div class="flex min-w-0 items-center gap-3.5" data-slot="card-title-row"><span class="%1$s" data-slot="card-icon">%2$s</span>%3$s</div>',
+        esc_attr(
+            'flex size-11 shrink-0 items-center justify-center rounded-xl ' .
+                "[&_svg:not([class*='size-'])]:size-5 " .
+                $icon_class,
+        ),
+        $icon, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        $title_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    );
+}
 
 $header_markup = '';
 
@@ -311,21 +398,40 @@ $footer_markup =
         )
         : '';
 
-$inner_html = $media_markup . $header_markup . $content_markup . $footer_markup;
+$body_html = $header_markup . $content_markup . $footer_markup;
 
-if (trim($inner_html) === '') {
+if (trim($media_markup . $body_html) === '') {
     return;
 }
 
+// Horizontal: header/content/footer move into their own padded body column next to the media.
+$inner_html = $horizontal
+    ? $media_markup .
+        sprintf(
+            '<div class="flex min-w-0 flex-col %1$s %2$s" data-slot="card-body">%3$s</div>',
+            $s['outer_gap'],
+            $s['outer_py'],
+            $body_html, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        )
+    : $media_markup . $body_html;
+
 $element_attributes = $attributes;
 
-// Base classes are shadcn's own Card ones (`flex flex-col gap-6 rounded-xl border bg-card py-6
-// text-card-foreground shadow-sm`, live-checked 2026-09-05) with this file's own radius/border-
-// token/hover-lift deviations documented in the file header above.
+// Base classes derived from shadcn's own Card ones (`flex flex-col gap-6 rounded-xl border bg-card
+// py-6 text-card-foreground shadow-sm`, live-checked 2026-09-05) with the elevation/hover
+// deviations documented in the file header above.
+$elevation_classes = [
+    'flat' => 'rounded-card-flat shadow-card-flat [a&]:hover:shadow-card-hover',
+    'raised' => 'rounded-card-raised shadow-card-raised [a&]:hover:shadow-lg',
+];
+$layout_classes = $horizontal
+    ? 'grid overflow-hidden sm:grid-cols-[240px_1fr]'
+    : "flex flex-col {$s['outer_gap']} {$s['outer_py']}";
+
 $computed_class = trim(
-    "bg-card text-card-foreground flex flex-col {$s['outer_gap']} rounded-2xl border border-border " .
-        "{$s['outer_py']} shadow-sm [a&]:cursor-pointer [a&]:no-underline [a&]:transition-all " .
-        '[a&]:hover:shadow-lg [a&]:hover:-translate-y-0.5',
+    "bg-card text-card-foreground {$layout_classes} {$elevation_classes[$elevation]} " .
+        '[a&]:cursor-pointer [a&]:no-underline [a&]:transition-shadow ' .
+        '[a&]:focus-visible:ring-[3px] [a&]:focus-visible:ring-ring/50 [a&]:focus-visible:outline-none',
 );
 
 $element_attributes['class'] = trim(
@@ -334,6 +440,8 @@ $element_attributes['class'] = trim(
 
 $element_attributes['data-slot'] = 'card';
 $element_attributes['data-size'] = $size;
+$element_attributes['data-elevation'] = $elevation;
+$element_attributes['data-orientation'] = $orientation;
 
 if ($href !== '') {
     $element_attributes['href'] = $href;

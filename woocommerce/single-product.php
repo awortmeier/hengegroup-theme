@@ -15,10 +15,9 @@ declare(strict_types=1);
 //      OHNE Link (explizite Vorgabe: Produkte zaehlen Anwendungen nur auf; die Seite "Anwendungen"
 //      verlinkt umgekehrt zu Produkten).
 //   4. Downloads (Tab "Technische Daten", Dateien aus der Mediathek; Format/Groesse automatisch):
-//      je Datei template-parts/base/attachment/attachment.php (Icon, Titel, Format/Groesse,
-//      Download-Button als Icon-Button, Button-Text aus dem Backend als aria-label), der
-//      Beschreibungstext darunter per typography.php -- attachment.php hat dafuer nur eine
-//      einzeilige, abgeschnittene Beschreibungszeile (explizite Wahl 2026-10-08).
+//      je Datei template-parts/base/attachment/attachment.php in der Variante `card` (Icon, Titel,
+//      Format/Groesse, Beschreibung, voller Download-Button mit dem Button-Text aus dem Backend)
+//      -- Design "Downloads" der Produktdetailseite (2026-10-08).
 //   5. Ansprechpartner + Anfrageformular (#kontakt): Ansprechpartner der Produktkategorie, sonst
 //      Standard aus Produkte > Einstellungen; Anfrage landet unter Produkte > Produktanfragen.
 //   6. Verwandte Produkte: WooCommerce "Up-Sells" (im Backend "Verwandte Produkte"), mit
@@ -211,46 +210,42 @@ while (have_posts()):
             <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               <?php foreach ($data['downloads'] as $download): ?>
                 <?php
+                $download_cta =
+                    $download['cta'] !== ''
+                        ? $download['cta']
+                        : sprintf(
+                            /* translators: %s: download title. */
+                            __('%s herunterladen', 'hengegroup-theme'),
+                            $download['title'],
+                        );
+
                 ob_start();
                 get_template_part('template-parts/base/button', null, [
                     'config' => [
                         'href' => $download['url'],
+                        'text' => $download_cta,
                         'variant' => 'grey-dark',
-                        'size' => 'icon-lg',
-                        'icon' => ['name' => 'download', 'set' => 'lucide'],
-                        'aria_label' =>
-                            $download['cta'] !== ''
-                                ? $download['cta']
-                                : sprintf(
-                                    /* translators: %s: download title. */
-                                    __('%s herunterladen', 'hengegroup-theme'),
-                                    $download['title'],
-                                ),
+                        'size' => 'lg',
+                        'full_width' => true,
                         'attributes' => ['download' => true],
                     ],
                 ]);
                 $download_action = (string) ob_get_clean();
                 ?>
-                <li class="flex flex-col gap-3">
+                <li class="flex">
                   <?php get_template_part('template-parts/base/attachment/attachment', null, [
                       'config' => [
+                          'variant' => 'card',
                           'title' => $download['title'],
                           'description' => $download['meta'],
+                          'text' => $download['description'],
                           'media' => [
-                              'icon' => ['name' => 'file', 'set' => 'lucide', 'class' => 'size-5'],
+                              'icon' => ['name' => 'file', 'set' => 'lucide'],
                           ],
                           'actions' => $download_action,
+                          'class' => 'w-full',
                       ],
                   ]); ?>
-                  <?php if ($download['description'] !== '') {
-                      get_template_part('template-parts/base/typography', null, [
-                          'config' => [
-                              'variant' => 'body-sm',
-                              'text' => $download['description'],
-                              'class' => 'px-1',
-                          ],
-                      ]);
-                  } ?>
                 </li>
               <?php endforeach; ?>
             </ul>
@@ -259,7 +254,9 @@ while (have_posts()):
       </section>
     <?php endif; ?>
 
-    <?php $contact_card = hengegroup_theme_render_product_contact_card($data['contact']); ?>
+    <?php $contact_card = hengegroup_theme_render_contact_card($data['contact'], [
+        'variant' => 'light',
+    ]); ?>
     <section id="kontakt" class="scroll-mt-24 bg-grey-dark py-16 md:py-25" aria-labelledby="kontakt-titel">
       <div class="wrapper gap-y-12">
         <div class="col-span-12 max-w-3xl">

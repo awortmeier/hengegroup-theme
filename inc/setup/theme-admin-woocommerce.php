@@ -36,11 +36,19 @@ function hengegroup_theme_get_woocommerce_submenu_pages_to_remove(): array
 
 /**
  * Komplette Top-Level-Menues von WooCommerce, die in diesem Projekt nicht genutzt werden
- * (explizite Nachfrage 2026-10-07: "Marketing" ganz ausblenden, nicht nur dessen Uebersicht).
+ * (explizite Nachfrage 2026-10-07: "Marketing" ganz ausblenden, nicht nur dessen Uebersicht;
+ * 2026-10-08: "WooCommerce" und "Zahlungen" ebenfalls, solange nur Produkte gebraucht werden --
+ * Shop-Funktionen kommen erst in einer spaeteren Version der Seite). Nur das Menue verschwindet,
+ * die Seiten bleiben per URL erreichbar (z. B. admin.php?page=wc-settings). Der Zahlungen-Slug
+ * enthaelt WCs `from`-Parameter und muss exakt passen (remove_menu_page() vergleicht exakt).
  */
 function hengegroup_theme_get_woocommerce_menu_pages_to_remove(): array
 {
-    return ['woocommerce-marketing'];
+    return [
+        'woocommerce-marketing',
+        'woocommerce',
+        'admin.php?page=wc-settings&tab=checkout&from=PAYMENTS_MENU_ITEM',
+    ];
 }
 
 /**

@@ -10,7 +10,7 @@ declare(strict_types=1);
 //     (template-parts/blocks/stellen-liste), nicht hier. Oben ein Hinweis, welche fuer Google Jobs wichtigen Angaben noch fehlen.
 //   - Zusatzfelder an den Taxonomie-Termen: Unternehmen (rechtlicher Name, Website, Logo, Farbe,
 //     Unternehmensseite, Standard-Benefits, optionaler eigener Ansprechpartner), Standort (Adresse + Koordinaten).
-//   - "Karriere > Einstellungen": Karriereseite + Standard-Ansprechpartner (aktuell einer fuer alle
+//   - "Stellenangebote > Einstellungen": Karriereseite + Standard-Ansprechpartner (aktuell einer fuer alle
 //     Unternehmen, pro Unternehmen ueberschreibbar).
 // Klassische add_meta_box()-/Term-Formular-Felder wie die bestehende SEO-/Badge-Box
 // (theme-seo-admin.php, theme-woocommerce-products.php) -- funktioniert im Block-Editor als
@@ -139,7 +139,7 @@ function hengegroup_theme_render_job_details_meta_box(WP_Post $post): void
             __('— Unternehmen wählen —', 'hengegroup-theme'),
         ),
         __(
-            'Logo, Farbe, Website und Ansprechpartner kommen vom Unternehmen (Karriere > Unternehmen).',
+            'Logo, Farbe, Website und Ansprechpartner kommen vom Unternehmen (Stellenangebote > Unternehmen).',
             'hengegroup-theme',
         ),
         'hengegroup-theme-job-company',
@@ -167,7 +167,7 @@ function hengegroup_theme_render_job_details_meta_box(WP_Post $post): void
         $location_markup !== ''
             ? $location_markup
             : esc_html__(
-                'Noch keine Standorte angelegt (Karriere > Standorte).',
+                'Noch keine Standorte angelegt (Stellenangebote > Standorte).',
                 'hengegroup-theme',
             ),
     );
@@ -515,7 +515,7 @@ function hengegroup_theme_get_job_term_fields(string $taxonomy): array
                 __('Ansprechpartner: Name', 'hengegroup-theme'),
                 'text',
                 __(
-                    'Nur ausfüllen, wenn abweichend vom Standard-Ansprechpartner (Karriere > Einstellungen).',
+                    'Nur ausfüllen, wenn abweichend vom Standard-Ansprechpartner (Stellenangebote > Einstellungen).',
                     'hengegroup-theme',
                 ),
             ],

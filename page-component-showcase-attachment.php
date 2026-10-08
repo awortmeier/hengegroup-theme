@@ -370,6 +370,64 @@ $view_remove_actions = static function (): string {
     </section>
 
     <section class="mb-16">
+        <h2 class="mb-6 text-xl font-semibold">Karte (<code>variant: 'card'</code>)</h2>
+        <p class="mb-4 text-sm text-neutral-500">
+            Download-Karte: Kopfzeile (Icon, Titel, Format/Größe), mehrzeiliger
+            <code>text</code>, darunter <code>actions</code> in voller Breite
+            (<code>button.php</code> mit <code>full_width</code>). <code>size</code>/
+            <code>orientation</code> greifen hier nicht.
+        </p>
+        <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <?php foreach (
+                [
+                    [
+                        'Produktdatenblatt',
+                        'PDF · 1,2 MB',
+                        'Alle technischen Daten, Korngrößen und Einsatzbereiche kompakt auf einen Blick.',
+                        'Datenblatt herunterladen',
+                    ],
+                    [
+                        'Sicherheitsdatenblatt',
+                        'PDF · 0,8 MB',
+                        'Angaben zu Handhabung, Lagerung und Gefahrenhinweisen gemäß REACH.',
+                        'SDB herunterladen',
+                    ],
+                    ['Zertifikate', 'PDF · 0,5 MB', '', 'Zertifikate herunterladen'],
+                ]
+                as [$card_title, $card_meta, $card_text, $card_cta]
+            ): ?>
+                <li class="flex">
+                    <?php
+                    ob_start();
+                    get_template_part('template-parts/base/button', null, [
+                        'config' => [
+                            'href' => '#',
+                            'text' => $card_cta,
+                            'variant' => 'grey-dark',
+                            'size' => 'lg',
+                            'full_width' => true,
+                        ],
+                    ]);
+                    $card_action = (string) ob_get_clean();
+
+                    get_template_part('template-parts/base/attachment/attachment', null, [
+                        'config' => [
+                            'variant' => 'card',
+                            'title' => $card_title,
+                            'description' => $card_meta,
+                            'text' => $card_text,
+                            'media' => ['icon' => ['name' => 'file', 'set' => 'lucide']],
+                            'actions' => $card_action,
+                            'class' => 'w-full',
+                        ],
+                    ]);
+                    ?>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </section>
+
+    <section class="mb-16">
         <h2 class="mb-6 text-xl font-semibold">Custom class (Passthrough)</h2>
         <div class="max-w-xl">
             <?php get_template_part('template-parts/base/attachment/attachment', null, [

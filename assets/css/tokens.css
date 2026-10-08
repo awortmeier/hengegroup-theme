@@ -133,4 +133,16 @@
        also separat tragen -- die generierte `max-w-page`-Utility (Tailwinds `--container-*`-
        Namespace) ist jetzt fuer beide Stellen dieselbe Quelle. */
     --container-page: 1600px;
+
+    /* Karten-Stufen (Audit 2026-10-08 Punkt 1): zwei Hoehen statt frei eingetragener
+       `shadow-[...]`/`rounded-[20px]`-Werte je Karte. `flat` = Karten auf hellem Grund in Rastern
+       (Anwendungen, Downloads, Faktenleiste, Stellen-Zeilen), `raised` = einzeln stehende,
+       hervorgehobene Karten (Kontakt, Anwendungs-Uebersicht, Auszeichnungen). `card-hover` ist der
+       Hover-Schatten verlinkter flacher Karten. Werte = Literalwerte der Design-Referenzen.
+       Utilities: shadow-card-flat/-hover/-raised, rounded-card-flat/-raised. */
+    --shadow-card-flat: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-card-raised: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --radius-card-flat: 1rem;
+    --radius-card-raised: 1.25rem;
 }

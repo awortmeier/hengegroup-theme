@@ -591,41 +591,35 @@ function hengegroup_theme_render_anwendung_icon(string $key, string $class): str
 }
 
 /**
- * Karte "Anwendungsbereich" (Design "Produktdetailseite"): Icon-Kachel in Produktfarbe, Titel,
- * Kurztext. Bewusst OHNE Link -- Produkte zaehlen Anwendungen nur auf (explizite Vorgabe).
+ * Karte "Anwendungsbereich" (Design "Produktdetailseite"): template-parts/base/card.php (flach,
+ * `lg`) mit Icon-Kachel in Produktfarbe, Titel, Kurztext. Bewusst OHNE Link -- Produkte zaehlen
+ * Anwendungen nur auf (explizite Vorgabe).
  */
 function hengegroup_theme_render_anwendung_card(WP_Term $term, string $variant): string
 {
     $anwendung = hengegroup_theme_get_anwendung_data($term);
     $icon = hengegroup_theme_render_anwendung_icon($anwendung['icon'], 'size-[22px]');
 
-    return sprintf(
-        '<li class="rounded-2xl bg-white p-7 shadow-[0_1px_3px_rgba(0,0,0,0.06)]" data-slot="anwendung-card"><div class="mb-4 flex items-center gap-3.5">%1$s%2$s</div>%3$s</li>',
-        $icon !== ''
-            ? sprintf(
-                '<span class="flex size-11 shrink-0 items-center justify-center rounded-xl %1$s">%2$s</span>',
-                esc_attr(hengegroup_theme_get_variant_background_class($variant)),
-                $icon,
-            )
-            : '',
-        hengegroup_theme_render_typography([
-            'variant' => 'body-base',
-            'tag' => 'h3',
-            'text' => $anwendung['name'],
-            'class' => 'font-extrabold',
-        ]),
-        $anwendung['short'] !== ''
-            ? hengegroup_theme_render_typography([
-                'variant' => 'body-sm',
-                'text' => $anwendung['short'],
-            ])
-            : '',
-    );
+    return hengegroup_theme_render_card([
+        'tag' => 'li',
+        'size' => 'lg',
+        'title' => $anwendung['name'],
+        'title_variant' => 'body-base',
+        'icon' => $icon,
+        'icon_class' => hengegroup_theme_get_variant_background_class($variant),
+        'content' =>
+            $anwendung['short'] !== ''
+                ? hengegroup_theme_render_typography([
+                    'variant' => 'body-sm',
+                    'text' => $anwendung['short'],
+                ])
+                : '',
+    ]);
 }
 
 /**
- * Querkarte einer Anwendung auf der Seite /anwendungen/ (Design "Anwendungen"): Bild links (240 px,
- * mobil oben), rechts Titel, Beschreibung und die zugeordneten Produkte als Chips (badge.php,
+ * Querkarte einer Anwendung auf der Seite /anwendungen/ (Design "Anwendungen"):
+ * template-parts/base/card.php (`raised`, `horizontal`, `lg`) -- Bild links (240 px, mobil oben), rechts Titel, Beschreibung und die zugeordneten Produkte als Chips (badge.php,
  * Variante `outline` mit `href` -- gleiche Optik wie die Anwendungs-Badges der Produktbox). Die
  * Chips verlinken auf die Produktseiten (Design) -- die Gegenrichtung (Produkt -> Anwendung) bleibt
  * ohne Link. `id` = Slug der Anwendung als Sprungziel.
@@ -675,176 +669,44 @@ function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
             )
             : '';
 
-    return sprintf(
-        '<li id="%1$s" class="grid scroll-mt-24 overflow-hidden rounded-[20px] bg-neutral-50 shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:grid-cols-[240px_1fr]" data-slot="anwendung-overview-card"><div class="relative min-h-45">%2$s</div><div class="flex flex-col px-7 py-6">%3$s%4$s%5$s</div></li>',
-        esc_attr($anwendung['slug']),
-        hengegroup_theme_render_image($image_config),
-        hengegroup_theme_render_typography([
-            'variant' => 'body-lg',
-            'tag' => 'h3',
-            'text' => $anwendung['name'],
-            'class' => 'mb-2.5 font-extrabold',
-        ]),
-        $anwendung['description'] !== ''
-            ? hengegroup_theme_render_typography([
-                'variant' => 'body-sm',
-                'text' => $anwendung['description'],
-                'class' => 'mb-4.5',
-            ])
-            : '',
-        $products,
-    );
+    return hengegroup_theme_render_card([
+        'tag' => 'li',
+        'elevation' => 'raised',
+        'orientation' => 'horizontal',
+        'size' => 'lg',
+        'image' => $image_config,
+        'title' => $anwendung['name'],
+        'content' =>
+            ($anwendung['description'] !== ''
+                ? hengegroup_theme_render_typography([
+                    'variant' => 'body-sm',
+                    'text' => $anwendung['description'],
+                    'class' => 'mb-4.5',
+                ])
+                : '') . $products,
+        'class' => 'scroll-mt-24',
+        'attributes' => ['id' => $anwendung['slug']],
+    ]);
 }
 
 /**
- * Helle Ansprechpartner-Karte mit Foto (Design "Produktdetailseite", Abschnitt "Ihr Ansprechpartner
- * im Vertrieb"). Leerer String, wenn weder Name noch E-Mail gepflegt sind.
- */
-function hengegroup_theme_render_product_contact_card(array $contact): string
-{
-    if (trim($contact['name'] ?? '') === '' && trim($contact['email'] ?? '') === '') {
-        return '';
-    }
-
-    $photo =
-        (int) ($contact['photo_id'] ?? 0) > 0
-            ? hengegroup_theme_render_image([
-                'attachment_id' => (int) $contact['photo_id'],
-                'size' => 'medium_large',
-                'alt' => (string) ($contact['name'] ?? ''),
-                'class' => 'h-55 w-full object-cover',
-            ])
-            : '';
-
-    $rows = '';
-    $row_template =
-        '<li class="flex min-w-0 items-center gap-2.5 text-sm text-grey-dark">%1$s<span class="min-w-0 break-all">%2$s</span></li>';
-
-    if (($contact['email'] ?? '') !== '') {
-        $rows .= sprintf(
-            $row_template,
-            hengegroup_theme_render_icon([
-                'name' => 'mail',
-                'set' => 'lucide',
-                'class' => 'size-4 shrink-0',
-            ]),
-            sprintf(
-                '<a class="text-grey-dark underline-offset-4 hover:underline" href="mailto:%1$s">%2$s</a>',
-                esc_attr(antispambot($contact['email'])),
-                esc_html(antispambot($contact['email'])),
-            ),
-        );
-    }
-
-    if (($contact['phone'] ?? '') !== '') {
-        $rows .= sprintf(
-            $row_template,
-            hengegroup_theme_render_icon([
-                'name' => 'phone',
-                'set' => 'lucide',
-                'class' => 'size-4 shrink-0',
-            ]),
-            sprintf(
-                '<a class="text-grey-dark underline-offset-4 hover:underline" href="%1$s">%2$s</a>',
-                esc_url(hengegroup_theme_phone_href($contact['phone']), ['tel']),
-                esc_html($contact['phone']),
-            ),
-        );
-    }
-
-    return sprintf(
-        '<div class="overflow-hidden rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.12)]" data-slot="product-contact">%1$s<div class="bg-white px-7 py-6"><p class="mb-1 text-[19px] font-extrabold text-grey-dark">%2$s</p>%3$s<ul class="flex flex-col gap-2.5">%4$s</ul></div></div>',
-        $photo,
-        esc_html($contact['name'] ?? ''),
-        ($contact['role'] ?? '') !== ''
-            ? '<p class="mb-4.5 text-sm text-grey-dark/60">' . esc_html($contact['role']) . '</p>'
-            : '<div class="mb-3.5"></div>',
-        $rows,
-    );
-}
-
-/**
- * Firmen-Kontaktkarte (Design "Produktuebersicht", Abschnitt "Kontakt"): grauer Kopf mit
- * E-Mail/Telefon/Fax, weisser Teil mit Adresse -- Daten aus Einstellungen > Footer, dieselbe Quelle
- * wie footer.php.
+ * Firmen-Kontaktkarte (Block "Kontakt"): template-parts/components/contact-card.php in der Variante
+ * `split` (oben E-Mail/Telefon/Fax, darunter Adresse) -- Daten aus Einstellungen > Footer, dieselbe
+ * Quelle wie footer.php.
  */
 function hengegroup_theme_render_company_contact_card(): string
 {
     $options = hengegroup_theme_get_footer_options();
-    $rows = '';
-    $row_template =
-        '<li class="flex items-center gap-2.5 text-[15px] text-grey-light">%1$s%2$s</li>';
-    $icon = static fn(string $name): string => hengegroup_theme_render_icon([
-        'name' => $name,
-        'set' => 'lucide',
-        'class' => 'size-[18px] shrink-0',
-    ]);
 
-    if ((string) $options['email'] !== '') {
-        $rows .= sprintf(
-            $row_template,
-            $icon('mail'),
-            sprintf(
-                '<a class="text-grey-light underline-offset-4 hover:underline" href="mailto:%1$s">%2$s</a>',
-                esc_attr(antispambot((string) $options['email'])),
-                esc_html(antispambot((string) $options['email'])),
-            ),
-        );
-    }
-
-    if ((string) $options['phone'] !== '') {
-        $rows .= sprintf(
-            $row_template,
-            $icon('phone'),
-            sprintf(
-                '<a class="text-grey-light underline-offset-4 hover:underline" href="%1$s">%2$s</a>',
-                esc_url(hengegroup_theme_phone_href((string) $options['phone']), ['tel']),
-                esc_html((string) $options['phone']),
-            ),
-        );
-    }
-
-    if ((string) $options['fax'] !== '') {
-        $rows .= sprintf(
-            $row_template,
-            $icon('printer'),
-            '<span><span class="sr-only">' .
-                esc_html__('Fax:', 'hengegroup-theme') .
-                ' </span>' .
-                esc_html((string) $options['fax']) .
-                '</span>',
-        );
-    }
-
-    $address_lines = array_filter(
-        array_map('trim', explode("\n", (string) $options['address'])),
-        static fn(string $line): bool => $line !== '',
-    );
-
-    $address =
-        $address_lines !== []
-            ? sprintf(
-                '<div class="bg-white px-7 py-6"><p class="mb-3.5 text-[19px] font-extrabold text-grey-dark">%1$s</p><address class="flex items-start gap-2.5 text-[15px] leading-[1.7] text-grey-dark not-italic">%2$s<span>%3$s</span></address></div>',
-                esc_html__('Adresse', 'hengegroup-theme'),
-                hengegroup_theme_render_icon([
-                    'name' => 'map-pin',
-                    'set' => 'lucide',
-                    'class' => 'mt-0.5 size-5 shrink-0 text-grey-dark/80',
-                ]),
-                implode('<br>', array_map('esc_html', $address_lines)),
-            )
-            : '';
-
-    return sprintf(
-        '<div class="overflow-hidden rounded-[20px] shadow-[0_8px_24px_rgba(0,0,0,0.12)]" data-slot="company-contact">%1$s%2$s</div>',
-        $rows !== ''
-            ? sprintf(
-                '<div class="bg-henge-grey px-7 py-6"><p class="mb-3.5 text-[19px] font-extrabold text-grey-light">%1$s</p><ul class="flex flex-col gap-2.5">%2$s</ul></div>',
-                esc_html__('Kontakt', 'hengegroup-theme'),
-                $rows,
-            )
-            : '',
-        $address,
+    return hengegroup_theme_render_contact_card(
+        [
+            'name' => __('Kontakt', 'hengegroup-theme'),
+            'email' => (string) $options['email'],
+            'phone' => (string) $options['phone'],
+            'fax' => (string) $options['fax'],
+            'address' => (string) $options['address'],
+        ],
+        ['variant' => 'split'],
     );
 }
 

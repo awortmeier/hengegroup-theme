@@ -10,7 +10,7 @@ declare(strict_types=1);
 // welches schema.org-Feld die Eintraege im JSON-LD fuellen.
 //
 // Eine leere "Wir bieten dir"-Liste zeigt die Standard-Benefits des zugeordneten Unternehmens
-// (Karriere > Unternehmen) -- so muss nicht jede Stelle dieselben Benefits wiederholen. Andere leere
+// (Stellenangebote > Unternehmen) -- so muss nicht jede Stelle dieselben Benefits wiederholen. Andere leere
 // Listen werden gar nicht ausgegeben. Listen-Optik (Aufzaehlungszeichen, Einzug) kommt hier aus
 // dem Block selbst, damit er auch ausserhalb der Stellen-Einzelseite korrekt aussieht.
 

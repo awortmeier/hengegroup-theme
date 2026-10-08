@@ -45,17 +45,59 @@ Ausloeser: Audit (`docs/audit-2026-10-08.md` Punkte 4-6).
   dem Design -- eine nur fuer den Footer gedachte Button-Variante ist den API-Zuwachs nicht wert.
   Groesse 40 statt 36 px (`icon-lg`). Nur gueltige http(s)-URLs erzeugen einen Button.
 
+### Karten: zwei Stufen als Token, card.php als Standard-Karte (2026-10-08)
+
+Ausloeser: Audit (`docs/audit-2026-10-08.md` Punkt 1) -- `card.php` war im Projekt ungenutzt,
+stattdessen trugen die Karten eigene feste Werte (4 Schatten, 3 Radien, 5 Innenabstaende).
+
+- **Tokens** in `assets/css/tokens.css`: `--shadow-card-flat`/`--radius-card-flat` (16px, leichter
+  Schatten) und `--shadow-card-raised`/`--radius-card-raised` (20px, grosser Schatten 0.12), dazu
+  `--shadow-card-hover`. Die Auszeichnung (vorher 0.08) ist dabei auf 0.12 angeglichen. Bewusst
+  `card-flat`/`card-raised` statt nur `card`: `shadow-card` waere mit der Farbe `--color-card`
+  (`shadow-<farbe>`) mehrdeutig.
+- **card.php = Standard-Karte**: `elevation`, `size: lg` (28px), `icon`, `title_variant`,
+  `orientation: horizontal`, `tag: li`; Details im Kopfkommentar. Umgestellt: Anwendungskarte,
+  Anwendungs-Uebersicht, Faktenleiste Stellenangebot, Stellen-Zeile, Auszeichnung.
+- **Bewusst eigenstaendig, nur mit den Tokens**: Kontaktkarte (zwei Farbflaechen), Download-Karte
+  (`attachment.php`, Datei-Karte). Die Produktbox bleibt ganz aussen vor (explizite Vorgabe).
+- **Auszeichnung ohne `orientation`**: Das Logo ist kein Cover-Bild, sondern ein kleines Bild im
+  Innenabstand -- die ganze Zeile steht als `content` in der Karte.
+- **Angleichungen** (sichtbar, aber gewollt): Anwendungs-Uebersicht weiss statt `neutral-50`,
+  Stellen-Zeile 24px statt 20px Innenabstand oben/unten, Auszeichnung 28px statt 24/32px,
+  Anwendungs-Uebersicht 28px statt 24px oben/unten.
+
+### Kontaktkarten als eine Komponente: hell, dunkel, zweigeteilt (2026-10-08)
+
+Ausloeser: Audit (`docs/audit-2026-10-08.md` Punkt 7). Job-, Produkt- und Firmen-Kontaktkarte
+waren drei getrennte Funktionen mit eigener Zeilenlogik; jetzt `template-parts/components/contact-card.php`
+(Aufruf ueber `hengegroup_theme_render_contact_card()`), Details im Kopfkommentar.
+
+- **Aufbau von der Produkt-Kontaktkarte** (explizite Vorgabe): Name, Rolle als Unterzeile,
+  E-Mail/Telefon als Zeilen. Die Job-Karte verliert dadurch ihre Rollen-Zeile mit Icon und die
+  groessere Schrift.
+- **Kein Foto mehr** (explizite Vorgabe). Das Feld "Ansprechpartner: Foto" in den
+  Produkt-Einstellungen/-Kategorien bleibt vorerst bestehen, wird aber nicht mehr ausgegeben.
+- **Variante statt fester Farbe**: Produktseite `light` (Karte auf dunklem Abschnitt), Karriere
+  `dark` (Karte auf hellem Hintergrund) -- wie bisher.
+- Telefon jetzt ueberall per `hengegroup_theme_phone_href()` + `esc_url()` (die Job-Karte liess die
+  "(0)" bisher im `tel:`-Link stehen).
+- **Firmen-Kontaktkarte = Variante `split`** (Nachtrag, gleicher Tag): zwei Bereiche in zwei
+  Farben (oben henge-grey mit E-Mail/Telefon/Fax, darunter weiss mit Adresse), Schrift, Icons und
+  Abstaende ebenfalls von der Produkt-Kontaktkarte (vorher 15px Text, 18px-Icons). Die Funktion
+  `hengegroup_theme_render_company_contact_card()` bleibt nur als Daten-Mapper aus Einstellungen >
+  Footer. Der Footer selbst ist bewusst noch nicht einbezogen.
+
 ### Produktdetailseite: Downloads ueber attachment.php, Anwendungs-Chips ueber badge.php (2026-10-08)
 
 Ausloeser: Audit (`docs/audit-2026-10-08.md` Punkte 2 und 3) -- beide waren eigenes Markup, obwohl
 die Base-Komponente existiert.
 
-- **Downloads = attachment.php + Beschreibung darunter** (explizite Wahl aus drei Varianten):
-  Icon, Titel, Format/Groesse und Download-Button kommen aus attachment.php. Der Button ist ein
-  Icon-Button (attachment.php setzt Aktionen rechts neben den Titel, ein Text-Button wuerde den
-  Titel abschneiden); der im Backend gepflegte Button-Text bleibt als `aria-label` erhalten. Der
-  Beschreibungstext steht per typography.php unter der Zeile, weil attachment.php nur eine
-  einzeilige, abgeschnittene Beschreibungszeile hat -- dort steht Format/Groesse.
+- **Downloads = attachment.php `variant: 'card'`** (Design "Downloads", 2026-10-08; ersetzt die
+  erste Loesung "Zeile mit Icon-Button + Beschreibung per typography.php darunter"): neue Variante
+  in attachment.php statt eigener download-card.php, weil es dieselben Teile sind (Media, Titel,
+  Format/Groesse, Aktionen, Trigger), nur anders angeordnet -- dazu ein mehrzeiliges `text`-Feld
+  und Aktionen in voller Breite, sodass der Button-Text aus dem Backend wieder sichtbar ist.
+  Details im Kopfkommentar von attachment.php.
 - **Anwendungs-Chips = badge.php `outline` mit `href`**: gleiche Optik wie die Anwendungs-Badges in
   der Produktbox statt eines eigenen Pill-Links mit Hex-Rahmenfarbe; Hover kommt aus badge.php.
 
@@ -758,6 +800,16 @@ Auf expliziten Wunsch (`inc/setup/theme-admin-woocommerce.php`):
 - **Nachtrag (2026-10-07): "Marketing" komplett ausgeblendet** (vorher nur dessen
   Uebersichts-Untermenue) -- `remove_menu_page('woocommerce-marketing')` ueber
   `hengegroup_theme_get_woocommerce_menu_pages_to_remove()`.
+- **Nachtrag (2026-10-08): "WooCommerce" und "Zahlungen" ebenfalls ausgeblendet** -- aktuell
+  werden nur Produkte gebraucht, Shop-Funktionen kommen erst in einer spaeteren Version der Seite.
+  Nur die Menuepunkte verschwinden, die Seiten (z. B. `admin.php?page=wc-settings`) bleiben per URL
+  erreichbar. Fuer die spaetere Shop-Version die beiden Slugs wieder aus
+  `hengegroup_theme_get_woocommerce_menu_pages_to_remove()` entfernen.
+- **Nachtrag (2026-10-08): Versand deaktiviert** -- Filter `wc_shipping_enabled` liefert
+  `false` (`inc/setup/theme-hardening-woocommerce.php`), damit der Website-Zustand nicht mehr
+  "Versand aktiv, aber keine Versandarten" meldet. Filter statt der WC-Option
+  `woocommerce_ship_to_countries`, weil Theme-Code auf jeder Instanz gilt. Fuer die spaetere
+  Shop-Version den Filter wieder entfernen.
 
 ### `badge.php`: `outline`-Randfarbe jetzt `neutral-500` direkt, kein eigener Token (2026-09-23)
 

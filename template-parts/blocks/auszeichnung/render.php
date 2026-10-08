@@ -27,7 +27,8 @@ $text = trim((string) ($attributes['text'] ?? ''));
 $button_text = trim((string) ($attributes['buttonText'] ?? ''));
 $button_url = trim((string) ($attributes['buttonUrl'] ?? ''));
 
-echo '<li class="flex items-start gap-6 rounded-[20px] bg-white p-6 shadow-[0_8px_24px_rgba(0,0,0,0.08)] sm:p-8">';
+ob_start();
+echo '<div class="flex items-start gap-6">';
 
 if ($image_id > 0) {
     $image_markup = hengegroup_theme_render_image([
@@ -82,4 +83,15 @@ if ($button_text !== '' && $button_url !== '') {
 }
 
 echo '</div>';
-echo '</li>';
+echo '</div>';
+
+// Karte selbst = template-parts/base/card.php (`raised`, `lg`); das Logo ist kein Cover-Bild,
+// darum steht die ganze Zeile (Logo + Text + Button) als `content` darin.
+get_template_part('template-parts/base/card', null, [
+    'config' => [
+        'tag' => 'li',
+        'elevation' => 'raised',
+        'size' => 'lg',
+        'content' => (string) ob_get_clean(),
+    ],
+]);

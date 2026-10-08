@@ -105,9 +105,27 @@ declare(strict_types=1);
 // per-state/-size look itself is CSS-attribute-driven (see above), not a PHP-computed class map per
 // value either, so there's no per-variant branch that would want its own file.
 //
+// `variant: 'card'` (design request 2026-10-08, "Downloads" section of the product detail page
+// reference https://claude.ai/artifact/4qQ92u93LJVZgHWZPLeLWV): a stacked download card instead of
+// the one-line row -- header (media + title/description) on top, a multi-line `text` below it
+// (`flex-1`, so cards in one grid row line up their actions), `actions` last at full width (the
+// reference's full-width pill CTA, i.e. a button.php call with `full_width: true`). Not a shadcn
+// prop (its Attachment is a single row only); kept inside attachment.php rather than a separate
+// download-card.php because media/title/description/actions/trigger are exactly the same parts,
+// only arranged differently. The extra `attachment-header`/`attachment-text` wrappers exist only in
+// this variant, so the default variant's markup is unchanged. `size`/`orientation` don't apply to
+// it (forced to default/horizontal) -- their padding/width overrides would fight the card's own.
+// Radius/shadow = the `flat` card step from tokens.css (`rounded-card-flat`/`shadow-card-flat`,
+// same as card.php's `elevation: flat`). Reference values mapped to real Tailwind steps: 28px padding =
+// `p-7`, 44px icon box = `size-11`, 15px/17px text = `text-base`/`text-lg`; the reference's
+// off-white icon box (#f4f3f1) = `bg-muted`, its dark CTA = button.php `grey-dark`.
+//
 // Supported config:
+//   variant         string   default | card (see the `variant: 'card'` note above)
 //   title           string   file/attachment name (required unless `media` is given)
 //   description     string   metadata line (e.g. file type + size, or an upload-progress message)
+//   text            string   multi-line body text below the header -- `variant: 'card'` only,
+//                             ignored otherwise (the default row has no room for it)
 //   media           array    { variant: 'icon' (default) | 'image', icon: icon.php config,
 //                              image: image.php config, class: string appended onto the media
 //                              wrapper AFTER its computed classes (e.g. an icon-box accent color --
@@ -147,6 +165,8 @@ $config = $args['config'];
 
 $title = trim((string) ($config['title'] ?? ''));
 $description = trim((string) ($config['description'] ?? ''));
+$variant = trim((string) ($config['variant'] ?? 'default'));
+$text = trim((string) ($config['text'] ?? ''));
 $media_config = is_array($config['media'] ?? null) ? $config['media'] : null;
 $actions = (string) ($config['actions'] ?? '');
 $progress_config = is_array($config['progress'] ?? null) ? $config['progress'] : null;
@@ -164,10 +184,15 @@ if ($title === '' && $media_config === null) {
     return;
 }
 
+$allowed_variants = ['default', 'card'];
 $allowed_states = ['idle', 'uploading', 'processing', 'error', 'done'];
 $allowed_sizes = ['default', 'sm', 'xs'];
 $allowed_orientations = ['horizontal', 'vertical'];
 $allowed_media_variants = ['icon', 'image'];
+
+if (!in_array($variant, $allowed_variants, true)) {
+    $variant = 'default';
+}
 
 if (!in_array($state, $allowed_states, true)) {
     $state = 'done';
@@ -178,6 +203,11 @@ if (!in_array($size, $allowed_sizes, true)) {
 }
 
 if (!in_array($orientation, $allowed_orientations, true)) {
+    $orientation = 'horizontal';
+}
+
+if ($variant === 'card') {
+    $size = 'default';
     $orientation = 'horizontal';
 }
 
@@ -230,7 +260,9 @@ if ($media_config !== null) {
             'group-data-[state=error]/attachment:bg-destructive/10 ' .
             'group-data-[state=error]/attachment:text-destructive ' .
             "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 " .
-            "group-data-[size=xs]/attachment:[&_svg:not([class*='size-'])]:size-3.5";
+            "group-data-[size=xs]/attachment:[&_svg:not([class*='size-'])]:size-3.5 " .
+            'group-data-[variant=card]/attachment:w-11 group-data-[variant=card]/attachment:text-foreground ' .
+            "group-data-[variant=card]/attachment:[&_svg:not([class*='size-'])]:size-5";
 
         if ($media_variant === 'image') {
             $media_class .=
@@ -271,6 +303,9 @@ if ($title !== '' || $description !== '' || $progress_markup !== '') {
             ? sprintf(
                 '<div data-slot="attachment-title" class="%1$s">%2$s</div>',
                 'block max-w-full min-w-0 truncate text-base font-semibold text-foreground ' .
+                    'group-data-[variant=card]/attachment:text-lg ' .
+                    'group-data-[variant=card]/attachment:font-extrabold ' .
+                    'group-data-[variant=card]/attachment:whitespace-normal ' .
                     'group-data-[size=sm]/attachment:text-sm group-data-[size=xs]/attachment:text-sm ' .
                     'group-data-[state=error]/attachment:text-destructive ' .
                     'group-data-[state=uploading]/attachment:animate-pulse ' .
@@ -305,6 +340,10 @@ $actions_markup =
         ? sprintf(
             '<div data-slot="attachment-actions" class="%1$s">%2$s</div>',
             'relative z-20 flex shrink-0 items-center gap-1 ' .
+                'group-data-[variant=card]/attachment:flex-col ' .
+                'group-data-[variant=card]/attachment:items-stretch ' .
+                'group-data-[variant=card]/attachment:mt-auto ' .
+                'group-data-[variant=card]/attachment:gap-2 ' .
                 'group-data-[orientation=vertical]/attachment:absolute ' .
                 'group-data-[orientation=vertical]/attachment:top-2.5 ' .
                 'group-data-[orientation=vertical]/attachment:right-2.5',
@@ -330,10 +369,45 @@ $base_classes =
     'data-[size=xs]:has-data-[slot=attachment-content]:py-1.5 ' .
     'data-[size=xs]:has-data-[slot=attachment-media]:p-1.5';
 
+if ($variant === 'card') {
+    // Own class string instead of `data-[variant=card]:` overrides on the row classes above: the
+    // row's `has-data-[slot=...]:px-*`/`p-*` variants would otherwise compete with `p-7` (Tailwind
+    // emits `p-*` before `px-*`, so the row padding would win).
+    $base_classes =
+        'group/attachment relative flex min-w-0 flex-col gap-5 rounded-card-flat bg-card p-7 ' .
+        'text-card-foreground shadow-card-flat transition-[color,box-shadow,border-color] ' .
+        'hover:shadow-card-hover ' .
+        'focus-within:ring-[3px] focus-within:ring-ring/50 ' .
+        'data-[state=idle]:border data-[state=idle]:border-dashed data-[state=idle]:border-border ' .
+        'data-[state=error]:border data-[state=error]:border-destructive/40 ' .
+        'data-[state=error]:bg-destructive/5';
+
+    $header_markup =
+        $media_markup . $content_markup !== ''
+            ? sprintf(
+                '<div data-slot="attachment-header" class="flex min-w-0 items-center gap-3.5">%1$s</div>',
+                $media_markup . $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            )
+            : '';
+    $text_markup =
+        $text !== ''
+            ? sprintf(
+                '<div data-slot="attachment-text" class="%1$s">%2$s</div>',
+                'flex-1 text-base leading-normal text-foreground',
+                esc_html($text),
+            )
+            : '';
+
+    // Header + text now carry media/content; the printf below stays shared.
+    $media_markup = $header_markup;
+    $content_markup = $text_markup;
+}
+
 $wrapper_attributes = $attributes;
 $wrapper_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $wrapper_attributes['data-slot'] = 'attachment';
+$wrapper_attributes['data-variant'] = $variant;
 $wrapper_attributes['data-state'] = $state;
 $wrapper_attributes['data-size'] = $size;
 $wrapper_attributes['data-orientation'] = $orientation;

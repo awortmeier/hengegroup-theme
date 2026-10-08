@@ -9,7 +9,7 @@ declare(strict_types=1);
 // geteilt mit dem Editor-Vorschau-Zwilling karriere-teaser-liste/render.php). Abgelaufene Stellen
 // filtert die gemeinsame Abfrage heraus.
 //
-// Ohne eigene Button-URL verlinkt der Button auf die Karriereseite (Karriere > Einstellungen)
+// Ohne eigene Button-URL verlinkt der Button auf die Karriereseite (Stellenangebote > Einstellungen)
 // inkl. Sprungmarke zum "Offene Stellen"-Block (`#stellen`), damit der Block auch ohne manuelle
 // Verlinkung sofort funktioniert -- gleiche Idee wie der Shop-Fallback des Produkte-Blocks.
 
