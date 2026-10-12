@@ -2,64 +2,21 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Select wraps a headless UI primitive (historically Radix UI; shadcn now also ships
-// Base UI/React Aria variants of many components): a custom, JS-driven popover-based dropdown
-// (SelectTrigger/SelectContent/SelectItem), fully re-implementing native <select> behaviour in
-// JS/CSS for custom styling. This component deliberately stays with the native <select>/<option>
-// instead (explicit request + CLAUDE.md #1: natives HTML-Verhalten hat Vorrang) -- full
-// keyboard/touch/OS-native picker support, zero JS. There is no "NativeSelect" in shadcn's
-// registry to mirror vocabulary from, so the config below follows plain HTML
-// <select>/<option>/<optgroup> semantics instead. Same optional label pairing as input.php/
-// checkbox.php (nests template-parts/base/label.php).
+// Native <select>/<option>/<optgroup> (text-only options). For a styled listbox use select.php.
 //
-// Named native-select.php (data-slot="native-select") rather than select.php/data-slot="select"
-// on purpose: a separate, JS-driven Select-equivalent component is planned for later and
-// will own the select.php filename + shadcn's own data-slot="select" naming -- this file and that
-// future one are deliberately distinct components, not variants of each other (see the trade-off
-// note below), so they need non-colliding names/data-slots from the start.
-//
-// Trade-off vs. shadcn's Select: no custom-styled dropdown list, no rich option content (icons,
-// descriptions) -- native <option> is text-only. If that's needed, use the future JS-driven
-// select.php instead, not this one.
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind with the same field-surface treatment as
-// input.php (border/background/radius/padding/typography, see that file's header for the full
-// mapping from the Bewerbungsformular design reference) -- there is no shadcn "NativeSelect" to
-// take classes from 1:1 (see above), so this borrows input.php's own Input classes instead of
-// inventing a third variant, since a native <select> needs the exact same field-surface look as a
-// native <input>. Deliberately NOT adding `appearance-none` + a custom chevron overlay: that would
-// be new markup (an icon element), not a Tailwind class, out of scope for a styling-only pass (see
-// CLAUDE.md #1) -- select.php already covers the custom-chevron/custom-listbox case for callers
-// that need it. The browser's own native dropdown arrow renders inside the padded box as-is.
-//
-// Supported config:
-//   options        array   required, ordered list of:
-//     value / text    string   a plain <option value="..."> entry
-//     selected        bool     preselects this option (ignored when top-level `value` is given)
-//     disabled        bool     per-option disabled
-//     OR, for a group (mutually exclusive with value/text/selected/disabled above):
-//     label           string   <optgroup label="...">
-//     options         array    nested list of the same plain-option shape (no further nesting)
-//   value          string|array   preselects the option(s) whose `value` matches; a string for a
-//                        single select, an array of strings when `multiple` is true. Overrides any
-//                        per-option `selected` flags when given.
-//   placeholder    string   prepends a disabled, initially-selected placeholder option with an
-//                        empty value (the standard native-<select> placeholder trick) -- only
-//                        shown as selected when no `value`/`selected` option is given
-//   multiple       bool     native `multiple` attribute
-//   name           string   native `name`
-//   disabled / required   bool   native attributes; `disabled` also mirrors as
-//                  data-disabled="true"
-//   aria_invalid   bool     sets aria-invalid="true" plus a mirrored data-invalid="true", same
-//                  error-state hooks as input.php
-//   id             string   native `id`; auto-generated via wp_unique_id() when omitted (needed
-//                        to pair with `label` via its `for` attribute)
-//   label          string   optional visible label text; when given, nests
-//                        template-parts/base/label.php before the select, both wrapped in a plain
-//                        <div data-slot="native-select-field">. Omit for full manual control.
-//   aria_label     string   accessible name when no visible `label` is given
-//   class / attributes / data_attributes   passthrough onto the <select> itself (not onto the
-//                        optional wrapper div, which stays a plain, unstyled hook)
+// Config:
+//   options        array          required: { value, text, selected, disabled } or
+//                                 { label, options } for an <optgroup>
+//   value          string|array   preselection (wins over `selected`), array when multiple
+//   placeholder    string         disabled empty first option
+//   multiple       bool
+//   name           string
+//   disabled / required   bool    disabled also sets data-disabled
+//   aria_invalid   bool           aria-invalid + data-invalid
+//   id             string         default wp_unique_id()
+//   label          string         adds label.php
+//   aria_label     string
+//   class / attributes / data_attributes   on the <select>
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

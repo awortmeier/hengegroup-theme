@@ -2,24 +2,11 @@
 
 declare(strict_types=1);
 
-// Resolves + prints the actual SEO tags for the current front-end request: <title> (via the
-// pre_get_document_title filter, cooperating with add_theme_support('title-tag') from
-// theme-setup.php), meta description, canonical link, robots meta, Open Graph + Twitter Card
-// tags, and a JSON-LD Organization schema. Every resolver below follows the same fallback chain:
-// per-page "SEO" meta box value (theme-seo-admin.php) -> site-wide Settings > SEO default
-// (hengegroup_theme_get_seo_options(), same file) -> a sensible computed default (post excerpt,
-// featured image, permalink, ...) -> omitted entirely. See docs/to-do.md #3.
-//
-// Structured data (hengegroup_theme_get_seo_structured_data() below) is extensible via the
-// `hengegroup_theme_seo_structured_data` filter; hreflang is intentionally not implemented here -- see
-// docs/how-to.md for the extension HowTo and docs/entscheidungen.md for the multilingual decision.
+// SEO-Ausgabe: title, description, canonical, robots, Open Graph/Twitter, JSON-LD. Fallback je
+// Wert: SEO-Box der Seite -> Einstellungen > SEO -> berechneter Default -> weglassen.
 
 /**
- * The post id whose "SEO" meta box values apply to the current request, or 0 when none does
- * (archives, search, 404, a blog index that isn't a "page for posts"). Singular views are the
- * obvious case; is_home() additionally needs the "page for posts" special-case, because WordPress
- * treats that view as an archive (is_singular() is false) even though it's backed by a real, SEO-
- * meta-box-editable Page.
+ * Post-ID, deren SEO-Box gilt; 0 bei Archiven/Suche/404. Die Beitragsseite zaehlt mit.
  */
 function hengegroup_theme_seo_current_post_id(): int
 {
@@ -66,9 +53,7 @@ function hengegroup_theme_filter_pre_get_document_title(string $title): string
 add_filter('pre_get_document_title', 'hengegroup_theme_filter_pre_get_document_title', 20);
 
 /**
- * Effective meta description, filterable via `hengegroup_theme_seo_description` (receives the
- * resolved string + the current post id) -- e.g. inc/setup/theme-careers-seo.php builds an
- * automatic description for job postings that have no own one. See docs/how-to.md.
+ * Filterbar ueber `hengegroup_theme_seo_description`.
  */
 function hengegroup_theme_get_seo_description(): string
 {
@@ -168,14 +153,10 @@ function hengegroup_theme_get_seo_robots(): string
         }
     }
 
-    // Search results and 404s are never worth indexing, regardless of the site-wide/per-page
-    // setting above -- same convention every major SEO plugin applies.
     if (is_search() || is_404()) {
         $noindex = true;
     }
 
-    // Respect Settings > Reading's "discourage search engines" checkbox site-wide, same as core's
-    // own virtual robots.txt already does.
     if ((int) get_option('blog_public') === 0) {
         $noindex = true;
     }
@@ -184,9 +165,7 @@ function hengegroup_theme_get_seo_robots(): string
 }
 
 /**
- * Resolves the effective social-share image as ['url' => ..., 'width' => ..., 'height' => ...],
- * or [] when nothing resolves. Fallback chain: per-page image -> site-wide default image ->
- * featured image of the current post -> nothing.
+ * ['url', 'width', 'height'] oder []: SEO-Box -> Standardbild -> Beitragsbild.
  */
 function hengegroup_theme_get_seo_image(): array
 {
@@ -227,13 +206,6 @@ function hengegroup_theme_get_seo_image(): array
     ];
 }
 
-/**
- * The base Organization schema, always included -- reuses the same signals already trusted
- * elsewhere in the theme instead of adding a redundant admin field: Settings > General's site
- * title/tagline (get_bloginfo()) and the custom logo from add_theme_support('custom-logo')
- * (theme-setup.php), same has_custom_logo()/get_theme_mod('custom_logo') pair header.php already
- * relies on for the visible header logo.
- */
 function hengegroup_theme_get_seo_organization_schema(): array
 {
     $schema = [
@@ -260,14 +232,7 @@ function hengegroup_theme_get_seo_organization_schema(): array
 }
 
 /**
- * All JSON-LD schema objects for the current request, each rendered as its own
- * <script type="application/ld+json"> tag (valid per the JSON-LD spec, and simpler for additive
- * filter callbacks than merging into one shared @graph). Starts with the base Organization schema
- * above; the `hengegroup_theme_seo_structured_data` filter is where page-type-specific schema gets
- * added later -- callbacks receive the full array (append their own entry, or replace/remove an
- * existing one by @type) plus the resolved post id for the current request (0 outside a
- * singular/page-for-posts context, see hengegroup_theme_seo_current_post_id()) to decide whether/what
- * to add. See docs/how-to.md for a usage example.
+ * Je Schema ein eigenes <script>. Filter `hengegroup_theme_seo_structured_data` ($schemas, $post_id).
  */
 function hengegroup_theme_get_seo_structured_data(): array
 {
@@ -283,17 +248,12 @@ function hengegroup_theme_get_seo_structured_data(): array
 function hengegroup_theme_action_wp_head_seo_structured_data(): void
 {
     foreach (hengegroup_theme_get_seo_structured_data() as $schema) {
-        // wp_json_encode() escapes forward slashes by default (no JSON_UNESCAPED_SLASHES), which
-        // keeps a literal "</script>" from ever appearing in a string value and breaking out of
-        // the tag below -- still valid JSON, just written as "<\/script>".
+        // wp_json_encode() escaped "/" und verhindert so ein "</script>" im Wert.
         $json = wp_json_encode($schema, JSON_UNESCAPED_UNICODE);
         if (!is_string($json) || $json === '') {
             continue;
         }
 
-        // esc_html() would corrupt the JSON (encodes quotes/ampersands); safety instead comes
-        // from the escaped slashes above plus wp_json_encode()'s own string escaping of every
-        // value.
         echo '<script type="application/ld+json">' . $json . '</script>' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     }
 }
@@ -373,7 +333,5 @@ function hengegroup_theme_action_wp_head_seo_meta_tags(): void
 }
 add_action('wp_head', 'hengegroup_theme_action_wp_head_seo_meta_tags', 1);
 
-// Core's own rel_canonical() would print a second <link rel="canonical"> on every singular view
-// next to the one above (which also honours the per-page "Kanonische URL" override) -- two
-// canonicals are ambiguous for search engines, so the theme's own tag is the only one.
+// Nur ein canonical (unserer beruecksichtigt die SEO-Box).
 remove_action('wp_head', 'rel_canonical');

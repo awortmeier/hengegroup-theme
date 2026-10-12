@@ -2,22 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's TableHeader: a plain <thead>, no ARIA/JS beyond what native table sectioning
-// already provides (CLAUDE.md #1). Content-agnostic wrapper, same nesting pattern as
-// table.php/button-group.php: buffer one or more table-row.php calls (each built
-// from table-head.php cells) and pass the combined HTML as `content`.
+// <thead>.
 //
-// Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own TableHeader
-// (registry/new-york-v4/ui/table.tsx, live-checked 2026-09-03): `[&_tr]:border-b` -- an
-// arbitrary-variant selector that puts the divider on the header's own <tr> rather than the
-// <thead> element itself (native table sectioning elements can't carry a visible border the way a
-// row can). No reference-driven deviation here; see table-head.php for the reference's own header-
-// cell look.
-//
-// Supported config:
-//   content   string   required. Pre-rendered HTML to wrap (buffered table-row.php calls)
-//   class / attributes / data_attributes   passthrough onto the outer
-//                       <thead data-slot="table-header"> wrapper
+// Config:
+//   content   string   table-row.php markup (required)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

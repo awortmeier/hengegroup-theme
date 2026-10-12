@@ -2,27 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's FieldGroup: a plain wrapper stacking several field.php calls, and (per shadcn's own
-// docs) a CSS container-query root so a child field.php's `orientation: 'responsive'` can mean
-// something. Content-agnostic wrapper, same nesting pattern as button-group.php/kbd-group.php:
-// buffer several field.php (or field-set.php) calls and pass the combined HTML as `content`.
+// Stacks several fields; container-query root for field.php's `responsive` orientation.
 //
-// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldGroup (registry/
-// new-york-v4/ui/field.tsx, live-checked 2026-08-30) -- Tailwind v4 ships container queries
-// natively (`@container`/`@md:`-style variants), no plugin/raw-CSS exception needed. The named
-// container `@container/field-group` is exactly what field.php's own `responsive` orientation
-// classes target via `@md/field-group:`-prefixed utilities (see that file's header) -- this file
-// unblocks that, no separate project-CSS `@container` rule needed elsewhere. The
-// `data-[slot=checkbox-group]` clause targets an element that self-carries that data-slot (not a
-// descendant) -- shadcn's own CheckboxGroup reuses FieldGroup's markup with an overridden
-// `data-slot`, same `data_slot`-override escape hatch as this project's own field-label.php/
-// input.php; kept 1:1 even though no checkbox-group.php exists in this theme yet (see
-// field-set.php's header for the same forward-compatible-selector reasoning).
-//
-// Supported config:
-//   content   string   required. Pre-rendered HTML to wrap (buffered field.php/field-set.php calls)
-//   class / attributes / data_attributes   passthrough onto the outer
-//                       <div data-slot="field-group"> wrapper
+// Config:
+//   content   string   pre-rendered HTML (required)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

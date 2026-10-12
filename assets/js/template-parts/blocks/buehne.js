@@ -1,23 +1,5 @@
-// Progressive-enhancement layer for template-parts/blocks/buehne/render.php: crossfades between
-// slides (opacity-only, no scrolling -- see docs/entscheidungen.md "Buehne: Opacity-Crossfade
-// statt Scroll-Snap" for why this diverges from carousel.php's own documented scroll-snap
-// contract) plus the dot navigation's active state/click-to-select. Does NOT modify
-// assets/js/template-parts/base/carousel.js -- render.php no longer renders a
-// [data-slot="carousel-content"] scroll container at all, so that file's scroll-snap wiring simply
-// has nothing to attach to here anymore.
-//
-// Dots are NOT part of template-parts/base/carousel/*.php (see carousel.php's own header comment)
-// -- render.php renders them as a sibling of the [data-slot="carousel"] root inside a shared
-// wrapper div, matched here via [data-buehne-dots]/[data-buehne-dot] instead of a data-slot, same
-// "carousel-specific meaning layered on top, not a new data-slot" idiom carousel-previous.php uses
-// for its own `data-carousel-nav`.
-//
-// The active slide is tracked directly in `currentIndex` here (set by dot clicks/autoplay, never
-// inferred from scroll position -- there is nothing to scroll anymore, so the old
-// IntersectionObserver-based tracking is gone). goToIndex() sets `data-state="active"/"inactive"`
-// on each [data-slot="carousel-item"] (drives the opacity transition in project CSS, see
-// render.php) and toggles `aria-hidden`/`inert` on the inactive ones so their buttons/links aren't
-// keyboard-/screen-reader-reachable while invisible behind the active slide.
+// Buehne: crossfade between slides plus dot navigation. goToIndex() sets data-state on the slides
+// and aria-hidden/inert on the inactive ones.
 
 function getItems(carousel) {
     return Array.from(carousel.querySelectorAll(':scope > [data-slot="carousel-item"]'));

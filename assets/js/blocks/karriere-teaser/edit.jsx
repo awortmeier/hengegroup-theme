@@ -1,15 +1,6 @@
-// Editor UI for template-parts/blocks/karriere-teaser/block.json. Gleiches Muster wie
-// blocks/produkte/edit.jsx (siehe dessen Kopfkommentar fuer die ausfuehrliche Begruendung):
-// Ueberschrift/Text/Button-Text sind natives `RichText` direkt in der Canvas, das
-// Ueberschrift-Element (h1-h6/p) und der Button-Link laufen ueber die Block-Toolbar
-// (`ToolbarDropdownMenu` bzw. `LinkControl` im `Popover`), die Sidebar haelt nur die Konfiguration
-// (Anzahl Stellen). Die Stellenliste rechts ist eine echte `ServerSideRender`-Vorschau gegen den
-// inserter-versteckten Zwillingsblock `hengegroup-theme/karriere-teaser-liste` (nur `limit` als
-// Attribut, damit Tastatureingaben links keinen REST-Request ausloesen) -- dieser Block wird unten
-// zusaetzlich clientseitig registriert, siehe produkte/edit.jsx fuer den Grund.
-//
-// Leere Button-URL = Karriereseite aus Karriere > Einstellungen (render.php), deshalb zeigt der
-// Link-Popover einen Hinweis statt einer leeren Eingabe als "fehlt".
+// Editor for "Karriere-Teaser" (same pattern as produkte/edit.jsx): RichText texts, heading tag and
+// link via toolbar, job list via ServerSideRender of karriere-teaser-liste. An empty link means the
+// career page, so the popover shows a hint.
 import { createElement as el, Fragment, useEffect, useRef, useState } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {
@@ -33,7 +24,6 @@ import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/karriere-teaser/block.json";
 import listeMetadata from "../../../../template-parts/blocks/karriere-teaser-liste/block.json";
 
-// Gleicher Plain-String-Rundlauf wie produkte/edit.jsx.
 function toRichTextValue(text) {
     return toHTMLString({ value: create({ text }) });
 }
@@ -52,7 +42,7 @@ const HEADING_TAG_OPTIONS = [
     { title: __("Absatz (P)", "hengegroup-theme"), value: "p" },
 ];
 
-// 1:1 aus template-parts/base/button.php's `variant: 'grey-dark'`/`size: 'lg'` gespiegelt.
+// Mirrors button.php grey-dark/lg.
 const BUTTON_PREVIEW_CLASSNAME =
     "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-7 text-lg font-medium whitespace-nowrap !bg-grey-dark !text-grey-dark-foreground";
 
@@ -150,9 +140,7 @@ function Edit({ attributes, setAttributes, isSelected }) {
                                     anchor={buttonRef.current}
                                     onClose={() => setIsEditingButtonUrl(false)}
                                 >
-                                    {/* Popover sitzt ausserhalb des Editor-Iframes (kein
-                                    Theme-Tailwind dort) -- Inline-Style ist hier reine
-                                    wp-admin-UI, gleiche Abgrenzung wie theme-seo-admin.php. */}
+                                    {/* Outside the editor iframe, no Tailwind there. */}
                                     <p
                                         style={{
                                             margin: 0,
@@ -192,7 +180,7 @@ registerBlockType(metadata, {
     save: () => null,
 });
 
-// Clientseitige Minimal-Registrierung des Vorschau-Zwillings, siehe produkte/edit.jsx.
+// Minimal client registration so ServerSideRender accepts the block.
 registerBlockType(listeMetadata, {
     edit: () => null,
     save: () => null,

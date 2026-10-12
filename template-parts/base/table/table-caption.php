@@ -2,21 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's TableCaption: a real native <caption>, already the correct semantic element for a
-// table's accessible name/description ("provides context for a table" per the HTML spec, exposed
-// to assistive tech automatically, no aria-label/aria-labelledby needed) -- no ARIA/JS needed at
-// all (CLAUDE.md #1). Plain text like kbd.php/field-title.php, not a content-agnostic wrapper: a
-// caption is near-universally a short line of text, and per the HTML spec it must be the FIRST
-// child of <table> -- see table.php's header comment for the composition order this implies.
+// <caption>; must be the first child of <table>.
 //
-// Phase 2 (CLAUDE.md Regel 1): base class taken 1:1 from shadcn's own TableCaption (registry/
-// new-york-v4/ui/table.tsx, live-checked 2026-09-03): `mt-4 text-sm text-muted-foreground` --
-// close enough to the Claude-Design reference "Hengegroup"'s own footnote-style text under its
-// Basis table that no reference-driven deviation was needed, see docs/entscheidungen.md.
-//
-// Supported config:
-//   text   string   required. Visible caption text, escaped
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   text   string   required
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

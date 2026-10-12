@@ -2,37 +2,14 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's AspectRatio equivalent (wraps a headless UI primitive -- historically Radix UI,
-// shadcn now also ships Base UI/React Aria variants of many components): a content-agnostic
-// wrapper that forces its content into a fixed ratio via the CSS `aspect-ratio` property. Not
-// image-specific — wraps any pre-rendered markup (image.php output, an iframe, a video, ...).
+// Forces content into a fixed aspect ratio. Inline style because the ratio is a runtime value
+// Tailwind cannot generate a class for.
 //
-// Rule 1 exception: the wrapper's `aspect-ratio` value is computed at request time from `ratio`
-// (any '<number>/<number>'), so Tailwind's build-time JIT scanner cannot pre-generate an arbitrary-
-// value class for it (`aspect-[<ratio>]` needs the literal value present in scanned source, not a
-// PHP variable) — inline `style="aspect-ratio: ...;"` is the documented exception here, not
-// optical styling.
-//
-// Nesting pattern (same as button.php nesting icon.php): buffer the inner component's output via
-// ob_start()/get_template_part()/ob_get_clean() and pass the resulting HTML string as `content`.
-//
-//   ob_start();
-//   get_template_part('template-parts/base/image', null, ['config' => [...]]);
-//   $image_markup = (string) ob_get_clean();
-//
-//   get_template_part('template-parts/base/aspect-ratio', null, [
-//       'config' => ['ratio' => '16/9', 'content' => $image_markup],
-//   ]);
-//
-// Supported config:
-//   content        string   required. Pre-rendered HTML to wrap (caller is responsible for
-//                            escaping/building this, e.g. via template-parts/base/image.php)
-//   ratio          string   CSS aspect-ratio value, e.g. '16/9', '4/3', '1/1' (default: '1/1');
-//                            validated against a strict number[/number] pattern, falls back to
-//                            '1/1' when invalid
-//   tag            string   div | figure | span (default: div) — e.g. `figure` when the wrapped
-//                            image will get a <figcaption> from the calling component
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   content   string   pre-rendered HTML (required)
+//   ratio     string   e.g. '16/9' (default '1/1', validated)
+//   tag       string   div (default) | figure | span
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

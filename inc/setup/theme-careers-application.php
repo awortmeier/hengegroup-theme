@@ -2,29 +2,9 @@
 
 declare(strict_types=1);
 
-// Verarbeitung des Bewerbungsformulars einer Stellenanzeige (Formular:
-// template-parts/components/job-application-form.php, explizite Nachfrage 2026-10-07: "exklusiv
-// fuer die Stellenanzeige, die man sich gerade ansieht" -- die Stelle steckt als verstecktes Feld im
-// Formular und wird hier gegen eine veroeffentlichte, nicht abgelaufene Stelle geprueft).
-//
-// Ablauf: klassisches POST an admin-post.php (funktioniert ohne JavaScript), danach Redirect zurueck
-// auf die Stelle (#bewerbung) mit Status -- Post/Redirect/Get, kein doppeltes Absenden beim Neuladen.
-// Bei Fehlern werden die Textfelder 15 Minuten in einem Transient gehalten (Schluessel im Redirect),
-// damit niemand alles neu tippen muss; Dateien muessen neu gewaehlt werden (Browser-Sicherheit).
-//
-// Die Bewerbung wird als Eintrag "Bewerbung" im Backend gespeichert (Menuepunkt "Bewerbungen" direkt unter Dashboard, siehe
-// inc/setup/theme-requests.php) -- es werden KEINE E-Mails versendet, weder an den Ansprechpartner
-// noch als Eingangsbestaetigung (explizite Vorgabe 2026-10-07, loest die fruehere Entscheidung
-// "Versand per E-Mail statt Speicherung" ab). Hochgeladene Dateien landen NICHT in der Mediathek
-// (dort waeren sie oeffentlich abrufbar), sondern in einem eigenen Verzeichnis AUSSERHALB des
-// Web-Roots mit zufaelligen Dateinamen (siehe hengegroup_theme_get_application_storage_dir());
-// heruntergeladen werden sie nur ueber
-// hengegroup_theme_handle_application_file_download() mit Rechte- und Nonce-Pruefung. Beim
-// endgueltigen Loeschen einer Bewerbung werden ihre Dateien mitgeloescht; automatisch geloescht wird
-// nichts (explizite Vorgabe). Siehe docs/entscheidungen.md "Formulare: Eintraege im Backend statt
-// E-Mail".
-//
-// Spam-Schutz ohne Captcha/Drittanbieter: Nonce, Honeypot-Feld und Mindest-Ausfuellzeit.
+// Verarbeitung des Bewerbungsformulars: POST an admin-post.php, Redirect zurueck (#bewerbung),
+// Textfelder bei Fehlern 15 min per Transient. Speichert einen Eintrag "Bewerbung" (keine E-Mail);
+// Dateien ausserhalb der Mediathek mit Zufallsnamen, Download nur mit Rechte- und Nonce-Pruefung.
 
 const HENGEGROUP_THEME_APPLICATION_ACTION = 'hengegroup_theme_job_application';
 const HENGEGROUP_THEME_APPLICATION_MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -32,18 +12,13 @@ const HENGEGROUP_THEME_APPLICATION_MAX_CERTIFICATES = 5;
 const HENGEGROUP_THEME_APPLICATION_FILE_ACTION = 'hengegroup_theme_application_file';
 
 /**
- * Tatsaechliche Obergrenze je Datei: 5 MB laut Design, aber nie mehr, als PHP auf dem Server
- * annimmt (`upload_max_filesize`/`post_max_size`, ueber wp_max_upload_size()) -- sonst wuerde das
- * Formular eine Groesse versprechen, die der Server stillschweigend verwirft.
+ * 5 MB, aber nie mehr als der Server annimmt (wp_max_upload_size()).
  */
 function hengegroup_theme_get_application_max_file_bytes(): int
 {
     return (int) min(HENGEGROUP_THEME_APPLICATION_MAX_FILE_BYTES, wp_max_upload_size());
 }
 
-/**
- * Erlaubte Dateitypen fuer Lebenslauf/Zeugnisse (Design: pdf, png, jpg, jpeg).
- */
 function hengegroup_theme_get_application_mime_types(): array
 {
     return [
@@ -53,9 +28,6 @@ function hengegroup_theme_get_application_mime_types(): array
     ];
 }
 
-/**
- * Status-Meldungen nach dem Redirect (Query-Parameter `bewerbung`).
- */
 function hengegroup_theme_get_application_status_messages(): array
 {
     return [
@@ -80,7 +52,7 @@ function hengegroup_theme_get_application_status_messages(): array
 }
 
 /**
- * Liest die Textfelder aus $_POST und sanitisiert sie. Nonce wird vom Aufrufer geprueft.
+ * Sanitisierte Textfelder; die Nonce prueft der Aufrufer.
  */
 function hengegroup_theme_get_application_input(): array
 {
@@ -108,14 +80,10 @@ function hengegroup_theme_get_application_input(): array
 }
 
 /**
- * Normalisiert einen $_FILES-Eintrag (einzeln oder `name[]`) zu einer Liste hochgeladener Dateien;
- * leere Felder ("keine Datei gewaehlt") fallen weg.
+ * $_FILES-Eintrag (einzeln oder name[]) als Liste; leere Felder entfallen.
  */
 function hengegroup_theme_get_application_files(string $key): array
 {
-    // Nonce geprueft in hengegroup_theme_handle_job_application(); jeder Wert wird unten einzeln
-    // behandelt (Name per sanitize_file_name(), Groessen/Fehler als int, tmp_name nur ueber
-    // is_uploaded_file()/move_uploaded_file()).
     $entry = $_FILES[$key] ?? null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
     if (!is_array($entry) || !isset($entry['name'])) {
@@ -143,8 +111,7 @@ function hengegroup_theme_get_application_files(string $key): array
 }
 
 /**
- * Prueft eine hochgeladene Datei: Upload ok, Groesse, echter Dateityp (Inhalt, nicht nur Endung).
- * Leerer String = gueltig, sonst Fehlermeldung.
+ * Upload-Status, Groesse, echter Dateityp. '' = gueltig.
  */
 function hengegroup_theme_validate_application_file(array $file): string
 {
@@ -176,9 +143,6 @@ function hengegroup_theme_validate_application_file(array $file): string
     return '';
 }
 
-/**
- * Redirect zurueck auf die Stelle, Abschnitt Bewerbung.
- */
 function hengegroup_theme_redirect_after_application(int $job_id, array $args): void
 {
     $target =
@@ -190,9 +154,8 @@ function hengegroup_theme_redirect_after_application(int $job_id, array $args): 
 
 function hengegroup_theme_handle_job_application(): void
 {
-    // Ueberschreitet die Anfrage `post_max_size`, verwirft PHP ALLE Felder ($_POST/$_FILES leer)
-    // -- ohne diesen Zweig kaeme faelschlich "Formular abgelaufen" (Nonce fehlt). Die Stelle ist
-    // dann nur noch ueber den Referer bekannt.
+    // Bei Ueberschreitung von post_max_size sind $_POST/$_FILES leer; ohne diesen Zweig kaeme
+    // "Formular abgelaufen". Die Stelle ist dann nur ueber den Referer bekannt.
     $content_length = isset($_SERVER['CONTENT_LENGTH']) ? absint($_SERVER['CONTENT_LENGTH']) : 0;
 
     // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nur Leer-Pruefung, kein Zugriff auf Werte.
@@ -224,8 +187,7 @@ function hengegroup_theme_handle_job_application(): void
         hengegroup_theme_redirect_after_application($job_id, ['bewerbung' => 'abgelaufen']);
     }
 
-    // Bots fuellen das unsichtbare Feld aus oder schicken in unter 3 Sekunden ab -- sie bekommen
-    // dieselbe Erfolgsmeldung wie echte Bewerber, damit sie nicht lernen, was sie verraten hat.
+    // Bots bekommen dieselbe Erfolgsmeldung, damit sie nicht lernen, was sie verraten hat.
     if (hengegroup_theme_is_form_bot($honeypot, $started)) {
         hengegroup_theme_redirect_after_application($job_id, ['bewerbung' => 'gesendet']);
     }
@@ -288,15 +250,9 @@ add_action(
 );
 
 /**
- * Ablageverzeichnis fuer Bewerbungsunterlagen, bei Bedarf angelegt. Bevorzugt ausserhalb des
- * Web-Roots (Geschwister-Ordner des Website-Stammverzeichnisses, z. B. neben `httpdocs/`) -- dort
- * ist keine Datei per URL erreichbar, egal ob Apache oder nginx ausliefert (.htaccess allein
- * schuetzt unter nginx nicht, der Dev-Server laeuft mit nginx). Nur wenn dieser Ordner nicht
- * angelegt werden kann (nicht beschreibbar oder ausserhalb von `open_basedir` -- so z. B. auf dem
- * Dev-Server, Plesk-Standard), faellt es auf uploads/hengegroup-bewerbungen/ zurueck (dann per
- * .htaccess gesperrt; auf dev geprueft: Plesk reicht die Anfrage an Apache durch, Antwort 403). `.htaccess`/`index.php` werden in beiden Faellen zusaetzlich geschrieben.
- * Filter `hengegroup_theme_application_storage_dir` setzt einen eigenen Pfad (docs/how-to.md).
- * Leerer String, wenn kein Verzeichnis angelegt werden kann.
+ * Ablageordner, bei Bedarf angelegt: bevorzugt neben dem Web-Root (.htaccess schuetzt unter nginx
+ * nicht), sonst uploads/hengegroup-bewerbungen/ (z. B. bei open_basedir). Filter
+ * `hengegroup_theme_application_storage_dir`. '' wenn nichts angelegt werden kann.
  */
 function hengegroup_theme_get_application_storage_dir(): string
 {
@@ -333,8 +289,7 @@ function hengegroup_theme_get_application_storage_dir(): string
 }
 
 /**
- * Frueherer Ablageort unter uploads/ -- Rueckfall fuer hengegroup_theme_get_application_storage_dir()
- * und Fundort fuer Dateien, die vor dem Umzug ausserhalb des Web-Roots gespeichert wurden.
+ * Frueherer Ablageort; Rueckfall und Fundort alter Dateien.
  */
 function hengegroup_theme_get_legacy_application_storage_dir(): string
 {
@@ -345,8 +300,7 @@ function hengegroup_theme_get_legacy_application_storage_dir(): string
 }
 
 /**
- * Vollstaendiger Pfad einer gespeicherten Bewerbungsdatei (Meta-Eintrag mit `file`), gesucht im
- * aktuellen und im frueheren Ablageort. Leerer String, wenn die Datei nirgends liegt.
+ * Sucht im aktuellen und im frueheren Ablageort; '' wenn nicht gefunden.
  */
 function hengegroup_theme_get_application_file_path(array $file): string
 {
@@ -372,10 +326,6 @@ function hengegroup_theme_get_application_file_path(array $file): string
     return '';
 }
 
-/**
- * Speichert die Bewerbung als Eintrag (Menuepunkt "Bewerbungen") und verschiebt die Dateien ins
- * geschuetzte Verzeichnis (zufaelliger Name, Originalname nur als Meta). Keine E-Mails.
- */
 function hengegroup_theme_store_job_application(array $job, array $values, array $files): bool
 {
     $options = hengegroup_theme_get_job_application_options();
@@ -429,9 +379,6 @@ function hengegroup_theme_store_job_application(array $job, array $values, array
     return true;
 }
 
-/**
- * Download-Links der Unterlagen einer Bewerbung fuer das Backend.
- */
 function hengegroup_theme_render_application_file_links(int $post_id, array $files): string
 {
     if ($files === []) {
@@ -464,10 +411,6 @@ function hengegroup_theme_render_application_file_links(int $post_id, array $fil
     return implode('<br>', $links);
 }
 
-/**
- * Liefert eine Bewerbungsdatei aus -- nur fuer angemeldete Nutzer, die die Bewerbung bearbeiten
- * duerfen, mit Nonce.
- */
 function hengegroup_theme_handle_application_file_download(): void
 {
     $post_id = isset($_GET['post']) ? absint($_GET['post']) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce direkt darunter.
@@ -513,9 +456,6 @@ add_action(
     'hengegroup_theme_handle_application_file_download',
 );
 
-/**
- * Loescht die Unterlagen mit, wenn eine Bewerbung endgueltig geloescht wird (Papierkorb leeren).
- */
 function hengegroup_theme_action_before_delete_post_application_files(int $post_id): void
 {
     if (get_post_type($post_id) !== HENGEGROUP_THEME_APPLICATION_POST_TYPE) {
@@ -535,10 +475,6 @@ function hengegroup_theme_action_before_delete_post_application_files(int $post_
 }
 add_action('before_delete_post', 'hengegroup_theme_action_before_delete_post_application_files');
 
-/**
- * Status und ggf. zwischengespeicherte Eingaben fuer das Formular nach dem Redirect. Der Transient
- * wird beim Lesen geloescht (einmalig).
- */
 function hengegroup_theme_get_application_state(): array
 {
     return hengegroup_theme_read_form_state(

@@ -2,17 +2,9 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/stellen-liste/block.json -- eine der drei Listen einer
-// Stellenanzeige ("Wir bieten dir"/"Dein Profil"/"Deine Aufgaben", Ueberschrift fest je Typ aus
-// hengegroup_theme_get_job_list_types()), darin eine normale Gutenberg-Liste (`$content`, fertig
-// gerendert). Explizite Nachfrage 2026-10-07: Listen im Editor statt als Textfelder, aber mit
-// Struktur -- der Typ sagt hengegroup_theme_extract_job_lists() (inc/template-parts/careers.php),
-// welches schema.org-Feld die Eintraege im JSON-LD fuellen.
-//
-// Eine leere "Wir bieten dir"-Liste zeigt die Standard-Benefits des zugeordneten Unternehmens
-// (Stellenangebote > Unternehmen) -- so muss nicht jede Stelle dieselben Benefits wiederholen. Andere leere
-// Listen werden gar nicht ausgegeben. Listen-Optik (Aufzaehlungszeichen, Einzug) kommt hier aus
-// dem Block selbst, damit er auch ausserhalb der Stellen-Einzelseite korrekt aussieht.
+// Block "Stellen-Liste": Ueberschrift je Typ + Gutenberg-Liste. Der Typ bestimmt das JSON-LD-Feld
+// (hengegroup_theme_extract_job_lists()). Leere "Wir bieten dir"-Liste = Standard-Benefits des
+// Unternehmens, andere leere Listen entfallen.
 
 if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_get_job_list_types')) {
     return;

@@ -2,13 +2,7 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/auszeichnungen/block.json (Design "Karriereseite", Abschnitt
-// "Auszeichnungen & Mitgliedschaften") -- siehe template-parts/blocks/buehne/render.php's
-// Kopfkommentar fuer die allgemeine Phase-3-Block-Konvention. Hellgraue Flaeche, Ueberschrift,
-// darunter die Karten als Kind-Bloecke (`hengegroup-theme/auszeichnung`, InnerBlocks), die WordPress
-// bereits fertig gerendert in `$content` uebergibt -- je Karte ein <li>, siehe
-// auszeichnung/render.php. Karten werden im Editor direkt im Block hinzugefuegt/verschoben/
-// bearbeitet (explizite Nachfrage 2026-10-07), siehe auszeichnungen/edit.jsx.
+// Block "Auszeichnungen": Ueberschrift + Kind-Bloecke (auszeichnung) als <ul>.
 
 if (!is_array($attributes ?? null)) {
     return;

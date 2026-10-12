@@ -1,14 +1,6 @@
-// Editor UI for template-parts/blocks/galerie/block.json. Alles direkt in der Canvas (explizite
-// Nachfrage 2026-10-07), gleiches Prinzip wie auszeichnungen/benefits:
-//   - Ueberschrift als `RichText`, Element (h1-h6/p) ueber die Block-Toolbar.
-//   - Bilder im selben Bento-Raster wie im Frontend (Formen aus layout.js, gespiegelt zu
-//     hengegroup_theme_get_bento_tile_shapes()); je Bild Schaltflaechen zum Verschieben und
-//     Entfernen (erscheinen beim Ueberfahren/Fokussieren), darunter "+ Bilder hinzufuegen"
-//     (Mehrfachauswahl aus der Mediathek, wird angehaengt). "Galerie bearbeiten" in der Toolbar
-//     oeffnet zusaetzlich den Mediathek-Galerie-Dialog (Sortieren per Drag & Drop).
-// Gespeichert werden nur Attachment-IDs, Alternativtexte kommen aus der Mediathek (render.php).
-// Die Canvas wird clientseitig gebaut (kein `ServerSideRender`), damit die Bedienelemente auf den
-// Bildern sitzen koennen; Tailwind ist per add_editor_style() im Editor-Iframe geladen.
+// Editor for "Galerie": images in the same bento grid as the frontend (layout.js), move/remove
+// controls per image, "+ Bilder hinzufuegen" and the media gallery dialog. Only attachment IDs are
+// stored; built client-side so the controls can sit on the images.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {

@@ -2,18 +2,10 @@
 
 declare(strict_types=1);
 
-// Shared render helpers for template-parts/base/*. Before adding a new closure/helper inside a
-// base component, check here first — if something similar already exists, reuse or extend it
-// instead of duplicating it locally. New cross-component helpers belong in this file, not copied
-// into each template part.
+// Shared render helpers for template parts.
 
 /**
- * Renders an associative array of HTML attributes into a string, e.g.
- * ['class' => 'foo', 'disabled' => true, 'data-x' => 'y'] -> ' class="foo" disabled data-x="y"'.
- *
- * - null/false values are omitted entirely.
- * - true renders the attribute name only (boolean HTML attributes).
- * - everything else is cast to string and escaped via esc_attr().
+ * ['class' => 'a', 'disabled' => true] -> ' class="a" disabled'. null/false are omitted.
  */
 function hengegroup_theme_render_attributes(array $attributes): string
 {
@@ -38,15 +30,7 @@ function hengegroup_theme_render_attributes(array $attributes): string
 }
 
 /**
- * Merges a component's `data_attributes` config (a plain ['name' => value, ...] map, keys WITHOUT
- * the `data-` prefix) into an existing HTML-attributes array, prefixing each key with `data-` and
- * trimming/skipping empty names -- the standard passthrough every base component offers alongside
- * `class`/`attributes` (see docs/neue-komponente-erstellen.md Regel 4). Returns the merged array,
- * ready for hengegroup_theme_render_attributes(); does not mutate $attributes in place (PHP arrays
- * are values, not references), so callers re-assign the result, e.g.
- * `$element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);`.
- * Replaces the identical foreach loop every base component used to duplicate locally for this same
- * merge (Regel 7: cross-cutting logic belongs here, not copied per file).
+ * Merges `data_attributes` (keys without `data-`) into an attributes array.
  */
 function hengegroup_theme_merge_data_attributes(array $attributes, array $data_attributes): array
 {
@@ -64,11 +48,7 @@ function hengegroup_theme_merge_data_attributes(array $attributes, array $data_a
 }
 
 /**
- * Escapes $content and wraps every occurrence of the words in $highlighted_words in
- * <span class="font-accent">...</span>. Used by base components that support an
- * `accent_words`-config key (e.g. headline, text) to highlight individual words within a string.
- * Matches are whole occurrences of the given words, longest word first, so overlapping needles
- * don't get partially matched.
+ * Escapes $content and wraps the given words in <span class="font-accent">, longest word first.
  */
 function hengegroup_theme_render_accent_text(string $content, array $highlighted_words): string
 {
@@ -126,12 +106,6 @@ function hengegroup_theme_render_accent_text(string $content, array $highlighted
     return $output;
 }
 
-/**
- * Renders a nested template-parts/base/icon.php call and returns its output as a string, for
- * components that embed an icon inline (e.g. a button's icon slot, an accordion trigger's
- * chevron, a badge's icon). Buffers get_template_part() output instead of every component
- * duplicating the same ob_start()/get_template_part()/ob_get_clean() closure locally.
- */
 function hengegroup_theme_render_icon(array $icon_config): string
 {
     ob_start();
@@ -140,12 +114,6 @@ function hengegroup_theme_render_icon(array $icon_config): string
     return (string) ob_get_clean();
 }
 
-/**
- * Renders a nested template-parts/base/typography.php call and returns its output as a string, for
- * markup assembled as strings (sprintf templates in render helpers/blocks) -- same idiom as
- * hengegroup_theme_render_icon()/hengegroup_theme_render_image(), instead of a hand-written
- * `<h3 class="text-[19px] ...">` that bypasses the typography scale.
- */
 function hengegroup_theme_render_typography(array $typography_config): string
 {
     ob_start();
@@ -154,11 +122,6 @@ function hengegroup_theme_render_typography(array $typography_config): string
     return (string) ob_get_clean();
 }
 
-/**
- * Renders a nested template-parts/base/card.php call and returns its output as a string -- same
- * idiom as hengegroup_theme_render_typography(), for project templates that assemble markup as
- * strings (render helpers in inc/template-parts/, block render.php files).
- */
 function hengegroup_theme_render_card(array $card_config): string
 {
     ob_start();
@@ -168,13 +131,7 @@ function hengegroup_theme_render_card(array $card_config): string
 }
 
 /**
- * Renders a nested template-parts/base/image.php call and returns its output as a string, for
- * components that need to know whether an image actually resolved (image.php renders nothing for
- * a missing/invalid file -- name/set is checked via is_file(), see that file's own header comment)
- * before deciding what else to render, e.g. card.php skipping its optional cover-media wrapper
- * entirely. Buffers get_template_part() output instead
- * of every component duplicating the same ob_start()/get_template_part()/ob_get_clean() closure
- * locally -- same idiom as hengegroup_theme_render_icon() above, just for image.php.
+ * Empty string when image.php renders nothing (e.g. missing file).
  */
 function hengegroup_theme_render_image(array $image_config): string
 {
@@ -185,33 +142,21 @@ function hengegroup_theme_render_image(array $image_config): string
 }
 
 /**
- * Deterministically derives the id template-parts/base/field/field-description.php renders for a
- * given control id (e.g. 'email' -> 'email-description'). A pure function of $control_id, not a
- * fresh wp_unique_id() -- both field-description.php (via its `for` config) and the control's own
- * `aria-describedby` can call this independently and always land on the identical string, instead
- * of the caller inventing/copying one id by hand in two places (see field.php's
- * header comment for the full wiring example).
+ * 'email' -> 'email-description'; deterministic so the control and the description match.
  */
 function hengegroup_theme_field_description_id(string $control_id): string
 {
     return $control_id . '-description';
 }
 
-/**
- * Same idea as hengegroup_theme_field_description_id(), for template-parts/base/field/field-error.php.
- */
 function hengegroup_theme_field_error_id(string $control_id): string
 {
     return $control_id . '-error';
 }
 
 /**
- * Builds a ready-to-use `aria-describedby` value for a field's control, e.g.
- * hengegroup_theme_field_describedby('email') -> 'email-description email-error' (space-separated, as
- * aria-describedby requires for multiple ids). Pass $has_description/$has_error as false to omit
- * the id for whichever of field-description.php/field-error.php isn't actually rendered for this
- * control -- an id pointing at a non-existent element is worse than no id. Drop the result straight
- * into the control's own `attributes: ['aria-describedby' => ...]`.
+ * aria-describedby value, e.g. 'email-description email-error'. Pass false for parts that are not
+ * rendered: an id pointing at nothing is worse than none.
  */
 function hengegroup_theme_field_describedby(
     string $control_id,
@@ -232,23 +177,12 @@ function hengegroup_theme_field_describedby(
 }
 
 /**
- * Renders one form field through the Field family instead of hand-built wrapper/error markup:
- * template-parts/base/field/field.php wrapping field-label.php + the caller's pre-rendered control +
- * field-error.php (only when `error` is non-empty). Returns the HTML (buffered), so callers can
- * echo it or place it in a grid. The control itself stays the caller's job (input.php/
- * native-select.php/textarea.php/...), including `aria_invalid` and `aria-describedby` --
- * hengegroup_theme_field_error_id($control_id) is the id field-error.php renders here (via its
- * `for`), same wiring as described in field.php's header comment.
+ * Field family wrapper: field.php + field-label.php + control + field-error.php (when `error`).
+ * aria_invalid/aria-describedby on the control stay the caller's job
+ * (hengegroup_theme_field_error_id()).
  *
- * Supported $field keys:
- *   control_id    string   the control's `id` (label `for`, error id)
- *   control       string   pre-rendered control HTML
- *   label         string   visible label text (plain text, escaped); '' when `control` already
- *                          brings its own label (e.g. a custom file picker)
- *   error         string   error message; '' = valid (no field-error.php, no data-invalid)
- *   label_class   string   appended to field-label.php's classes
- *   error_class   string   appended to field-error.php's classes
- *   class         string   appended to field.php's classes
+ * $field: control_id, control (HTML), label ('' if the control brings its own), error,
+ * label_class, error_class, class.
  */
 function hengegroup_theme_render_form_field(array $field): string
 {
@@ -295,11 +229,7 @@ function hengegroup_theme_render_form_field(array $field): string
 }
 
 /**
- * Dev-time-only hint for icon-only interactive components (e.g. button.php, toggle.php) that
- * document `aria_label` as required but -- per this codebase's "never fatal" guard-clause
- * convention -- still render without it. `_doing_it_wrong()` already no-ops unless WP_DEBUG is on,
- * same as WordPress core's own API misuse warnings, so this is safe to call unconditionally on
- * every render: zero behavioural/markup difference in production, a visible nudge while developing.
+ * WP_DEBUG hint for icon-only components without aria_label (_doing_it_wrong() is a no-op otherwise).
  */
 function hengegroup_theme_warn_missing_aria_label(
     string $component,
@@ -324,31 +254,8 @@ function hengegroup_theme_warn_missing_aria_label(
 }
 
 /**
- * Computes the static Tailwind position classes for a panel floating next to a trigger element on
- * one of four sides, with an optional cross-axis alignment -- e.g. `side: 'bottom', align: 'start'`
- * -> 'top-[calc(100%+10px)] left-0'. Extracted from popover.php's own Phase 2 styling (see
- * docs/entscheidungen.md's popover.php entry) once tooltip.php turned out to need the exact same
- * side/align -> class lookup for its own resting/pre-JS position -- shared here instead of
- * duplicated per component, same "cross-cutting logic belongs in this file" convention as
- * hengegroup_theme_render_attributes() above.
- *
- * $side/$align are expected to already be validated/defaulted by the caller (same "trust the
- * caller" contract as hengegroup_theme_render_attributes()) -- an unrecognised value here quietly
- * falls back to the same bottom/center default every caller already uses for an invalid `side`/
- * `align` config value, it does not throw.
- *
- * Only covers the CONTENT box's own position -- NOT a floating panel's arrow, which (where one
- * exists, e.g. popover.php's/tooltip.php's own `*-arrow` element) has its own, per-component logic:
- * an arrow's classes differ in kind, not just value (border sides, a `-mt-1`-style overlap margin,
- * ...), and tooltip.php's arrow additionally has to stay reactive to `data-side` changing at
- * runtime (tooltip.js flips `side` after the initial render on a viewport collision -- see that
- * file's own header comment) in a way this content-box helper deliberately does not: the CONTENT
- * box's own position becomes irrelevant the moment tooltip.js's positionFloatingElement() takes
- * over (it always overrides via inline styles, whichever specific classes were rendered here), so
- * there is exactly one side/align combination worth emitting for it -- the configured one -- same
- * reasoning popover.php's own header comment already spelled out for why IT never needed the full
- * `group-data-[side=...]` combinatorial matrix in the first place, popover.php just has no JS flip
- * at all to begin with.
+ * Static position classes for a floating panel, e.g. bottom/start -> 'top-[calc(100%+10px)] left-0'.
+ * Only the panel itself; arrows have their own per-component classes.
  */
 function hengegroup_theme_floating_position_classes(
     string $side,
@@ -382,12 +289,9 @@ function hengegroup_theme_floating_position_classes(
 }
 
 /**
- * Kachelformen fuer ein Bento-Raster mit 3 Spalten, das bei JEDER Anzahl buendig als Rechteck
- * abschliesst (Galerie-Block, explizite Vorgabe 2026-10-07). Je 8 Bilder bilden einen festen
- * 3x4-Block (hoch, quadrat, quadrat, breit, quadrat, quadrat, hoch, breit = 12 Zellen); der Rest
- * (1-7 Bilder) bekommt Formen, die ebenfalls volle Reihen ergeben -- mit `grid-flow-dense` landen sie
- * luckenlos. Rueckgabe je Bild: 'square' (1x1), 'wide' (2x1), 'tall' (1x2) oder 'full' (3x1).
- * Muss mit assets/js/blocks/galerie/layout.js uebereinstimmen (Editor-Vorschau), beide getestet.
+ * Bento shapes for a 3-column grid that ends flush for any count: every 8 images form a 3x4 block,
+ * the rest also fills whole rows. 'square' | 'wide' (2x1) | 'tall' (1x2) | 'full' (3x1).
+ * Must match assets/js/blocks/galerie/layout.js.
  */
 function hengegroup_theme_get_bento_tile_shapes(int $count): array
 {
@@ -417,11 +321,7 @@ function hengegroup_theme_get_bento_tile_shapes(int $count): array
 }
 
 /**
- * Renders template-parts/components/contact-card.php and returns its output as a string (empty
- * when neither name nor e-mail is set) -- callers check for '' before rendering a wrapper.
- *
- * @param array $contact { name, role, email, phone }
- * @param array $args    { variant: light|dark, label, class } -- see the component's header
+ * contact-card.php as a string ('' when nothing to show).
  */
 function hengegroup_theme_render_contact_card(array $contact, array $args = []): string
 {
@@ -438,8 +338,7 @@ function hengegroup_theme_render_contact_card(array $contact, array $args = []):
 }
 
 /**
- * Turns a human-formatted phone number ("+49 (0) 63 48 / 98 38-0") into a tel: URI. The German
- * trunk prefix "(0)" after the country code must be dropped, otherwise the dialled number is wrong.
+ * Phone number -> tel: URI. The German trunk prefix "(0)" after the country code is dropped.
  */
 function hengegroup_theme_phone_href(string $phone): string
 {
@@ -447,4 +346,50 @@ function hengegroup_theme_phone_href(string $phone): string
     $digits = preg_replace('/[^0-9+]/', '', $phone) ?? '';
 
     return $digits === '' ? '' : 'tel:' . $digits;
+}
+
+/**
+ * Contact rows (e-mail, phone, fax) for contact-card.php and footer.php. The e-mail goes through
+ * antispambot() (entities): output href with esc_attr(), text with esc_html() -- esc_url() would
+ * double-encode. tel: is already esc_url()-ed; fax has no link.
+ *
+ * @return list<array{icon: string, label: string, text: string, href: ?string}>
+ */
+function hengegroup_theme_get_contact_rows(string $email, string $phone, string $fax): array
+{
+    $email = trim($email);
+    $phone = trim($phone);
+    $fax = trim($fax);
+    $rows = [];
+
+    if ($email !== '') {
+        $obfuscated = antispambot($email);
+        $rows[] = [
+            'icon' => 'mail',
+            'label' => __('E-Mail:', 'hengegroup-theme'),
+            'text' => $obfuscated,
+            'href' => 'mailto:' . $obfuscated,
+        ];
+    }
+
+    $phone_href = $phone !== '' ? hengegroup_theme_phone_href($phone) : '';
+    if ($phone_href !== '') {
+        $rows[] = [
+            'icon' => 'phone',
+            'label' => __('Telefon:', 'hengegroup-theme'),
+            'text' => $phone,
+            'href' => esc_url($phone_href, ['tel']),
+        ];
+    }
+
+    if ($fax !== '') {
+        $rows[] = [
+            'icon' => 'printer',
+            'label' => __('Fax:', 'hengegroup-theme'),
+            'text' => $fax,
+            'href' => null,
+        ];
+    }
+
+    return $rows;
 }

@@ -2,179 +2,27 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Calendar is not built on a headless UI primitive like most other components here --
-// it wraps the third-party `react-day-picker` library (Base UI/React Aria/Radix UI variants exist
-// in shadcn's docs too, but the underlying date-grid logic is still react-day-picker's own, not one
-// of those interaction-pattern primitives). There is no native HTML element that renders an
-// always-visible, custom-styled month grid (`<input type="date">` is the closest native date
-// control, but it only ever shows an OS-controlled POPUP picker, never an inline grid -- a
-// genuinely different UI, not a substitute here, see CLAUDE.md #1).
+// Month grid rendered server-side; each day is a toggle.php (radio for single, checkbox for
+// multiple), so selection works without JS. Month navigation is an add_query_arg() link (the
+// caller reads the query var and passes month/year). calendar.js navigates without reload and
+// recomputes the grid with the same formula and the same classes; it reads its settings from the
+// data-* attributes rendered here.
 //
-// What IS achievable natively, and is what this component does: PHP already has full calendar math
-// built in (DateTimeImmutable), so the month grid itself -- weekday headers, day-of-week alignment,
-// leading/trailing days from adjacent months -- is computed and rendered server-side, zero JS. Each
-// day cell reuses template-parts/base/toggle/toggle.php with `type: 'radio'`
-// (`mode: 'single'`) or `type: 'checkbox'` (`mode: 'multiple'`) -- the exact same native-grouping
-// technique toggle-group.php already uses, just laid out into a real `<table>` grid instead of a
-// flat sequence, so it needs its own per-cell loop rather than nesting toggle-group.php directly.
-// Month navigation is real `<a href="...">` links built via WordPress's own `add_query_arg()`
-// (preserves whatever other query args the current URL already has) -- a real page
-// reload/navigation, genuinely functional with zero JS (see CLAUDE.md #1), and still the entire
-// story for a caller that never loads assets/js/template-parts/base/calendar.js. This component
-// does NOT read `$_GET` itself to figure out which month to show -- like every other base
-// component, it's a pure config-driven renderer; a caller relying on the zero-JS reload path owns
-// reading the nav query var back out and passing `month`/`year` in on the next request (same
-// division of responsibility as WordPress's own `paged` query var and page templates).
-//
-// calendar.js progressively enhances the above into reload-free navigation: it intercepts clicks
-// on the prev/next links and rebuilds the month grid in place instead. Unlike select.js/combobox.js
-// (which enhance by reading an already-rendered DOM of ALL possible options), there is no
-// "everything, just hidden" DOM to read from here -- switching months means generating dates that
-// were never rendered by PHP at all, so the grid math (day-of-week alignment, leading/trailing
-// days) is necessarily reimplemented in JS using the native `Date` object, mirroring the
-// DateTimeImmutable arithmetic below formula-for-formula (closer to tooltip.js's own placement
-// math -- a real client-side calculation, not a case of duplicating something already in the DOM).
-// Everything ELSE it needs (mode, week_starts_on, show_outside_days, name, nav_name, min/max/
-// disabled/selected dates) is read from `data-*` attributes on the wrapper (below) rather than
-// hardcoded twice -- config still flows from PHP once, JS just also receives it.
-//
-// Deliberately out of scope for v1, each a genuinely different/more complex feature, not a variant
-// of this one (same reasoning as native-select.php's `multiple`, combobox.php's chips mode,
-// dropdown-menu.php's submenus):
-//   - `mode: 'range'` -- highlighting an arbitrary span between two clicks has no native
-//     single-request equivalent at all (unlike single/multiple, which map cleanly onto
-//     radio/checkbox groups); a real client-side feature, not built speculatively
-//   - `numberOfMonths` (multiple months side by side) -- render this component multiple times with
-//     adjacent `month`/`year` values instead
-//   - `captionLayout: 'dropdown'` (month/year as native-select.php pickers instead of plain text)
-//   - disabling prev/next navigation itself when the whole adjacent month falls outside
-//     `min_date`/`max_date` -- `min_date`/`max_date` only disable individual day cells in v1, not
-//     navigation availability
-//   - "Date Picker" (Calendar + Popover/tooltip.php's positioning technique) -- shadcn's own docs
-//     treat this as a separate, composed component, not part of Calendar itself (meanwhile built
-//     separately as date-picker.php, which nests this file directly, see its own header comment)
-//   - `timeZone` (Intl.DateTimeFormat-based day-boundary shifting) -- this component only ever
-//     works with date-only values (`Y-m-d`), no time-of-day/timezone concept exists to shift
-//   - Hijri/Persian calendar mode -- a different calendar system entirely, not a day-cell variant;
-//     would need its own month-grid math (DateTimeImmutable + JS `Date` both assume Gregorian)
-//   - preset shortcuts ("Today" / "Tomorrow" / "In 3 days" / "booked dates") -- caller-specific
-//     convenience buttons around the grid, not part of the grid itself; a consuming
-//     component/page can already build these today by pre-setting `selected`/`month`/`year`
-//
-// A small, well-scoped change to toggle.php was needed for this: its `aria_label` config now
-// overrides the label-derived accessible name whenever given, not just for icon-only toggles (see
-// that file's header comment) -- each day cell passes a full "Monday, January 5, 2026" via
-// `aria_label` while its visible label stays just the day number, matching shadcn's own Calendar
-// day-button accessible names.
-//
-// Nesting toggle.php means each day cell also inherits its documented "checkbox"/"radio button"
-// vs. shadcn's own "button" announcement gap (see toggle.php's header comment) -- and, per
-// the established ARIA-gap-closing rule, toggle.js's enhanceToggle() closes it here too: no
-// `role="radiogroup"` wraps this component's day cells (a calendar grid isn't a radiogroup), so
-// both `mode: 'single'` and `mode: 'multiple'` days get upgraded to `role="button"
-// aria-pressed`, matching shadcn's real Calendar day buttons. calendar.js imports and calls
-// enhanceToggle() directly on every day cell it creates client-side during month navigation, since
-// those cells never go through toggle.js's own DOMContentLoaded sweep (see that file's header
-// comment) -- a component that creates toggle.php-shaped markup after page load is responsible for
-// re-applying this enhancement itself, the same way it's responsible for everything else
-// toggle.php would otherwise have rendered for it.
-//
-// Also the first base component to use WordPress's own i18n functions (`date_i18n()` for the
-// month/weekday labels, `esc_attr__()` with this theme's `hengegroup-theme` text domain for the "Previous
-// month"/"Next month" nav labels) -- every other component so far only ever renders CALLER-supplied
-// text (already the caller's responsibility to translate before passing in), but weekday/month
-// names and the nav labels are static UI chrome this component invents itself, so they need real
-// locale/translation support rather than hardcoded English literals. calendar.js mirrors this via
-// the browser's own `Intl.DateTimeFormat`, locale taken from `document.documentElement.lang`
-// (whatever WordPress's `language_attributes()` already put on `<html>`) -- not a second,
-// hardcoded set of month/weekday names.
-//
-// CSS contract, same shape as select.php/combobox.php: calendar.js sets `data-js` on the outer
-// <div data-slot="calendar"> once initialized; nothing needs to be hidden/shown by it, but project
-// CSS can use the attribute to opt into e.g. a fade transition between months that would look
-// broken without JS driving it.
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind against a "Termine" date-picker reference design
-// (single-month, single-selection card -- shadcn's own Calendar has no shipped visual spec of its
-// own to take classes 1:1 from, unlike button.php/input.php). Mapping decisions:
-//   - the whole wrapper IS the card (bg-card/border-border/rounded-2xl/p-6/shadow-sm) rather than a
-//     bare grid that expects an external card to wrap it -- the reference renders one self-contained
-//     white rounded surface, not a grid needing outside chrome. This meant reducing
-//     date-picker.php's own popover-content div to a plain `absolute`-positioned wrapper (mt-2, no
-//     more of its own competing border/bg/padding/shadow -- see that file's own comment) instead of
-//     double-carding when this component sits inside that popover panel; that positioning div was
-//     also missing `absolute` entirely before this change (a real, pre-existing bug -- its panel
-//     pushed following content down instead of floating, unlike select.php's/combobox.php's already-
-//     fixed panels), fixed alongside this since both live in the same file.
-//   - the reference's accent color (a solid-fill selected day + a "Gewählt: <date>" summary line
-//     below the grid) maps to henge-green -- tokens.css documents it as this project's shadcn-
-//     "primary" equivalent, and button.php already uses it as the default/primary action color.
-//     The summary line itself is NOT reproduced here: it's caller-owned demo chrome reflecting a
-//     picked value back as text, not part of the grid this component renders -- the same boundary
-//     already drawn for the reference's date-range/booking-flow screens (out of scope, see above);
-//     date-picker.php's own trigger `<span data-slot="date-picker-value">` already fills that role
-//     for this component's real, documented composition.
-//   - day-cell sizing (h-10/rounded-xl/w-full-per-column via `table-fixed`) and nav-button sizing
-//     (size-9/rounded-xl) are taken directly from the reference's own pixel values (40px/12px radius,
-//     36px), all of which happen to land exactly on real Tailwind steps, no arbitrary values needed.
-//   - a day's SELECTED look must react live to a click with zero JS (native radio/checkbox has no
-//     reload in between) -- per toggle.php's own documented CSS contract, that means styling off the
-//     checkbox's live `:checked`/`:disabled` state via Tailwind's `peer`/`peer-checked:`/
-//     `peer-disabled:`, not a render-time boolean class. This is why toggle.php's checkbox itself now
-//     renders `class="peer sr-only"` unconditionally (see that file's header comment) -- a small,
-//     colour-free prerequisite pulled forward from toggle.php's own Phase 2 before that file had any
-//     other styling of its own, not something this file could route around via its own `class`
-//     config (toggle.php's `class`/`attributes`/`data_attributes` passthrough only ever reaches the
-//     visible label, by design, see that file's header -- never the checkbox). Now that toggle.php's
-//     own Phase 2 computes real default-variant classes too, several collide with this grid's own
-//     ones on the same CSS property -- `$day_classes` below marks its own intentionally-overriding
-//     utilities `!important` for that reason, see the comment right above its definition. "Today"
-//     (a render-time-only fact, it can't change without a full page view) stays a plain conditional
-//     `ring-1 ring-border` class instead, no
-//     `peer-*` needed.
-//   - calendar.js's own buildDayCell()/renderMonth() (client-side month navigation, no PHP re-render)
-//     mirror every one of these classes verbatim on the elements they create, the same
-//     "reimplemented formula-for-formula" duplication that file's header comment already documents
-//     for the grid-math side of the same problem -- a navigated-to month would otherwise render
-//     completely unstyled after the first client-side rebuild.
-//
-// Supported config:
-//   mode              string   single | multiple (default: single) -- selection mode, mirrors
-//                              toggle-group.php's own `type` naming for the same distinction
-//   month             int      1-12 (default: current month per current_time('n'))
-//   year              int      default: current year per current_time('Y')
-//   selected          string|array   ISO date string(s) (YYYY-MM-DD) currently selected -- a
-//                              string for `single`, an array of strings for `multiple`, same
-//                              shape as toggle-group.php's own `value`
-//   disabled_dates    array    ISO date strings to individually disable
-//   min_date / max_date   string   ISO date strings (inclusive); days outside this range are
-//                              disabled
-//   week_starts_on    int      0 (Sunday, default) - 6 (Saturday)
-//   show_outside_days bool     default true. Shows adjacent months' day numbers in the leading/
-//                              trailing blank cells (non-interactive, `data-outside="true"`) --
-//                              shadcn's own default. `false` renders those cells fully empty.
-//   navigation        bool     default true. Renders the prev/next month links + caption; `false`
-//                              omits all three, for a caller that pins the month externally
-//   nav_name          string   query var name for the month-navigation links; auto-generated as
-//                              `{id}_month` when omitted (keeps multiple calendars on one page from
-//                              colliding)
-//   name              string   shared form field name for the day radios/checkboxes; auto-generated
-//                              via wp_unique_id() when omitted, exactly like toggle-group.php
-//   aria_label        string   accessible name for the outer <table>
-//   id                string   native `id` on the outer wrapper; auto-generated via
-//                              wp_unique_id() when omitted
-//   class / attributes / data_attributes   passthrough onto the outer
-//                              <div data-slot="calendar"> wrapper
-//
-// Not itself config, but worth documenting: the wrapper also carries `data-mode`/
-// `data-week-starts-on`/`data-show-outside-days`/`data-name`/`data-nav-name`/`data-min-date`/
-// `data-max-date`/`data-disabled-dates` (JSON array)/`data-selected` (JSON array)/
-// `data-aria-label-custom` (only when `aria_label` was given -- tells calendar.js NOT to
-// overwrite the table's aria-label with an auto-generated caption after month navigation, since
-// both the custom and auto-generated cases otherwise set aria-label on the same <table> element)
-// and the `<table>` carries `data-month`/`data-year` -- calendar.js's own bootstrap data,
-// reflecting this same config back out as attributes rather than JS needing a second config
-// source.
+// Config:
+//   mode                string         single (default) | multiple
+//   month               int            1-12, default current month
+//   year                int            default current year
+//   selected            string|array   Y-m-d date(s)
+//   disabled_dates      array          Y-m-d dates
+//   min_date / max_date string         Y-m-d, inclusive
+//   week_starts_on      int            0 (Sunday, default) - 6
+//   show_outside_days   bool           default true
+//   navigation          bool           default true; prev/next + caption
+//   nav_name            string         query var for navigation, default {id}_month
+//   name                string         form name of the days, default wp_unique_id()
+//   aria_label          string         name of the <table>
+//   id                  string         default wp_unique_id()
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -303,23 +151,8 @@ foreach ($cells as $cell) {
 
         $day_timestamp = mktime(0, 0, 0, $month, $day, $year);
 
-        // Selected/disabled MUST react live to the native checkbox/radio's own `:checked`/`:disabled`
-        // state (`peer-*`, see header comment) -- a render-time boolean class here would go stale the
-        // instant a user picks a different day without a page reload. "Today" has no such live
-        // concern (it can't change mid-view), so it's the one plain conditional class below.
-        //
-        // `!`-prefixed (Tailwind's own important-modifier, e.g. `!rounded-xl`) on every utility that
-        // now collides with toggle.php's OWN Phase-2 default-variant classes (rounded-full vs this
-        // grid's rounded-xl, h-9.5 vs h-10, font-medium vs font-normal, text-muted-foreground vs
-        // text-foreground, peer-checked:bg-grey-dark vs peer-checked:bg-henge-green, its added
-        // peer-checked:shadow-xs, and -- since `peer-checked:hover:` carries higher specificity than
-        // plain `peer-checked:`, see toggle.php's own header comment -- its
-        // peer-checked:hover:text-grey-dark-foreground too) -- toggle.php's header comment documents
-        // why this pre-existing nesting needed this once that file started computing its own classes:
-        // PHP has no `tailwind-merge`/`cn()` to resolve the collision any other way (plain string
-        // concatenation, see docs/entscheidungen.md), so `!important` is what keeps this calendar
-        // grid's own look deterministic regardless of which file Tailwind's class scanner happens to
-        // encounter first.
+        // Selected/disabled via peer-* so they follow the live input state. `!` because toggle.php's
+        // own default classes target the same properties (no tailwind-merge in PHP).
         $day_classes =
             'peer-focus-visible:border-ring peer-focus-visible:ring-[3px] ' .
             'peer-focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:outline-none ' .
@@ -432,9 +265,6 @@ $table_markup = sprintf(
     $body_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
-// Phase 2 (CLAUDE.md Regel 1): the whole wrapper IS the card -- see header comment for why this
-// component owns the full bg/border/radius/shadow/padding treatment instead of expecting a caller
-// to supply it (unlike e.g. select.php's/combobox.php's bare floating panels).
 $card_classes = 'rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-sm';
 
 $wrapper_attributes = $attributes;
@@ -442,11 +272,7 @@ $wrapper_attributes['class'] = trim($card_classes . ($class_name !== '' ? ' ' . 
 $wrapper_attributes['data-slot'] = 'calendar';
 $wrapper_attributes['id'] = $id;
 
-// Marks a caller-supplied aria_label as custom, distinct from the auto-generated "F Y" caption
-// (see $table_attributes above) -- both cases set aria-label on the SAME element (the <table>),
-// so calendar.js can't tell them apart just by checking whether aria-label is present (it always
-// is, either way). This wrapper-level marker is what calendar.js's renderMonth() checks before
-// overwriting the table's aria-label with a freshly formatted caption after month navigation.
+// Tells calendar.js not to overwrite a custom aria-label after navigation.
 if ($aria_label !== '') {
     $wrapper_attributes['data-aria-label-custom'] = 'true';
 }

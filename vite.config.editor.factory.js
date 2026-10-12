@@ -1,25 +1,12 @@
 import { defineConfig } from "vite";
 import path from "node:path";
 
-// Shared build config for every template-parts/blocks/<name>/'s editor script -- one classic,
-// non-module IIFE per block, built against WordPress' OWN `wp.*` globals instead of bundling React
-// again (see docs/entscheidungen.md's "Phase-3-Block-Architektur" entry). Factored out once a
-// SECOND block needed it (`ueberschrift-text`, alongside `buehne`) instead of speculatively upfront
-// -- each block still gets its OWN thin `vite.config.editor-<name>.js` file calling this factory
-// with its own entry/fileName/global name, and its own `vite build --config ...` call in
-// `package.json`'s `build:assets`, because Rollup/Vite's iife/umd lib-mode output does not support
-// multiple entry points in a single build (tried as one shared array-of-configs file first, same
-// limitation that already ruled out merging this with the main `vite.config.js`, see that decision's
-// own entry).
-// `emptyOutDir: false` is load-bearing: every block's build shares `dist/assets` with
-// `vite.config.js`'s own (non-editor) build, which must run FIRST and is the only one allowed to
-// empty that directory.
+// One IIFE per block against WordPress' `wp.*` globals. Separate config per block because lib-mode
+// iife output allows only one entry. `emptyOutDir: false`: vite.config.js runs first and owns dist/assets.
 export function createEditorBlockConfig({ entry, fileName, name }) {
     return defineConfig({
         base: "./",
-        // esbuild's JSX pragma: every block's edit.jsx imports `createElement as el`/`Fragment`
-        // from the externalized `@wordpress/element` (see `external`/`globals` below) instead of
-        // React, so compiled JSX must call THAT `el`, not the default `React.createElement`.
+        // edit.jsx files import `createElement as el` from @wordpress/element instead of React.
         esbuild: {
             jsx: "transform",
             jsxFactory: "el",

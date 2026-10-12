@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
-# Baut das Theme-Paket: dist/ leeren, Icons synchronisieren, Vite-Assets bauen, Theme-Dateien
-# nach dist/ kopieren.
+# Baut das Theme nach dist/.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
 dist_path="$repo_root/dist"
 
-# Nicht-PHP-Theme-Dateien mit festem Namen (WP-Konvention). PHP-Templates werden separat unten
-# per *.php-Wildcard erfasst (siehe docs/entscheidungen.md), damit neue Top-Level-Templates nach
-# WordPress-Template-Hierarchie (z. B. page-{slug}.php, single-{post-type}.php,
-# category-{slug}.php) automatisch mitgebaut werden, ohne diese Liste pflegen zu muessen.
+# Top-Level-PHP-Templates kommen separat per *.php-Wildcard dazu.
 theme_static_files=(
     "style.css"
     "theme.json"
@@ -18,15 +14,12 @@ theme_static_files=(
     "screenshot.jpg"
 )
 
-# "Quelle:Ziel"-Paare (relativ zum Repo-Root).
 theme_directories=(
     "inc:inc"
     "template-parts:template-parts"
     "languages:languages"
     "assets/images:assets/images"
-    # WooCommerce-Template-Overrides (woocommerce/content-product.php, single-product.php, ...) --
-    # eine Unterordner-Ebene, deshalb NICHT vom *.php-Wildcard oben erfasst (nicht rekursiv).
-    # Fehlte bis 2026-09-22, siehe docs/entscheidungen.md.
+    # Unterordner werden nicht per Wildcard erfasst, deshalb hier explizit.
     "woocommerce:woocommerce"
 )
 
@@ -41,14 +34,8 @@ mkdir -p "$dist_path"
     pnpm run build:assets
 )
 
-# Ships a production-only vendor/ (enshrined/svg-sanitize, no phpcs/PHPUnit/wordpress-stubs/
-# brain-monkey -- see docs/entscheidungen.md "SVG-Upload-Support") inside dist/: this theme
-# deploys as a fertiges Bundle per FTP (siehe deploy/deploy-changed in package.json), keine
-# Server-seitige `composer install`. Swaps the REPO's OWN vendor/ to --no-dev just long enough to
-# copy it, then restores the dev vendor/ (phpcs/PHPUnit/...) via `trap ... EXIT` so
-# `composer lint`/`composer test` keep working locally afterwards -- even if this subshell fails
-# partway through. Scoped to its own subshell so the trap can't linger for the rest of this
-# script.
+# Produktions-vendor/ (svg-sanitize) mitliefern, weil auf dem Server kein composer laeuft.
+# Danach per trap wieder den Dev-vendor/ herstellen, damit lint/test lokal weiter funktionieren.
 (
     cd "$repo_root"
     trap 'composer install' EXIT

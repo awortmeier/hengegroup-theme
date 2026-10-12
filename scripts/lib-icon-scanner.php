@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-// Shared scanning helpers for the icon-set sync scripts (Lucide, Tabler, ...).
-// Each icon set's own find-*.php only supplies the pattern-matching predicate;
-// the file collection and PHP tokenizing live here once.
+// Shared scanning helpers for find-*-icons.php.
 
 /**
  * @return string[]
@@ -13,8 +11,6 @@ function collect_php_files(string $repo_root): array
 {
     $files = glob($repo_root . '/*.php') ?: [];
 
-    // `woocommerce/` (Template-Overrides) seit 2026-10-07: single-product.php nutzt als erstes
-    // Override Icons -- ohne diesen Eintrag fehlten deren SVGs nach dem Sync stillschweigend.
     foreach (['inc', 'template-parts', 'woocommerce'] as $directory) {
         $absolute_directory = $repo_root . '/' . $directory;
 
@@ -37,12 +33,8 @@ function collect_php_files(string $repo_root): array
 }
 
 /**
- * Tokenizes PHP source and returns the "own text" of every bracket-delimited
- * literal ('[' ... ']' or '(' ... ')'), with nested sub-brackets masked out
- * (replaced by a placeholder). This isolates each array literal's direct
- * key => value pairs from those of any sibling or parent array, so callers
- * can pattern-match config arrays (e.g. icon.php's ['name' => ..., 'set' => ...])
- * without false cross-matches between unrelated icons in the same file.
+ * Own text of every [...] / (...) literal with nested brackets masked, so each array's key => value
+ * pairs can be matched without cross-matching sibling arrays.
  *
  * @return string[]
  */
@@ -75,10 +67,7 @@ function extract_bracket_literals(string $source): array
 }
 
 /**
- * Reads a JSON array file (e.g. scripts/lucide-icons.json) used to list extra
- * icons that should be synced even though nothing in the theme code
- * references them yet. Returns an empty array if the file is missing or
- * doesn't contain a JSON array — extra icons are optional, never required.
+ * [] when the file is missing or not a JSON array.
  *
  * @return array<int, mixed>
  */

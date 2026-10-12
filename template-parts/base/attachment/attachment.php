@@ -2,160 +2,24 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Attachment is one of its newer AI-chat-building-block components (alongside Bubble,
-// Message, Message Scroller, Marker -- not yet built here): a card showing a file/image attachment
-// with media, metadata and actions, for "files and images in chat composers, message threads, and
-// upload lists". Unlike most components in this theme, there is no native-vs-headless-primitive
-// question to work through at all -- shadcn's own Attachment is already "styled native React/HTML
-// rather than wrapping headless UI primitives" (no interaction pattern to replicate), so this file
-// is, like badge.php, a direct presentational translation: pure data-attributed markup,
-// zero JS (see CLAUDE.md #1).
+// File/attachment card. `href` renders a stretched-link overlay (<a> behind the actions) instead
+// of wrapping the card, so action buttons are not nested inside a link.
 //
-// Composition: `media` nests template-parts/base/icon.php or
-// template-parts/base/image.php depending on `media.variant` -- shadcn's own AttachmentMedia is
-// just an icon-or-image switch, nothing more. `actions` is caller-provided, pre-rendered HTML (same
-// convention as tooltip.php's `trigger`) -- shadcn's own AttachmentAction "inherits all Button
-// props, defaults to size=icon-xs" (this project's nearest equivalent is `size: 'icon-sm'`, see
-// docs/entscheidungen.md for button.php's sm/base/lg size vocabulary), `variant: 'ghost'` for a
-// button, so no separate attachment-action.php is needed, same reasoning as
-// input-group.php not needing an input-group-button.php. Several attachment.php calls are grouped
-// via template-parts/base/attachment/attachment-group.php, which nests scroll-area.php rather than
-// reimplementing horizontal scrolling (see that file's header comment).
-//
-// `href` (shadcn's AttachmentTrigger, "a full-card overlay for links/dialogs that doesn't interfere
-// with clickable actions") is rendered as its own `<a data-slot="attachment-trigger">` -- a
-// sibling of the media/content/actions, NOT a wrapper around them. Wrapping the whole card
-// (including its own `actions` buttons) in one `<a>` would nest interactive elements inside an
-// interactive element, invalid/broken markup. The standard "stretched link" CSS technique covers
-// this instead (`absolute inset-0` on the trigger, `relative` on the card, the trigger BEHIND the
-// actions in stacking order so a real action button still reaches that button first) -- see the
-// Tailwind classes below, `data-slot="attachment-trigger"`/`-actions"` are the same hooks either
-// way, just authored as Tailwind utilities now that Phase 2 puts classes directly in this file
-// (same convention as every other styled base component).
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes adapted from shadcn's own
-// Attachment/AttachmentMedia/-Content/-Title/-Description/-Actions/-Trigger (registry/new-york-v4/
-// ui/attachment.tsx, live-checked 2026-09-02) with the deviations the design reference below calls
-// for:
-//   - shadcn's own `w-fit` is dropped entirely rather than replaced with `w-full` -- an explicit
-//     width would have to be right for BOTH consumers (a full-width row in attachment-group.php's
-//     `flex-col` vertical list, a content-sized item in its own horizontal-scroll `flex-row` group,
-//     see that file's header comment), and a bare block-level `<div>` already IS full-width in the
-//     first context (normal flex `align-items: stretch` in a column) and content-sized in the
-//     second (default `flex: 0 1 auto`, no `align-items: stretch` on the row's cross axis) with NO
-//     explicit width utility needed either way -- letting the two callers' own flex directions do
-//     this for free beats hand-tuning a `w-*` value that would have to be undone in one of them.
-//     `flex-wrap` also dropped so the title truncates instead of the actions wrapping onto a
-//     second line.
-//   - `focus-within:ring-[3px]` instead of shadcn's `ring-1` -- this project's own focus-ring width
-//     convention everywhere else (accordion.php/select.php/calendar.php/...), not a
-//     component-specific choice.
-//   - card gets `shadow-xs`/`hover:shadow-md` (shadcn's own has no shadow at all) and a graduated
-//     `rounded-2xl`/`rounded-xl`/`rounded-lg` per `size` (shadcn: flat `rounded-xl`, only `xs` steps
-//     down to `rounded-lg`) -- the reference's cards visibly lift/shadow, real Tailwind steps used
-//     throughout instead of its literal `14px`/`12px`/`10px` (see button.php's own size-class
-//     comment for the "real steps only" convention this repeats).
-//   - error state additionally gets `bg-destructive/5` (shadcn's own only tints the border) --
-//     matches the reference's own pale-red error card wash; `uploading`/`processing`/`done` get NO
-//     extra border/background tint of their own even though the reference gives each a distinct
-//     one -- that reads as a side-by-side demo-grid flourish (states shown all at once need more
-//     visual separation than any one of them needs on its own), not a resting-state look worth
-//     baking in permanently, especially for `done` (the default -- see below), matching shadcn's
-//     own real spec instead, which doesn't tint any of the three either.
-//   - all remaining structure -- the `group/attachment` + `group-data-[...]/attachment:`/
-//     `has-data-[slot=...]:` mechanism driving size/orientation/state entirely from CSS off the
-//     `data-size`/`data-orientation`/`data-state` attributes already set below, `data-[state=idle]:
-//     border-dashed`, the image media's opacity fade-in on `done`/`idle`, `AttachmentTitle`'s
-//     `animate-pulse` while `uploading`/`processing` (this project's stock-Tailwind stand-in for
-//     shadcn's own custom `shimmer` utility -- same visual intent, zero custom CSS/keyframes needed,
-//     proportionate for what's otherwise a one-line effect) -- is shadcn's own, kept close to 1:1.
-//   - NOT reproduced from the reference: its per-file-type icon accent colors (each demo card picks
-//     its own icon-box background) aren't a shadcn prop or a formal "variant" this component should
-//     own -- that's caller content, covered by `media.class` below (same escape hatch as
-//     `class`/`attributes` elsewhere), not a bespoke `accent` config duplicating Tailwind's own
-//     `bg-*` utilities; its per-card diagonal shimmer-sweep overlay (an extra absolutely-positioned
-//     div + custom keyframe) is simplified to the `animate-pulse` treatment above, one fewer
-//     one-off animation for the design system to carry (same simplification spirit as accordion.
-//     php's own dark-variant chevron-badge note); its "Zustände" trailing icons (retry/check/
-//     spinner) are ordinary `actions` content -- shadcn's real AttachmentAction is just a Button,
-//     so there is no per-state icon for this component to own either (see the showcase page for
-//     how to compose these, e.g. nesting spinner.php for `processing`).
-//
-// `progress` (design request 2026-09-02): nests template-parts/base/progress/progress.php INSIDE
-// `attachment-content`, below title/description -- not a shadcn prop (its real Attachment has no
-// progress bar at all, see above), but the design reference's own "Zustände" section nests its own
-// progress bar the same way (inside the card's content column, not as a separate element below the
-// card), so this is closer to that reference than the plain external-composition approach tried
-// first. Still just a thin config-to-progress.php passthrough, not a reimplementation -- the
-// component doesn't know or care whether the value is real or a demo.
-//
-// Design reference: https://claude.ai/code/artifact/79e4e9d6-7cc2-43f6-a58a-b54c4184b194
-// ("Basis"/"Zustände"/"Größen" sections; "Bild" render an unrelated placeholder in the artifact
-// itself and isn't a usable reference -- `media.variant: 'image'` is styled from shadcn's own
-// AttachmentMedia image treatment instead).
-//
-// File organization: kept as the existing two-file template-parts/base/attachment/ folder
-// (attachment.php + attachment-group.php) rather than splitting further into one file per
-// shadcn sub-component (Media/Content/Title/Description/Actions/Trigger). Unlike e.g.
-// input-group.php's addon or field.php's sub-parts, none of these are ever invoked on their own by
-// a caller -- they only ever exist as config keys (`media`/`actions`) or literal markup
-// (title/description/trigger) inside one attachment.php call, so a separate file per part would add
-// files without adding any real composability, the same "config keys instead of a subfolder"
-// reasoning card.php/badge.php already document for their own multi-part shadcn origin. The
-// per-state/-size look itself is CSS-attribute-driven (see above), not a PHP-computed class map per
-// value either, so there's no per-variant branch that would want its own file.
-//
-// `variant: 'card'` (design request 2026-10-08, "Downloads" section of the product detail page
-// reference https://claude.ai/artifact/4qQ92u93LJVZgHWZPLeLWV): a stacked download card instead of
-// the one-line row -- header (media + title/description) on top, a multi-line `text` below it
-// (`flex-1`, so cards in one grid row line up their actions), `actions` last at full width (the
-// reference's full-width pill CTA, i.e. a button.php call with `full_width: true`). Not a shadcn
-// prop (its Attachment is a single row only); kept inside attachment.php rather than a separate
-// download-card.php because media/title/description/actions/trigger are exactly the same parts,
-// only arranged differently. The extra `attachment-header`/`attachment-text` wrappers exist only in
-// this variant, so the default variant's markup is unchanged. `size`/`orientation` don't apply to
-// it (forced to default/horizontal) -- their padding/width overrides would fight the card's own.
-// Radius/shadow = the `flat` card step from tokens.css (`rounded-card-flat`/`shadow-card-flat`,
-// same as card.php's `elevation: flat`). Reference values mapped to real Tailwind steps: 28px padding =
-// `p-7`, 44px icon box = `size-11`, 15px/17px text = `text-base`/`text-lg`; the reference's
-// off-white icon box (#f4f3f1) = `bg-muted`, its dark CTA = button.php `grey-dark`.
-//
-// Supported config:
-//   variant         string   default | card (see the `variant: 'card'` note above)
-//   title           string   file/attachment name (required unless `media` is given)
-//   description     string   metadata line (e.g. file type + size, or an upload-progress message)
-//   text            string   multi-line body text below the header -- `variant: 'card'` only,
-//                             ignored otherwise (the default row has no room for it)
-//   media           array    { variant: 'icon' (default) | 'image', icon: icon.php config,
-//                              image: image.php config, class: string appended onto the media
-//                              wrapper AFTER its computed classes (e.g. an icon-box accent color --
-//                              plain string concat, no tailwind-merge/cn() equivalent available in
-//                              PHP, same caveat as button.php's/badge.php's own `class`) }
-//                             -- renders the matching nested component
-//   actions         string   pre-rendered HTML for one or more button.php calls (see composition
-//                             note above)
-//   progress        array    optional. template-parts/base/progress/progress.php config (value/max/
-//                             aria_label/aria_valuetext/class/...), nested inside the content
-//                             column below title/description (see the `progress` note above) --
-//                             typically paired with `state: 'uploading'`, not enforced
-//   state           string   idle | uploading | processing | error | done (default: done) --
-//                             shadcn's own Attachment state vocabulary (verified live: shadcn's
-//                             documented default is "done", not "idle" -- a bare attachment.php
-//                             call is assumed to represent an already-attached file, not one mid-
-//                             upload), sets data-state only; the shimmer animation during
-//                             uploading/processing and destructive styling for error are
-//                             project-CSS driven off of it, not baked in here
-//   size            string   default | sm | xs
-//   orientation     string   horizontal (default) | vertical
-//   href            string   renders the full-card `<a data-slot="attachment-trigger">` overlay
-//                             (see the note above); requires `aria_label` or `title` for its
-//                             accessible name
-//   aria_label      string   accessible name for the `href` trigger; falls back to `title` when
-//                             omitted
-//   id              string   native `id` on the outer wrapper; auto-generated via wp_unique_id()
-//                             when omitted
-//   class / attributes / data_attributes   passthrough onto the outer
-//                             <div data-slot="attachment"> wrapper
+// Config:
+//   variant       string   default (row) | card (stacked download card; ignores size/orientation)
+//   title         string   required unless `media` is given
+//   description   string   meta line, e.g. type + size
+//   text          string   body text, card variant only
+//   media         array    { variant: icon (default) | image, icon, image, class }
+//   actions       string   pre-rendered button.php markup
+//   progress      array    progress.php config, shown below the title
+//   state         string   idle | uploading | processing | error | done (default)
+//   size          string   default | sm | xs
+//   orientation   string   horizontal (default) | vertical
+//   href          string   full-card link
+//   aria_label    string   link name (falls back to title)
+//   id            string   default wp_unique_id()
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -370,9 +234,7 @@ $base_classes =
     'data-[size=xs]:has-data-[slot=attachment-media]:p-1.5';
 
 if ($variant === 'card') {
-    // Own class string instead of `data-[variant=card]:` overrides on the row classes above: the
-    // row's `has-data-[slot=...]:px-*`/`p-*` variants would otherwise compete with `p-7` (Tailwind
-    // emits `p-*` before `px-*`, so the row padding would win).
+    // Own class string: the row's px-*/p-* variants would otherwise win over p-7.
     $base_classes =
         'group/attachment relative flex min-w-0 flex-col gap-5 rounded-card-flat bg-card p-7 ' .
         'text-card-foreground shadow-card-flat transition-[color,box-shadow,border-color] ' .
@@ -398,7 +260,6 @@ if ($variant === 'card') {
             )
             : '';
 
-    // Header + text now carry media/content; the printf below stays shared.
     $media_markup = $header_markup;
     $content_markup = $text_markup;
 }

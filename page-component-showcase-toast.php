@@ -3,28 +3,7 @@
 /**
  * Template Name: Component Showcase - Toast
  *
- * Dev-only page template: renders template-parts/base/toast.php (the toaster viewport, once, as
- * documented in that file's own header) plus a set of trigger buttons that call the imperative
- * `toast()` API from assets/js/template-parts/base/toast.js, for manual visual/functional review
- * during Phase 2 styling work -- not meant for production content or navigation. Analog zu
- * page-component-showcase-tabs.php/-separator.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Toast"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Unlike every other showcase page so far, this one can't lay its examples out inline in the page
- * flow: a toast IS a fixed-position overlay by design (that's the whole point of a toaster, see
- * toast.php's own header), so there is no non-fixed "preview" rendering to fall back to without
- * duplicating toast.php's own markup/classes outside their source of truth. Every example here is
- * therefore triggered on demand via a button, exactly how sonner's own live docs demo their toasts
- * too -- click a button, watch the real, fixed-position toaster in the corner, not a static
- * side-by-side grid of every variant at once. `duration` is left at the toaster's own real default
- * (4000ms) on purpose so the auto-dismiss life bar is actually visible in this demo, unlike a
- * `duration: 0` "hold it open for review" example would show.
- *
- * Design reference: https://claude.ai/code/artifact/4955236e-3bbd-4520-913c-795cfb92c5c6
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();
@@ -182,10 +161,7 @@ get_header();
     </section>
 </div>
 
-<?php // The toaster viewport itself -- rendered ONCE per page, see toast.php's own header.
-
-// `close_button: true` so every trigger above shows the close button styling too.
-get_template_part('template-parts/base/toast', null, [
+<?php get_template_part('template-parts/base/toast', null, [
     'config' => [
         'close_button' => true,
     ],

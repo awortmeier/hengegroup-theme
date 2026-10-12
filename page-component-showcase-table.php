@@ -3,32 +3,13 @@
 /**
  * Template Name: Component Showcase - Table
  *
- * Dev-only page template: renders template-parts/base/table/table.php (+ its table-*.php family)
- * and template-parts/base/table/data-table.php across the Claude-Design reference "Hengegroup"'s
- * own sections (Basis, Varianten, Data Table), for manual visual/functional review during Phase 2
- * styling work -- not meant for production content or navigation. Analog zur
- * page-component-showcase-pagination.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Table"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();
 
 /**
- * Buffers table-caption.php + table-header.php (built from $header_cells) + table-body.php (built
- * from $body_rows, each a buffered table-row.php call) + an optional table-footer.php, in HTML-spec
- * order (caption first), then passes the combined content to table.php -- same composition example
- * table.php's own file header documents.
- *
- * @param string $header_cells   Pre-rendered table-head.php calls, wrapped in one table-row.php
- * @param string $body_rows      Pre-rendered table-row.php calls (each wrapping table-cell.php)
- * @param string $caption
- * @param string $footer_row     Pre-rendered table-row.php call, or '' to omit table-footer.php
- * @param array<string, mixed> $table_config   Extra config merged onto the table.php call (e.g.
- *                                              `striped`, `class`)
+ * @param array<string, mixed> $table_config
  */
 $render_table = static function (
     string $header_cells,
@@ -289,8 +270,7 @@ $technical_specs = [
         ['key' => 'bestand', 'label' => 'Bestand', 'align' => 'end', 'sortable' => true],
     ];
 
-    // More rows than the default per_page (10), so the "Data Table" example below actually
-    // demonstrates client-side paging, not just a single always-full page.
+    // Mehr Zeilen als per_page (10), damit das Blaettern sichtbar wird.
     $inventory = [
         [
             'artikel' => 'Edelkorund weiß',
@@ -378,10 +358,7 @@ $technical_specs = [
         return '<span class="inline-flex items-center gap-1.5 rounded-full bg-henge-green/10 px-2.5 py-0.5 text-xs font-medium text-henge-green"><span class="size-1.5 rounded-full bg-henge-green"></span>Lager</span>';
     };
 
-    // Pre-sorted by 'artikel' to match the `orderby`/`order` config below (data-table.php only
-    // reflects the INITIAL sort state in aria-sort/the active icon now, see its own header comment
-    // -- the caller still owns sorting `rows` for the first render, same as before, just not for
-    // every subsequent click any more).
+    // Vorsortiert passend zu orderby/order (data-table.php sortiert nur clientseitig).
     usort($inventory, static fn(array $a, array $b): int => strcmp($a['artikel'], $b['artikel']));
 
     $data_table_rows = array_map(
@@ -396,9 +373,7 @@ $technical_specs = [
                     ' ' .
                     $render_status_badge($row['bestand']),
             ],
-            // 'bestand's cell mixes a number with a unit/status badge -- sort_values overrides the
-            // auto-computed (stripped-text, non-numeric) sort key so the column sorts numerically
-            // instead of lexicographically, see data-table.php's own header comment.
+            // Numerisch sortieren, obwohl die Zelle ein Badge enthaelt.
             'sort_values' => ['bestand' => $row['bestand']],
             'selected' => $index === 1,
         ],

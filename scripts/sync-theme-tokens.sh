@@ -1,21 +1,6 @@
 #!/usr/bin/env bash
-#
-# Spiegelt die Marken-Akzentfarbe aus assets/css/tokens.css (--color-henge-green) in theme.json
-# (settings.color.palette "accent"-Eintrag, Label "Henge Green" + styles.elements.link.color.text).
-# tokens.css ist die Single Source of Truth (siehe deren Kopfkommentar) — theme.json kann sie nicht
-# importieren (reines JSON, kein CSS-Pipeline-Zugriff), daher dieser Sync per Skript statt von Hand.
-# Der WP-Palette-Slug bleibt bewusst "accent" (siehe tokens.css-Kopfkommentar), auch wenn das
-# CSS-Token selbst --color-henge-green heisst.
-#
-# Reine Text-/Regex-Ersetzung auf beiden Dateien, kein JSON-Parse/Reserialize-Roundtrip — das
-# wuerde die bestehende Prettier-Formatierung von theme.json durcheinanderbringen (Key-Reihenfolge,
-# Einrueckung, Escaping). Nach dem Schreiben wird das Ergebnis trotzdem als JSON geparst, um
-# sicherzustellen, dass theme.json dabei nicht kaputt geht.
-#
-# Manuell auszufuehren, nachdem --color-henge-green in tokens.css geaendert wurde (z. B. Schritt 5
-# von README "Neues Projekt aus dieser Vorlage starten" bzw. setup.md).
-#
-# Beispiel: bash scripts/sync-theme-tokens.sh
+# Spiegelt --color-henge-green aus tokens.css nach theme.json (Palette "accent" + Link-Farbe).
+# Regex statt JSON-Roundtrip, damit die Formatierung von theme.json erhalten bleibt.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

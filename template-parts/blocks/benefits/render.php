@@ -2,13 +2,7 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/benefits/block.json (Design "Karriereseite", Abschnitt "Benefits")
-// -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die allgemeine
-// Phase-3-Block-Konvention. Dunkle Flaeche mit zwei weichen Lichtflecken (radiale Verlaeufe als
-// Tailwind-Arbitrary-Value, 1:1 aus dem Design) und Innenschatten oben/unten; darauf Ueberschrift,
-// Einleitung und das Raster der Kind-Bloecke (`hengegroup-theme/benefit`, InnerBlocks, fertig
-// gerendert in `$content`, je Benefit ein <li> -- siehe benefit/render.php). Benefits werden im
-// Editor direkt im Block hinzugefuegt/verschoben/bearbeitet (explizite Nachfrage 2026-10-07).
+// Block "Benefits": dunkle Flaeche, Ueberschrift, Einleitung, Kind-Bloecke (benefit) als <ul>.
 
 if (!is_array($attributes ?? null)) {
     return;

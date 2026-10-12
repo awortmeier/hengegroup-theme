@@ -3,32 +3,12 @@
 /**
  * Template Name: Component Showcase - Popover
  *
- * Dev-only page template: renders template-parts/base/popover.php across a form-content example,
- * a plain-text info example, all four `side` values, all three `align` values, and a right-aligned
- * filter example over a product list, for manual visual/functional review during Phase 2 styling
- * work -- not meant for production content or navigation. Analog zu
- * page-component-showcase-tooltip.php/-toast.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Popover"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Design reference: https://claude.ai/code/artifact/527a7d35-e7c6-43b4-ab6f-9f85baf2b43c
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();
 
-// popover.php's own header comment documents the constraint this helper exists for: `trigger`
-// lands inside the native <summary> that IS the popover's one interactive control -- nesting a
-// second real interactive element inside it (a genuine button.php `<button>`/`<a>`) breaks the
-// browser's native disclosure toggle entirely (invalid HTML content model: interactive content
-// inside interactive content), it does not merely look wrong. Every trigger below therefore reuses
-// button.php's own variant/size class-building logic (no duplicated Tailwind strings to drift out
-// of sync) but swaps its outer `<button>` tag for an inert `<span>` so it's safe to nest. Dev-only
-// showcase concern, not something popover.php's own API needs to solve -- real callers are
-// expected to pass plain text/icon content instead (see popover.php's/dropdown-menu.php's header
-// comments), this is only for visually matching the design reference's button-look triggers here.
+// Trigger mit Button-Optik als <span>: in <summary> darf kein zweites interaktives Element stehen.
 $render_popover_trigger_look = static function (array $button_config): string {
     ob_start();
     get_template_part('template-parts/base/button', null, ['config' => $button_config]);

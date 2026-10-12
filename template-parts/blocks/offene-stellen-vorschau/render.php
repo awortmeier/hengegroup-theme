@@ -2,11 +2,8 @@
 
 declare(strict_types=1);
 
-// Editor-Vorschau-Zwilling von template-parts/blocks/offene-stellen: rendert je nach `part` nur die
-// Stellenliste oder nur die Ansprechpartner-Karte -- die Ueberschrift dazwischen ist im Editor
-// natives `RichText` (siehe offene-stellen/edit.jsx). Gleiche Begruendung wie
-// produkte-raster/render.php: ein `ServerSideRender` gegen den ganzen Block wuerde die Ueberschrift
-// doppelt zeigen. Kein eigenes Editor-Bundle, offene-stellen/edit.jsx registriert ihn clientseitig mit.
+// Editor-Vorschau von offene-stellen: Stellenliste oder Ansprechpartner-Karte je `part`
+// (siehe produkte-raster/render.php).
 
 if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_open_jobs_list')) {
     return;

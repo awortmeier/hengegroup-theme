@@ -2,19 +2,8 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/anwendungsgruppe/block.json (Design "Anwendungen", je Gruppe eine
-// Sektion) -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die allgemeine
-// Phase-3-Block-Konvention. Gleicher Aufbau wie template-parts/blocks/produktkategorie/render.php:
-// Redakteure waehlen nur Gruppe und Hintergrund; Kicker/Farbe/Ueberschrift/Beschreibung kommen aus
-// der Gruppe (Produkte > Anwendungen, Ebene 1), die Karten sind automatisch alle Anwendungen der
-// Gruppe (Ebene 2) in ihrer Reihenfolge -- je Karte mit den zugeordneten Produkten als verlinkte
-// Chips (hengegroup_theme_render_anwendung_overview_card(), inc/template-parts/products.php).
-//
-// Anwendungen ohne Produkte erscheinen trotzdem (die Beschreibung ist eigener Inhalt); eine Gruppe
-// ganz ohne Anwendungen rendert nichts.
-//
-// Kopf als volle Rasterzeile (siehe produktkategorie/render.php, Bugfix Grid-Auto-Placement);
-// `id` = Slug der Gruppe als Sprungziel, jede Karte traegt den Slug ihrer Anwendung.
+// Block "Anwendungsgruppe": Kicker/Farbe/Ueberschrift aus der gewaehlten Gruppe, Karten = alle
+// Anwendungen der Gruppe. Gruppe ohne Anwendungen rendert nichts. `id` = Gruppen-Slug.
 
 if (
     !is_array($attributes ?? null) ||

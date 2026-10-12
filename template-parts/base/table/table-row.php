@@ -2,34 +2,12 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's TableRow: a plain <tr>, no ARIA/JS beyond what native table rows already provide
-// (CLAUDE.md #1). Content-agnostic wrapper, same nesting pattern as table-header.php/
-// table-body.php: buffer one or more table-head.php (inside table-header.php) or
-// table-cell.php (inside table-body.php/table-footer.php) calls and pass the combined HTML as
-// `content`.
+// <tr>.
 //
-// shadcn's own TableRow styles `data-[state=selected]`, set by a caller integrating something
-// like TanStack Table's row-selection state -- exposed here as `selected`, same
-// config-key-instead-of-manual-data-attribute convention as toggle.php's `pressed`.
-//
-// Phase 2 (CLAUDE.md Regel 1): base classes taken 1:1 from shadcn's own TableRow
-// (registry/new-york-v4/ui/table.tsx, live-checked 2026-09-03) -- `border-b transition-colors
-// hover:bg-muted/50 has-aria-expanded:bg-muted/50` -- with one deliberate deviation on the
-// strength of the Claude-Design reference "Hengegroup" (same `.dc.html` reference workflow as
-// pagination.php's own entry, see docs/entscheidungen.md): the selected-row tint is
-// `data-[state=selected]:bg-henge-green/5` instead of shadcn's own flat `bg-muted` -- a brand-color
-// wash instead of a neutral one, matching the reference's own selected-row look (`rgba(27,110,70,
-// 0.06)`, i.e. henge-green at ~6% -- `/5` is the nearest real Tailwind opacity step, same
-// nearest-real-scale-step convention as button.php's font-size mapping) and the same henge-green-
-// for-"current/selected" precedent pagination.php's own active-page item already established.
-//
-// Supported config:
-//   content    string   required. Pre-rendered HTML to wrap (buffered table-head.php/
-//                        table-cell.php calls)
-//   selected   bool     default false. Sets data-state="selected" (pure styling hook, e.g. a
-//                        highlighted row in a selectable data table)
-//   class / attributes / data_attributes   passthrough onto the outer
-//                        <tr data-slot="table-row"> wrapper
+// Config:
+//   content    string   table-head/-cell markup (required)
+//   selected   bool     sets data-state="selected" (highlight)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

@@ -2,34 +2,9 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/produkte/block.json ueber WordPress' natives `render`-Feld -- siehe
-// template-parts/blocks/buehne/render.php's Kopfkommentar fuer die allgemeine Phase-3-Block-
-// Konvention.
-//
-// Produktkarten sind woocommerce/content-product.php UNVERAENDERT -- wiederverwendet ueber
-// hengegroup_theme_render_produkte_grid() (inc/template-parts/woocommerce-product-card.php), die
-// eigentliche WP_Query + `wc_get_template_part('content', 'product')`-Loop-Logik, geteilt mit
-// template-parts/blocks/produkte-raster/render.php (siehe dessen Kopfkommentar: der
-// Editor-Vorschau-Zwillingsblock fuer die Live-Produktraster-Vorschau im Canvas, waehrend
-// Ueberschrift/Text hier als natives, direkt im Content-Bereich editierbares `RichText` laufen,
-// siehe assets/js/blocks/produkte/edit.jsx's Kopfkommentar fuer die volle Begruendung dieser
-// Aufteilung).
-//
-// Layout: `.wrapper`-12-Spalten-Grid (siehe docs/entscheidungen.md "12-Spalten-Grid ueber
-// .wrapper"). Kopfzeile (Ueberschrift/Text/Button) bekommt trotzdem `col-span-12` (volle Zeile,
-// gleiche Konvention wie jeder andere Block-Kopf) und wird per `max-w-2xl` optisch schmaler
-// gehalten -- ein Teil-`col-span` liesse die erste Produktkarte per CSS-Grid-Auto-Placement in die
-// auf dieser Zeile noch freien Spalten rutschen, statt in einer eigenen Zeile darunter zu beginnen.
-// Die Produktkarten selbst liegen als `<ul class="contents">` (`display: contents`) direkt als
-// Kind von `.wrapper`, damit content-product.php's eigene `col-span-12 sm:col-span-6 lg:col-span-3` je `<li>` direkt
-// gegen DIESES `.wrapper`-Grid greift statt gegen ein zweites, verschachteltes.
-//
-// Dunkler Hintergrund (`bg-grey-dark`, siehe tokens.css) + `color: 'light'`-Typography -- gleiches
-// "weisser Text auf dunklem Grund"-Muster wie buehne/render.php's Content-Box. Der
-// "Alle Produkte"-Button faellt ohne eigene `buttonUrl` auf die Produktuebersicht zurueck
-// (hengegroup_theme_get_products_page_url(), Produkte > Einstellungen bzw. Seite "produkte" -- seit
-// 2026-10-07 keine WooCommerce-Shop-Seite mehr, siehe inc/setup/theme-products.php), damit der Block
-// auch ohne manuelle Verlinkung sofort funktioniert.
+// Block "Produkte": dunkle Sektion mit Kopf und Produktraster. Kopf als volle Rasterzeile
+// (max-w-2xl), sonst rutscht die erste Karte per Auto-Placement daneben; die Karten liegen per
+// `<ul class="contents">` direkt im .wrapper-Grid. Ohne Button-URL: Produktuebersicht.
 
 if (!is_array($attributes ?? null)) {
     return;

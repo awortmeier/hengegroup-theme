@@ -3,18 +3,7 @@
 /**
  * Template Name: Component Showcase - Toggle
  *
- * Dev-only page template: renders template-parts/base/toggle/toggle.php and
- * template-parts/base/toggle/toggle-group.php across `variant` (default/outline/accent), `size`
- * (sm/default/lg), the `multiple`-selection group mode, an icon example and a disabled state, for
- * manual visual/functional review during Phase 2 styling work -- not meant for production content
- * or navigation. Analog zu page-component-showcase-tabs.php/-kbd.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Toggle"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Design reference: https://claude.ai/code/artifact/120c0655-89f0-4c42-b99b-bb5227b96ccc
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

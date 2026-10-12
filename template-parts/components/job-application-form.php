@@ -2,32 +2,13 @@
 
 declare(strict_types=1);
 
-// Bewerbungsformular einer Stellenanzeige (Design "Stellenangebot einzelseite", Abschnitt
-// "Bewerbungsformular") -- exklusiv fuer die angezeigte Stelle (verstecktes `job_id`, keine
-// Stellen-Auswahl wie im Design-Entwurf), verarbeitet von inc/setup/theme-careers-application.php
-// (siehe dort fuer Ablauf, Spam-Schutz und Datenschutz-Entscheidung).
+// Bewerbungsformular einer Stelle, verarbeitet von inc/setup/theme-careers-application.php.
+// Im HTML-Teil keine PHP-Bloecke, die nur aus einem Kommentar bestehen: @prettier/plugin-php
+// vervielfacht sie. Datei-Inputs liegen sr-only in einem als Button gestalteten <label>;
+// job-application.js zeigt Dateinamen an und prueft die Groesse vorab.
 //
-// Komposition aus template-parts/base/: field/field.php + field-label.php + field-error.php (je Feld
-// ueber hengegroup_theme_render_form_field(), inc/template-parts/helpers.php), input.php,
-// native-select.php, textarea.php, checkbox.php, button.php -- die Basis-Felder sind weiss und stehen auf dem hellgrauen Grund der
-// Bewerbungs-Sektion (neutral-200, single-stellenangebote.php); Beschriftungen in grey-dark.
-// Fehler stehen je Feld darunter (`aria-describedby` + `aria-invalid`, IDs ueber
-// hengegroup_theme_field_error_id()), zusaetzlich eine Zusammenfassung oben mit `role="alert"`.
-//
-// Ergaenzt gegenueber dem Design: Pflicht-Checkbox fuer die Datenschutzhinweise (Bewerbungsdaten
-// sind personenbezogen, Art. 13 DSGVO) und ein unsichtbares Honeypot-Feld gegen Spam (fuer Menschen
-// unsichtbar, `aria-hidden` und per `tabindex="-1"` nicht per Tab erreichbar, Bots fuellen es aus).
-//
-// Hinweis Formatierung: im HTML-Teil unten keine PHP-Bloecke, die nur aus einem Kommentar bestehen
-// -- @prettier/plugin-php verschiebt und vervielfacht Kommentare dann bei jedem Lauf.
-//
-// Datei-Felder: das native <input type="file"> liegt visuell versteckt (`sr-only`) in einem als
-// Button gestalteten <label> (bleibt per Tastatur fokussierbar, Fokusring ueber
-// `has-[:focus-visible]`); assets/js/components/job-application.js zeigt die gewaehlten Dateinamen
-// an und prueft die 5-MB-Grenze schon vor dem Absenden.
-//
-// Supported args:
-//   job   array   hengegroup_theme_get_job_data() der angezeigten Stelle (Pflicht)
+// Args:
+//   job   array   hengegroup_theme_get_job_data() (Pflicht)
 
 if (!isset($args['job']) || !is_array($args['job'])) {
     return;
@@ -41,9 +22,7 @@ $options = hengegroup_theme_get_job_application_options();
 $form_id = 'hengegroup-theme-application-' . (int) $job['id'];
 $value = static fn(string $field): string => (string) ($values[$field] ?? '');
 
-// Gibt ein Feld aus hengegroup_theme_render_form_field() aus (field/field.php + field-label.php +
-// field-error.php). Die Datenschutz-Checkbox bringt ein eigenes <label> mit statt field-label.php,
-// weil ihr Text einen Link enthaelt und label.php reinen Text escaped.
+// Datenschutz-Checkbox mit eigenem <label>, weil label.php den Link escapen wuerde.
 $print_field = static function (array $field): void {
     printf(
         '%s',
@@ -108,8 +87,7 @@ $file_field = static function (
     );
 };
 
-// Selects bekommen `value` nur, wenn wirklich etwas gewaehlt war -- ein leerer `value` wuerde den
-// Platzhalter abwaehlen und der Browser die erste echte Option vorbelegen (native-select.php).
+// Leerer `value` wuerde den Platzhalter abwaehlen und die erste Option vorbelegen.
 $select_value = static fn(string $field): array => $value($field) !== ''
     ? ['value' => $value($field)]
     : [];
@@ -360,9 +338,7 @@ $privacy_label =
     </div>
 
     <div class="grid gap-5 pt-1 sm:grid-cols-2">
-      <?php // Datei-Felder bringen ihr eigenes Label mit (siehe $file_field oben) -- daher ohne `label`.
-
-
+      <?php
       $field($form_id . '-cv', 'cv', '', $file_field($form_id . '-cv', 'cv', $cv_label, false));
       $field(
           $form_id . '-certificates',

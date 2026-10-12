@@ -2,20 +2,8 @@
 
 declare(strict_types=1);
 
-// Backend fuer Stellenangebote (siehe inc/setup/theme-careers.php fuer Post-Type/Taxonomien):
-//   - "Stellendetails"-Box im Stellen-Editor: Unternehmen (Einzelauswahl), Standorte,
-//     Taetigkeitsbereich, Anstellungsart, Gueltig bis, Eintritt, Gehalt, Arbeitsmodell,
-//     Erfahrung/Abschluss, "Stelle besetzt", alte Stellen-ID. Die Listen "Wir bieten dir"/"Dein
-//     Profil"/"Deine Aufgaben" pflegt man im Inhalt als Block "Stellen-Liste"
-//     (template-parts/blocks/stellen-liste), nicht hier. Oben ein Hinweis, welche fuer Google Jobs wichtigen Angaben noch fehlen.
-//   - Zusatzfelder an den Taxonomie-Termen: Unternehmen (rechtlicher Name, Website, Logo, Farbe,
-//     Unternehmensseite, Standard-Benefits, optionaler eigener Ansprechpartner), Standort (Adresse + Koordinaten).
-//   - "Stellenangebote > Einstellungen": Karriereseite + Standard-Ansprechpartner (aktuell einer fuer alle
-//     Unternehmen, pro Unternehmen ueberschreibbar).
-// Klassische add_meta_box()-/Term-Formular-Felder wie die bestehende SEO-/Badge-Box
-// (theme-seo-admin.php, theme-woocommerce-products.php) -- funktioniert im Block-Editor als
-// Metabox unter dem Inhalt, ohne eigenes JS-Bundle. Inline-`style`-Attribute sind wp-admin-UI,
-// ausserhalb von CLAUDE.md Regel 1 (gleiche Abgrenzung wie theme-seo-admin.php).
+// Backend der Stellenangebote: Stellendetails-Box (mit Hinweis auf fehlende Google-Jobs-Angaben),
+// Zusatzfelder der Taxonomien, Stellenangebote > Einstellungen.
 
 function hengegroup_theme_action_add_meta_boxes_job_details(): void
 {
@@ -31,8 +19,7 @@ function hengegroup_theme_action_add_meta_boxes_job_details(): void
 add_action('add_meta_boxes', 'hengegroup_theme_action_add_meta_boxes_job_details');
 
 /**
- * Eine Tabellenzeile im WordPress-Formular-Stil (`form-table`), `$control` ist bereits escapetes
- * HTML.
+ * `$control` ist bereits escapetes HTML.
  */
 function hengegroup_theme_render_job_admin_row(
     string $label,
@@ -50,9 +37,6 @@ function hengegroup_theme_render_job_admin_row(
     );
 }
 
-/**
- * <select> aus einer value => label-Liste. `$empty_label` erzeugt eine erste, leere Option.
- */
 function hengegroup_theme_get_job_admin_select(
     string $id,
     string $name,
@@ -370,8 +354,7 @@ function hengegroup_theme_action_save_post_job_details(int $post_id): void
         return;
     }
 
-    // Jeder Wert wird unten einzeln gegen eine Allow-Liste geprueft bzw. sanitisiert, bevor er
-    // gespeichert wird -- phpcs sieht diese nachgelagerte Pruefung von dieser Zeile aus nicht.
+    // Jeder Wert wird unten gegen eine Allow-Liste geprueft bzw. sanitisiert (phpcs sieht das nicht).
     $data =
         isset($_POST['hengegroup_theme_job']) && is_array($_POST['hengegroup_theme_job'])
             ? wp_unslash($_POST['hengegroup_theme_job']) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -471,8 +454,7 @@ add_action(
 );
 
 /**
- * Zusatzfelder je Taxonomie: field => [Label, Typ, Beschreibung]. Typ: text | url | email |
- * textarea | image | variant.
+ * field => [Label, Typ (text | url | email | textarea | image | variant), Beschreibung].
  */
 function hengegroup_theme_get_job_term_fields(string $taxonomy): array
 {
@@ -660,8 +642,7 @@ function hengegroup_theme_render_job_term_edit_fields(WP_Term $term, string $tax
 }
 
 /**
- * Haengt an den generischen `created_term`/`edited_term` (die als 3. Argument den Taxonomie-Namen
- * uebergeben) statt an `created_{$taxonomy}` -- Letzteres uebergibt dort die Term-Argumente.
+ * Generisches created_term/edited_term, weil nur dort der Taxonomie-Name als 3. Argument kommt.
  */
 function hengegroup_theme_action_save_job_term(int $term_id, int $tt_id, string $taxonomy): void
 {
@@ -686,8 +667,7 @@ function hengegroup_theme_action_save_job_term(int $term_id, int $tt_id, string 
         return;
     }
 
-    // Jeder Wert wird unten je Feldtyp einzeln sanitisiert -- siehe Kommentar in
-    // hengegroup_theme_action_save_post_job_details().
+    // Jeder Wert wird unten je Feldtyp sanitisiert.
     $data =
         isset($_POST['hengegroup_theme_term']) && is_array($_POST['hengegroup_theme_term'])
             ? wp_unslash($_POST['hengegroup_theme_term']) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -743,11 +723,7 @@ add_action('created_term', 'hengegroup_theme_action_save_job_term', 10, 3);
 add_action('edited_term', 'hengegroup_theme_action_save_job_term', 10, 3);
 
 /**
- * Karriere-Taxonomien, deren Standardfelder "Titelform" (Slug) und "Beschreibung" nirgends gelesen
- * werden: keine oeffentlichen Seiten (Slug egal, entsteht automatisch aus dem Namen), Stellen und
- * JSON-LD nutzen nur Name + Zusatzfelder (Taetigkeitsbereich nur den Namen als
- * `occupationalCategory`). Explizite Nachfrage 2026-10-07: "alle Felder entfernen, die nicht
- * benoetigt werden".
+ * Taxonomien, deren Slug/Beschreibung nirgends gelesen werden.
  */
 function hengegroup_theme_get_job_taxonomies_without_default_fields(): array
 {
@@ -759,10 +735,7 @@ function hengegroup_theme_get_job_taxonomies_without_default_fields(): array
 }
 
 /**
- * Blendet "Titelform" und "Beschreibung" auf Liste/Formular der Karriere-Taxonomien aus. WordPress
- * bietet dafuer keinen Filter (Felder fest in edit-tags.php/edit-tag-form.php) -- deshalb rohes CSS
- * statt Tailwind als Ausnahme (CLAUDE.md Regel 1), gleiche Begruendung wie bei den Anwendungen
- * (hengegroup_theme_action_admin_head_anwendung_fields(), theme-products-admin.php).
+ * Kein Filter vorhanden, daher CSS im Backend.
  */
 function hengegroup_theme_action_admin_head_job_term_fields(): void
 {
@@ -784,9 +757,6 @@ function hengegroup_theme_action_admin_head_job_term_fields(): void
 }
 add_action('admin_head', 'hengegroup_theme_action_admin_head_job_term_fields');
 
-/**
- * Spalten "Beschreibung"/"Titelform" in den Listen der Karriere-Taxonomien ausblenden (siehe oben).
- */
 function hengegroup_theme_filter_manage_job_term_columns(array $columns): array
 {
     unset($columns['description'], $columns['slug']);
@@ -805,9 +775,6 @@ function hengegroup_theme_register_job_term_column_filters(): void
 }
 hengegroup_theme_register_job_term_column_filters();
 
-/**
- * Logo-Feld der Unternehmen nutzt dasselbe wp.media()-Bildauswahl-Widget wie die SEO-Box.
- */
 function hengegroup_theme_action_admin_enqueue_scripts_job_terms(string $hook_suffix): void
 {
     if (!in_array($hook_suffix, ['edit-tags.php', 'term.php'], true)) {
@@ -825,10 +792,6 @@ function hengegroup_theme_action_admin_enqueue_scripts_job_terms(string $hook_su
 }
 add_action('admin_enqueue_scripts', 'hengegroup_theme_action_admin_enqueue_scripts_job_terms');
 
-/**
- * Spalten "Gültig bis"/Status in der Stellenliste -- abgelaufene Stellen sind so auf einen Blick
- * erkennbar, ohne jede einzeln zu oeffnen.
- */
 function hengegroup_theme_filter_manage_job_columns(array $columns): array
 {
     $date = $columns['date'] ?? null;

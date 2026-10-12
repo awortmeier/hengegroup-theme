@@ -3,20 +3,7 @@
 /**
  * Template Name: Component Showcase - Skeleton
  *
- * Dev-only page template: renders template-parts/base/skeleton.php across every documented config
- * option (shape, color, decorative, class passthrough) plus a few realistic compositions, for
- * manual visual/functional review during Phase 2 styling work -- not meant for production content
- * or navigation. Analog zu page-component-showcase-spinner.php.
- *
- * The "Karte"/"Liste und Tabelle" sections' card/table chrome (borders, headings, cell layout) is
- * showcase markup, not part of skeleton.php itself -- same "component renders only the shape, the
- * caller composes the surrounding chrome" minimalism as spinner.php's own "Im Kontext" section.
- * "Übergang" is shown as a static side-by-side comparison (Platzhalter | Geladen) rather than the
- * reference's interactive toggle button -- the point being demonstrated (skeleton dimensions match
- * the real content exactly, nothing shifts on load) doesn't need real interactivity to verify, and
- * this avoids introducing a new show/hide interaction pattern purely for a dev-only showcase page.
- *
- * Design reference: https://claude.ai/artifact/AgUuYjLPw8bHzEXojvtqyj
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

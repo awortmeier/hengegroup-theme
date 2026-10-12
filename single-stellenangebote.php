@@ -2,32 +2,9 @@
 
 declare(strict_types=1);
 
-// Einzelseite einer Stelle unter /karriere/<slug>/ (Design "Stellenangebot einzelseite"):
-// Firmen-Pill, H1, Standortzeile, Faktenleiste mit Ansprechpartner-Karte rechts daneben, Inhalt
-// (Gutenberg: Einleitung + "Stellen-Liste"-Bloecke fuer Wir bieten dir/Profil/Aufgaben, siehe
-// template-parts/blocks/stellen-liste), Bewerbungs-Abschnitt.
-//
-// Layout (explizite Nachfrage 2026-10-07): breiter `.wrapper`; der gesamte Inhalt (Kopf,
-// Faktenleiste, Text, Bewerbung) bleibt linksbuendig in 8 von 12 Spalten -- so breit wie die
-// Faktenleiste --, die Ansprechpartner-Karte steht ab `lg` rechts daneben in den uebrigen 4 Spalten
-// (mobil zwischen Faktenleiste und Text). Die Karte spannt ueber zwei Rasterzeilen
-// (`lg:row-span-2`), damit der Text direkt unter der Faktenleiste beginnt statt erst unter der
-// (hoeheren) Karte; Faktenleiste und Karte richten sich jeweils nach ihrem eigenen Inhalt. Alle Daten aus hengegroup_theme_get_job_data()
-// (inc/template-parts/careers.php) -- derselben Quelle wie das JobPosting-JSON-LD
-// (inc/setup/theme-careers-seo.php), damit sichtbarer Inhalt und strukturierte Daten
-// uebereinstimmen.
-//
-// Faktenleiste (Standort/Anstellungsart/Arbeitsmodell/Gehalt/Eintritt/Veroeffentlicht) ist eine
-// Ergaenzung zum Design: Gehalt/Anstellungsart/Ablauf stehen im JSON-LD und muessen laut Google
-// auch sichtbar sein; als echtes <dl> sind sie ausserdem fuer KI-Suchen sauber als Fakten lesbar.
-//
-// Bewerbung ueber das Formular aus dem Design (template-parts/components/job-application-form.php,
-// Verarbeitung inc/setup/theme-careers-application.php -- landet als Eintrag unter Karriere >
-// Bewerbungen, keine E-Mail). Die E-Mail-Adresse des Ansprechpartners steht, falls gepflegt, als
-// Alternative darunter.
-//
-// Der Header ist `fixed` und liegt ueber dem Inhalt (siehe header.php) -- daher der groessere
-// obere Abstand des ersten Abschnitts.
+// Einzelseite einer Stelle. Inhalt in 8 von 12 Spalten, Ansprechpartner-Karte ab lg rechts
+// (row-span-2, damit der Text direkt unter der Faktenleiste beginnt). Daten aus
+// hengegroup_theme_get_job_data(), wie das JSON-LD; Google verlangt die Fakten auch sichtbar.
 
 defined('ABSPATH') || exit();
 
@@ -60,8 +37,7 @@ while (have_posts()):
         $start_label = '';
     }
 
-    // Literale Icon-Konfigurationen (statt aus Variablen zusammengesetzt), damit
-    // scripts/find-lucide-icons.php sie beim Build findet und die SVGs synchronisiert.
+    // Literale Icon-Namen, damit find-lucide-icons.php sie findet.
     $facts = [
         [
             'label' => __('Standort', 'hengegroup-theme'),

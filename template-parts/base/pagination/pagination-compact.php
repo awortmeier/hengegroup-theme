@@ -2,65 +2,21 @@
 
 declare(strict_types=1);
 
-// NOT a shadcn/ui component -- shadcn's own Pagination (see pagination.php's own header) is
-// exclusively the items-array-of-page-links shape that file already covers. This is a Rule-2
-// implementation extension, stated plainly as such rather than dressed up as upstream vocabulary
-// (same category as tabs.php's own trailing-badge extension): a compact "Page X of Y" bar for
-// narrow columns/mobile, plus an optional items-per-page switcher, modeled on this theme's own
-// data-table.php pagination footer (structurally different from pagination.php: page-count-driven
-// via `current_page`/`total_pages`/`page_var` + real `add_query_arg()` navigation, not an
-// items-array a caller assembles by hand) rather than on any shadcn source. Lives alongside
-// pagination.php in this component's own template-parts/base/pagination/ folder (Rule 4) because
-// it is a second, structurally distinct file for the same component family -- not a `size`/
-// `variant` value of pagination.php itself, the same distinction that keeps toggle.php and
-// toggle-group.php (or kbd.php and kbd-group.php) separate files instead of one config-driven one.
+// Compact "Page X of Y" bar with optional per-page switcher. Links via add_query_arg(); the
+// prev/next buttons carry data-action for data-table.js.
 //
-// Nests template-parts/base/button.php for Previous/Next and every per-page option (same
-// single-source-of-truth-for-"is a button" reasoning as pagination.php's own header), and
-// template-parts/base/button-group/button-group.php to merge the per-page options into one
-// segmented control (already Phase-2-styled, reused as-is rather than inventing a new "segmented
-// track" look this theme has no other precedent for -- see docs/entscheidungen.md).
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
-// "Hengegroup"'s "Kompakt" section (same `.dc.html` reference workflow as pagination.php's own
-// entry, see docs/entscheidungen.md). The reference's card surface (`rounded-xl border
-// bg-background px-3.5 py-3 shadow-xs`) is an existing pattern already used elsewhere in this theme
-// (e.g. page-component-showcase-kbd.php's search-box example), not a one-off invention. Per-button
-// look again comes from the nested button.php, not reproduced here (see pagination.php's own Phase
-// 2 note for why).
-//
-// The Previous/Next buttons carry a `data-action="previous"|"next"` data attribute (via button.php's
-// own `data_attributes`) -- not used by this file, a stable hook for a JS enhancement layer to find
-// them without depending on DOM position. First consumer: data-table.php/data-table.js reuses this
-// whole component for its own pagination bar and manages `href`/`aria-disabled` on these two
-// buttons client-side once all rows are known up front (see that file's own header comment) --
-// still real `<a href>` navigation without JS, same zero-JS-first idiom as everywhere else.
-//
-// Supported config:
-//   current_page      int      default 1, clamped to >= 1
-//   total_pages       int      default 1, clamped to >= 1
-//   page_var          string   query var the Previous/Next/per-page links write the target page to
-//                               (default 'paged', WordPress's own pagination query var convention,
-//                               matching data-table.php)
-//   status_text       string   overrides the computed center label (default: translated "Page
-//                               %1$d of %2$d", same string as data-table.php's own pagination
-//                               label -- consistent copy across both compositions)
-//   total_items       int|null when given together with `per_page`, renders a secondary row with a
-//                               translated "%1$d-%2$d of %3$d results" range line
-//   per_page          int|null current items-per-page value (required for the range line and to
-//                               mark the active per-page option)
-//   per_page_options  array    list of ints, e.g. [12, 24, 48]. When non-empty (with `per_page`
-//                               set), renders a per-page-size button-group.php segmented control;
-//                               each option's href resets `page_var` to 1 (a per-page change always
-//                               re-pages from the start, matching the reference's own behaviour)
-//   per_page_var      string   query var the per-page links write the chosen value to (default
-//                               'per_page')
-//   per_page_label    string   visible label before the per-page control (default: translated "Per
-//                               page")
-//   aria_label        string   accessible name for the outer <nav> (default: translated
-//                               'pagination', same default as pagination.php)
-//   class / attributes / data_attributes   passthrough onto the outer <nav data-slot=
-//                               "pagination-compact">
+// Config:
+//   current_page       int        default 1
+//   total_pages        int        default 1
+//   page_var           string     default 'paged'
+//   status_text        string     default "Page %1$d of %2$d"
+//   total_items        int|null   with per_page: adds a "1-12 of 40 results" line
+//   per_page           int|null   current page size
+//   per_page_options   array      e.g. [12, 24, 48]; renders a button-group, resets to page 1
+//   per_page_var       string     default 'per_page'
+//   per_page_label     string     default "Per page"
+//   aria_label         string     default "pagination"
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -128,10 +84,6 @@ $nav_button = static function (
             'icon' => ['name' => $icon_name, 'set' => 'lucide'],
             'icon_position' => $icon_position,
             'disabled' => $disabled,
-            // `data-action="previous"|"next"` -- not used by this file itself, a stable hook for a
-            // JS enhancement layer (this project's own or a project's) to find these two specific
-            // buttons without depending on their DOM position; see data-table.js for the first
-            // consumer.
             'data_attributes' => ['action' => $action],
         ],
     ]);

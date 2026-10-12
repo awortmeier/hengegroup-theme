@@ -2,47 +2,14 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Label wraps a headless UI primitive (historically Radix UI; shadcn now also ships
-// Base UI/React Aria variants of many components), whose only real job -- clicking the label
-// focuses/activates its associated control -- is already native <label> behaviour, no JS needed
-// (see CLAUDE.md #1: natives HTML-Verhalten hat Vorrang). This component is therefore just a
-// data-attributed native <label>: no Tailwind/utility classes baked in, only data-slot="label"
-// for the project's own CSS. Built as its own base component (instead of inlined into
-// checkbox.php) because every future form control (radio, switch, input, textarea, select, ...)
-// needs the same pairing -- compose it, don't duplicate a <label> tag per component.
+// <label>. With `data_slot: 'field-label'` it uses the field-label class set instead (replaced, not
+// appended, because the classes conflict and PHP has no tailwind-merge).
 //
-// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own Label component (registry/
-// new-york-v4/ui/label.tsx) -- since every sibling form component (input.php/textarea.php/
-// checkbox.php/...) nests THIS file for its own `label` convenience config, styling it here once
-// cascades to all of them, instead of repeating the same classes in every caller.
-//
-// field-label.php's thin wrapper is the one exception: shadcn's own FieldLabel renders their Label
-// component but layers a SUBSTANTIALLY different class list on top (live-checked 2026-08-30) --
-// not just Label's classes plus a few additions, several outright conflict (`leading-none` vs.
-// `leading-snug`, `items-center` vs. `w-fit`). Concatenating both would leave contradicting
-// utilities in the same class attribute with no tailwind-merge to resolve them (same caveat as
-// button.php's own `class` config), so this file swaps to FieldLabel's own class set entirely --
-// same full-replacement-based-on-a-flag idiom as input.php's `data_slot === 'input-group-control'`
-// branch -- instead of appending. Deviations from shadcn's FieldLabel: `rounded-md` -> `rounded-lg`
-// (this project's field-surface radius, see input.php/input-group.php's own header comments),
-// `border` gained an explicit `border-border` (same bare-`border`-needs-a-color-utility reasoning
-// as button-group-text.php's header), `border-primary`/`bg-primary` renamed to this project's
-// henge-green brand token (same substitution button.php's variant vocabulary already makes), and
-// the `dark:has-data-[state=checked]:bg-primary/10` clause dropped (no dark-mode strategy yet, same
-// reasoning as button.php/badge.php).
-//
-// Supported config:
-//   text / label   string   required. Visible label content (plain text, escaped)
-//   for            string   the associated control's id (native `for` attribute); omit when the
-//                            label will wrap its control instead of being its sibling
-//   data_slot      string   overrides the root `data-slot` value (default: 'label') -- same
-//                            composing-parent escape hatch as input.php's/textarea.php's
-//                            `data_slot`; field-label.php requests 'field-label' here instead of
-//                            duplicating this file's attribute-building logic.
-//                            Leave unset for standalone use.
-//   class / attributes / data_attributes   passthrough, as in the other base parts (`class` is
-//                            appended AFTER the computed base classes, same caveat as button.php's
-//                            own `class`)
+// Config:
+//   text / label   string   required
+//   for            string   control id (omit when the label wraps the control)
+//   data_slot      string   default 'label'
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

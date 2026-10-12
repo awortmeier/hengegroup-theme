@@ -3,26 +3,7 @@
 /**
  * Template Name: Component Showcase - Progress
  *
- * Dev-only page template: renders template-parts/base/progress/progress.php +
- * progress-circle.php + progress-steps.php across every documented config option (value/max,
- * size, variant/color, striped, indeterminate, aria) for manual visual/functional review during
- * Phase 2 styling work -- not meant for production content or navigation. Analog zu
- * page-component-showcase-accordion.php/-attachment.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Progress"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses
- * the existing per-page mechanism instead of a second one.
- *
- * All three components render only their own indicator, not the surrounding label/value text or
- * card chrome (see each file's own header comment) -- every section below composes that chrome
- * itself with plain markup, same as the design reference does around its own examples. The
- * reference's "Basis" section additionally wires live +10/-10 buttons updating the bar in real
- * time -- progress.php has zero JS (see that file's header), so this page shows static value
- * snapshots instead, same "no fake interactivity on a server-rendered demo page" approach the
- * other showcase pages already take.
- *
- * Design reference: https://claude.ai/code/artifact/742f972a-483b-4310-a64e-fc82e6b1d2d4
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

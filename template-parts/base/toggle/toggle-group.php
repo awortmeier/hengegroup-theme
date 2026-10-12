@@ -2,113 +2,25 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's ToggleGroup wraps a headless UI primitive (historically Radix UI; shadcn now also
-// ships Base UI/React Aria variants of many components): a context provider (shares `variant`/
-// `size` with its items) around several ToggleGroupItem, JS-driven single/multiple selection state.
-// Composition instead of duplication: this file nests several
-// template-parts/base/toggle/toggle.php calls -- the exact same pattern radio-group.php already
-// uses for radio.php -- rather than re-implementing toggle.php's icon/text/variant/size rendering
-// here.
+// Group of toggle.php items. `single` uses radio inputs sharing a name (native exclusivity,
+// role="radiogroup"); toggle-group.js turns it into role="group" with aria-pressed buttons.
+// `multiple` uses checkboxes (role="group"), upgraded by toggle.js.
 //
-// `type` picks which native input toggle.php renders per item, matching each selection mode to its
-// closest native primitive:
-//   - `single` (mutually exclusive, one item selected) -> `type: 'radio'` toggles sharing one
-//     `name`. Native radio grouping enforces the exclusivity with zero JS -- clicking one item
-//     natively unchecks the others, nothing to wire up (same trick as radio-group.php).
-//   - `multiple` (independent booleans, any number selected) -> `type: 'checkbox'` toggles (each
-//     toggle.php's own default) -- a direct, unmodified nesting, no extra wiring needed at all.
-//
-// Same semantic trade-off as toggle.php itself, just restated at the group level: shadcn announces
-// every item as "button, pressed/not pressed" regardless of `type`, selection exclusivity in
-// `single` mode is JS-managed state, not a native role. This component instead announces `single`
-// items as "radio button, selected, N of M" (arguably an even closer semantic fit for "choose one
-// from a set" than a generic pressed button, if a different one than shadcn's own) and `multiple`
-// items as "checkbox, checked/not checked" -- see toggle.php's header comment for the full
-// reasoning. The wrapper role follows the same native-first logic: `role="radiogroup"` for `single`
-// (the correct ARIA container for a set of same-named radios, matching radio-group.php), plain
-// `role="group"` for `multiple` (a set of independent checkboxes, no radiogroup semantics apply).
-//
-// `multiple` mode's gap is closed: its items are plain `type: 'checkbox'` toggle.php instances
-// under a plain `role="group"`, so assets/js/template-parts/base/toggle.js's enhanceToggle()
-// upgrades each one to `role="button" aria-pressed` exactly like standalone toggle.php (see that
-// file's header comment) -- nothing group-specific stood in the way.
-//
-// `single` mode's gap -- previously a known, deliberately still-open exception to the established
-// ARIA-gap-closing rule -- is closed by assets/js/template-parts/base/toggle-group.js: unlike
-// `multiple` mode, toggle.js's own enhanceToggle() alone can't do this (it explicitly skips
-// radio-typed toggles inside a `role="radiogroup"`, exactly this component's `single` mode), because
-// the small "hide native + relabel the paired <label>" trick that closes every other case in this
-// theme doesn't apply on its own here -- shadcn's real ToggleGroup (`single`) is a
-// `role="group"`/toolbar-pattern set of real `aria-pressed` buttons where JS itself manages the
-// mutual-exclusivity that native radiogroup grouping gives this component for free; relabeling
-// individual items to `role="button"` without also replacing that native exclusivity with
-// JS-managed state would leave a broken half-upgrade (buttons that don't actually enforce "choose
-// one"). toggle-group.js is that larger undertaking: it promotes the wrapper from
-// `role="radiogroup"` to `role="group"`, then calls toggle.js's enhanceToggle() on each item (now
-// unblocked, since the guard above no longer matches once the wrapper's role has changed) --
-// reusing that logic rather than duplicating it -- and additionally
-// re-syncs every sibling's `aria-pressed` on each item's `change` event, because native radio
-// exclusivity does NOT fire `change` on the item that silently becomes unchecked, which
-// enhanceToggle()'s own per-item listener alone would miss. The underlying native radio inputs
-// (same shared `name`) are untouched otherwise -- actual "choose one" enforcement still comes from
-// the browser's native radio-exclusivity behaviour, not reimplemented in JS; only the *announced*
-// ARIA role/state changes. Without JS, `single` mode still falls back to announcing "radio button,
-// selected, N of M", which -- as argued above -- is itself a defensible, WCAG-valid fit for this
-// exact composition, not merely a broken fallback.
-//
-// `orientation` is exposed for CSS/ARIA parity with shadcn's vocabulary (data-orientation,
-// aria-orientation) but, like radio-group.php, doesn't change actual arrow-key direction -- native
-// Tab/Space (and, for `single`, native radio arrow-key) behaviour is DOM-order-based regardless of
-// visual layout; not a functional gap worth solving with JS for the common case (see CLAUDE.md #1).
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
-// "Hengegroup" (https://claude.ai/code/artifact/120c0655-89f0-4c42-b99b-bb5227b96ccc)'s "Basis"
-// section -- see toggle.php's own header comment for the full reference/variant/size writeup, this
-// wrapper only needs a row/column layout (`gap`, `flex-col` for `vertical`), every fill/border/color
-// already lives on each nested toggle.php item. `variant` gained the same third `accent` value
-// toggle.php's own header documents -- propagated here unchanged, no group-specific reasoning beyond
-// "same vocabulary as the item it wraps".
-//
-// Supported config:
-//   type          string   single | multiple (default: single) -- selection mode, see above
-//   items         array    required, ordered list of:
-//     value          string   required. This item's native `value`
-//     text / label    string   visible label text (omit for an icon-only item)
-//     icon            array    icon.php config, e.g. ['name' => 'bold', 'set' => 'lucide']
-//     icon_position   string   start | end (ignored for icon-only items)
-//     aria_label      string   accessible name, required for icon-only items
-//     disabled        bool     per-item disabled (in addition to the group-wide `disabled`)
-//     variant         string   per-item override of the group's `variant`
-//     size            string   per-item override of the group's `size`
-//     id              string   this item's id; auto-generated via wp_unique_id() when omitted
-//   value         string|array   the currently selected value(s) -- a string for `single` (compared
-//                          against each item's `value`), an array of strings for `multiple` (each
-//                          item whose `value` is in the array gets `pressed`). Matches shadcn's own
-//                          `value` prop, which is likewise a string for `single` and a string[] for
-//                          `multiple`.
-//   variant       string   default | outline | accent (default: default) -- shared default for every item,
-//                          same vocabulary as toggle.php, propagated like shadcn's context provider
-//   size          string   default | sm | lg (default: default) -- same propagation as `variant`
-//   disabled      bool     disables every item in the group; also sets `data-disabled="true"` on
-//                          the group wrapper itself (there's no native `disabled` attribute for a
-//                          <div>), matching radio-group.php's convention
-//   required      bool     applied to every item's underlying checkbox/radio input -- same
-//                          cross-family-consistency reasoning as toggle.php's own `required`
-//                          (matches radio-group.php's own `required`, which does the same per item)
-//   aria_invalid  bool     sets aria-invalid="true" plus a mirrored data-invalid="true" on the
-//                          group wrapper -- same error-state hooks as radio-group.php's own
-//                          `aria_invalid`, kept on the wrapper rather than per item for the same
-//                          reason
-//   name          string   base form field name. `single`: the literal shared radio `name` (what
-//                          makes the items mutually exclusive at all), auto-generated via
-//                          wp_unique_id() when omitted, exactly like radio-group.php. `multiple`:
-//                          optional; when given, each item gets `{name}[]` (standard HTML
-//                          checkbox-array submission convention) -- omit for no form participation.
-//   orientation   string   horizontal (default, matches shadcn's own default row layout) | vertical
-//                          -- sets data-orientation/aria-orientation only, see note above
-//   aria_label    string   accessible name for the group wrapper
-//   class / attributes / data_attributes   passthrough onto the outer
-//                          <div role="radiogroup"|"group" data-slot="toggle-group"> wrapper
+// Config:
+//   type           string         single (default) | multiple
+//   items          array          required, each { value (required), text/label, icon,
+//                                 icon_position, aria_label (icon-only), disabled, variant, size, id }
+//   value          string|array   selected value(s)
+//   variant        string         default | outline | accent
+//   size           string         default | sm | lg
+//   disabled       bool           all items; also data-disabled on the wrapper
+//   required       bool
+//   aria_invalid   bool           aria-invalid + data-invalid on the wrapper
+//   name           string         single: shared radio name (default wp_unique_id());
+//                                 multiple: optional, items get name[]
+//   orientation    string         horizontal (default) | vertical
+//   aria_label     string
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -212,14 +124,7 @@ foreach ($items_config as $item_config) {
     ]);
     $item_markup = (string) ob_get_clean();
 
-    // Wrapped per item (same reason tabs.php wraps each of its own trigger pairs in a
-    // `data-slot="tabs-trigger-item"` <span>, see that file's header comment): Tailwind's
-    // `peer-checked:`/`peer-disabled:`/`peer-focus-visible:` compile to a GENERAL sibling selector
-    // (`.peer:checked ~ *`), which -- without a per-item container -- would match every LATER
-    // item's label too, not just the checked item's own paired label, the moment one item in the
-    // group is checked (a Phase 1 non-issue, since toggle.php had no `peer-checked:`-styled classes
-    // of its own yet; a real Phase 2 bug otherwise, caught by rendering this file with real
-    // multi-item input against the actual compiled Tailwind output).
+    // Wrapper per item: peer-checked: is a general sibling selector and would hit later items too.
     $items_markup .= '<span data-slot="toggle-group-item">' . $item_markup . '</span>';
 }
 
@@ -227,12 +132,6 @@ if ($items_markup === '') {
     return;
 }
 
-// Phase 2 (CLAUDE.md Regel 1): layout only -- the reference's "Ohne Kante" row shows a set of
-// independent pills with a small gap between them, NOT a shared card/border container like
-// tabs.php's own segmented `variant: 'default'` (see that file's own header comment) -- every visual
-// (fill/border/color) already lives on each nested toggle.php item, this wrapper only needs to lay
-// them out in a row (or column for `vertical`), see this file's own header comment for the
-// reference link.
 $root_classes =
     'inline-flex flex-wrap items-center gap-1 data-[orientation=vertical]:flex-col ' .
     'data-[orientation=vertical]:items-start';

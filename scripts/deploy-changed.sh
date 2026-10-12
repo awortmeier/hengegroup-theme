@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-#
-# Wie deploy.sh, laedt aber nur Dateien hoch, deren SHA-256-Hash sich seit dem letzten Deploy
-# geaendert hat (Zustand in .deploy-state/ftp-theme-state.json, gebunden an FTP_REMOTE_PATH).
-# Gleiche Parallelisierung (xargs -P) und Fortschrittsanzeige wie deploy.sh, siehe dort.
-#
-# --skip-build: ueberspringt den Build-Schritt.
+# Wie deploy.sh, laedt aber nur seit dem letzten Deploy geaenderte Dateien hoch
+# (Zustand in .deploy-state/, gebunden an FTP_REMOTE_PATH). --skip-build ueberspringt den Build.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -125,7 +121,6 @@ if [ "$file_count" -eq 0 ]; then
     exit 1
 fi
 
-# relativePath<TAB>sha256 fuer jede Datei im aktuellen dist/-Build.
 current_state="$(
     find "$dist_path" -type f | LC_ALL=C sort | while IFS= read -r file; do
         relative_path="${file#"$dist_path"/}"
@@ -134,8 +129,7 @@ current_state="$(
     done
 )"
 
-# Vorheriger Stand aus state_file_path, nur wenn er zum aktuellen FTP_REMOTE_PATH gehoert; sonst
-# leer (= alles gilt als geaendert).
+# Vorheriger Stand, nur wenn er zum aktuellen FTP_REMOTE_PATH gehoert.
 previous_state="$(node -e '
     const fs = require("fs");
     const [stateFilePath, remoteBasePath] = process.argv.slice(1);
@@ -163,9 +157,7 @@ previous_state="$(node -e '
     }
 ' "$state_file_path" "$remote_base_path")"
 
-# Diff: nur Dateien, die in previous_state fehlen oder einen anderen Hash haben. Ueber temporaere
-# Dateien statt stdin, weil Bash-Variablen keine NUL-Bytes als Trenner zwischen den beiden
-# Zustaenden transportieren koennen.
+# Temporaere Dateien statt Variablen, weil Bash-Variablen keine NUL-Bytes halten.
 current_state_file="$(mktemp)"
 previous_state_file="$(mktemp)"
 printf '%s' "$current_state" >"$current_state_file"
@@ -250,8 +242,7 @@ if [ -s "$fail_log" ]; then
     exit 1
 fi
 
-# Neuen Stand nur bei vollstaendigem Erfolg schreiben (state
-# spiegelt immer den zuletzt tatsaechlich hochgeladenen dist/-Inhalt).
+# Stand nur bei vollstaendigem Erfolg schreiben.
 mkdir -p "$(dirname "$state_file_path")"
 node -e '
     const fs = require("fs");

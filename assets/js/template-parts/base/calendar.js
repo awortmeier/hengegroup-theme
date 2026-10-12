@@ -1,27 +1,11 @@
-// Progressive-enhancement layer for template-parts/base/calendar.php: intercepts clicks on the
-// prev/next month links and rebuilds the month grid in place instead of letting the browser follow
-// them (a real page reload -- see that file's header comment on why this needs its own grid math
-// in JS rather than reading an already-rendered DOM, unlike select.js/combobox.js). Everything else
-// (mode, week_starts_on, show_outside_days, name, min/max/disabled/selected dates) is read from the
-// `data-*` attributes calendar.php already renders -- config still flows from PHP once.
-//
-// Each day cell reuses toggle.php's own markup (see calendar.php's header
-// comment) -- toggle.js's initToggle() DOMContentLoaded sweep already picks up the initially
-// server-rendered days, but cells this file creates client-side during month navigation never go
-// through that sweep. enhanceToggle() is called on every freshly created cell below so navigated-to
-// months announce "button, pressed" just like the initial month does (the established
-// ARIA-gap-closing rule), not raw "checkbox"/"radio button" after the first month switch.
-//
-// The Tailwind classes below (input/label/outside-cell) mirror calendar.php's own render-time
-// classes verbatim -- see that file's header comment on why (same "reimplemented formula-for-
-// formula" duplication already documented there for the date-grid math itself, just for CSS classes
-// this time). Keep both in sync by hand; there is no shared source for either.
+// Month navigation without reload for calendar.php: rebuilds the grid with the same formula and
+// classes as the PHP (keep both in sync by hand) and reads its settings from data-* attributes.
+// New day cells go through enhanceToggle() because toggle.js's initial sweep never sees them.
 import { enhanceToggle } from "./toggle.js";
 
 const TOGGLE_INPUT_CLASSES = "peer sr-only";
 
-// `!`-prefixed utilities guard against toggle.php's own Phase-2 default-variant classes, which this
-// markup also nests -- see calendar.php's own $day_classes comment for the full itemized reasoning.
+// `!` against toggle.php's own default classes, as in calendar.php.
 const DAY_LABEL_CLASSES =
     "peer-focus-visible:border-ring peer-focus-visible:ring-[3px] " +
     "peer-focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:outline-none " +
@@ -64,8 +48,6 @@ function isoDate(year, month1, day) {
     return `${year}-${pad2(month1)}-${pad2(day)}`;
 }
 
-// Mirrors calendar.php's own leading/trailing formulas (DateTimeImmutable there, native Date here)
-// formula-for-formula -- see this file's header comment on why that duplication is unavoidable.
 function buildMonthCells(year, month1, weekStartsOn) {
     const monthIndex0 = month1 - 1;
     const daysInMonth = new Date(year, monthIndex0 + 1, 0).getDate();
@@ -222,11 +204,7 @@ function renderMonth(wrapper, table, config, year, month1) {
         caption.textContent = captionText;
     }
 
-    // calendar.php always sets aria-label on the <table> -- either a caller-supplied custom label
-    // or the auto-generated "F Y" caption -- so checking wrapper.hasAttribute("aria-label") can't
-    // distinguish the two (it's never set on the wrapper itself). data-aria-label-custom is the
-    // actual marker calendar.php renders only for the custom case; only overwrite the table's
-    // aria-label with the freshly formatted caption when that marker is absent.
+    // aria-label is always set on the <table>; only data-aria-label-custom marks a custom one.
     if (!wrapper.hasAttribute("data-aria-label-custom")) {
         table.setAttribute("aria-label", captionText);
     }
@@ -286,9 +264,7 @@ function setupCalendar(wrapper) {
         captionFormatter: new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }),
     };
 
-    // The initially server-rendered month may not have carried every selected date (a `selected`
-    // date outside that month never gets rendered by PHP at all) -- `data-selected` above is
-    // always the complete, authoritative list, not just what's visible on load.
+    // data-selected is the complete list, including dates outside the initial month.
 
     let year = parseInt(table.getAttribute("data-year") || "0", 10);
     let month1 = parseInt(table.getAttribute("data-month") || "0", 10);

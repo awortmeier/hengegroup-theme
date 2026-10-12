@@ -2,14 +2,8 @@
 
 declare(strict_types=1);
 
-// Scans the theme's own PHP files for icon.php configs that use a Tabler set
-// (['name' => '...', 'set' => 'tabler/outline'|'tabler/filled', ...]) and
-// prints the referenced icons as a JSON array of {name, variant}. Additionally
-// merges in any icons listed in scripts/tabler-icons.json — a supplementary
-// list for icons that should be synced even though the theme code doesn't
-// reference them yet (e.g. an icon name assembled dynamically at runtime,
-// which the static scan can't see). JSON entries may be a plain name string
-// (defaults to the "outline" variant) or an object {"name": ..., "variant": ...}.
+// Prints the Tabler icons referenced in the theme's PHP plus scripts/tabler-icons.json as a JSON
+// array of {name, variant}. JSON entries: a name (outline) or {"name", "variant"}.
 
 require __DIR__ . '/lib-icon-scanner.php';
 

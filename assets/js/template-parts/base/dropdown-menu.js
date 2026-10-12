@@ -1,9 +1,5 @@
-// Progressive-enhancement layer for template-parts/base/dropdown-menu/dropdown-menu.php: adds the
-// full WAI-ARIA Menu pattern (roving tabindex, arrow-key/Home/End/type-ahead navigation,
-// outside-click/Escape close) on top of the native <details>/<summary> zero-JS baseline (see that
-// file's header comment). Also the only place `role="menuitemcheckbox"`/`"menuitemradio"` toggling (
-// dropdown-menu-checkbox-item.php/dropdown-menu-radio-item.php) actually works at all, see those
-// files' header comments -- there is no native fallback for that part.
+// WAI-ARIA menu pattern for dropdown-menu.php (roving tabindex, arrow keys, Home/End, type-ahead,
+// outside click/Escape) and the only place checkbox/radio items can toggle.
 
 function getItems(content) {
     return Array.from(
@@ -102,15 +98,13 @@ function setupDropdownMenu(wrapper) {
 
         toggleCheckState(item);
 
-        // Plain menuitems (real <button>/<a>) already navigate/submit on their own native click;
-        // this only needs to close the menu behind them.
+        // Plain menu items act natively; only close the menu.
         if (item.getAttribute("role") === "menuitem") {
             close();
             return;
         }
 
-        // menuitemcheckbox/menuitemradio typically stay open after a toggle (matches shadcn's own
-        // default behaviour) so the user can flip several without reopening the menu.
+        // Checkbox/radio items keep the menu open for several changes.
     };
 
     trigger.addEventListener("keydown", (event) => {
@@ -152,8 +146,6 @@ function setupDropdownMenu(wrapper) {
         } else if (event.key === "Tab") {
             close();
         } else if (event.key.length === 1 && event.key !== " ") {
-            // Type-ahead: jump to the next enabled item whose text starts with the typed
-            // character(s), same convention as native <select>.
             window.clearTimeout(typeAheadTimer);
             typeAheadBuffer += event.key.toLowerCase();
             typeAheadTimer = window.setTimeout(() => {

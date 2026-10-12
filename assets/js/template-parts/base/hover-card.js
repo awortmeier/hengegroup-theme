@@ -1,15 +1,5 @@
-// Progressive-enhancement layer for template-parts/base/hover-card.php: enhances the native
-// `title`-attribute fallback into a styled, positioned floating preview panel. Positioning math
-// is shared with tooltip.js via utils/floating-position.js (see that file's header comment) --
-// this module only adds the parts genuinely specific to HoverCard, documented on hover-card.php:
-// separate open/close delays, and staying open while the pointer is over the panel itself (not
-// just the trigger), since the panel may hold interactive content the user needs to reach.
-//
-// "Hoverable" open/close: unlike tooltip.js (which listens on one wrapper element, safe because
-// its content is never meant to be interacted with), trigger and content are listened to
-// separately here. Entering EITHER cancels a pending close and (re)opens; leaving EITHER
-// schedules a close after `close_delay`, giving the user a grace period to move the pointer
-// across the gap between them without the panel disappearing first.
+// hover-card.php: styled panel with separate open/close delays. Trigger and content are listened to
+// separately so the pointer can cross the gap without closing the panel.
 
 import { positionFloatingElement } from "../../utils/floating-position.js";
 
@@ -85,7 +75,6 @@ function setupHoverCard(wrapper) {
         }
     });
 
-    // Once JS is driving the styled panel, the native title tooltip would just duplicate it.
     wrapper.removeAttribute("title");
     wrapper.dataset.js = "hover-card";
 }

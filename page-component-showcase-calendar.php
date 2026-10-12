@@ -3,26 +3,7 @@
 /**
  * Template Name: Component Showcase - Calendar
  *
- * Dev-only page template: renders template-parts/base/calendar.php across its documented config
- * axes (mode single/multiple, selected/disabled/min/max dates, week_starts_on,
- * show_outside_days, navigation) plus its main real-world composition,
- * template-parts/base/date-picker.php, for manual visual/functional review during Phase 2
- * styling work -- not meant for production content or navigation. Analog zu
- * page-component-showcase-button.php/page-component-showcase-badge.php; date-picker.php already
- * gets a short section in page-component-showcase-form-elements.php too, but calendar.php's own
- * grid -- the actual Phase-2-styled surface, see that file's header comment -- has no page of its
- * own yet, and every other config axis here (multiple/min-max/week_starts_on/show_outside_days/
- * navigation) is calendar.php-specific, not shared with the rest of that form-elements page.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Calendar"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses
- * the existing per-page mechanism instead of a second one.
- *
- * Another slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- one page per
- * component (family), not the full one-call-per-base-component page from that entry yet, see
- * docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

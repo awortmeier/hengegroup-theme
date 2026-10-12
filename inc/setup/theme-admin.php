@@ -37,8 +37,7 @@ function hengegroup_theme_action_admin_menu_cleanup(): void
         'site-editor.php?path=/wp_template',
         'site-editor.php?p=%2Fpattern',
         'site-editor.php?p=/pattern',
-        // Kein registrierter Sidebar-/Widget-Bereich (siehe docs/to-do.md) —
-        // die Widgets-Seite waere ohne Zielbereich nur eine leere, verwirrende Admin-Seite.
+        // Keine Widget-Bereiche registriert.
         'widgets.php',
     ];
 
@@ -52,16 +51,12 @@ function hengegroup_theme_action_admin_menu_cleanup(): void
     remove_submenu_page('tools.php', 'ms-delete-site.php');
     remove_submenu_page('tools.php', 'import.php');
     remove_submenu_page('tools.php', 'export.php');
-    // export-personal-data.php/erase-personal-data.php bleiben sichtbar (siehe setup.md,
-    // "Verarbeitet diese Website personenbezogene Daten?" = Ja) — DSGVO-Auskunfts-/
-    // Loeschrecht braucht diese Tools-Seiten als Erreichbarkeitspunkt fuer
-    // wp_privacy_personal_data_exporters/-erasers.
+    // Export/Loeschen personenbezogener Daten bleibt sichtbar (DSGVO).
     remove_submenu_page('options-general.php', 'options-media.php');
     remove_submenu_page('options-general.php', 'options-discussion.php');
     remove_submenu_page('options-general.php', 'options-writing.php');
     remove_menu_page('post-new.php');
-    // Datei-Editoren fuer Theme/Plugins: Code-Aenderungen laufen ausschliesslich ueber Repo + Deploy
-    // (explizite Nachfrage 2026-10-07, siehe docs/entscheidungen.md).
+    // Code nur ueber Repo + Deploy.
     remove_submenu_page('themes.php', 'theme-editor.php');
     remove_submenu_page('plugins.php', 'plugin-editor.php');
 

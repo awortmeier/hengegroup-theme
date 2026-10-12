@@ -2,58 +2,19 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Checkbox wraps a headless UI primitive (historically Radix UI; shadcn now also
-// ships Base UI/React Aria variants of many components): a <button role="checkbox"> plus a
-// hidden native input, driven entirely by JS state (checked/onCheckedChange). A checkbox is
-// exactly the case where native HTML already does the job without any of that --
-// <input type="checkbox"> has full native checked/disabled/required/keyboard/touch/form-submission
-// behaviour built in (see CLAUDE.md #1: natives HTML-Verhalten hat Vorrang). This component is a
-// plain, data-attributed <input type="checkbox">, optionally paired with
-// template-parts/base/label.php (composition instead of duplicating a
-// <label> tag here).
+// Native <input type="checkbox">, colored via accent-color.
 //
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind. shadcn's own Checkbox draws its checked state
-// via a custom `data-[state=checked]:bg-primary` background plus an SVG checkmark it fully
-// controls (Radix's CheckboxIndicator) -- neither is available on a bare native
-// `<input type="checkbox">` without `appearance-none` + a hand-drawn pseudo-element checkmark,
-// which would trade real native widget rendering for a re-implemented one just to look like
-// shadcn's, the opposite of this file's whole native-first rationale (see file header above).
-// Instead this uses the `accent-color` CSS property (Tailwind's `accent-*` utilities) -- a
-// standards-track property built for exactly this: recoloring a native checkbox/radio/range's own
-// checkmark/dot/thumb while leaving the browser's native rendering (and its focus/touch/OS-theme
-// behaviour) completely intact. `border`/`rounded-[4px]` are kept for browsers/themes that do
-// respect box-model styling on an unstyled checkbox; the focus ring and disabled state (box-shadow/
-// opacity/cursor) render identically regardless of native widget chrome, so those are shadcn's own
-// classes 1:1 (`dark:`-prefixed classes dropped, same reasoning as button.php/badge.php).
-//
-// Supported config:
-//   checked        bool     default false. Native `checked` attribute.
-//   disabled       bool     native `disabled` attribute, plus a mirrored `data-disabled="true"`
-//                            CSS hook (shadcn sets both alongside each other on their own
-//                            Checkbox, not just the native attribute)
-//   required       bool     native `required` attribute.
-//   indeterminate  bool     sets data-indeterminate="true" as a JS hook only -- there is no HTML
-//                            attribute for indeterminate, it's a DOM property, JS-only in every
-//                            browser. Deferred extension point: applying the actual visual state
-//                            needs a one-line script (`el.indeterminate = true`) that isn't part
-//                            of this theme yet -- not added unprompted (see CLAUDE.md #1).
-//   aria_invalid   bool     sets aria-invalid="true" plus a mirrored data-invalid="true" CSS
-//                            hook, same error-state hooks as input.php/textarea.php/
-//                            native-select.php (shadcn's current Checkbox docs show both as real
-//                            props, previously missing here -- inconsistent with the rest of the
-//                            form-control family)
-//   name / value   string   native form attributes, only rendered when given
-//   id             string   native `id`; auto-generated via wp_unique_id() when omitted (needed
-//                            to pair with `label` via its `for` attribute)
-//   label          string   optional visible label text; when given, nests
-//                            template-parts/base/label.php right after the input, both wrapped in
-//                            a plain <span data-slot="checkbox-field">. Omit for full manual
-//                            control: render the bare input, then compose your own label.php call
-//                            + wrapper markup at the call site (shadcn's own usage pattern --
-//                            Checkbox and Label are independent, composed by the caller)
-//   aria_label     string   accessible name when no visible `label` is given
-//   class / attributes / data_attributes   passthrough onto the <input> itself (not onto the
-//                            optional wrapper span, which stays a plain, unstyled hook)
+// Config:
+//   checked         bool
+//   disabled        bool     also data-disabled
+//   required        bool
+//   indeterminate   bool     only sets data-indeterminate (the state itself needs JS)
+//   aria_invalid    bool     aria-invalid + data-invalid
+//   name / value    string
+//   id              string   default wp_unique_id()
+//   label           string   adds label.php, both wrapped in <span data-slot="checkbox-field">
+//   aria_label      string   when there is no visible label
+//   class / attributes / data_attributes   on the <input>
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

@@ -2,81 +2,18 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Select wraps a headless UI primitive (historically Radix UI; shadcn now also ships
-// Base UI/React Aria variants of many components): a custom, JS-driven popover-based dropdown
-// (SelectTrigger/SelectContent/SelectItem) with its own keyboard/ARIA handling. Unlike every other
-// base component so far, there is no native HTML equivalent for a fully custom-styled option list
-// (see CLAUDE.md #1) -- this is the case that rule anticipates as "State wird zwingend gebraucht",
-// and building it is the whole point of this file (native-select.php already covers the
-// zero-JS case, see that file's header comment).
+// Styled select: nests native-select.php as the data source (works without JS) plus a hidden
+// trigger and empty listbox. select.js builds the items from the native <option>s (select-only
+// combobox pattern), syncs the value back via `change` and sets data-js; the native select then
+// stays visually hidden but focusable for its label.
 //
-// Architecture (progressive enhancement, composition):
-//   - This component nests template-parts/base/native-select.php (`data-slot="native-select"`)
-//     as the ONE authoritative data source: real <option>/<optgroup> elements, real form
-//     participation, works perfectly with zero JS on its own.
-//   - It additionally renders an (initially hidden) custom trigger <button> +
-//     <div role="listbox"> shell. assets/js/template-parts/base/select.js (mirrors this file's
-//     own path under assets/js/template-parts/) finds these on page load,
-//     builds the listbox items FROM the native select's own <option>/<optgroup> DOM (single
-//     source of truth -- no separate PHP/JS option list to keep in sync), and wires up
-//     open/close + keyboard navigation via the WAI-ARIA "select-only combobox" pattern
-//     (role="combobox" + aria-activedescendant, focus stays on the trigger). Selecting a custom
-//     item sets the native select's value and dispatches a `change` event on it, so the native
-//     select stays the source of truth for forms/any other code observing it.
-//   - CSS contract: the JS sets a `data-js` attribute on the outer <div data-slot="select"> once
-//     it has initialized. Project CSS must gate visibility on that attribute:
-//       [data-slot="select"]:not([data-js]) [data-slot="select-trigger"],
-//       [data-slot="select"]:not([data-js]) [data-slot="select-content"] { display: none; }
-//       [data-slot="select"][data-js] [data-slot="native-select"] { /* visually-hidden rules,
-//         NOT display:none/visibility:hidden -- it must stay focusable so the paired `label`
-//         (for/id) still works; JS also redirects a focus event on it back to the trigger */ }
-//     Without JS (or before it runs), the real native select stays visible/usable -- this is
-//     deliberate graceful degradation, not a bug.
-//
-// Scope: single-select only, matching shadcn's own stock Select (no `multiple` -- that's a
-// genuinely different, more complex component, not a variant of this one, see native-select.php).
-// No search/type-ahead/virtualized lists in v1 -- deferred extension points, not added
-// speculatively without a concrete need.
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, trigger classes taken 1:1 from shadcn's own
-// SelectTrigger (registry/new-york-v4/ui/select.tsx) with the same padding/radius deviations as
-// input.php (see that file's header for the Bewerbungsformular design-reference mapping --
-// `rounded-md` -> `rounded-lg`, `dark:`-prefixed classes dropped); the fixed
-// `data-[size=default]:h-9`/`data-[size=sm]:h-8` pair is replaced by the same padding-driven-height
-// override, applied per `size` below since shadcn's own size axis controls padding here too. The
-// floating listbox (`select-content`)/nested native-select.php get a minimal panel/field-surface
-// treatment for when JS is active; before JS initializes, native-select.php's own styling (see that
-// file) is what's actually visible. `select-content` is `absolute` (its own wrapper `<div
-// data-slot="select">` is the `relative` anchor) rather than a plain in-flow block -- it must float
-// OVER whatever comes after it in the DOM once opened, not push it down. The listbox ITEMS
-// (`select-item`/`select-group`/`select-label`/`select-item-indicator`) are built entirely in JS
-// (assets/js/template-parts/base/select.js, from the native select's own <option>s) and styled
-// there, not here -- this file only renders the empty `<div role="listbox">` shell.
-//
-// Supported config:
-//   options / value / placeholder / name / disabled / required / aria_invalid
-//                    same meaning as native-select.php (passed straight through to the nested
-//                    native-select.php call) -- see that file's config docs. `disabled`/
-//                    `aria_invalid` are also mirrored onto the trigger button itself as
-//                    data-disabled="true"/data-invalid="true" (shadcn's own CSS-hook convention);
-//                    `required` is additionally mirrored as aria-required="true" on the trigger --
-//                    unlike the other two, `required` has no data-* mirror to stay consistent with
-//                    it, since none of the sibling form components mirror `required` that way
-//                    either (see input.php)
-//   size             string   default | sm -- shadcn's SelectTrigger size (default: default)
-//   id               string   native id on the underlying native select; auto-generated via
-//                    wp_unique_id() when omitted (needed to pair with `label` via its `for`
-//                    attribute)
-//   label            string   optional visible label text; when given, nests
-//                    template-parts/base/label.php before the select, both wrapped in a plain
-//                    <div data-slot="select-field">. Omit for full manual control.
-//   aria_label       string   accessible name for the trigger, used only when no visible `label`
-//                    is given (same visible-label-wins gating as every sibling form component)
-//                    -- required once `label` is omitted, since label.php's `for`
-//                    pairs with the native select, not the trigger button that actually receives
-//                    focus after JS init
-//   class / attributes / data_attributes   passthrough onto the trigger <button> (shadcn's own
-//                    SelectTrigger receives className the same way, not the outer wrapper)
+// Config:
+//   options / value / placeholder / name / disabled / required / aria_invalid   as native-select.php
+//   size         string   default | sm
+//   id           string   id of the native select, default wp_unique_id()
+//   label        string   adds label.php
+//   aria_label   string   required without a visible label (the label points at the native select)
+//   class / attributes / data_attributes   on the trigger
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -112,9 +49,7 @@ if ($id === '') {
     $id = 'hengegroup-theme-select-' . wp_unique_id();
 }
 
-// Flatten groups once, just to resolve the trigger's initial label text -- native-select.php does
-// its own (separate) options handling for the actual <option>/<optgroup> markup; duplicating that
-// full logic here isn't worth it for what's ultimately a single text lookup.
+// Flattened only to find the initial trigger text.
 $flat_options = [];
 
 foreach ($options_config as $option_config) {
@@ -224,19 +159,10 @@ if ($aria_invalid) {
 }
 
 if ($required) {
-    // native-select.php's underlying <select required> already announces this natively, but after
-    // JS init the trigger <button role="combobox"> is the actually focused/interactive element --
-    // a plain <button> has no native `required` semantics, so aria-required is the only way a
-    // screen reader user learns this field is required from the trigger itself.
+    // The trigger is a <button>, so `required` must be announced via ARIA.
     $trigger_attributes['aria-required'] = 'true';
 }
 
-// Same visible-label-wins gating as every sibling form component (input.php, textarea.php,
-// checkbox.php, radio.php, switch.php, combobox.php, native-select.php): setting
-// aria-label unconditionally would be harmless on its own, but label.php's `for="$id"` here points
-// at the native select (hidden after JS init, not the trigger), so the trigger has no native label
-// association either way -- aria_label is this component's only way to give the trigger an
-// accessible name, and must stay required whenever a visible `label` isn't given.
 if ($label_text === '' && $aria_label !== '') {
     $trigger_attributes['aria-label'] = $aria_label;
 }
@@ -253,14 +179,8 @@ $trigger_markup = sprintf(
     $chevron_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
-// `absolute` (not the previous plain in-flow block) + `z-50`: the panel must float OVER whatever
-// comes after it in the document, not push it down -- the wrapper below gets `relative` so this
-// is positioned against it, matching shadcn's own Popper-anchored SelectContent instead of a
-// static block that shifts layout. `max-h-64 overflow-y-auto` caps very long option lists instead
-// of growing the panel (and page) without bound. Not nested via scroll-area.php (its `thin`-
-// scrollbar classes are just duplicated below instead, same reasoning as combobox.php's own
-// `select-content`-sibling comment): this panel is an empty shell populated by JS at runtime, and
-// scroll-area.php's `content` guard renders nothing at all for empty content.
+// Absolute so the panel floats over the following content. Not scroll-area.php: it renders
+// nothing for empty content, but this shell is filled by JS.
 $content_markup = sprintf(
     '<div class="absolute top-full left-0 z-50 mt-2 max-h-64 w-full overflow-y-auto ' .
         '[scrollbar-width:thin] [scrollbar-color:var(--color-border)_transparent] ' .

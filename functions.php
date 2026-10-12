@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-// enshrined/svg-sanitize (siehe inc/setup/theme-svg-support.php) ist die erste echte Laufzeit-
-// Composer-Abhaengigkeit dieses Themes (composer.json's require, nicht require-dev) -- guarded
-// per file_exists(), falls jemand klont/deployed, ohne vorher `composer install` laufen zu lassen
-// (theme-svg-support.php faellt in diesem Fall selbst fail-closed auf "kein SVG-Upload" zurueck).
+// Composer-Autoload (svg-sanitize) nur, wenn vendor/ existiert; theme-svg-support.php sperrt sonst
+// SVG-Uploads.
 if (file_exists(get_template_directory() . '/vendor/autoload.php')) {
     require_once get_template_directory() . '/vendor/autoload.php';
 }

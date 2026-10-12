@@ -2,52 +2,19 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's RadioGroupItem wraps a headless UI primitive (historically Radix UI; shadcn now
-// also ships Base UI/React Aria variants of many components): a <button role="radio"> plus a
-// hidden native input, driven by JS group state. A radio button is exactly the case where native
-// HTML already does the job without any of that -- <input type="radio"> has full native grouping
-// (same `name` = mutually exclusive), checked/disabled/required/keyboard/form-submission behaviour
-// built in (see CLAUDE.md #1). This component is a plain, data-attributed <input type="radio">,
-// optionally paired with template-parts/base/label.php (same convenience pattern
-// as checkbox.php's `label` config).
+// Native <input type="radio">, colored via accent-color. Usually rendered via radio-group.php.
 //
-// Standalone atom for manual composition/custom layouts. For the common case of rendering a whole
-// group of radios from a simple list, use template-parts/base/radio/radio-group.php instead, which
-// nests this file per item and auto-wires the shared `name` + `checked` state from a single
-// `value` config.
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, same `accent-color`-based approach as
-// checkbox.php (see that file's header comment for the full rationale) -- shadcn's own
-// RadioGroupItem draws a custom filled dot via its own SVG indicator, unavailable on a bare native
-// `<input type="radio">` without trading real native rendering for a re-implemented one; `accent-*`
-// recolors the browser's own native radio dot instead. Focus ring/disabled state are shadcn's own
-// classes 1:1 (`dark:`-prefixed classes dropped, same reasoning as button.php/badge.php).
-//
-// Supported config:
-//   checked        bool     default false. Native `checked` attribute.
-//   disabled       bool     native `disabled` attribute, plus a mirrored `data-disabled="true"`
-//                            CSS hook (matches checkbox.php/shadcn's own convention)
-//   required       bool     native `required` attribute (on a radio group, any one item having
-//                            `required` makes the whole group require a selection).
-//   name           string   native form field name -- MUST be shared across all radios that
-//                            should form one mutually exclusive group.
-//   value          string   native `value` attribute (the value submitted when this radio is
-//                            checked).
-//   aria_invalid   bool     sets aria-invalid="true" plus a mirrored data-invalid="true" CSS
-//                            hook, same error-state hooks as input.php/checkbox.php (previously
-//                            missing here -- inconsistent with the rest of the form-control
-//                            family). radio-group.php also has its own group-level `aria_invalid`
-//                            for the whole group.
-//   id             string   native `id`; auto-generated via wp_unique_id() when omitted (needed
-//                            to pair with `label` via its `for` attribute)
-//   label          string   optional visible label text; when given, nests
-//                            template-parts/base/label.php right after the input, both wrapped in
-//                            a plain <span data-slot="radio-field">. Omit for full manual control:
-//                            render the bare input, then compose your own label.php call +
-//                            wrapper markup at the call site (same escape hatch as checkbox.php)
-//   aria_label     string   accessible name when no visible `label` is given
-//   class / attributes / data_attributes   passthrough onto the <input> itself (not onto the
-//                            optional wrapper span, which stays a plain, unstyled hook)
+// Config:
+//   checked        bool
+//   disabled       bool     also data-disabled
+//   required       bool
+//   name           string   shared by all radios of a group
+//   value          string
+//   aria_invalid   bool     aria-invalid + data-invalid
+//   id             string   default wp_unique_id()
+//   label          string   adds label.php, both wrapped in <span data-slot="radio-field">
+//   aria_label     string   when there is no visible label
+//   class / attributes / data_attributes   on the <input>
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

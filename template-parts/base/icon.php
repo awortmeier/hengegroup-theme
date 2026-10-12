@@ -2,25 +2,15 @@
 
 declare(strict_types=1);
 
-// shadcn/ui has no Icon primitive either: icons are consumed directly as their own importable
-// component (typically from lucide-react), e.g. <Button><ArrowRightIcon /> Continue</Button> --
-// no wrapper needed because JS/React already gives every icon its own importable module. PHP has
-// no equivalent import-per-icon mechanism, so this component is the necessary server-side
-// substitute: a generic renderer parameterized by `name`/`set` that resolves to a pre-synced
-// static SVG file from lucide-static/@tabler/icons (see docs/how-to.md "Ein weiteres Icon
-// ergaenzen") -- the closest practical PHP analog to "importing an icon component", not a
-// deviation from shadcn's approach.
+// Renders a synced SVG from assets/images/icons/<set>/<name>.svg (see docs/how-to.md, "Icons").
 //
-// Supported config:
-//   name             string   required. Icon file name (without or with .svg), e.g. 'arrow-right'
-//   set              string   subdirectory under assets/images/icons/, e.g. 'lucide',
-//                              'tabler/outline', 'tabler/filled' (default: none/root)
-//   class            string   merged with any class="..." already present on the source SVG
-//   decorative       bool     default true. true -> aria-hidden="true" + focusable="false";
-//                              false -> role="img" + aria-label (or aria-labelledby + <title> when
-//                              `title` is given)
-//   title            string   accessible title, only used when decorative is false
-//   attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   name         string   required, e.g. 'arrow-right'
+//   set          string   e.g. 'lucide', 'tabler/outline', 'tabler/filled'
+//   class        string   merged with the SVG's own class
+//   decorative   bool     default true (aria-hidden); false = role="img" + aria-label/<title>
+//   title        string   accessible name when not decorative
+//   attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -85,9 +75,7 @@ if (!is_string($svg) || trim($svg) === '') {
     return;
 }
 
-// Source SVGs (e.g. lucide-static) ship their own class="..." on the <svg> tag;
-// strip it out and merge it with the caller's class instead of appending a
-// second class attribute, which browsers would otherwise silently ignore.
+// Merge into the SVG's existing class attribute; a second one would be ignored.
 $existing_class = '';
 $svg =
     preg_replace_callback(

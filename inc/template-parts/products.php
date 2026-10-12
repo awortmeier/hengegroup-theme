@@ -2,37 +2,15 @@
 
 declare(strict_types=1);
 
-// Daten- und Render-Helfer fuer den Produktbereich: Produktdetailseite
-// (woocommerce/single-product.php), Anwendungen (Taxonomie `produkt_anwendung`, Block
-// "Anwendungsgruppe"), Block "Produktkategorie" und die Ansprechpartner-Karte. Post-Type/Routing:
-// inc/setup/theme-products.php, Backend-Felder: inc/setup/theme-products-admin.php.
-//
-// Gleiche Aufteilung wie inc/template-parts/careers.php: nur Funktionen, keine Hooks beim Einbinden,
-// damit die reinen Logik-Helfer (Analyse-Zeilen, Auffuellen der verwandten Produkte) per Brain
-// Monkey testbar bleiben (tests/Unit/ProductsTest.php).
-//
-// Datenmodell (siehe docs/entscheidungen.md "Produktbereich: Datenmodell"):
-//   - Anwendungen: hierarchische, nicht oeffentliche Taxonomie `produkt_anwendung` am Produkt --
-//     Ebene 1 = Gruppen (Sektionen der Seite /anwendungen/, Kicker/Farbe/Ueberschrift wie bei den
-//     Produktkategorien), Ebene 2 = Anwendungen (Beschreibung, Bild, Icon, Reihenfolge). Produkte
-//     bekommen nur Anwendungen der Ebene 2; die Verknuepfung liegt einmal in WordPress' eigener
-//     Term-Zuordnung und ist in beide Richtungen abfragbar (Produkt -> Anwendungen per
-//     get_the_terms(), Anwendung -> Produkte per tax_query). Keine Einzelseiten (explizite Vorgabe
-//     2026-10-07: Anwendungen haben nur eine Uebersichtsseite).
-//   - Produktkategorien (`product_cat`): Sektionen der Produktuebersicht, mit Kicker/Farbe/
-//     Ueberschrift/Ansprechpartner als Term-Meta.
-//   - Koernungen: globales WooCommerce-Attribut `pa_koernung` -- wird spaeter, sobald Produkte
-//     bestellbar sind, zur Variantenauswahl ("Fuer Variationen verwenden").
-//   - Chemische Analyse/Downloads/Recycling-Hinweis: Produkt-Meta aus dem Tab "Technische Daten".
+// Daten- und Render-Helfer fuer den Produktbereich. Nur Funktionen (keine Hooks), damit die Logik per
+// Brain Monkey testbar bleibt. Anwendungen: Taxonomie `produkt_anwendung` (Ebene 1 Gruppen, Ebene 2
+// Anwendungen); Koernungen: Attribut `pa_koernung`; Analyse/Downloads: Produkt-Meta.
 
 const HENGEGROUP_THEME_ANWENDUNG_TAXONOMY = 'produkt_anwendung';
 const HENGEGROUP_THEME_PRODUCT_OPTION = 'hengegroup_theme_product_options';
 const HENGEGROUP_THEME_GRAIN_ATTRIBUTE = 'koernung';
 const HENGEGROUP_THEME_RELATED_PRODUCTS_LIMIT = 4;
 
-/**
- * Produkt-Meta-Keys des Tabs "Technische Daten".
- */
 function hengegroup_theme_get_product_meta_keys(): array
 {
     return [
@@ -43,8 +21,7 @@ function hengegroup_theme_get_product_meta_keys(): array
 }
 
 /**
- * Icon-Auswahl fuer Anwendungen (Karten "Anwendungsbereiche" auf der Produktdetailseite). Literale Konfigurationen, damit scripts/find-lucide-icons.php sie beim
- * Build findet.
+ * Literale Icon-Konfigurationen, damit find-lucide-icons.php sie findet.
  */
 function hengegroup_theme_get_anwendung_icons(): array
 {
@@ -91,10 +68,6 @@ function hengegroup_theme_get_anwendung_icons(): array
     ];
 }
 
-/**
- * Hintergrundklasse je Badge-Farbe (hengegroup_theme_get_badge_variants()) -- fuer Flaechen in
- * Produktfarbe (Icon-Kacheln der Anwendungsbereiche).
- */
 function hengegroup_theme_get_variant_background_class(string $variant): string
 {
     return [
@@ -106,11 +79,8 @@ function hengegroup_theme_get_variant_background_class(string $variant): string
 }
 
 /**
- * Bereinigt die Zeilen der chemischen Analyse aus den parallelen Formular-Arrays (Bezeichnung[] /
- * Wert[]) -- Zeilen ohne Bezeichnung UND Wert fallen weg, Reihenfolge bleibt erhalten.
+ * Analyse-Zeilen aus den parallelen Formular-Arrays; Zeilen ohne Bezeichnung und Wert entfallen.
  *
- * @param array<int, mixed> $labels
- * @param array<int, mixed> $values
  * @return list<array{label: string, value: string}>
  */
 function hengegroup_theme_normalize_analysis_rows(array $labels, array $values): array
@@ -132,9 +102,7 @@ function hengegroup_theme_normalize_analysis_rows(array $labels, array $values):
 }
 
 /**
- * Verwandte Produkte: zuerst die manuell gesetzten (WooCommerce "Up-Sells", im Backend als
- * "Verwandte Produkte" beschriftet), dann mit passenden Zufallsprodukten auf `$limit` aufgefuellt.
- * Ohne Duplikate und ohne das Produkt selbst.
+ * Erst die manuellen (Up-Sells), dann aufgefuellt auf $limit; ohne Duplikate und ohne das Produkt selbst.
  *
  * @param int[] $manual_ids
  * @param int[] $fallback_ids
@@ -166,11 +134,7 @@ function hengegroup_theme_merge_related_product_ids(
 }
 
 /**
- * IDs der verwandten Produkte (siehe hengegroup_theme_merge_related_product_ids()). Die Auffuellung
- * kommt zuerst aus WooCommerce' eigener Zufallsauswahl `wc_get_related_products()` (gleiche
- * Produktkategorie/-schlagwoerter, gecacht und gemischt); reicht das nicht fuer 4 (z. B. kleine
- * Kategorie), wird mit zufaelligen anderen veroeffentlichten Produkten aufgefuellt -- explizite
- * Vorgabe: bei weniger als 4 gesetzten immer auf 4 auffuellen.
+ * Auffuellung zuerst aus wc_get_related_products(), dann aus beliebigen Produkten (immer 4).
  *
  * @return int[]
  */
@@ -215,8 +179,7 @@ function hengegroup_theme_get_related_product_ids(WC_Product $product): array
 }
 
 /**
- * Sortiert Anwendungen (Arrays mit `group_order`, `order`, `name`) nach Gruppe, dann Reihenfolge,
- * dann Name -- reine Funktion, unit-getestet (tests/Unit/ProductsTest.php).
+ * Nach Gruppe, Reihenfolge, Name.
  *
  * @param list<array{group_order: int, order: int, name: string}> $items
  * @return list<array{group_order: int, order: int, name: string}>
@@ -235,17 +198,13 @@ function hengegroup_theme_sort_anwendung_items(array $items): array
     return $items;
 }
 
-/**
- * Reihenfolge-Feld eines Anwendungs-Terms (Gruppe oder Anwendung), 0 wenn leer.
- */
 function hengegroup_theme_get_anwendung_order(int $term_id): int
 {
     return (int) get_term_meta($term_id, '_hengegroup_theme_anwendung_order', true);
 }
 
 /**
- * Normalisierte Daten einer Anwendung (Term der Ebene 2). `short` = Kurztext fuer die Karte auf der
- * Produktdetailseite, faellt auf die gekuerzte Beschreibung zurueck.
+ * `short` (Kurztext der Karte) faellt auf die gekuerzte Beschreibung zurueck.
  */
 function hengegroup_theme_get_anwendung_data(WP_Term $term): array
 {
@@ -267,10 +226,6 @@ function hengegroup_theme_get_anwendung_data(WP_Term $term): array
     ];
 }
 
-/**
- * Normalisierte Daten einer Anwendungsgruppe (Term der Ebene 1) -- gleiche Felder wie
- * hengegroup_theme_get_product_category_data().
- */
 function hengegroup_theme_get_anwendung_group_data(WP_Term $term): array
 {
     $meta = static fn(string $field): string => trim(
@@ -292,8 +247,6 @@ function hengegroup_theme_get_anwendung_group_data(WP_Term $term): array
 }
 
 /**
- * Anwendungen (Ebene 2) einer Gruppe, sortiert nach Reihenfolge, dann Name.
- *
  * @return WP_Term[]
  */
 function hengegroup_theme_get_group_anwendungen(int $group_id): array
@@ -308,8 +261,6 @@ function hengegroup_theme_get_group_anwendungen(int $group_id): array
 }
 
 /**
- * Sortiert Anwendungs-Terms nach Gruppe (deren Reihenfolge), eigener Reihenfolge, Name.
- *
  * @param WP_Term[] $terms
  * @return WP_Term[]
  */
@@ -330,8 +281,7 @@ function hengegroup_theme_sort_anwendung_terms(array $terms): array
 }
 
 /**
- * Anwendungen eines Produkts (nur Ebene 2 -- versehentlich zugeordnete Gruppen fallen weg),
- * sortiert wie auf der Seite /anwendungen/.
+ * Nur Ebene 2 (versehentlich zugeordnete Gruppen fallen weg).
  *
  * @return WP_Term[]
  */
@@ -349,9 +299,6 @@ function hengegroup_theme_get_product_anwendungen(int $product_id): array
 }
 
 /**
- * Veroeffentlichte Produkte einer Anwendung (Gegenrichtung der Zuordnung am Produkt), in der
- * Reihenfolge der Produktuebersicht.
- *
  * @return int[]
  */
 function hengegroup_theme_get_anwendung_product_ids(int $term_id): array
@@ -379,8 +326,7 @@ function hengegroup_theme_get_anwendung_product_ids(int $term_id): array
 }
 
 /**
- * Produkte einer Kategorie (inkl. Unterkategorien) in der Reihenfolge "Menue-Reihenfolge, dann
- * Name" -- wie WooCommerce' eigene Standardsortierung.
+ * Inkl. Unterkategorien, sortiert wie WooCommerce (Menue-Reihenfolge, Name).
  *
  * @return int[]
  */
@@ -408,10 +354,6 @@ function hengegroup_theme_get_category_product_ids(int $term_id): array
     );
 }
 
-/**
- * Zusatzfelder einer Produktkategorie (Term-Meta, gepflegt unter Produkte > Kategorien). `heading`
- * faellt auf den Kategorienamen zurueck, `description` ist WordPress' eigene Term-Beschreibung.
- */
 function hengegroup_theme_get_product_category_data(WP_Term $term): array
 {
     $meta = static fn(string $field): string => trim(
@@ -439,9 +381,6 @@ function hengegroup_theme_get_product_category_data(WP_Term $term): array
     ];
 }
 
-/**
- * Einstellungen unter Produkte > Einstellungen, ueber die Standardwerte gemischt.
- */
 function hengegroup_theme_get_product_options(): array
 {
     $stored = get_option(HENGEGROUP_THEME_PRODUCT_OPTION, []);
@@ -460,8 +399,7 @@ function hengegroup_theme_get_product_options(): array
 }
 
 /**
- * URL der Produktuebersicht: die unter Produkte > Einstellungen gewaehlte Seite, sonst die Seite mit
- * Slug "produkte", sonst die Startseite.
+ * Gewaehlte Seite, sonst Slug "produkte", sonst Startseite.
  */
 function hengegroup_theme_get_products_page_url(): string
 {
@@ -480,9 +418,7 @@ function hengegroup_theme_get_products_page_url(): string
 }
 
 /**
- * Ansprechpartner eines Produkts: der bei seiner (ersten) Kategorie hinterlegte, falls Name ODER
- * E-Mail gepflegt sind, sonst der Standard aus Produkte > Einstellungen -- gleiches Muster wie
- * hengegroup_theme_get_job_contact().
+ * Ansprechpartner der ersten Kategorie (wenn Name oder E-Mail gepflegt), sonst der Standard.
  */
 function hengegroup_theme_get_product_contact(int $product_id): array
 {
@@ -512,9 +448,6 @@ function hengegroup_theme_get_product_contact(int $product_id): array
     ];
 }
 
-/**
- * Normalisierte Produktdaten fuer die Detailseite -- eine Quelle fuer alle Abschnitte.
- */
 function hengegroup_theme_get_product_data(WC_Product $product): array
 {
     $id = $product->get_id();
@@ -578,9 +511,6 @@ function hengegroup_theme_get_product_data(WC_Product $product): array
     ];
 }
 
-/**
- * Icon einer Anwendung als SVG-Markup (leer, wenn keins gewaehlt ist).
- */
 function hengegroup_theme_render_anwendung_icon(string $key, string $class): string
 {
     $icons = hengegroup_theme_get_anwendung_icons();
@@ -591,9 +521,7 @@ function hengegroup_theme_render_anwendung_icon(string $key, string $class): str
 }
 
 /**
- * Karte "Anwendungsbereich" (Design "Produktdetailseite"): template-parts/base/card.php (flach,
- * `lg`) mit Icon-Kachel in Produktfarbe, Titel, Kurztext. Bewusst OHNE Link -- Produkte zaehlen
- * Anwendungen nur auf (explizite Vorgabe).
+ * Bewusst ohne Link: Produkte zaehlen Anwendungen nur auf.
  */
 function hengegroup_theme_render_anwendung_card(WP_Term $term, string $variant): string
 {
@@ -618,11 +546,7 @@ function hengegroup_theme_render_anwendung_card(WP_Term $term, string $variant):
 }
 
 /**
- * Querkarte einer Anwendung auf der Seite /anwendungen/ (Design "Anwendungen"):
- * template-parts/base/card.php (`raised`, `horizontal`, `lg`) -- Bild links (240 px, mobil oben), rechts Titel, Beschreibung und die zugeordneten Produkte als Chips (badge.php,
- * Variante `outline` mit `href` -- gleiche Optik wie die Anwendungs-Badges der Produktbox). Die
- * Chips verlinken auf die Produktseiten (Design) -- die Gegenrichtung (Produkt -> Anwendung) bleibt
- * ohne Link. `id` = Slug der Anwendung als Sprungziel.
+ * Karte auf /anwendungen/ mit Produkt-Chips (verlinkt). `id` = Slug als Sprungziel.
  */
 function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
 {
@@ -690,9 +614,7 @@ function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
 }
 
 /**
- * Firmen-Kontaktkarte (Block "Kontakt"): template-parts/components/contact-card.php in der Variante
- * `split` (oben E-Mail/Telefon/Fax, darunter Adresse) -- Daten aus Einstellungen > Footer, dieselbe
- * Quelle wie footer.php.
+ * Daten aus Einstellungen > Footer, wie footer.php.
  */
 function hengegroup_theme_render_company_contact_card(): string
 {
@@ -711,9 +633,7 @@ function hengegroup_theme_render_company_contact_card(): string
 }
 
 /**
- * Produktkarten als `<ul class="contents">` (Kinder greifen direkt ins umgebende `.wrapper`-Grid),
- * in der Variante `default` oder `minimal` (template-parts/components/product-card.php). Leerer
- * String, wenn keine ID zu einem veroeffentlichten Produkt gehoert.
+ * Als `<ul class="contents">`, damit die <li> im umgebenden .wrapper-Grid liegen. '' ohne Produkte.
  *
  * @param int[] $product_ids
  */
@@ -744,10 +664,7 @@ function hengegroup_theme_render_product_cards(
 }
 
 /**
- * Prueft die (bereits sanitisierten) Felder einer Produktanfrage -- reine Funktion, unit-getestet
- * (tests/Unit/ProductsTest.php). `$with_location`: PLZ/Ort sind Pflicht (Formular der
- * Produktuebersicht), auf der Produktdetailseite gibt es die Felder nicht.
- * Rueckgabe: Feldname => Fehlermeldung, leer = alles gueltig.
+ * Feld => Fehlermeldung. Mit $with_location sind PLZ/Ort Pflicht.
  */
 function hengegroup_theme_validate_product_inquiry(array $values, bool $with_location): array
 {
@@ -791,10 +708,6 @@ function hengegroup_theme_validate_product_inquiry(array $values, bool $with_loc
     return $errors;
 }
 
-/**
- * Zeile "Kontaktkarte + Anfrageformular" des Blocks "Kontakt" (zwei Rasterspalten fuer ein
- * umgebendes `.wrapper`) -- geteilt mit dessen Editor-Vorschau-Zwilling kontakt-vorschau.
- */
 function hengegroup_theme_render_company_contact_row(): string
 {
     $card = hengegroup_theme_render_company_contact_card();

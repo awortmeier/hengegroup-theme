@@ -1,11 +1,5 @@
-// Progressive-enhancement layer for template-parts/base/navigation-menu/navigation-menu.php: adds
-// what the native <details>/<summary> zero-JS baseline can't do on its own (see that file's header
-// comment) -- outside-click/Escape close (same gap dropdown-menu.js already closes for its own
-// single-<details> case), hover-intent open/close per trigger item, and horizontal Left/Right
-// (Home/End) roving navigation across the top-level items. Does NOT reimplement the "only one
-// panel open at a time" behaviour -- every trigger item's <details> already shares one native
-// `name` (see that file's header comment), so opening one via script (`details.open = true`)
-// closes any other same-named open one for free, exactly like a user click would.
+// navigation-menu.php: outside click/Escape, hover intent and Left/Right/Home/End navigation.
+// One-panel-at-a-time comes from the shared <details name>.
 
 function getTopItems(list) {
     return Array.from(

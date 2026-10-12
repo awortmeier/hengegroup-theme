@@ -1,11 +1,5 @@
-// Editor UI for template-parts/blocks/stellen-liste/block.json -- eine Liste der Stellenanzeige mit
-// fester Ueberschrift je Typ (Wir bieten dir/Dein Profil/Deine Aufgaben), Typ ueber die
-// Block-Toolbar, darin eine normale `core/list` (InnerBlocks) -- Listenpunkte tippt man wie in jeder
-// Gutenberg-Liste (Enter = neuer Punkt). Siehe render.php fuer die Begruendung und den
-// Rueckgriff auf die Unternehmens-Benefits.
-//
-// Die Ueberschriften kommen per Inline-Script aus PHP (`window.hengegroupThemeJobListTypes`,
-// hengegroup_theme_get_job_list_types()) -- dieselben Texte wie im Frontend, keine Kopie hier.
+// Editor for "Stellen-Liste": type via toolbar, core/list inside. Headings come from
+// window.hengegroupThemeJobListTypes.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {
@@ -68,6 +62,6 @@ function Edit({ attributes, setAttributes }) {
 
 registerBlockType(metadata, {
     edit: Edit,
-    // Dynamischer Block (render.php), gespeichert wird nur die innere Liste.
+    // Dynamic block; only the inner list is saved.
     save: () => <InnerBlocks.Content />,
 });

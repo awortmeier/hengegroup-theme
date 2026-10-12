@@ -1,12 +1,5 @@
-// Progressive-enhancement layer for template-parts/base/date-picker.php: closes the honest zero-JS
-// gaps documented in that file's header comment -- outside-click/Escape to close (mirrors
-// dropdown-menu.js), reformatting the trigger's summary text after a live pick inside the nested
-// calendar.php (which fires a native `change` event on its radio/checkbox day inputs automatically,
-// no special wiring needed there), and actually preventing the panel from opening while
-// `data-disabled` is set (native <details>/<summary> has no disabled concept of its own, so this is
-// the JS-active half of that gap; the PHP side only sets the aria-disabled/data-disabled hooks).
-// Month navigation inside the panel is calendar.js's own job -- it initializes independently off of
-// `[data-slot="calendar"]`, nested or not.
+// date-picker.php: outside click/Escape close, updates the trigger text on selection, blocks
+// opening while data-disabled. Month navigation is calendar.js's job.
 
 function formatSelectedText(wrapper, isoDates) {
     if (isoDates.length === 0) {

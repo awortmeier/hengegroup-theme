@@ -3,37 +3,13 @@
 /**
  * Template Name: Component Showcase - Pagination
  *
- * Dev-only page template: renders template-parts/base/pagination/pagination.php +
- * pagination-compact.php across item count/ellipsis, size, active/disabled state and the compact
- * (+ per-page selector) composition, for manual visual/functional review during Phase 2 styling
- * work -- not meant for production content or navigation. Analog zur
- * page-component-showcase-button-group.php: pagination.php's own `items` config is an array the
- * caller assembles by hand (see its Kopfkommentar) -- `build_page_items()` below is this page's
- * own small helper for that (first/last + neighbours + ellipsis gaps), not part of the base
- * component itself (same "caller re-queries/re-builds" split as data-table.php's own pagination
- * config, see pagination.php's Kopfkommentar).
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Pagination"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Further slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- not the full
- * one-call-per-base-component page from that entry yet, see docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();
-
 /**
- * Builds a pagination.php `items` array for a given current/total page count: page 1, the current
- * page +/- 1 neighbour, and the last page always stay, with an ellipsis item filling any gap --
- * same "keep the ends + a window around the active page" shape as the Claude-Design reference's
- * own "Mit Auslassung" section (see pagination.php's Kopfkommentar).
+ * Seite 1, aktuelle Seite +/- 1, letzte Seite, dazwischen Ellipsen.
  *
- * @param int $current
- * @param int $total
- * @param string $base_url
  * @return array<int, array<string, mixed>>
  */
 $build_page_items = static function (int $current, int $total, string $base_url): array {

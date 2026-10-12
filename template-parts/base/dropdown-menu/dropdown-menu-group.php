@@ -2,19 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's DropdownMenuGroup: `role="group"` around a set of related dropdown-menu-item.php
-// calls (e.g. paired with a preceding dropdown-menu-label.php). Content-agnostic wrapper, same
-// nesting pattern as button-group.php/kbd-group.php: buffer the inner item calls
-// and pass the combined HTML string as `content`.
+// role="group" around related menu items.
 //
-// Supported config:
-//   content   string   required. Pre-rendered HTML to wrap (dropdown-menu-item.php/
-//                       -checkbox-item.php calls)
-//   class / attributes / data_attributes   passthrough, as in the other base parts
-//
-// Phase 2 (CLAUDE.md Regel 1): no classes added -- shadcn's own real stock DropdownMenuGroup
-// (live-checked against current docs) carries none either, it's a pure semantic wrapper; the
-// visible styling all lives on the nested item calls this wraps.
+// Config:
+//   content   string   item markup (required)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

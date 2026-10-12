@@ -1,18 +1,6 @@
 #!/usr/bin/env bash
-#
-# Spiegelt die Versionsnummer aus package.json ("version") in den style.css-WordPress-Theme-Header
-# ("Version:"-Feld). package.json ist die Single Source of Truth (siehe README "Versionierung").
-#
-# Gedacht als "version"-Lifecycle-Script fuer `pnpm version <patch|minor|major>` (siehe
-# package.json "scripts.version") — npm/pnpm bumpen dabei zuerst package.json, fuehren dann dieses
-# Skript aus, bevor sie den Versions-Commit + Git-Tag erzeugen. Alles, was dieses Skript per
-# `git add` staged, landet automatisch im selben Commit wie der package.json-Bump.
-#
-# Kann auch manuell aufgerufen werden (`pnpm run sync-theme-version`), z. B. um eine von Hand in
-# package.json geaenderte Version nachzuziehen, ohne `pnpm version` (inkl. Commit/Tag) auszuloesen.
-#
-# --no-git-add: ueberspringt `git add style.css` — nur fuer den manuellen Aufruf ausserhalb des
-# Versions-Lifecycles sinnvoll, wo kein automatischer Commit folgt.
+# Spiegelt die Version aus package.json nach style.css; laeuft als "version"-Lifecycle von
+# `pnpm version`. --no-git-add fuer den manuellen Aufruf.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

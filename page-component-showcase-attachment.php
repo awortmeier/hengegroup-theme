@@ -3,29 +3,7 @@
 /**
  * Template Name: Component Showcase - Attachment
  *
- * Dev-only page template: renders template-parts/base/attachment/attachment.php +
- * attachment-group.php across every documented config option (media icon/image, state, size,
- * orientation, href, actions/composition patterns, class passthrough) for manual visual/functional
- * review during Phase 2 styling work -- not meant for production content or navigation. Analog zu
- * page-component-showcase-accordion.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Attachment"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses
- * the existing per-page mechanism instead of a second one.
- *
- * Another slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- one page per
- * component, not the full one-call-per-base-component page from that entry yet, see
- * docs/to-do.md.
- *
- * Icon choices below are limited to what's actually synced under assets/images/icons/lucide (see
- * icon.php's own header) -- there is no dedicated "file"/"document" icon in that subset, so
- * `circle` stands in as a neutral generic-file glyph purely for this demo, not a real recommendation.
- *
- * The inline SVG data-URI below is a self-contained placeholder image (no Media Library
- * dependency) purely so the "Bild" section has something to render -- swap for a real
- * `attachment_id`/`src` in actual content.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

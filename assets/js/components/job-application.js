@@ -1,13 +1,6 @@
-// Fortschreitende Verbesserung fuer das Bewerbungsformular
-// (template-parts/components/job-application-form.php) -- das Formular funktioniert auch ohne
-// dieses Script (klassisches POST mit serverseitiger Pruefung), das Script macht es nur angenehmer:
-//   - zeigt die gewaehlten Dateinamen neben "Datei auswaehlen" an (das native Feld ist visuell
-//     versteckt, siehe dortiger Kopfkommentar),
-//   - prueft die Groessengrenze (data-max-bytes) schon vor dem Absenden ueber die native
-//     Constraint-Validation (setCustomValidity) -- der Browser zeigt die Meldung am Feld an,
-//   - verhindert doppeltes Absenden (Button deaktiviert, aria-busy) waehrend Dateien hochladen,
-//   - setzt nach dem Redirect den Fokus auf die Status-/Fehlermeldung, damit Screenreader sie
-//     vorlesen.
+// Enhancement for the application form (works without it): shows chosen file names, checks the size
+// limit before submit (setCustomValidity), prevents double submit and focuses the status message
+// after the redirect so screen readers announce it.
 
 function formatNames(files, emptyLabel) {
     if (!files || files.length === 0) {

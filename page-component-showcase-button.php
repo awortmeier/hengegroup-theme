@@ -3,20 +3,7 @@
 /**
  * Template Name: Component Showcase - Button
  *
- * Dev-only page template: renders template-parts/base/button.php across every documented variant
- * (henge-green | henge-blue | henge-grey | grey-dark | grey-light | destructive | outline | ghost |
- * link), size (sm | base | lg | icon-sm | icon-base | icon-lg) and state (disabled,
- * loading, icon-only, icon start/end, href/link, custom class passthrough) for manual visual/
- * functional review during Phase 2 styling work -- not meant for production content or navigation.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Button"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * First, button-only slice of the "Komponenten-Showcase-Seite" idea documented as deliberately
- * deferred in docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- not
- * the full one-call-per-base-component page from that entry yet, see docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

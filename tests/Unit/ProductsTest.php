@@ -7,11 +7,6 @@ namespace BaseTheme\Tests\Unit;
 use BaseTheme\Tests\TestCase;
 use Brain\Monkey\Functions;
 
-/**
- * Unit tests for the pure-logic product helpers in inc/template-parts/products.php (analysis rows,
- * filling up related products, inquiry validation). Everything that queries posts/terms or renders
- * template parts stays out of scope, same boundary as CareersTest (see docs/to-do.md Abschnitt 1).
- */
 final class ProductsTest extends TestCase
 {
     protected function setUp(): void

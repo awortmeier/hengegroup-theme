@@ -1,8 +1,5 @@
-// Progressive-enhancement layer for template-parts/base/popover.php: closes the honest zero-JS
-// gaps documented in that file's header comment -- moving focus into the panel on open (and back
-// to the trigger on an Escape-close), plus outside-click/Escape to dismiss (mirrors
-// dropdown-menu.js/date-picker.js). Native <details>/<summary> already provides click-to-toggle
-// and keeps `content` in normal tab order without any of this.
+// popover.php: moves focus into the panel on open (back to the trigger on Escape), closes on
+// outside click/Escape.
 
 const FOCUSABLE_SELECTOR =
     "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), " +
@@ -28,15 +25,12 @@ function setupPopover(wrapper) {
         }
     };
 
-    // Native <details> fires `toggle` on both the open and the close transition -- same event
-    // dropdown-menu.js already relies on for its own roving-tabindex setup.
     wrapper.addEventListener("toggle", () => {
         if (!wrapper.open) {
             return;
         }
 
-        // WAI-ARIA dialog pattern: initial focus goes inside the panel, falling back to the panel
-        // itself (its own tabindex="-1", see popover.php) when there's nothing focusable in it.
+        // Dialog pattern: focus inside, falling back to the panel itself (tabindex="-1").
         (getFirstFocusable(content) || content).focus();
     });
 

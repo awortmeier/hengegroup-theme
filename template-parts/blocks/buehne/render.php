@@ -2,73 +2,10 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/buehne/block.json ueber WordPress' natives `render`-Feld (Block
-// API "render"-Property, seit WP 6.1) -- WP_Block_Type::render() injiziert $attributes/$content/
-// $block automatisch in den Scope dieser Datei, keine manuelle render_callback-Registrierung
-// noetig (siehe inc/setup/theme-blocks.php). Reine Komposition aus template-parts/base/*, keine
-// eigene Markup-/Styling-Logik jenseits der Anordnung -- siehe docs/entscheidungen.md fuer die
-// Architekturentscheidung "Phase-3-Block-Konvention" dahinter.
-//
-// Folienwechsel laeuft als Opacity-Crossfade, kein Scroll-Effekt -- siehe docs/entscheidungen.md
-// "Buehne: Opacity-Crossfade statt Scroll-Snap" fuer die Kehrtwende gegenueber der urspruenglichen
-// Scroll-Snap-Entscheidung. Nur carousel.php (Root, `role="region"`) und carousel-item.php (je
-// Folie `role="group"`) werden noch komponiert -- carousel-content.php wird bewusst NICHT genutzt,
-// dessen `tabindex="0"`-Scroll-Container waere hier ein totes, fokussierbares Element ohne
-// Funktion, da nichts mehr scrollt. Folien liegen stattdessen absolut uebereinander gestapelt
-// (`absolute inset-0` je carousel-item.php) im `relative` Root von carousel.php, `data-state`
-// steuert per `data-[state=active]:opacity-100` die Blende; inaktive Folien bekommen zusaetzlich
-// `aria-hidden="true"` + `inert`, damit ihre Buttons/Links waehrend der Unsichtbarkeit nicht per
-// Tastatur/Screenreader erreichbar sind.
-//
-// Dot-Navigation unten ist bewusst eigenes, Block-spezifisches Markup statt eines weiteren
-// carousel-*.php-Aufrufs -- template-parts/base/carousel/carousel.php dokumentiert im eigenen
-// Kopfkommentar, dass Dots kein Teil der Komponente sind (nur optionale Previous-/Next-Buttons).
-// Autoplay + Dot-Klick werden von assets/js/template-parts/blocks/buehne.js verdrahtet, ueber
-// data-buehne-dot[s]-Attribute unten -- der Folienwechsel setzt dort direkt `data-state`/
-// `aria-hidden`/`inert` je Folie, kein IntersectionObserver mehr noetig (der Aktiv-Index wird jetzt
-// selbst gehalten statt aus einer Scroll-Position abgeleitet). assets/js/template-parts/base/
-// carousel.js selbst bleibt unangetastet -- dessen Scroll-Snap-Verdrahtung wird hier schlicht nicht
-// mehr eingebunden (kein `[data-slot="carousel-content"]` mehr im Markup).
-//
-// Dot-STYLING (nicht die Position/Logik) ist auf eine Design-Vorgabe umgestellt: statt runder
-// Pill-Buttons jetzt schmale Text-Tabs mit Unterstreichung (fett/kursiv/Grossbuchstaben), siehe
-// docs/entscheidungen.md "Buehne: Dot-Navigation als Text-Tabs statt Pillen" fuer die Design-
-// Referenz und Details. Nur der AKTIVE Dot traegt die Akzentfarbe seiner Folie (Text + Unterstrich,
-// `$accent_dot_classes` oben) -- inaktive bleiben immer neutral grau, unabhaengig vom
-// Folien-Akzent, exakt wie in der Referenz.
-//
-// Kicker-BILD-Dots (siehe weiter unten) bekommen denselben aktiv/inaktiv-Kontrast wie die Text-Dots
-// oben, nur ueber Filter statt Farbe: inaktive Logos sind entsaettigt + aufgehellt
-// (`grayscale brightness-[1.6]`, exakt der Referenz-Wert -- Tailwinds eigene Brightness-Stufen
-// haben keinen 160%-Stop) und leicht transparent (`opacity-80`), der aktive Dot zeigt sein Logo in
-// Originalfarbe/-helligkeit (`group-data-[active=true]:grayscale-0 group-data-[active=true]:
-// brightness-100 group-data-[active=true]:opacity-100`) -- `group` auf dem Dot-Button darunter ist
-// dafuer noetig, damit `group-data-[active=true]:*` das verschachtelte `<img>` erreicht (Bugfix,
-// siehe docs/entscheidungen.md "Buehne: Kicker-Logo-Filter fuer inaktive Dots").
-//
-// Dot-Reihe (`data-buehne-dots`) bleibt `position: absolute` -- sie liegt als EINE Reihe ueber
-// allen Folien (Sibling des Carousels, nicht Teil des Crossfade-Stacks), waehrend die Content-Box
-// pro Folie dupliziert im Stack steckt; beide sind also keine Flow-Geschwister, zwischen denen ein
-// Grid-`gap` wirken koennte -- der `pb-24` oben bleibt deshalb bewusst der Sicherheitsabstand
-// dafuer. Was die Dot-Reihe stattdessen von `.wrapper` uebernimmt: dieselbe
-// `mx-auto max-w-page px-4 sm:px-6 lg:px-8`-Skala (kein `.wrapper` direkt, das braeuchte
-// `display: grid` statt der eigenen `flex flex-wrap justify-center`-Zentrierung hier) --
-// `max-w-page` ist dasselbe Token wie `.wrapper`s eigene Deckelung (`--container-page`,
-// tokens.css), nicht ein eigener Arbitrary-Value, weil genau diese Dopplung schon einmal
-// auseinandergelaufen ist. Damit faellt die Dot-Reihe auf jedem Breakpoint/jeder Bildschirmbreite
-// mit denselben Raendern wie die Content-Box und der Rest des Sites-Contents zusammen.
-//
-// Mobile-Groessen/-Abstaende sind bewusst kleiner (`text-xs`/`h-4`/`gap-2`/`pt-2 pb-1`,
-// `sm:`-Stufen heben auf die Ausgangswerte zurueck) -- Ziel: fuenf Dots (Text oder Kicker-Bild)
-// passen auf einem schmalen Mobile-Viewport in eine Reihe, statt via `flex-wrap` in eine zweite
-// Zeile umzubrechen (bleibt trotzdem als Sicherheitsnetz aktiv, falls ein Slide-Label ungewoehnlich
-// lang ist). Text-Dots nutzen `break-words` statt `whitespace-nowrap` (Bugfix): ein einzelnes,
-// zusammengesetztes Wort ohne Leerzeichen (z. B. "Mineralverarbeitung") haette mit `nowrap` gar
-// nicht umbrechen koennen und waere ueber den Dot/die Reihe hinaus geragt -- `min-w-0` auf dem
-// Button selbst, weil ein Flex-Kind ohne das per Default nicht unter seine eigene
-// Min-Content-Breite schrumpft (gleiches Muster/gleicher Bug wie beim Mobile-Overflow der
-// Content-Box, siehe docs/entscheidungen.md "Buehne: `justify-self-start` von der Content-Box
-// entfernt").
+// Block "Buehne": Folien liegen gestapelt in carousel.php und wechseln per Opacity-Crossfade
+// (buehne.js). Inaktive Folien sind aria-hidden + inert. Die Dot-Reihe liegt absolut ueber allen
+// Folien (darum pb-24 als Abstand) und nutzt max-w-page wie .wrapper. Kicker-Logos sind inaktiv
+// entsaettigt (group-data-[active]). Dots brechen per break-words/min-w-0 um statt ueberzulaufen.
 
 if (!is_array($attributes ?? null)) {
     return;
@@ -97,9 +34,6 @@ $accent_border_classes = [
     'henge-grey' => 'border-henge-grey',
 ];
 
-// Aktiver Dot-Zustand je Folien-Akzent (Design-Referenz: nur der aktive Dot traegt Farbe/
-// Unterstreichung in der Akzentfarbe seiner Folie, inaktive bleiben immer neutral grau -- siehe
-// Kopfkommentar der Dot-Navigation weiter unten).
 $accent_dot_classes = [
     'henge-green' => 'data-[active=true]:border-henge-green data-[active=true]:text-henge-green',
     'henge-blue' => 'data-[active=true]:border-henge-blue data-[active=true]:text-henge-blue',
@@ -189,14 +123,10 @@ foreach ($slides as $slide) {
         ]);
     }
 
-    // Ein Button erscheint genau dann, wenn sein Text gepflegt ist -- kein eigener An/Aus-Schalter
-    // mehr (explizite Nachfrage 2026-10-07). Das alte `showPrimaryButton`-Attribut bestehender
-    // Folien wird bewusst ignoriert.
+    // Button erscheint, sobald sein Text gepflegt ist (altes showPrimaryButton wird ignoriert).
     $has_primary_button = $primary_button_text !== '';
 
     if ($has_primary_button || $secondary_button_text !== '') {
-        // Unter sm: Buttons volle Breite + untereinander (flex-col); ab sm zurueck zur
-        // urspruenglichen Reihe (flex-row, rechtsbuendig, auto-Breite je Button).
         echo '<div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-end">';
 
         if ($has_primary_button) {
@@ -262,10 +192,7 @@ foreach ($slides as $slide) {
                 $index + 1,
             );
 
-    // Kicker-Bild sitzt im Dot-Button statt in der Content-Box (Design-Entscheidung) -- der
-    // Button braucht dann ein aria-label, weil ein rein dekoratives <img> (siehe image.php's
-    // `decorative`) dem Button sonst keinen Accessible Name gibt; bei reinem Text-Label liefert
-    // der sichtbare Inhalt den Namen bereits selbst, kein zusaetzliches aria-label noetig.
+    // Mit Kicker-Bild braucht der Dot ein aria-label (das Bild ist dekorativ).
     if ($kicker_image_id > 0) {
         ob_start();
         get_template_part('template-parts/base/image', null, [
@@ -310,9 +237,7 @@ if ($carousel_items === '') {
 
 $carousel_data_attributes = ['block' => 'buehne'];
 
-// Bei nur einer Folie gibt es nichts umzuschalten: kein Autoplay und kein Folien-Picker unten
-// (explizite Nachfrage 2026-10-07). assets/js/template-parts/blocks/buehne.js bricht ohne
-// [data-buehne-dots] selbst ab, die einzige Folie ist bereits als aktiv gerendert.
+// Bei einer Folie kein Picker und kein Autoplay (buehne.js bricht ohne [data-buehne-dots] ab).
 $has_multiple_slides = $index > 1;
 
 if ($autoplay && $has_multiple_slides) {

@@ -2,21 +2,12 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's DropdownMenuLabel: plain, non-interactive section-heading text inside
-// dropdown-menu.php's `content` (e.g. "My Account" above a group of related items). No ARIA role
-// beyond what the plain text already provides -- not a form <label>, unrelated to
-// template-parts/base/label.php.
+// Non-interactive section heading inside the menu.
 //
-// Supported config:
-//   text     string   required. Visible content (plain text, escaped)
-//   inset    bool     adds a data-inset="true" hook so this label can align with icon-having
-//                      sibling items (project-CSS padding, same convention as
-//                      dropdown-menu-item.php's `inset`)
-//   class / attributes / data_attributes   passthrough, as in the other base parts
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via shadcn's own real stock DropdownMenuLabel class recipe
-// (live-checked against current docs) -- see dropdown-menu.php's own header comment for why this
-// isn't traced to the Claude-Design reference like every prior Phase 2 entry.
+// Config:
+//   text    string   required
+//   inset   bool     aligns with icon items
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

@@ -1,210 +1,86 @@
 # CLAUDE.md
 
-Projektspezifische Anweisungen fuer Claude Code. Ergaenzt `README.md` (Schnellstart: neues Projekt
-aus dieser Vorlage starten) um verbindliche Konventionen fuer die Arbeit an diesem Theme.
+## Projekt
 
-## Zielbild und Phasen
+PHP-WordPress-Theme fuer die fertige Hengegroup-Website: generische Bausteine in
+`template-parts/base/` (nach shadcn/ui), projektspezifische Teile in `template-parts/components/`,
+Seiteninhalte als Gutenberg-Bloecke in `template-parts/blocks/`.
 
-Endergebnis ist ein **PHP-basiertes WordPress-Theme**. Der Weg dahin laeuft in drei Phasen —
-**Phase 1 ist abgeschlossen, aktuell laeuft Phase 2**, Phase 3 ist geplant, aber noch nicht
-begonnen:
+Technik nach bester UX/DX waehlen (JS, Bibliotheken, Build-Tools sind erlaubt). Native
+HTML-Semantik ist ein guter Start, aber keine Pflicht.
 
-1. **Phase 1 — Base-Komponenten (abgeschlossen).** `template-parts/base/` bekommt die shadcn/ui-
-   Komponenten als generische, projektunabhaengige PHP-Bausteine: Markup, Config-API, Verhalten
-   (nativ und/oder JS) und Barrierefreiheit. **Kein visuelles Styling in dieser Phase** — Tailwind-
-   Klassen waren nur erlaubt, wenn sie funktional notwendig waren, nicht fuer Optik (siehe Regel 1).
-2. **Phase 2 — Styling-Layer (aktuell).** Visuelles Design (Farben, Abstaende, Typografie,
-   Radien, Schatten, Animationen, ...) kommt als eigener Schritt obendrauf, **ausschliesslich
-   ueber Tailwind** (siehe Regel 1).
-3. **Phase 3 — Gutenberg-Block-Wrapper (spaeter).** Die fertig gestylten Base-Komponenten werden
-   in einer weiteren Schicht als Gutenberg-Bloecke verfuegbar gemacht (Block-Registrierung,
-   `block.json`, Editor-/Save-Rendering o. Ae.).
+## Styling
 
-Diese Reihenfolge ist bewusst: Base-Komponenten sollen sich in Phase 2 stylen lassen, ohne dass
-ihre Struktur/API sich nochmal aendern muss, und sich in Phase 3 in Gutenberg-Bloecke wrappen
-lassen, ohne dass Phase 1/2 nochmal angefasst werden muss. Beim Bauen einer Phase-1-Komponente
-also immer mitdenken, dass sie in Phase 2 gestylt und in Phase 3 gewrappt werden muss — z. B.
-stabile `data-slot`/`data-variant`/`data-size`-Hooks setzen (siehe Regel 1), auch wenn sie aktuell
-noch kein Projekt-CSS ansprechen.
+- **Ausschliesslich Tailwind** (inkl. Arbitrary Values und Tokens aus `assets/css/tokens.css`). Kein
+  eigenes CSS/SCSS, keine `style`-Attribute fuer Optik. Ausnahme nur, wenn nachweislich nicht mit
+  Tailwind machbar -- dann im Code kurz begruenden.
+- `data-slot`/`data-variant`/`data-size`/`data-state` als stabile Hooks fuer JS und Tests setzen.
 
-## Kernhaltung: moderner Tech-Stack, keine unnoetigen Einschraenkungen
+## Base-Komponenten
 
-Technologieentscheidungen fallen ausschliesslich danach, was fuer **UX** (und fuer DX/
-Wartbarkeit) am besten ist — nicht danach, welche Technologie am "nativsten" wirkt oder am
-wenigsten "kostet". Es gibt keinen Grund, JavaScript, ein JS-Framework/eine Bibliothek
-(Alpine.js, htmx, Web Components, Lit, ...), ein Build-Tool oder jede andere Technologie
-grundsaetzlich zu vermeiden oder erst als letztes Mittel in Betracht zu ziehen, wenn sie im
-Einzelfall die bessere Loesung ist. Die einzige bewusste Einschraenkung im gesamten Stack ist die
-Styling-Technologie (Regel 1: ausschliesslich Tailwind) — alles andere ist offen und wird pro
-Komponente neu entschieden.
+- Config-API nach shadcn/ui (Vokabular uebernehmen, snake_case). Gemeinsame Keys der
+  Formular-Familie konsistent halten (`disabled`, `aria_invalid`, `required`, gespiegelt als
+  `data-disabled`/`data-invalid`).
+- Bestehende Komponenten komponieren statt Markup duplizieren; gemeinsame Logik nur in
+  `inc/template-parts/helpers.php` (Praefix `hengegroup_theme_`), vorher dort nachsehen.
+- Jede Datei: `declare(strict_types=1);`, Guard `if (!isset($args['config']) ...) return;`, Enums per
+  Allow-List mit stillem Default-Fallback, Passthrough `class`/`attributes`/`data_attributes`
+  (strukturelle Attribute wie `data-slot`/`role` werden danach gesetzt und gewinnen).
+- Ausgabe nur ueber `esc_html()`/`esc_attr()`; vorab escapte Strings mit `phpcs:ignore` markieren.
+- Pfade aus Config (`icon.php`, `image.php`) per Whitelist-Regex pruefen.
+- a11y gehoert zur API (`aria_label` bei icon-only, `decorative`, `aria-busy`, ...). Weicht die
+  ARIA-Rolle wegen nativer Elemente von shadcn ab, sofort per JS schliessen (Vorbild `toggle.js`).
+- Mehrere Dateien -> Unterordner `template-parts/base/<name>/`. JS liegt unter
+  `assets/js/template-parts/<gleicher Pfad>.js` (Base-JS flach), exportiert `init<Name>()`,
+  registriert in `assets/js/app.js`. DOM ist die einzige Datenquelle; wiederholtes Markup per
+  `<template>` klonen.
+- Projektspezifisches gehoert nach `template-parts/components/` bzw. `template-parts/blocks/`, nicht
+  nach `base/`.
 
-Native HTML-Semantik (Formularelemente, `<details>`, `<dialog>`, CSS Scroll Snap, ...) bleibt
-trotzdem oft die pragmatischste Wahl und ein guter Ausgangspunkt, ist aber keine Pflichtvorgabe,
-die eine bessere UX verhindern darf. Wo natives Verhalten eine schwaechere ARIA-Rolle als shadcn's
-Vorbild ankuendigen wuerde (z. B. `role="checkbox"` statt `role="button"`), bleibt das kein
-dauerhaft akzeptierter Kompromiss, sondern wird entweder durch eine vollstaendige JS-Umsetzung
-oder eine schliessende JS-Enhancement-Schicht behoben.
+## Kommentare und Doku
 
-### 1. Styling: was in Phase 1 erlaubt war, was jetzt (Phase 2) dazukommt
+So knapp wie moeglich. Code, der sich selbst erklaert, bekommt keinen Kommentar.
 
-Diese Regel geht allen anderen vor:
+- **Kommentieren nur das Warum**, das nicht im Code steht: Workarounds, Browser-/WP-/WC-Eigenheiten,
+  Sicherheitsgruende, bewusst ungewoehnliche Loesungen. Ein bis zwei Zeilen.
+- **Nicht kommentieren**: was der Code tut, Historie ("vorher", "Bugfix vom ...", "auf Wunsch"),
+  Daten, Herkunft aus shadcn/Design, Verweise auf Doku/Phasen/Regeln, Aufzaehlungen von Aufrufern,
+  verworfene Alternativen.
+- **Dateikopf** einer Komponente: ein Satz Zweck plus die `config`-Keys, je eine Zeile
+  (`key  typ  werte (default)`), Erklaerung nur wenn nicht offensichtlich. Andere Dateien: Kopf nur,
+  wenn der Zweck nicht aus Name und Code folgt.
+- **Docblocks** nur, wenn Name und Typen nicht reichen. Keine `@param`/`@return`, die nur die
+  Signatur wiederholen.
+- **Doku-Dateien**: `docs/entscheidungen.md` (Entscheidungen, die nicht aus dem Code folgen, je
+  ein bis drei Zeilen, nach Thema; veraltete ersetzen statt "Nachtrag" anhaengen), `docs/how-to.md`
+  (Pflege/Erweiterungspunkte), `docs/to-do.md` (nur Offenes, Erledigtes loeschen), `CHANGELOG.md`
+  (was sich geaendert hat, ein Satz pro Punkt). Keine neuen Doku-Dateien, keine Audit-/Berichtsdateien
+  im Repo. Nichts doppelt: Infos stehen an genau einer Stelle.
 
-- **Ausschliesslich Tailwind**, wenn ueberhaupt Styling-Code entsteht — kein eigenes Utility-CSS,
-  kein SCSS/LESS, kein CSS-in-JS, keine Inline-`style`-Attribute fuer Optik. Nur wenn ein
-  konkreter Fall mit Tailwind (inkl. Arbitrary Values und den `@theme`-Tokens aus
-  `assets/css/tokens.css`) nachweislich nicht abbildbar ist, darf rohes CSS/eine
-  CSS-Custom-Property als Ausnahme genutzt werden — die Ausnahme kurz im Dateikopf-Kommentar
-  begruenden.
-- **Phase 1 (abgeschlossen): nur funktionale Klassen.** Erlaubt waren Tailwind-Klassen, die ein
-  Verhalten bzw. einen Zustand abbilden, ohne den die Komponente nicht korrekt funktionieren
-  wuerde — typischerweise Sichtbarkeits-/Zustandsklassen, die an `data-state`/`aria-*`/JS
-  gekoppelt sind (z. B. ein Dropdown-Panel, das erst nach dem Oeffnen sichtbar sein darf: `hidden`
-  als Default, Umschaltung ueber JS/`data-state`). **Nicht erlaubt** in Phase 1: alles, was eine
-  gestalterische Entscheidung ist — Farben, Abstaende/Spacing ueber das fuer die Funktion noetige
-  Minimum hinaus, Typografie, Radien, Schatten, rein optische Transitions/Animationen.
-- **Phase 2 (jetzt): visuelles Styling ist erlaubt.** Die Phase-1-Beschraenkung oben gilt fuer
-  bereits gebaute Base-Komponenten nicht mehr — Farben, Abstaende, Typografie, Radien, Schatten,
-  Animationen duerfen jetzt ergaenzt werden, weiterhin ausschliesslich ueber Tailwind (siehe oben)
-  und ohne die in Phase 1 festgelegte Struktur/Config-API der Komponente zu aendern (siehe
-  "Zielbild und Phasen").
-- `data-slot`/`data-variant`/`data-size`/weitere `data-*`-Attribute werden trotzdem weiterhin
-  gesetzt — nicht als Styling-Pflichtmechanik, sondern als stabile Hooks fuer JS-Zustands-
-  Selektoren, Tests und die kommende Phase-2-Styling-Arbeit, egal ob diese am Ende
-  `[data-variant="..."]`-Selektoren oder direkt im PHP gesetzte Tailwind-Klassen pro Variante
-  nutzt.
-- Dass eine Komponente in Phase 1 optisch "unfertig" aussieht, weil kein visuelles Styling
-  existiert, ist erwartet und kein Bug — Phase 2 holt das gesammelt nach, ohne die Struktur/API
-  der Komponente nochmal anfassen zu muessen.
+## Tooling
 
-### Neue Komponente erstellen
-
-Siehe `docs/neue-komponente-erstellen.md` — API-Design, Komposition, Datei-Struktur, a11y,
-Datei-Sicherheit, Helper, Abgrenzung, Doku-Pflicht, JS-Enhancement, Checkliste. Ausgelagert, weil
-aktuell kein Arbeitsauftrag (Phase 1 ist abgeschlossen, aktuell laeuft Phase 2); dort nachschlagen,
-sobald wieder eine neue Base-Komponente entsteht.
-
-### 11. Tooling
-
-Regeln, die reine Prosa bleiben, verlassen sich vollstaendig auf manuelle/Agent-gestuetzte Pruefung
-statt auf einen Lint-Lauf. `phpcs.xml` (WPCS via `squizlabs/php_codesniffer` +
-`wp-coding-standards/wpcs`, siehe `composer.json`) deckt automatisiert einen Teilausschnitt bereits
-schriftlich fixierter Regeln ab: `declare(strict_types=1)`, `esc_html()`/`esc_attr()`-Escaping
-inkl. dokumentierter `phpcs:ignore`-Ausnahmen, sanitisierte Datei-Zugriffe. Bewusst **nicht** Teil
-des Rulesets: WordPress-Extra's volle Formatierungssniffs (Tabs,
-Whitespace, Array-Einrueckung, ...) — die uebernimmt bereits `@prettier/plugin-php`
-(`.prettierrc.json`); zwei konkurrierende Format-Tools waeren Drift-Risiko statt Mehrwert.
-
-Ergaenzend dazu deckt PHPUnit (`phpunit/phpunit` + `brain/monkey`, `tests/Unit/`) die reinen
-Logik-Helper (`hengegroup_theme_render_attributes()`, `hengegroup_theme_render_accent_text()`, die
-`field_*`-ID-Helper, `hengegroup_theme_warn_missing_aria_label()`) mit echten Verhaltens-Tests ab, statt
-nur Syntax-/Escaping-Muster zu pruefen — Brain Monkey stubt die paar WP-Funktionen, die diese
-Helper aufrufen (`esc_attr()`/`esc_html()`/`_doing_it_wrong()`), ohne dass dafuer eine echte
-WordPress-Installation noetig ist (siehe `docs/entscheidungen.md` fuer die Begruendung
-dieser Wahl statt eines vollen `wp-env`-Testcontainers). Vitest (`vitest.config.js`) deckt analog
-dazu die komplexeren JS-Enhancement-Module unter `assets/js/template-parts/` ab (aktuell
-`toggle.js` als erstes Beispiel) via `jsdom`. `hengegroup_theme_render_icon()`/`hengegroup_theme_render_image()`
-sowie alles, was tatsaechliches PHP-Template-Rendering braucht, bleibt bewusst ausserhalb dieser
-Unit-Suite — das ist ein spaeterer WP-gestuetzter Integrationstest, kein Job fuer Brain Monkey (siehe
-`docs/to-do.md` Abschnitt 1).
-
-- Einmalig: `composer install` (installiert `vendor/`, nicht committed, siehe `.gitignore`) sowie
-  `pnpm install` (installiert `node_modules/`; das `prepare`-Skript richtet dabei automatisch den
-  Git-Pre-Commit-Hook unten ein).
-- Vor dem Commit/PR: `composer lint` (bzw. `composer lint:fix` fuer automatisch behebbare Befunde),
-  `composer test` (PHPUnit), `pnpm format:check` (bzw. `pnpm format` zum Schreiben) und `pnpm test`
-  (Vitest).
-- **Pre-Commit-Hook** (`husky` + `lint-staged`, `.husky/pre-commit`): laeuft automatisch bei jedem
-  `git commit` — `prettier --write` auf allen staged `*.{css,js,json,md,php}`-Dateien, zusaetzlich
-  `phpcs` auf staged `*.php`-Dateien; ein verbleibender WPCS-Verstoss blockt den Commit, bevor er
-  entsteht, statt erst in CI oder Review aufzufallen.
-- **CI** (`.github/workflows/ci.yml`, GitHub Actions): erzwingt bei jedem Push/PR dieselben Checks
-  automatisiert (`composer lint`, `composer test`, `pnpm format:check`, `pnpm test`) in zwei
-  unabhaengigen Jobs (PHP/JS), plus `composer audit`/`pnpm audit` als nicht blockierenden
-  Report-Schritt (siehe naechster Punkt).
-- Ein Lint-/Test-Fehler ist ein echter Regelverstoss gegen die oben dokumentierten Konventionen,
-  kein Stil-Vorschlag — beheben statt zu ignorieren, ausser eine dokumentierte Ausnahme (z. B.
-  Regel 1's begruendete rohes-CSS-Ausnahme) greift bereits.
-- `composer audit`/`pnpm audit` pruefen die jeweiligen Dependencies gegen bekannte
-  Sicherheits-Advisories. Laufen sowohl automatisiert bei jedem CI-Lauf (als reiner,
-  nicht-blockierender Report-Schritt, siehe oben) als auch weiterhin auf Zuruf lokal; Funde werden
-  in beiden Faellen manuell per Versions-Update behoben, kein automatischer Fix, kein Commit-/PR-Gate
-  (siehe `docs/entscheidungen.md` fuer die Begruendung, warum bewusst kein Gate).
-- Deckt nur ab, was Lint-/Test-Tooling ueberhaupt automatisiert pruefen kann (Syntax-/Escaping-/
-  Security-Muster sowie das schmale Set an Unit-getesteter Helper-/JS-Logik oben). Semantische
-  Vorgaben (API-Vokabular gegen shadcn, Komposition statt Duplikation, a11y-Config, Doku-Pflicht)
-  sowie alles, was PHP-Template-Rendering oder eine echte WP-Instanz braucht (a11y-Scan,
-  Visual-Regression, siehe `docs/to-do.md` Abschnitt 1), bleiben weiterhin
-  Aufgabe manueller/Agent-gestuetzter Review — kein Ersatz dafuer, nur eine zusaetzliche,
-  guenstige Absicherung fuer den automatisierbaren Teil.
-
-### 12. Entscheidungen & HowTos: zentral in `docs/entscheidungen.md`/`docs/how-to.md`
-
-Bewusste Architektur-/Prozessentscheidungen (z. B. "Hreflang wird nicht implementiert, weil...")
-werden **zusaetzlich** zum jeweiligen Dateikopf-/Code-Kommentar in `docs/entscheidungen.md`
-festgehalten, praktische Anleitungen fuer wiederkehrende Erweiterungen (z. B. "wie ergaenze ich ein
-weiteres JSON-LD-Schema") in `docs/how-to.md` — beides nicht nur im Kopfkommentar der betroffenen
-Datei oder im CHANGELOG-Eintrag, wo die Begruendung bei der naechsten Aufraeumaktion/dem naechsten
-Release untergehen wuerde.
-
-Abgrenzung zu benachbarten Dokumenten (steht auch im Kopf von `docs/entscheidungen.md`/
-`docs/how-to.md` selbst, hier nur zur Einordnung):
-
-- `docs/to-do.md` sammelt **offene** Punkte (noch nicht entschieden/gebaut). Sobald ein dort
-  gelisteter Punkt entschieden ist, wandert die Begruendung als neuer Eintrag nach
-  `docs/entscheidungen.md`; der to-do.md-Eintrag wird wie bisher als geloest markiert/entfernt.
-- `CHANGELOG.md` haelt fest, **was** sich geaendert hat (fuer Nutzer der Vorlage) —
-  `docs/entscheidungen.md`/`docs/how-to.md` halten fest, **warum/wie** (fuer kuenftige Bearbeiter,
-  inkl. Claude selbst).
-- Der Dateikopf-Kommentar der betroffenen Datei bleibt die Quelle direkt am Code; ein
-  Eintrag in `docs/entscheidungen.md`/`docs/how-to.md` ist ein zusaetzlicher, thematisch
-  gebuendelter Verweis, kein Doppel-Text mit abweichendem Inhalt — kurz halten, auf den
-  Kopfkommentar verweisen statt ihn zu duplizieren.
-
-Ein Eintrag in `docs/entscheidungen.md` ist noetig bei jeder bewussten Entscheidung, die nicht
-offensichtlich aus dem Code folgt (typische Form: "warum kein X" / "warum Y statt Z"); ein Eintrag
-in `docs/how-to.md` bei jeder wiederkehrenden Erweiterungs-Anleitung fuer einen Extension-Point
-(Filter/Hook/Config-Key), den ein spaeteres Projekt-Theme voraussichtlich nutzen wird — nicht bei
-jeder Implementierungsdetail-Entscheidung, die schon aus dem Diff/Kopfkommentar ersichtlich ist.
+- Einmalig `composer install` und `pnpm install` (richtet den Pre-Commit-Hook ein: Prettier +
+  phpcs auf staged Dateien).
+- Vor Commit/PR: `composer lint`, `composer test`, `pnpm format:check`, `pnpm test`. Dieselben Checks
+  laufen in CI. Fehler beheben, nicht ignorieren.
+- Formatierung macht Prettier (`@prettier/plugin-php`), phpcs prueft nur strict_types, Escaping und
+  Input-Sanitizing.
 
 ## Dev-Server (dev.hengegroup.com)
 
-Claude Code darf und soll den Dev-Server direkt nutzen, um Stand/Konfiguration zu pruefen und
-Inhalte/Einstellungen per wp-cli zu setzen, statt den Nutzer um Screenshots oder Klickanleitungen
-zu bitten:
+Direkt nutzen statt nach Screenshots zu fragen.
 
-- **Verbindung:** `ssh hengegroup` (Alias in der lokalen `~/.ssh/config`, Chroot-Umgebung).
-  WordPress-Root: `/dev.hengegroup.com/httpdocs`, Theme: `wp-content/themes/hengegroup`.
-- **wp-cli:** kein globales `wp`; Aufruf ueber `php /tmp/wp-cli.phar ...` im WordPress-Root. Fehlt
-  die Datei (`/tmp` wird ggf. geleert), neu laden von
-  `https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar`. Fuer groessere
-  Skripte: Datei per `scp` hochladen, dann `wp eval-file`.
-- **Lesen** (Plugins, Optionen, Terms, Theme-Dateien vergleichen, WooCommerce-Quellcode
-  nachschlagen, ...) ist jederzeit erlaubt.
-- **Schreiben** (Inhalte, Optionen, Terms, Theme-Dateien) nur im Rahmen des aktuellen Auftrags --
-  es ist eine Entwicklungsinstanz, aber kein Wegwerf-System. Nichts loeschen, was nicht
-  ausdruecklich verlangt wurde.
-- **Theme-Code** entsteht immer zuerst im Repo (Lint/Tests wie unter Regel 11), nie nur auf dem
-  Server. Deploy regulaer per `pnpm deploy:changed` (FTP, Zugangsdaten in `.env`). Ein einzelner
-  `scp` einer geaenderten PHP-Datei ist fuer schnelle Pruefung erlaubt -- vorher die Server-Datei
-  gegen den lokalen Stand diffen, damit nichts ueberschrieben wird; der naechste
-  `deploy:changed` laedt sie dann einfach erneut hoch.
-- Theme-Funktionalitaet (Menue-Bereinigung, Feature-Schalter, ...) gehoert in den Theme-Code, nicht
-  als einmalige wp-cli-Aenderung in die Datenbank -- sonst fehlt sie auf jeder weiteren Instanz.
-- Nur der Dev-Server; Live-Systeme werden nicht angefasst.
+- `ssh hengegroup`, WordPress-Root `/dev.hengegroup.com/httpdocs`, Theme
+  `wp-content/themes/hengegroup`.
+- wp-cli: `php /tmp/wp-cli.phar ...` im WP-Root; fehlt die Datei, neu laden von
+  `https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar`.
+- Lesen jederzeit. Schreiben nur im Rahmen des Auftrags, nichts ungefragt loeschen.
+- Theme-Code immer erst im Repo, Deploy per `pnpm deploy:changed`. Ein `scp` einzelner Dateien zum
+  Testen ist ok (vorher Server-Datei gegen lokal diffen).
+- Funktionalitaet gehoert in den Theme-Code, nicht als einmalige DB-Aenderung.
+- Nur Dev, nie Live.
 
-## Git-Workflow
+## Git
 
-Claude Code committet und pusht **niemals ungefragt**, unabhaengig davon, wie klar/abgeschlossen
-eine Aenderung wirkt oder wie explizit eine vorherige Anweisung im selben Gespraech war (eine
-Freigabe gilt fuer den einen Anlass, nicht stillschweigend fuer alle folgenden Aenderungen):
-
-- `git commit` und `git push` (inkl. Tags: `git tag`/`git push origin <tag>`) nur, wenn der Prompt
-  im aktuellen Gespraechsschritt explizit danach fragt ("committe das", "push das", "erstelle einen
-  PR", o. ae.) — nicht automatisch am Ende einer Aufgabe, auch wenn Tests/Lint erfolgreich waren.
-- Lokale, nicht-oeffentliche Arbeitsschritte (`git init`, `git add`, `git status`, `git diff`,
-  Branches/Commits in einem Wegwerf-Testklon wie bei der Verifikation von
-  `scripts/pull-base-updates.sh`) sind davon unberuehrt — die Grenze ist nicht "irgendein
-  Git-Befehl", sondern alles, was den Verlauf des tatsaechlichen Projekt-Repos veraendert
-  (Commit) oder etwas an ein Remote sendet (Push).
-- Im Zweifel nachfragen oder den fertigen Stand beschreiben und explizit auf den ausstehenden
-  Commit/Push hinweisen, statt ihn selbststaendig auszufuehren.
+Nie ungefragt committen, pushen oder taggen -- nur wenn im aktuellen Schritt explizit verlangt.
+Eine Freigabe gilt nur fuer diesen Anlass.

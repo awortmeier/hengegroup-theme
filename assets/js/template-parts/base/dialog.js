@@ -1,16 +1,5 @@
-// Progressive-enhancement layer for template-parts/base/dialog.php: native <dialog> +
-// showModal()/close() already does the heavy lifting (focus trap, ::backdrop, native
-// Escape-to-close, focus return to the trigger) -- see that file's header comment. This module
-// does NOT reimplement any of that. It only:
-//
-//   1. Polyfills `command`/`commandfor` invocation for browsers without native Invoker Commands
-//      support (feature-detected once; a no-op in browsers that already handle it natively).
-//   2. Upgrades a server-rendered `open: true` dialog (native non-modal baseline, see dialog.php)
-//      into a real showModal() on init, when `modal` is not false.
-//   3. Adds backdrop-click-to-close (clicking the <dialog> element itself, i.e. outside its
-//      content box -- native <dialog> has no built-in "click outside" event).
-//   4. Honours `dismissible: false` by preventing the native `cancel` event (Escape) and ignoring
-//      backdrop clicks.
+// dialog.php: polyfills command/commandfor, upgrades `open` to showModal(), closes on backdrop click
+// and honors dismissible: false (blocks Escape and backdrop).
 
 function setupDialog(dialog) {
     if (dialog.dataset.js === "dialog") {
@@ -41,8 +30,6 @@ function setupDialog(dialog) {
 }
 
 function setupCommandFallback() {
-    // Native support covers show-modal/close/request-close for real command/commandfor pairs --
-    // nothing left to wire up manually.
     if ("command" in HTMLButtonElement.prototype) {
         return;
     }

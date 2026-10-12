@@ -2,22 +2,9 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/kontakt/block.json (Design "Produktuebersicht", Abschnitt
-// "Kontakt") -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die allgemeine
-// Phase-3-Block-Konvention. Ueberschrift + Text, darunter links die Firmen-Kontaktkarte (Daten aus
-// Einstellungen > Footer, dieselbe Quelle wie der Footer), rechts das Anfrageformular mit PLZ/Ort
-// (template-parts/components/inquiry-form.php). Anfragen landen im Menuepunkt "Produktanfragen",
-// es wird keine E-Mail versendet.
-//
-// Ueberschrift/Text als volle Rasterzeile mit `max-w-3xl` statt Teil-`col-span`, damit die
-// Kontaktkarte nicht per Grid-Auto-Placement daneben rutscht, sondern links neben dem Formular steht
-// (Bugfix 2026-10-07).
-//
-// `id="kontakt"` ist das Sprungziel der "Kontakt"-Links aus dem Design (Header-Button, Buehne) und
-// der Redirect nach dem Absenden -- deshalb nur einmal pro Seite erlaubt (`supports.multiple: false`).
-// Ueberschrift/Text sind im Editor direkt in der Canvas editierbar (`RichText`); Karte und Formular
-// kommen dort ueber den inserter-versteckten Zwilling kontakt-vorschau -- gleiche Aufteilung wie
-// offene-stellen/offene-stellen-vorschau.
+// Block "Kontakt": Ueberschrift, Firmen-Kontaktkarte (Einstellungen > Footer) und Anfrageformular.
+// Kopf als volle Rasterzeile, sonst rutscht die Karte per Auto-Placement daneben.
+// `id="kontakt"` ist Sprungziel und Redirect-Ziel, daher `supports.multiple: false`.
 
 if (
     !is_array($attributes ?? null) ||

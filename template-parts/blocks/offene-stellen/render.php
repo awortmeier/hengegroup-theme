@@ -2,21 +2,8 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/offene-stellen/block.json (Design "Karriereseite", Abschnitt
-// "Offene Stellen") -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die
-// allgemeine Phase-3-Block-Konvention. Links alle aktiven Stellen gruppiert nach Unternehmen
-// (hengegroup_theme_render_jobs_grouped(), inc/template-parts/careers.php), rechts die
-// Ansprechpartner-Karte (Standard-Ansprechpartner aus Stellenangebote > Einstellungen). Abgelaufene
-// Stellen filtert die gemeinsame Abfrage bereits heraus, der Block braucht dafuer keine eigene
-// Logik.
-//
-// `id="stellen"` ist das Sprungziel des Menuepunkts "Offene Stellen" aus dem Design; der Block ist
-// deshalb nur einmal pro Seite erlaubt (`supports.multiple: false`).
-//
-// Die Ueberschrift ueber der Ansprechpartner-Karte ist im Editor direkt in der Canvas editierbar
-// (`RichText`, explizite Nachfrage 2026-10-07); Stellenliste und Karte kommen dort ueber den
-// inserter-versteckten Zwilling offene-stellen-vorschau -- gleiche Aufteilung wie
-// produkte/produkte-raster, siehe offene-stellen/edit.jsx.
+// Block "Offene Stellen": aktive Stellen nach Unternehmen, rechts der Ansprechpartner.
+// `id="stellen"` ist Sprungziel, daher `supports.multiple: false`.
 
 if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_open_jobs_list')) {
     return;

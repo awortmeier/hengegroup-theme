@@ -3,30 +3,12 @@
 /**
  * Template Name: Component Showcase - Tabs
  *
- * Dev-only page template: renders template-parts/base/tabs.php across `variant` (line/default),
- * `orientation` (horizontal/vertical), icon/badge triggers and a disabled item, plus a composed
- * in-context example, for manual visual/functional review during Phase 2 styling work -- not meant
- * for production content or navigation. Analog zur page-component-showcase-kbd.php/
- * -separator.php: every buffered block below only ever feeds tabs.php's own `content` config
- * (caller's responsibility to build/escape, see that file's header), never gets `echo`ed raw on
- * this page -- direct tabs.php calls stay as plain `get_template_part()` calls, same as every
- * other showcase page.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Tabs"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Further slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- not the full
- * one-call-per-base-component page from that entry yet, see docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();
 
-// Buffers the HTML between this call and the next `hengegroup_theme_showcase_buffer()` call -- lets
-// each tab panel below be written as plain HTML (readable, no manual string escaping) instead of
-// one long concatenated string, while still handing tabs.php's `content` config a plain string.
+// Puffert das HTML bis zum naechsten Aufruf, damit die Panels als normales HTML geschrieben werden koennen.
 $hengegroup_theme_showcase_buffer = static function (): string {
     return (string) ob_get_clean();
 };

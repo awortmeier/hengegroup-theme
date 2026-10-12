@@ -2,21 +2,12 @@
 
 declare(strict_types=1);
 
-// Verarbeitung der Produkt-Kontaktformulare (Formular: template-parts/components/inquiry-form.php)
-// -- Block "Kontakt" auf der Produktuebersicht (allgemeine Anfrage, mit PLZ/Ort) und Abschnitt
-// "Ihr Ansprechpartner im Vertrieb" der Produktdetailseite (Anfrage zu genau diesem Produkt).
-//
-// Gleicher Ablauf wie das Bewerbungsformular (inc/setup/theme-careers-application.php): klassisches
-// POST an admin-post.php, danach Redirect zurueck auf die Seite (#kontakt) mit Status
-// (Post/Redirect/Get), bei Fehlern Eingaben 15 Minuten per Transient; Spam-Schutz ueber Nonce,
-// Honeypot und Mindest-Ausfuellzeit. Die Anfrage wird als Eintrag im Menuepunkt "Produktanfragen"
-// gespeichert (inc/setup/theme-requests.php) -- es wird KEINE E-Mail versendet (explizite Vorgabe).
+// Verarbeitung der Produkt-Anfrageformulare: POST an admin-post.php, Redirect zurueck (#kontakt),
+// Fehler per Transient, Spam-Schutz wie beim Bewerbungsformular. Speichert einen Eintrag
+// "Produktanfrage", keine E-Mail.
 
 const HENGEGROUP_THEME_INQUIRY_ACTION = 'hengegroup_theme_product_inquiry';
 
-/**
- * Status-Meldungen nach dem Redirect (Query-Parameter `anfrage`).
- */
 function hengegroup_theme_get_inquiry_status_messages(): array
 {
     return [
@@ -46,8 +37,7 @@ function hengegroup_theme_get_inquiry_state(): array
 }
 
 /**
- * Redirect zurueck auf die Seite, von der das Formular kam (veroeffentlichter Beitrag/Seite/
- * Produkt), sonst auf die Produktuebersicht.
+ * Zurueck zur Ursprungsseite (wenn veroeffentlicht), sonst Produktuebersicht.
  */
 function hengegroup_theme_redirect_after_inquiry(int $return_id, array $args): void
 {

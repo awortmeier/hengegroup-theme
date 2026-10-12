@@ -2,39 +2,14 @@
 
 declare(strict_types=1);
 
-// Kontaktkarte als Komponente -- fuehrt die fruehere Produkt-Kontaktkarte (Produktdetailseite),
-// die Job-Kontaktkarte (Karriereseite/Stellenangebot) und die Firmen-Kontaktkarte (Block "Kontakt")
-// zusammen (Audit 2026-10-08 Punkt 7, Vorgaben 2026-10-08):
-//   - Aufbau, Masse und Abstaende von der Produkt-Kontaktkarte: Ueberschrift (Name) in 19px
-//     extrabold, Rolle als Unterzeile, `size-4`-Icons, `px-7 py-6`, Karten-Stufe `raised` aus tokens.css
-//     (`rounded-card-raised`/`shadow-card-raised`). Kein Foto (explizite Vorgabe).
-//   - Kontaktzeilen und Adresse in typography.php's `body-sm` (`text-base leading-normal`) -- eine
-//     Stufe groesser als die Produktkarte (`text-sm`), Vorgabe 2026-10-08.
-//   - `variant` waehlt die Flaechen:
-//       light  ein Bereich, weiss, dunkle Schrift
-//       dark   ein Bereich, grey-dark, helle Schrift
-//       split  zwei Bereiche (aus der Firmen-Kontaktkarte): oben henge-grey mit Name/Rolle/
-//              Kontaktzeilen, darunter weiss mit "Adresse" -- der zweite Bereich nur, wenn eine
-//              Adresse gepflegt ist
-//   - `fax` als Zeile ohne Link (kein sinnvolles Linkziel), "Fax:" fuer Screenreader.
-//   - `address` wird nur in `split` ausgegeben (die einteiligen Varianten haben keinen Platz fuer
-//     einen eigenen Adressblock).
-//   - `label`: kleine Ueberschrift ueber dem Namen, wenn die Karte ohne eigene
-//     Abschnitts-Ueberschrift steht. Aktuell nirgends genutzt (Stellen-Einzelseite zeigt seit
-//     2026-10-08 auf Wunsch keine Ueberschrift mehr).
-// Telefon-Link ueber hengegroup_theme_phone_href() + esc_url(), E-Mail ueber antispambot().
-// Rendert nichts, wenn weder Name, E-Mail noch (bei `split`) Adresse gepflegt sind.
+// Kontaktkarte. Zeilendaten aus hengegroup_theme_get_contact_rows() (wie footer.php). Rendert nichts
+// ohne Name, E-Mail und (bei split) Adresse. Aufruf als String: hengegroup_theme_render_contact_card().
 //
-// Aufruf als String ueber hengegroup_theme_render_contact_card() (inc/template-parts/helpers.php).
-//
-// Supported args:
-//   contact   array    Pflicht. { name, role, email, phone, fax, address } -- `name` ist die
-//                      Ueberschrift des (oberen) Bereichs, bei der Firmenkarte z. B. "Kontakt";
-//                      `address` mehrzeilig (Zeilenumbrueche). Weitere Schluessel (z. B. photo_id)
-//                      werden ignoriert
-//   variant   string   light | dark | split (default: light)
-//   label     string   optionale kleine Ueberschrift ueber dem Namen
-//   class     string   an den Wrapper angehaengt (z. B. `h-full`)
+// Args:
+//   contact   array    Pflicht. { name, role, email, phone, fax, address (mehrzeilig) }
+//   variant   string   light (default) | dark | split (oben henge-grey, darunter Adresse)
+//   label     string   kleine Ueberschrift ueber dem Namen
+//   class     string   an den Wrapper angehaengt
 
 $contact = is_array($args['contact'] ?? null) ? $args['contact'] : [];
 $name = trim((string) ($contact['name'] ?? ''));
@@ -62,7 +37,6 @@ if ($name === '' && $email === '' && $address_lines === []) {
     return;
 }
 
-// Flaeche, Schrift, gedaempfte Schrift je Bereich.
 $tones = [
     'light' => ['bg-white', 'text-grey-dark', 'text-grey-dark/60'],
     'dark' => ['bg-grey-dark', 'text-grey-light', 'text-grey-light/60'],
@@ -84,42 +58,21 @@ $row_template = sprintf(
 $link_class = $text_class . ' underline-offset-4 hover:underline';
 $rows = '';
 
-if ($email !== '') {
+foreach (hengegroup_theme_get_contact_rows($email, $phone, $fax) as $contact_row) {
     $rows .= sprintf(
         $row_template,
-        $icon('mail'),
-        sprintf(
-            '<a class="%1$s" href="mailto:%2$s">%3$s</a>',
-            esc_attr($link_class),
-            esc_attr(antispambot($email)),
-            esc_html(antispambot($email)),
-        ),
-    );
-}
-
-$phone_href = $phone !== '' ? hengegroup_theme_phone_href($phone) : '';
-
-if ($phone_href !== '') {
-    $rows .= sprintf(
-        $row_template,
-        $icon('phone'),
-        sprintf(
-            '<a class="%1$s" href="%2$s">%3$s</a>',
-            esc_attr($link_class),
-            esc_url($phone_href, ['tel']),
-            esc_html($phone),
-        ),
-    );
-}
-
-if ($fax !== '') {
-    $rows .= sprintf(
-        $row_template,
-        $icon('printer'),
+        $icon($contact_row['icon']),
         '<span class="sr-only">' .
-            esc_html__('Fax:', 'hengegroup-theme') .
+            esc_html($contact_row['label']) .
             ' </span>' .
-            esc_html($fax),
+            ($contact_row['href'] !== null
+                ? sprintf(
+                    '<a class="%1$s" href="%2$s">%3$s</a>',
+                    esc_attr($link_class),
+                    esc_attr($contact_row['href']),
+                    esc_html($contact_row['text']),
+                )
+                : esc_html($contact_row['text'])),
     );
 }
 
@@ -128,7 +81,6 @@ $wrapper_class = trim(
         ($variant === 'split' ? '' : $surface_class . ' ') .
         $class_name,
 );
-// Icon + Adresszeilen (einzeln escaped, mit <br> verbunden).
 $address_markup =
     $icon('map-pin', 'mt-0.5') .
     '<span>' .

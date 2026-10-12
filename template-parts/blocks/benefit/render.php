@@ -2,13 +2,8 @@
 
 declare(strict_types=1);
 
-// Ein Benefit im Block "Benefits" (Kind-Block, nur innerhalb von hengegroup-theme/benefits
-// einfuegbar) -- als <li>, weil der Eltern-Block die Benefits in eine <ul> setzt (inhaltlich eine
-// Aufzaehlung, Screenreader nennen die Anzahl). Icon-Kachel mit Marken-Verlauf grau -> gruen ->
-// blau (wie die Header-Kante), Titel, Text. Icons aus der festen Auswahl
-// hengegroup_theme_get_benefit_icons() (inc/template-parts/careers.php), unbekannte Schluessel
-// fallen auf das erste Icon zurueck. Ohne Titel wird nichts ausgegeben (leere, frisch eingefuegte
-// Karte).
+// Benefit im Block "Benefits" (<li>). Unbekannte Icons fallen auf das erste zurueck. Ohne Titel
+// keine Ausgabe.
 
 if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_get_benefit_icons')) {
     return;

@@ -2,20 +2,11 @@
 
 declare(strict_types=1);
 
-// Produktbox (Design `Produktbox.dc.html`) als Komponente -- aus woocommerce/content-product.php
-// herausgeloest, damit dieselbe Box in zwei Auspraegungen existiert statt als zwei Kopien:
-//   - `default`: Bild + Badge, Name, Kurzbeschreibung, Trenner + "Anwendungen"-Chips, Button
-//     (Produktuebersicht, Produkte-Block, alle WooCommerce-Loops).
-//   - `minimal`: dieselbe Box ohne Anwendungen/Trenner, niedrigeres Bild (160 statt 180 px) --
-//     Abschnitt "Verwandte Produkte" der Produktdetailseite (Design "Produktdetailseite").
+// Produktbox (WooCommerce-Loops, Produkte-Block, verwandte Produkte).
 //
-// Alle Gestaltungsentscheidungen (Farben, Radius, Schatten, Bild-/Badge-Masse aus der Referenz,
-// Kurzbeschreibung statt Langtext, kein Preis/Warenkorb) sind unveraendert aus content-product.php
-// uebernommen -- siehe dessen Kopfkommentar und docs/entscheidungen.md "Produktbox: ...".
-//
-// Supported args:
+// Args:
 //   product   WC_Product   Pflicht
-//   variant   string       default | minimal (default: default)
+//   variant   string       default | minimal (ohne Anwendungen, niedrigeres Bild)
 
 $product = $args['product'] ?? null;
 
@@ -43,10 +34,6 @@ $image_config =
 
 $badge_markup = hengegroup_theme_render_product_badge($product_id);
 
-// Kurzbeschreibung (WCs post_excerpt), nicht die lange Produktbeschreibung -- explizite Nachfrage
-// 2026-09-22, siehe docs/entscheidungen.md. wp_strip_all_tags() vor wp_trim_words(): die
-// Kurzbeschreibung kann einfaches HTML enthalten, die Karte zeigt reinen Text; 24 Woerter reichen
-// fuer die im Referenz-Design gezeigten 2-3 Zeilen.
 $short_description = wp_strip_all_tags((string) $product->get_short_description());
 $description = $short_description !== '' ? wp_trim_words($short_description, 24) : '';
 
@@ -98,7 +85,6 @@ $anwendung_badges_markup =
     }
 
     if ($anwendung_badges_markup !== '') {
-        // Trenner nur, wenn es tatsaechlich einen Anwendungen-Block gibt (explizite Nachfrage).
         get_template_part('template-parts/base/separator/separator', null, [
             'config' => [
                 'class' => 'mb-2',

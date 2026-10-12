@@ -1,10 +1,4 @@
-// Vanilla wp.media() picker for every `.hengegroup-theme-seo-image-picker` field rendered by
-// inc/setup/theme-seo-admin.php (the "Standard Social-Bild" field on Settings > SEO, and each
-// post/page's own "Social-Bild" field in its "SEO" meta box). Enqueued directly via
-// wp_enqueue_script(), not through the Vite/Tailwind pipeline in vite.config.js -- that pipeline
-// only builds the public assets/js/app.js and assets/js/login.js bundles; this is a small
-// wp-admin-only script with no styling/build step of its own, so a plain enqueue is simpler than
-// wiring up a third Vite entry for it.
+// wp.media() picker for every `.hengegroup-theme-seo-image-picker` (plain wp-admin script, no Vite).
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".hengegroup-theme-seo-image-picker").forEach((wrapper) => {
         const input = wrapper.querySelector('input[type="hidden"]');

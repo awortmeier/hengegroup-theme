@@ -2,42 +2,19 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Textarea has no headless-library primitive either (Radix UI/Base UI/React Aria
-// alike) -- it's a styled native <textarea>, no JS
-// state at all (see CLAUDE.md #1). Same as input.php: a plain, data-attributed <textarea>,
-// optionally paired with template-parts/base/label.php (same convenience pattern
-// as input.php's `label` config, label before the field).
+// <textarea>. With `data_slot: 'input-group-control'` it renders bare (see input-group.php).
 //
-// Unlike <input>, a <textarea>'s value is its text content, not a `value` attribute -- handled
-// accordingly below (escaped via esc_textarea() and placed between the opening/closing tags).
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken 1:1 from shadcn's own Textarea
-// component (registry/new-york-v4/ui/textarea.tsx), same deviations as input.php (see that file's
-// header for the full rationale): `dark:`-prefixed classes dropped, `rounded-md` -> `rounded-lg`,
-// padding mapped to the Bewerbungsformular reference's `12px 14px` (`py-3`/`px-3.5`), and a
-// `data_slot === 'input-group-control'` branch for input-group.php composition.
-//
-// Supported config:
-//   name / value / placeholder / autocomplete / minlength / maxlength   string   native
-//                    attributes, only rendered when given (`value` becomes the element's text
-//                    content)
-//   rows / cols      int|string   native attributes, only rendered when given
-//   wrap             string   soft | hard (native <textarea wrap>, only rendered when valid)
-//   disabled / required / readonly   bool   native attributes; `disabled` also mirrors as
-//                    data-disabled="true"
-//   aria_invalid     bool    sets aria-invalid="true" plus a mirrored data-invalid="true" --
-//                    same error-state hooks as input.php
-//   id               string  native `id`; auto-generated via wp_unique_id() when omitted (needed
-//                            to pair with `label` via its `for` attribute)
-//   data_slot        string  overrides the root `data-slot` value (default: 'textarea') -- same
-//                            composing-parent escape hatch as input.php's `data_slot`, used by
-//                            input-group.php ('input-group-control')
-//   label            string  optional visible label text; when given, nests
-//                            template-parts/base/label.php before the textarea, both wrapped in a
-//                            plain <div data-slot="textarea-field">. Omit for full manual control.
-//   aria_label       string  accessible name when no visible `label` is given
-//   class / attributes / data_attributes   passthrough onto the <textarea> itself (not onto the
-//                            optional wrapper div, which stays a plain, unstyled hook)
+// Config:
+//   name / value / placeholder / autocomplete / minlength / maxlength   string
+//   rows / cols      int|string
+//   wrap             string   soft | hard
+//   disabled / required / readonly   bool   disabled also sets data-disabled
+//   aria_invalid     bool     aria-invalid + data-invalid
+//   id               string   default wp_unique_id()
+//   data_slot        string   default 'textarea'
+//   label            string   adds label.php
+//   aria_label       string
+//   class / attributes / data_attributes   on the <textarea>
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

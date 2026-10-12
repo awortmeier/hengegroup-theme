@@ -3,23 +3,7 @@
 /**
  * Template Name: Component Showcase - Button Group
  *
- * Dev-only page template: renders template-parts/base/button-group/button-group.php +
- * button-group-text.php (plus the reused template-parts/base/separator/separator.php and button.php as
- * nested content) across orientation, size, icon-only, separator, text-segment and nested-group
- * composition for manual visual/functional review during Phase 2 styling work -- not meant for
- * production content or navigation. Analog zur page-component-showcase-button.php/-badge.php, mit
- * dem Unterschied, dass button-group.php/button-group-text.php content-agnostische Wrapper sind
- * (siehe deren Kopfkommentare) -- jede Sektion puffert ihre Kind-Ausgabe erst per ob_start()/
- * ob_get_clean(), statt die Wrapper direkt mit fertigem Text zu befüllen.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Button Group"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Further slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- not the full
- * one-call-per-base-component page from that entry yet, see docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

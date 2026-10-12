@@ -1,8 +1,4 @@
-// Unit tests for enhanceToggle()/initToggle() (see toggle.js's header comment for the ARIA gap
-// this closes). Builds the native checkbox/radio + <label> markup toggle.php renders directly in
-// jsdom instead of importing template-parts/base/toggle/toggle.php -- rendering real PHP output
-// isn't available in this JS-only test runner, see docs/to-do.md Abschnitt 1 for
-// where a WP-backed integration suite would close that gap.
+// Markup is built in jsdom to match toggle.php.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { enhanceToggle, initToggle } from "./toggle.js";
 
@@ -116,8 +112,7 @@ describe("enhanceToggle", () => {
     });
 
     it("does enhance a radio input once its radiogroup wrapper has been promoted to role=group", () => {
-        // Mirrors what toggle-group.js does before calling enhanceToggle() itself for single-mode
-        // items (see that module's header comment): promote the wrapper's role first, then enhance.
+        // Like toggle-group.js: promote the wrapper first, then enhance.
         document.body.innerHTML = `
             <div role="group">
                 <input type="radio" id="toggle-radio" data-slot="toggle-input" />

@@ -1,12 +1,4 @@
-// Unit tests for initBuehne() (see buehne.js's header comment for what it does on top of the
-// static markup template-parts/blocks/buehne/render.php renders). Builds the exact DOM shape
-// render.php renders directly in jsdom instead of importing the PHP template -- rendering real PHP
-// output isn't available in this JS-only test runner, see docs/to-do.md Abschnitt 1 for where a
-// WP-backed integration suite would close that gap.
-//
-// jsdom implements neither matchMedia nor real layout/scrolling -- matchMedia is stubbed locally
-// here (not in the shared assets/js/test-setup.js) since no other suite needs it yet; the crossfade
-// itself needs no layout stub, it's pure attribute toggling (see goToIndex() in buehne.js).
+// Markup is built in jsdom to match buehne/render.php; matchMedia is stubbed here.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initBuehne } from "./buehne.js";
 

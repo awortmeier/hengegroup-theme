@@ -1,7 +1,4 @@
-// Kachelformen des Galerie-Bento-Rasters -- 1:1 dieselbe Logik wie
-// hengegroup_theme_get_bento_tile_shapes() in inc/template-parts/helpers.php (siehe dort fuer die
-// Begruendung), hier fuer die Editor-Vorschau. Beide Seiten sind getestet (layout.test.js bzw.
-// tests/Unit/HelpersTest.php), damit sie nicht auseinanderlaufen.
+// Same logic as hengegroup_theme_get_bento_tile_shapes() (helpers.php), for the editor preview.
 const BLOCK = ["tall", "square", "square", "wide", "square", "square", "tall", "wide"];
 const TAILS = [
     [],
@@ -28,8 +25,7 @@ export function getBentoTileShapes(count) {
     return [...shapes, ...TAILS[count % 8]];
 }
 
-// Literale Klassen je Form (Tailwind muss sie im Quelltext finden) -- identisch zu
-// template-parts/blocks/galerie/render.php. Mobil eine Spalte im 4:3-Format, ab `sm` das Bento.
+// Literal classes (Tailwind scanner), identical to galerie/render.php.
 export const TILE_CLASSNAMES = {
     square: "aspect-[4/3] sm:aspect-square",
     wide: "aspect-[4/3] sm:col-span-2 sm:aspect-[2/1]",

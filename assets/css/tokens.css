@@ -1,75 +1,11 @@
 /*
- * Zentrale Design-Tokens fuer dieses Theme.
- *
- * Fuer neutrale Grautoene (Text, Hintergruende, Rahmen) wird bewusst Tailwinds
- * eigene neutral-Skala verwendet (z. B. "neutral-800", ueber theme(--color-neutral-800)
- * in Roh-CSS oder direkt als Utility-Klasse) statt eigener Alias-Tokens. Die drei
- * projektspezifischen Marken-Grautoene (Design-Vorgabe: grey-light #EFEFEF, grey-medium #E5E3DF,
- * grey-dark #222222) liegen nah genug an bestehenden neutral-*-Stufen, dass dafuer bewusst KEINE
- * eigenen Tokens angelegt wurden, ausser wo eine Komponenten-API selbst den Markennamen als Wert
- * erwartet (siehe --color-grey-dark/--color-grey-light unten, Button-Variant-Vokabular) — haelt die
- * obige Konvention fuer alles andere statt sie pauschal aufzuweichen:
- *
- *   - grey-light  #EFEFEF -> neutral-100 (#F5F5F5), Differenz ~6/Kanal.
- *   - grey-medium #E5E3DF -> neutral-200 (#E5E5E5), Differenz ~2-6/Kanal — Naeherung: grey-medium
- *     hat einen warmen/beigen Unterton (R>G>B), den die reine neutral-Skala nicht abbildet. Falls
- *     ein Anwendungsfall den exakten Markenwert 1:1 braucht, dafuer gezielt ein eigenes Token
- *     ergaenzen statt neutral-200 zu nutzen. Kein eigenes --color-grey-medium-Token, da bislang
- *     keine Komponenten-API "grey-medium" als Wert erwartet.
- *   - grey-dark   #222222 -> neutral-800 (#262626), Differenz ~4/Kanal.
- *
- * badge.php's `outline`-Variante nutzt fuer ihre Randfarbe `neutral-500` direkt als Tailwind-
- * Utility (`border-neutral-500`), keinen der drei Marken-Grautoene oben -- ebenfalls kein eigenes
- * Token dafuer, aus demselben "keine Komponenten-API erwartet den Wert als Markennamen"-Grund, siehe
- * badge.php's eigenen Kopfkommentar und docs/entscheidungen.md.
- *
- * --color-henge-green ist die primaere Marken-Akzentfarbe — der einzige Farbwert, der automatisiert
- * per `pnpm run sync-theme-tokens` nach theme.json uebernommen wird (siehe
- * scripts/sync-theme-tokens.sh: sync't settings.color.palette "accent"-Eintrag/Label "Henge Green"
- * + styles.elements.link). Der WP-Editor-Palette-Slug bleibt bewusst "accent" (aendert bereits
- * gespeicherte `has-accent-color`-Blockklassen sonst rueckwirkend) -- nur das CSS-Token selbst heisst
- * seit 2026-08-28 nicht mehr --color-accent (siehe docs/entscheidungen.md): der Name "accent" ist
- * shadcns eigene neutrale Hover-/Subtle-Rolle (z. B. skeleton.php's `bg-accent`), keine Marken-
- * Akzentfarbe -- --color-accent unten deckt jetzt tatsaechlich diese shadcn-Rolle ab.
- * --color-henge-blue/--color-henge-grey sind sekundaere Marken-Akzentfarben, manuell zusaetzlich in
- * theme.json (settings.color.palette) gepflegt, da das Sync-Skript bewusst nur den einen
- * automatisiert kritischen Wert (Link-Farbe/Editor-Default) abdeckt.
- *
- * --font-primary (Outfit) ist die Fliesstext-/UI-Schrift, --font-accent (Crillee) die
- * Akzent-/Display-Schrift — genutzt u. a. von hengegroup_theme_render_accent_text() ueber die
- * .font-accent-Klasse (siehe inc/template-parts/helpers.php, template-parts/base/typography.php).
- * Beide sind bewusst NICHT als Tailwinds --font-sans registriert: das wuerde ueber Tailwinds
- * Preflight-Basisstil sofort site-weit die Body-Schrift aendern — ein pauschales visuelles Styling,
- * das laut CLAUDE.md Regel 1 erst Phase 2 gehoert. --font-primary erzeugt trotzdem schon jetzt die
- * Utility-Klasse .font-primary (ungenutzt, bis Phase 2 sie tatsaechlich einsetzt); --font-accent ist
- * dagegen bereits jetzt aktiv im Einsatz, weil das eine dokumentierte funktionale API ist (Akzent-
- * Woerter hervorheben), keine pauschale Optik-Entscheidung. (--font-accent ist reine Typografie und
- * bleibt von der --color-accent-Umbenennung oben unberuehrt -- kein Namenskonflikt, "accent" heisst
- * hier "Akzent-Schriftrolle", nicht die Marken-Akzentfarbe.)
- *
- * Self-Hosting/@font-face siehe assets/css/fonts.css, erwartete Font-Dateien siehe
- * assets/fonts/README.md.
- *
- * Wird von app.css und login.css importiert, damit die Variablen in beiden
- * (unabhaengigen) Vite-Entrypoints zur Laufzeit zur Verfuegung stehen.
- *
- * Semantische Rollen-Tokens (--color-background/-foreground/-card/-popover/-secondary/-muted/
- * -accent/-destructive/-border/-input/-ring): Phase-2-Vorbereitung fuer das Variant-Vokabular der
- * Base-Komponenten (button.php/badge.php: default | secondary | destructive | outline | ghost |
- * link — siehe docs/entscheidungen.md fuer die Rollen-Zuordnung/Begruendung jedes einzelnen Werts,
- * u. a. warum --color-destructive vorlaeufig Tailwinds Standard-Rot statt eines Marken-Rottons ist.
- * Referenzieren wo moeglich Tailwinds eigene Skalen (var(--color-neutral-*), var(--color-red-*),
- * var(--color-white)) statt Werte zu duplizieren, gleiche Konvention wie oben fuer die
- * Marken-Grautoene.
+ * Design-Tokens (von app.css und login.css importiert). Fuer Grautoene ohne Komponenten-API
+ * Tailwinds neutral-Skala direkt nutzen. --color-henge-green synct `pnpm run sync-theme-tokens` nach
+ * theme.json (Palette-Slug bleibt "accent"); --color-accent ist dagegen shadcns dezente Hover-Rolle.
+ * Die Schriften sind bewusst nicht --font-sans.
  */
 @theme static {
-    /* Marken-Akzentfarben + Marken-Grautoene, jede mit eigenem -foreground-Pendant (Text auf
-       dieser Farbe) -- selbe 1:1 Namenskonvention wie shadcns primary/primary-foreground, nur mit
-       Marken-Namen statt "primary". Button-Varianten-Vokabular seit 2026-08-28 (siehe
-       docs/entscheidungen.md): henge-green/henge-blue/henge-grey/grey-dark/grey-light statt
-       shadcns default/secondary. "weisser" Text ist projektweit bewusst grey-light
-       (var(--color-neutral-100)) statt reinem Weiss (Design-Vorgabe), ausser bei grey-light selbst
-       als Hintergrund -- dort grey-dark als Text, sonst kein Kontrast. */
+    /* Markenfarben mit -foreground; "weisser" Text ist grey-light. */
     --color-henge-green: #3b875e; /* primaere Marken-Akzentfarbe (= shadcns "primary"-Rolle) */
     --color-henge-green-foreground: var(--color-neutral-100);
     --color-henge-blue: #075f8f;
@@ -96,10 +32,7 @@
     ); /* = grey-light, bewusst neutral statt henge-blue */
     --color-secondary-foreground: var(--color-neutral-800);
 
-    /* shadcns eigene "accent"-Rolle: dezenter Hover-/Subtle-Hintergrund (z. B. skeleton.php's
-       bg-accent, ghost-/outline-Hover), KEINE Marken-Akzentfarbe -- siehe henge-green oben. Gleicher
-       Hintergrund-Wert wie --color-muted (wie in shadcns eigenem Default-Theme), aber
-       -foreground bleibt volltonig lesbar (= --color-foreground) statt gedaempft. */
+    /* shadcns "accent": dezenter Hover-Hintergrund, keine Markenfarbe. */
     --color-accent: var(--color-neutral-100);
     --color-accent-foreground: var(--color-neutral-800);
 
@@ -117,29 +50,17 @@
 
     --color-border: var(--color-neutral-200); /* = grey-medium */
     --color-input: var(--color-neutral-200);
-    --color-ring: var(
-        --color-blue-500
-    ); /* Tailwinds eigener Standard-Fokusring-Blauton, siehe docs/entscheidungen.md */
+    --color-ring: var(--color-blue-500); /* Tailwinds Standard-Fokusring */
 
     --font-primary:
         "Outfit", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
         "Helvetica Neue", Arial, sans-serif;
     --font-accent: "Crillee", ui-sans-serif, system-ui, sans-serif;
 
-    /* Maximalbreite von .wrapper (assets/css/app.css) -- als benanntes Token statt eines an
-       mehreren Stellen wiederholten Arbitrary-Values (`max-w-[1600px]`), weil genau das schon
-       einmal auseinandergelaufen ist: template-parts/blocks/buehne/render.php's Dot-Reihe kann
-       .wrapper selbst nicht nutzen (braucht `flex`, nicht `.wrapper`s `grid`), musste die Breite
-       also separat tragen -- die generierte `max-w-page`-Utility (Tailwinds `--container-*`-
-       Namespace) ist jetzt fuer beide Stellen dieselbe Quelle. */
+    /* Auch fuer Elemente, die .wrapper nicht nutzen koennen (max-w-page). */
     --container-page: 1600px;
 
-    /* Karten-Stufen (Audit 2026-10-08 Punkt 1): zwei Hoehen statt frei eingetragener
-       `shadow-[...]`/`rounded-[20px]`-Werte je Karte. `flat` = Karten auf hellem Grund in Rastern
-       (Anwendungen, Downloads, Faktenleiste, Stellen-Zeilen), `raised` = einzeln stehende,
-       hervorgehobene Karten (Kontakt, Anwendungs-Uebersicht, Auszeichnungen). `card-hover` ist der
-       Hover-Schatten verlinkter flacher Karten. Werte = Literalwerte der Design-Referenzen.
-       Utilities: shadow-card-flat/-hover/-raised, rounded-card-flat/-raised. */
+    /* Karten-Stufen: flat (in Rastern), raised (einzeln, hervorgehoben), card-hover (verlinkt). */
     --shadow-card-flat: 0 1px 3px rgba(0, 0, 0, 0.06);
     --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
     --shadow-card-raised: 0 8px 24px rgba(0, 0, 0, 0.12);

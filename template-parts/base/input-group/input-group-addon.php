@@ -2,45 +2,13 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's InputGroupAddon: a positioned slot inside input-group.php for icons, buttons or text
-// next to the control (`template-parts/base/input-group/input-group-text.php` for plain text, `button.php`
-// with `size: 'sm'`/`'icon-sm'`, `variant: 'ghost'` for a button -- this project's nearest
-// equivalent to shadcn's own InputGroupButton default variant/size, both already valid values in
-// button.php's own allow-lists (see docs/entscheidungen.md for button.php's sm/base/lg size
-// vocabulary) -- no separate input-group-button.php needed for what button.php already covers).
-// Content-agnostic, same nesting pattern as input-group.php's own `content` and
-// button-group.php/aspect-ratio.php/kbd-group.php elsewhere.
+// Slot inside input-group.php for an icon, button (button.php, ghost, sm) or text
+// (input-group-text.php) next to the control.
 //
-// shadcn's real InputGroupAddon also focuses the sibling control when the addon's non-interactive
-// area is clicked (e.g. clicking the icon padding next to a search input, not just the input
-// itself). No native HTML equivalent when the addon contains interactive children like a button
-// (wrapping in a <label> would nest a second interactive control inside it, invalid/confusing) --
-// deferred, documented JS enhancement, not added unprompted (see CLAUDE.md #1/#9); the input stays
-// fully usable by clicking directly on it in the meantime.
-//
-// Phase 2 (CLAUDE.md Regel 1): classes taken from shadcn's own InputGroupAddon (registry/
-// new-york-v4/ui/input-group.tsx), trimmed to the alignments this file actually exposes and
-// re-padded to this project's `px-3.5`/`py-3` field-surface rhythm (same design-reference mapping
-// as input.php) instead of shadcn's own `px-3`/`py-1.5`. The `has-[>button]:m{l,r}-*` negative-
-// margin rules mirror shadcn's own button-child compensation (its `-0.45rem` was tuned against
-// their `px-3`; scaled proportionally to this project's `px-3.5` and rounded to the nearest real
-// Tailwind step, same "real steps only" convention as button.php's size-class comment) -- without
-// it a button addon (the password-visibility-toggle example below) sits with extra padding around
-// it instead of visually hugging the group's edge like a plain icon/text addon does. `role="group"`
-// mirrors shadcn's own semantic role, same as input-group.php.
-//
-// Not reproduced: shadcn's own `has-[>kbd]:m{l,r}-[-0.35rem]` (no addon+kbd-group.php composition
-// exercised by any consumer yet) and its block-start/block-end `[.border-b]:pb-3`/`[.border-t]:pt-3`
-// fine-tuning (needs a border-carrying sibling convention this project doesn't have yet) -- add
-// both once an actual composition needs them, rather than guessing untested magic numbers now.
-//
-// Supported config:
-//   content   string   required. Pre-rendered HTML to wrap (an icon.php call, a button.php call,
-//                       an input-group-text.php call, or plain escaped text)
-//   align     string   inline-start (default) | inline-end | block-start | block-end -- shadcn's
-//                       own InputGroupAddon positioning axis, sets data-align only (actual
-//                       placement/spacing is project-CSS, see CLAUDE.md #1)
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   content   string   pre-rendered HTML (required)
+//   align     string   inline-start (default) | inline-end | block-start | block-end
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

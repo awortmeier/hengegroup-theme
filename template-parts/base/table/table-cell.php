@@ -2,43 +2,12 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's TableCell: a plain <td>, no ARIA/JS beyond what native table cells already provide
-// (CLAUDE.md #1). Content-agnostic, same nesting pattern as input-group-addon.php:
-// `content` accepts plain escaped text or nested component markup (e.g. a badge.php call for a
-// status column, a button.php call for an actions column) -- caller's responsibility to
-// escape/build, same convention as everywhere else `content` is used.
+// <td>. Empty content still renders the cell so columns stay aligned. colspan/rowspan via `attributes`.
 //
-// Like table-head.php, `content` is intentionally allowed to be empty: a genuinely blank data cell
-// (e.g. no value for this row/column combination) is a normal table shape, not a missing-config
-// case -- rendering nothing there would drop a column and misalign the rest of the row, so this
-// file does NOT early-return on blank content the way e.g. table-body.php does.
-//
-// `colspan`/`rowspan` have no dedicated config key -- pass them via the `attributes` passthrough
-// (e.g. `attributes: ['colspan' => '2']`), same as table-head.php.
-//
-// Phase 2 (CLAUDE.md Regel 1): base classes taken from shadcn's own TableCell (registry/
-// new-york-v4/ui/table.tsx, live-checked 2026-09-03) -- `align-middle [&:has([role=checkbox])]:
-// pr-0 [&>[role=checkbox]]:translate-y-[2px]` kept 1:1, `p-2` widened to `px-4 py-3` on the
-// strength of the Claude-Design reference "Hengegroup" (same `.dc.html` reference workflow as
-// table-head.php's own entry, see docs/entscheidungen.md) -- `px-4` matches table-head.php's own
-// horizontal padding so header/body columns line up, `py-3` (12px) is the nearest real Tailwind
-// step to the reference's own ~13px row padding.
-//
-// `align` mirrors table-head.php's own new config 1:1 -- see that file's header comment for the
-// "for project CSS" -> first-class-config history this closes for the whole column, not just the
-// header cell.
-//
-// Supported config:
-//   content   string   optional. Pre-rendered HTML (plain escaped text or nested component markup,
-//                       e.g. an icon.php/badge.php/button.php call). Omit/empty for a deliberately
-//                       blank cell -- see note above
-//   align     string   start (default) | center | end -- text alignment, mirrored as `data-align`
-//                       (see table-head.php's own Phase 2 note)
-//   class / attributes / data_attributes   passthrough onto the outer
-//                       <td data-slot="table-cell"> element -- `class` is appended AFTER the
-//                       computed base/align classes (plain string concat, same caveat as
-//                       button.php's own `class` doc): fine for additive classes, not guaranteed to
-//                       win a conflicting utility (e.g. a different `py-*`) over the computed ones
+// Config:
+//   content   string   pre-rendered HTML
+//   align     string   start (default) | center | end
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

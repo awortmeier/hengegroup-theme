@@ -2,21 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's FieldTitle: a small text atom with label-like styling, used inside
-// field-content.php (e.g. naming the control when the real field-label.php sits beside rather than
-// above it, or when there's no single control to `for`-pair with at all). Plain text, no ARIA role
-// beyond what it already provides -- unlike field-label.php it is never `for`-paired to a control
-// (that's field-label.php's job), so it stays a plain <div>, not a <label>.
+// Label-styled text inside field-content.php that is not paired with a control.
 //
-// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldTitle (registry/
-// new-york-v4/ui/field.tsx, live-checked 2026-08-30). `group-data-[disabled=true]/field:opacity-50`
-// dims this text when it sits inside a `field.php` carrying `data-disabled="true"` -- field.php
-// itself doesn't set that attribute today (no `disabled` config of its own, see that file's
-// header), so this stays inert until a caller adds it via field.php's own `attributes` passthrough.
-//
-// Supported config:
-//   text   string   required. Visible content (plain text, escaped)
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   text   string   required
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

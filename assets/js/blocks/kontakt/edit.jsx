@@ -1,14 +1,5 @@
-// Editor UI for template-parts/blocks/kontakt/block.json. Same Vite/@wordpress-globals architecture
-// as the other blocks (see blocks/buehne/edit.jsx's header comment) -- built via
-// vite.config.editor-kontakt.js.
-//
-// Ueberschrift und Text sind direkt in der Canvas editierbar (`RichText`, gleiches Muster wie
-// offene-stellen/edit.jsx); Kontaktkarte und Formular kommen als echte `ServerSideRender`-Vorschau
-// ueber den inserter-versteckten Zwilling `hengegroup-theme/kontakt-vorschau`, weil ein
-// `ServerSideRender` gegen diesen Block Ueberschrift/Text ein zweites Mal statisch zeigen wuerde.
-// Die Kontaktdaten der Karte kommen aus Einstellungen > Footer.
-//
-// Markup (section/wrapper/col-span) spiegelt render.php, damit die Canvas wie das Frontend aussieht.
+// Editor for "Kontakt": heading/text as RichText, card + form via ServerSideRender of
+// kontakt-vorschau (a preview of this block would show the texts twice).
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import { RichText, useBlockProps } from "@wordpress/block-editor";
@@ -18,8 +9,7 @@ import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/kontakt/block.json";
 import vorschauMetadata from "../../../../template-parts/blocks/kontakt-vorschau/block.json";
 
-// Gleicher Plain-String-Rundlauf wie produkte/edit.jsx: Ueberschrift/Text bleiben reine Strings,
-// render.php gibt sie ueber typography.php's esc_html() aus.
+// Texts stay plain strings; render.php escapes them.
 function toRichTextValue(text) {
     return toHTMLString({ value: create({ text }) });
 }
@@ -67,7 +57,7 @@ registerBlockType(metadata, {
     save: () => null,
 });
 
-// Clientseitige Minimal-Registrierung des Vorschau-Zwillings, siehe produkte/edit.jsx.
+// Minimal client registration so ServerSideRender accepts the block.
 registerBlockType(vorschauMetadata, {
     edit: () => null,
     save: () => null,

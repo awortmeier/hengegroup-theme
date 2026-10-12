@@ -2,45 +2,20 @@
 
 declare(strict_types=1);
 
-// shadcn/ui has no Image primitive: an image has no state/behaviour to wrap, so there's nothing
-// beyond the framework's native <img> (or next/image) + utility classes. This component is the
-// direct PHP equivalent: pure attribute plumbing around <img>, no Tailwind/utility classes baked
-// in (see CLAUDE.md #1). Anything beyond "render an <img>" is handled by composition, not by
-// growing this file:
-//   - fixed aspect ratio             -> wrap the rendered output with
-//                                        template-parts/base/aspect-ratio.php (shadcn's
-//                                        AspectRatio equivalent), same nesting pattern as
-//                                        button.php + icon.php
-//   - captions / text+image layouts  -> project-specific molecule in template-parts/components/
-//                                        that composes this file with
-//                                        template-parts/base/typography.php
+// <img> from a URL, a media library attachment or a theme file.
 //
-// Supported config:
-//   src              string   ready-made image URL (checked first)
-//   attachment_id    int      WordPress Media Library attachment ID (checked second, when no src
-//                              is given): resolves via wp_get_attachment_image_src()/
-//                              wp_get_attachment_image_srcset()/wp_get_attachment_image_sizes(),
-//                              incl. WordPress's own responsive srcset/sizes generation. `alt`
-//                              falls back to the attachment's own alt-text meta when not given
-//                              explicitly; `width`/`height`/`srcset`/`sizes` config below still
-//                              override the attachment-derived values when given.
-//   size             string|array   WP image size for attachment_id (e.g. "medium", "large",
-//                              "full", or [width, height]); default "full"
-//   name / set       string   fallback: resolves a file from assets/images/<set>/<name> in the
-//                              theme itself (e.g. bundled/decorative graphics) when neither src
-//                              nor attachment_id resolve to anything
-//   alt              string   alt text (ignored/emptied when decorative is true)
-//   decorative       bool     true -> empty alt + aria-hidden (purely presentational image)
-//   loading          string   native <img loading>; auto-set to "lazy" when `lazy` is true
-//   decoding         string   native <img decoding> (default: async)
-//   fetchpriority    string   native <img fetchpriority>
-//   srcset / sizes / width / height   string   passed through as-is when given
-//   lazy             bool     shorthand for loading="lazy" + data-lazy="true" (for a JS-driven
-//                              lazy-load setup instead of the native attribute)
-//   lazy_src / lazy_srcset    string   deferred src/srcset for a JS lazy-loader (data-src/
-//                              data-srcset), independent of the `lazy` flag
-//   class / attributes / data_attributes   passthrough, as in the other base parts
-//
+// Config:
+//   src                          string         checked first
+//   attachment_id                int            checked second; srcset/sizes/alt from WordPress
+//   size                         string|array   attachment size, default "full"
+//   name / set                   string         fallback: assets/images/<set>/<name>
+//   alt                          string
+//   decorative                   bool           empty alt + aria-hidden
+//   loading / decoding / fetchpriority   string   decoding defaults to async
+//   srcset / sizes / width / height      string   override
+//   lazy                         bool           loading="lazy" + data-lazy
+//   lazy_src / lazy_srcset       string         data-src/data-srcset for a JS loader
+//   class / attributes / data_attributes
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
 }

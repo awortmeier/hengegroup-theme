@@ -2,35 +2,15 @@
 
 declare(strict_types=1);
 
-// Eingaenge aus Website-Formularen als Backend-Eintraege statt E-Mails (explizite Vorgabe
-// 2026-10-07: "keine echten E-Mails, sondern Eintraege im Backend"):
-//   - `produktanfrage` (Hauptmenuepunkt "Produktanfragen"): Kontaktformulare der Produktuebersicht
-//     (Block "Kontakt") und der Produktdetailseite, Handler inc/setup/theme-product-inquiries.php.
-//   - `bewerbung` (Hauptmenuepunkt "Bewerbungen"): Bewerbungsformular der Stellenseite, Handler
-//     inc/setup/theme-careers-application.php, Dateien geschuetzt ausserhalb der Mediathek.
-//
-// Beide Typen teilen sich hier Registrierung, Status (neu / in Bearbeitung / erledigt), Spalten,
-// die schreibgeschuetzte Detailansicht und den Zaehler neuer Eintraege am Menuepunkt (es kommt ja
-// keine E-Mail mehr, die auf neue Eingaenge hinweist). Beide sind eigene Hauptmenuepunkte direkt
-// unter "Dashboard" statt Unterpunkte von Produkte/Karriere (explizite Nachfrage 2026-10-07) --
-// dort sieht man sie nach dem Login zuerst; der Zaehler steht direkt am Menuepunkt. Eintraege werden nie automatisch geloescht
-// (explizite Vorgabe); sichtbar fuer alle, die fremde Beitraege bearbeiten duerfen (Redakteure und
-// Administratoren -- explizite Vorgabe "jeder darf sie sehen"). Neu anlegen kann man sie im Backend
-// nicht (`create_posts => do_not_allow`), sie entstehen nur ueber die Formulare.
-//
-// Spam-Schutz und Fehler-Zwischenspeicher (Post/Redirect/Get) teilen sich beide Formulare ueber
-// hengegroup_theme_is_form_bot()/hengegroup_theme_store_form_state()/
-// hengegroup_theme_read_form_state() unten. Begruendung: docs/entscheidungen.md "Formulare:
-// Eintraege im Backend statt E-Mail".
+// Formular-Eingaenge als Backend-Eintraege statt E-Mail: `produktanfrage` und `bewerbung`, mit Status,
+// schreibgeschuetzter Detailansicht und Zaehler am Menuepunkt. Sichtbar fuer Redakteure, im Backend
+// nicht anlegbar, nie automatisch geloescht. Dazu der gemeinsame Spam-Schutz und Formular-Zustand.
 
 const HENGEGROUP_THEME_INQUIRY_POST_TYPE = 'produktanfrage';
 const HENGEGROUP_THEME_APPLICATION_POST_TYPE = 'bewerbung';
 const HENGEGROUP_THEME_REQUEST_META_PREFIX = '_hengegroup_theme_request_';
 const HENGEGROUP_THEME_REQUESTS_MENU_SEPARATOR = 'separator-hengegroup-theme-requests';
 
-/**
- * Status eines Eingangs.
- */
 function hengegroup_theme_get_request_statuses(): array
 {
     return [
@@ -41,8 +21,7 @@ function hengegroup_theme_get_request_statuses(): array
 }
 
 /**
- * Felder je Eingangs-Typ in Anzeige-Reihenfolge: Feld => Label. Gespeichert als Post-Meta
- * HENGEGROUP_THEME_REQUEST_META_PREFIX . Feld (Auswahlfelder bereits als lesbarer Text).
+ * Feld => Label; gespeichert als Meta HENGEGROUP_THEME_REQUEST_META_PREFIX . Feld.
  */
 function hengegroup_theme_get_request_fields(string $post_type): array
 {
@@ -134,8 +113,7 @@ function hengegroup_theme_register_request_post_types(): void
 add_action('init', 'hengegroup_theme_register_request_post_types');
 
 /**
- * Legt einen Eingang an. `$fields` = Feld => Wert (siehe hengegroup_theme_get_request_fields()).
- * Rueckgabe: Post-ID oder 0 bei Fehler.
+ * Post-ID oder 0.
  */
 function hengegroup_theme_create_request(string $post_type, string $title, array $fields): int
 {
@@ -178,8 +156,7 @@ function hengegroup_theme_get_request_status(int $post_id): string
 }
 
 /**
- * Spam-Pruefung beider Formulare: Honeypot-Feld ausgefuellt oder in unter 3 Sekunden abgeschickt.
- * Erkannte Bots bekommen beim Aufrufer dieselbe Erfolgsmeldung wie Menschen.
+ * Honeypot ausgefuellt oder schneller als 3 Sekunden abgeschickt.
  */
 function hengegroup_theme_is_form_bot(string $honeypot, int $started): bool
 {
@@ -187,8 +164,7 @@ function hengegroup_theme_is_form_bot(string $honeypot, int $started): bool
 }
 
 /**
- * Haelt Eingaben + Fehler 15 Minuten fuer die Anzeige nach dem Redirect; Rueckgabe: Schluessel fuer
- * den Query-Parameter `eingabe`.
+ * Eingaben + Fehler fuer 15 min; liefert den Schluessel fuer den Query-Parameter `eingabe`.
  */
 function hengegroup_theme_store_form_state(string $prefix, array $values, array $errors): string
 {
@@ -203,8 +179,7 @@ function hengegroup_theme_store_form_state(string $prefix, array $values, array 
 }
 
 /**
- * Status (Query-Parameter `$status_key`) und ggf. zwischengespeicherte Eingaben nach dem Redirect.
- * Der Transient wird beim Lesen geloescht (einmalig).
+ * Der Transient wird beim Lesen geloescht.
  */
 function hengegroup_theme_read_form_state(
     string $prefix,
@@ -230,10 +205,6 @@ function hengegroup_theme_read_form_state(
     ];
 }
 
-/**
- * Detailansicht und Status-Box im Editor eines Eingangs. Titel bleibt sichtbar (Kurzbezeichnung),
- * die Formulardaten selbst sind schreibgeschuetzt.
- */
 function hengegroup_theme_action_add_meta_boxes_requests(): void
 {
     foreach (
@@ -260,9 +231,6 @@ function hengegroup_theme_action_add_meta_boxes_requests(): void
 }
 add_action('add_meta_boxes', 'hengegroup_theme_action_add_meta_boxes_requests');
 
-/**
- * Anzeige eines gespeicherten Feldwerts im Backend (verlinkt, wo sinnvoll).
- */
 function hengegroup_theme_format_request_value(int $post_id, string $field): string
 {
     $value = get_post_meta($post_id, HENGEGROUP_THEME_REQUEST_META_PREFIX . $field, true);
@@ -396,9 +364,6 @@ add_action(
     'hengegroup_theme_action_save_post_request_status',
 );
 
-/**
- * Spalten der Listen: Status + die wichtigsten Angaben je Typ.
- */
 function hengegroup_theme_filter_manage_request_columns(array $columns): array
 {
     $screen = get_current_screen();
@@ -466,9 +431,6 @@ add_action(
     2,
 );
 
-/**
- * Anzahl Eingaenge mit Status "neu".
- */
 function hengegroup_theme_count_new_requests(string $post_type): int
 {
     $query = new WP_Query([
@@ -483,9 +445,6 @@ function hengegroup_theme_count_new_requests(string $post_type): int
     return (int) $query->found_posts;
 }
 
-/**
- * Badge-Markup im Stil von WordPress' eigenen Zaehlern (Kommentare, Updates).
- */
 function hengegroup_theme_get_admin_count_bubble(int $count): string
 {
     return sprintf(
@@ -494,10 +453,6 @@ function hengegroup_theme_get_admin_count_bubble(int $count): string
     );
 }
 
-/**
- * Zaehler neuer Eingaenge (Status "neu") direkt an den Hauptmenuepunkten "Produktanfragen"/
- * "Bewerbungen" -- ersetzt die E-Mail-Benachrichtigung. Ohne neue Eingaenge erscheint kein Badge.
- */
 function hengegroup_theme_action_admin_menu_request_counts(): void
 {
     global $menu;
@@ -526,10 +481,7 @@ function hengegroup_theme_action_admin_menu_request_counts(): void
 add_action('admin_menu', 'hengegroup_theme_action_admin_menu_request_counts', 1000);
 
 /**
- * Eigener Menue-Trenner zwischen "Dashboard" und den Eingaengen (explizite Nachfrage 2026-10-07:
- * gleicher Abstand wie zwischen "Bewerbungen" und "Medien", das ist WordPress' `separator1`).
- * Gleiche Struktur wie WordPress' eigene Trenner in wp-admin/menu.php; die Position setzt
- * hengegroup_theme_filter_menu_order_requests().
+ * Eigener Trenner vor den Eingaengen (Position setzt hengegroup_theme_filter_menu_order_requests()).
  */
 function hengegroup_theme_action_admin_menu_requests_separator(): void
 {
@@ -540,11 +492,8 @@ function hengegroup_theme_action_admin_menu_requests_separator(): void
 add_action('admin_menu', 'hengegroup_theme_action_admin_menu_requests_separator', 1000);
 
 /**
- * Setzt "Produktanfragen" und "Bewerbungen" direkt hinter "Dashboard", abgesetzt durch den eigenen
- * Trenner davor (siehe hengegroup_theme_action_admin_menu_requests_separator()); danach folgt
- * WordPress' `separator1`. Ueber `menu_order` statt `menu_position`, weil zwischen Dashboard (2) und
- * dem ersten Trenner (4) nur Platz fuer einen Eintrag mit ganzzahliger Position ist -- ein zweiter
- * wuerde von WordPress hinter "Beitraege" geschoben.
+ * Eingaenge direkt hinter "Dashboard". Per menu_order, weil zwischen Dashboard (2) und dem ersten
+ * Trenner (4) nur eine ganzzahlige Position frei ist.
  */
 function hengegroup_theme_filter_menu_order_requests(array $menu_order): array
 {

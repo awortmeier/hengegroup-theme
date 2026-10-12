@@ -3,21 +3,7 @@
 /**
  * Template Name: Component Showcase - Badge
  *
- * Dev-only page template: renders template-parts/base/badge.php across every documented variant
- * (grey-dark | grey-light | henge-blue | henge-green | henge-grey | outline) and state (icon-only,
- * icon start/end, href/link, custom class passthrough) for manual visual/functional review during
- * Phase 2 styling work -- not meant for production content or navigation. Analog zur
- * page-component-showcase-button.php, ohne deren Größen-/Disabled-/Loading-Abschnitte -- badge.php
- * kennt kein `size`/`disabled`/`loading` (siehe dessen Kopfkommentar).
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Badge"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Second slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- not the full
- * one-call-per-base-component page from that entry yet, see docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

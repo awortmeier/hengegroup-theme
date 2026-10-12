@@ -1,7 +1,5 @@
-// Progressive-enhancement layer for template-parts/base/select.php: builds a custom-styled
-// listbox from a native <select>'s own <option>/<optgroup> elements (single source of truth, see
-// that file's header comment) and wires up the WAI-ARIA "select-only combobox" pattern
-// (role="combobox" + aria-activedescendant, focus always stays on the trigger button).
+// Builds a styled listbox from select.php's native <select> (select-only combobox pattern, focus
+// stays on the trigger).
 
 function getFlatOptions(nativeSelect) {
     const flat = [];
@@ -53,11 +51,8 @@ function buildListbox(nativeSelect, content, indicatorTemplate) {
             }
         }
 
-        // Classes taken from shadcn's own SelectItem (registry/new-york-v4/ui/select.tsx) --
-        // `relative`/`pr-8` + the indicator's own `absolute right-2` (below) is what keeps the
-        // checkmark from taking its own row: it's overlaid on the item, not laid out inline next
-        // to the text. `data-active` (this module's own keyboard/hover-highlight state, see
-        // setActive()) mirrors shadcn's `data-highlighted` via the same `bg-accent` treatment.
+        // relative/pr-8 + absolute indicator keeps the check mark on the same line; data-active is
+        // the keyboard/hover highlight.
         const item = document.createElement("div");
         item.id = `${nativeSelect.id}-option-${index}`;
         item.setAttribute("role", "option");
@@ -81,9 +76,6 @@ function buildListbox(nativeSelect, content, indicatorTemplate) {
         indicator.setAttribute("data-slot", "select-item-indicator");
         indicator.className = "absolute right-2 flex size-3.5 items-center justify-center";
 
-        // Only populate the indicator for the actually-selected item -- shadcn's own
-        // SelectItemIndicator (Radix) only renders its children when selected; cloning the
-        // checkmark template unconditionally here (the previous bug) made it show on every item.
         if (indicatorTemplate && option.selected) {
             indicator.appendChild(indicatorTemplate.content.cloneNode(true));
         }
@@ -224,14 +216,12 @@ function setupSelect(wrapper) {
         }
     });
 
-    // A click on the paired <label for="..."> focuses the (visually-hidden-once-JS-ready) native
-    // select natively -- redirect that focus to the visible trigger instead.
+    // A click on the <label for> focuses the hidden native select; move focus to the trigger.
     nativeSelect.addEventListener("focus", () => {
         trigger.focus();
     });
 
-    // Keeps the custom UI in sync if the native select's value changes from outside this module
-    // (a form reset, another script, ...), not just from selectItem() above.
+    // Stay in sync when the value changes from outside (form reset, other scripts).
     nativeSelect.addEventListener("change", () => {
         items = buildListbox(nativeSelect, content, indicatorTemplate);
         activeIndex = items.findIndex((item) => item.getAttribute("aria-selected") === "true");

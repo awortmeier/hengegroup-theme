@@ -2,17 +2,13 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's CarouselNext -- the mirror of carousel-previous.php (ArrowRight icon,
-// `data-carousel-nav="next"`). See that file's header comment for the full rationale (button.php
-// nesting, the honest "needs JS" gap, the `data-carousel-nav` matching convention); not repeated
-// here to avoid the two files drifting out of sync with duplicated prose.
+// "Next" button, mirror of carousel-previous.php.
 //
-// Supported config:
-//   aria_label   string   default: translated "Next slide" (esc_html__())
-//   icon         array    icon.php config override (default: ['name' => 'arrow-right', 'set' =>
-//                           'lucide'])
-//   disabled     bool     default false -- see carousel-previous.php's header comment
-//   class / attributes / data_attributes   passthrough onto the nested button.php call
+// Config:
+//   aria_label   string   default "Next slide"
+//   icon         array    icon.php config (default arrow-right)
+//   disabled     bool
+//   class / attributes / data_attributes   on the nested button.php
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

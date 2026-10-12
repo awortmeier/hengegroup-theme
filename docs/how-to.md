@@ -1,260 +1,84 @@
 # HowTos
 
-Anleitungen, wie man einen bestehenden Erweiterungspunkt (Filter/Hook/Config-Key) nutzt.
+## Neue WordPress-Instanz
 
-Abgrenzung zu benachbarten Dokumenten:
-
-- `docs/entscheidungen.md` sammelt bewusste Entscheidungen (das "Warum"), waehrend diese Datei das
-  "Wie" fuer bestehende Erweiterungspunkte festhaelt.
-- `docs/to-do.md` sammelt **offene** Punkte (noch nicht entschieden/gebaut).
-- Der Dateikopf-Kommentar der betroffenen Datei bleibt die Quelle direkt am Code (siehe
-  `docs/neue-komponente-erstellen.md` Regel 4/9). Ein Eintrag hier ist ein zusaetzlicher, thematisch
-  gebuendelter Verweis, kein Doppel-Text mit abweichendem Inhalt — kurz halten, auf den
-  Kopfkommentar verweisen statt ihn zu duplizieren.
-
-Siehe `CLAUDE.md` Regel 12 fuer die Pflicht, wann ein Eintrag hier angelegt wird.
-
----
-
-### Neue WordPress-Instanz einrichten (wp-config.php)
-
-In der `wp-config.php` jeder Instanz (Dev, Live, ...) zwischen "Add any custom values" und "stop
-editing" ergaenzen:
+In `wp-config.php` setzen, sonst meldet der Website-Zustand ein fehlendes Standard-Theme:
 
 ```php
 define("WP_DEFAULT_THEME", "hengegroup");
 ```
 
-Sonst meldet der Website-Zustand "Ein Standard-Theme zur Verfuegung haben", weil WordPress
-`twentytwentyfive` erwartet und das nicht installiert ist. Das Theme kann die Konstante nicht
-selbst setzen, weil WordPress sie schon vor dem Laden des Themes definiert.
+## Produktbereich pflegen
 
-### Produkt-Badge setzen
-
-Das Badge im Produktbox-Bild ist ein einfaches Feld-Paar im Produkt-Editor (Metabox "Badge",
-Seitenleiste, siehe `inc/setup/theme-woocommerce-products.php`) -- kein Term/keine Taxonomie mehr
-zu verwalten. Text eingeben, Farbe aus dem Dropdown waehlen (henge-blue | henge-green | henge-grey |
-grey-dark, siehe `hengegroup_theme_get_badge_variants()`), speichern. Leerer Text = kein Badge auf
-der Karte (siehe `docs/entscheidungen.md` "Produktbox: Badge-/Anwendungs-Datenmodell" fuer die
-Begruendung, warum das ein Postmeta-Feld-Paar statt einer Taxonomie ist).
-
-Ein weiterer Farbwert im Dropdown braucht eine Code-Aenderung
-(`hengegroup_theme_get_badge_variants()` erweitern) -- die vier Farben sind badge.php's eigenes
-Volltonfarben-Vokabular, kein per Filter erweiterbarer Escape-Hatch wie das vorherige
-`firma`-Datenmodell.
-
-### Anwendungen anlegen und Produkten zuordnen
-
-Anwendungen sind eine Taxonomie mit zwei Ebenen (Produkte > Anwendungen, siehe
-`docs/entscheidungen.md` "Anwendungen: Taxonomie statt Post-Type, nur Uebersichtsseite"):
-
-1. Gruppe anlegen (ohne uebergeordnete Gruppe): Name, Beschreibung, Kicker, Farbe, Ueberschrift,
-   Reihenfolge. Eine Gruppe = eine Sektion auf der Seite /anwendungen/ (Block "Anwendungsgruppe").
-2. Anwendung anlegen mit der Gruppe als "uebergeordnet": Beschreibung (Text auf /anwendungen/),
-   Kurztext (Karte auf Produktseiten), Bild, Icon, Reihenfolge.
-3. Zuordnung im Produkt-Editor (Box "Anwendungen") oder fuer mehrere Produkte per Quick Edit/
-   Massenbearbeitung in der Produktliste. Das Produkt erscheint danach automatisch bei der Anwendung
-   auf /anwendungen/.
-
-Ein weiteres Icon: Eintrag in `hengegroup_theme_get_anwendung_icons()`
-(`inc/template-parts/products.php`) ergaenzen und `pnpm icons:lucide` ausfuehren.
-
-### Produktbereich einrichten / Produkt pflegen
-
-1. Produkte > Kategorien: je Sektion der Uebersicht eine Kategorie mit Beschreibung, Kicker, Farbe,
-   Ueberschrift und ggf. eigenem Ansprechpartner.
-2. Produkte > Einstellungen: Uebersichtsseite und Standard-Ansprechpartner (inkl. Foto).
-3. Seite /produkte/: Buehne, je Kategorie ein Block "Produktkategorie" (Hintergrund Hell/Grau im
-   Wechsel), am Ende der Block "Kontakt". Kontaktdaten der Karte kommen aus Einstellungen > Footer.
-4. Produkt: Beschreibung (Intro), Kurzbeschreibung (Box), Beitragsbild, Badge, Kategorie,
-   Anwendungen; Tab "Technische Daten" fuer Analyse-Zeilen, Downloads und Recycling-Hinweis;
-   Tab "Eigenschaften" > Attribut "Koernung" fuer die lieferbaren Koernungen (Werte unter
-   Produkte > Eigenschaften > Koernung, Reihenfolge per Drag & Drop); Tab "Verknuepfte Produkte" >
+1. Produkte > Kategorien: je Sektion der Uebersicht eine Kategorie (Kicker, Farbe, Ueberschrift,
+   optional Ansprechpartner).
+2. Produkte > Einstellungen: Uebersichtsseite und Standard-Ansprechpartner.
+3. Seite /produkte/: Buehne, je Kategorie ein Block "Produktkategorie", am Ende "Kontakt".
+4. Produkt: Beschreibung, Kurzbeschreibung, Beitragsbild, Badge (Text + Farbe), Kategorie,
+   Anwendungen; Tab "Technische Daten" (Analyse, Downloads, Recycling); Attribut "Koernung";
    "Verwandte Produkte" fuer bis zu 4 feste Empfehlungen.
-5. Eingaenge: Menuepunkt "Produktanfragen" bzw. Menuepunkt "Bewerbungen"; Status in der Seitenleiste
-   setzen, damit der Zaehler am Menue nur Neues zeigt.
+5. Anwendungen: erst Gruppe (ohne Eltern), dann Anwendung mit Gruppe als Eltern. Zuordnung am Produkt
+   oder per Quick Edit. Neues Icon: `hengegroup_theme_get_anwendung_icons()` ergaenzen, dann
+   `pnpm icons:lucide`.
+6. Eingaenge (Produktanfragen/Bewerbungen): Status in der Seitenleiste setzen, damit der Zaehler nur
+   Neues zeigt.
 
-### Ein weiteres JSON-LD-Schema ergaenzen (z. B. Product/JobPosting)
+Weitere Badge-Farbe: `hengegroup_theme_get_badge_variants()` erweitern.
 
-`inc/setup/theme-seo-output.php` rendert immer das site-weite Organization-Schema und bietet dafuer
-den Filter `hengegroup_theme_seo_structured_data(array $schemas, int $post_id)` als Erweiterungspunkt:
+## Stellenangebote pflegen
 
-```php
-add_filter(
-    "hengegroup_theme_seo_structured_data",
-    function (array $schemas, int $post_id): array {
-        if (get_post_type($post_id) === "product") {
-            $schemas[] = [
-                "@context" => "https://schema.org",
-                "@type" => "Product",
-                "name" => get_the_title($post_id),
-                // ...
-            ];
-        }
-        return $schemas;
-    },
-    10,
-    2,
-);
-```
+1. Stellenangebote > Unternehmen/Standorte anlegen, unter Einstellungen Karriereseite und
+   Standard-Ansprechpartner waehlen.
+2. Neue Stelle: Einleitung, Listen-Bloecke ("Wir bieten dir" leer = Standard-Benefits),
+   "Stellendetails"-Box. Der gelbe Hinweis nennt fehlende Google-Jobs-Angaben.
+3. Stelle beenden: "Gueltig bis" oder "besetzt" setzen, nicht loeschen (sonst keine 301).
+4. Neues JobPosting-Feld: in `hengegroup_theme_get_job_data()` lesen, in
+   `hengegroup_theme_build_job_posting_schema()` ausgeben, in `single-stellenangebote.php` anzeigen,
+   Test in `tests/Unit/CareersTest.php`.
 
-- Jeder Eintrag im zurueckgegebenen Array wird als eigenes `<script type="application/ld+json">`
-  gerendert (einfacher fuer additive Callbacks als ein gemeinsames `@graph`-Merge).
-- `$post_id` ist `0` ausserhalb eines Singular-/"Page for posts"-Kontexts (Archive, Suche, 404) —
-  siehe `hengegroup_theme_seo_current_post_id()` im selben File.
-- Ein bestehender Eintrag laesst sich per `@type`-Abgleich im uebergebenen `$schemas`-Array auch
-  ersetzen/entfernen, nicht nur ergaenzen.
-- Details/Contract siehe Docblock von `hengegroup_theme_get_seo_structured_data()` im selben File.
+## Footer
 
-### Einen neuen Gutenberg-Block anlegen
+Kontaktdaten und Social-URLs unter Einstellungen > Footer, Links ueber die Menue-Position
+"Footermenü". Weiteres Netzwerk: Eintrag in `hengegroup_theme_get_footer_social_networks()` und Key
+in `hengegroup_theme_get_footer_options()`, dann `pnpm icons:tabler`.
 
-Konvention/Begruendung siehe `docs/entscheidungen.md` "Phase-3-Block-Architektur" (am Beispiel von
-`hengegroup-theme/buehne`, `template-parts/blocks/buehne/`). Fuer einen weiteren Block:
+## Neuer Gutenberg-Block
 
-1. **Ordner anlegen**: `template-parts/blocks/<name>/block.json` + `render.php` (gleiche
-   Ordner-Konvention wie `template-parts/base/<name>/`). `block.json`s `"category"` ist `"henge"`
-   (eigene Kategorie, siehe `docs/entscheidungen.md` "Eigene Block-Kategorie 'Henge' statt
-   Core-Kategorie 'theme'"), nicht die Core-Kategorie `"theme"`. `"render"` zeigt auf
-   `"file:./render.php"` — WordPress injiziert `$attributes`/`$content`/`$block` automatisch, kein
-   manueller `render_callback` noetig. `render.php` komponiert ausschliesslich
-   `template-parts/base/*`-Aufrufe (`ob_start()`/`get_template_part()`/`ob_get_clean()`, siehe
-   `carousel.php`s eigener Kopfkommentar fuer das genaue Muster) — keine neue Markup-/
-   Styling-Logik, Tailwind-Klassen direkt im PHP wie in jeder Base-Komponente selbst.
-2. **Editor-Script**: `assets/js/blocks/<name>/edit.jsx`, importiert ausschliesslich aus
-   `@wordpress/*` (kein eigenes React). Fuer eine WYSIWYG-Vorschau ohne die render.php-Markup-
-   Struktur ein zweites Mal in JS nachzubauen: `ServerSideRender` mit `block={metadata.name}`
-   verwenden (`metadata` = direkter JSON-Import des eigenen `block.json`).
-3. **Vite-Build**: eine EIGENE Config-Datei `vite.config.editor-<name>.js` (Vite 8s `vite build`-CLI
-   akzeptiert pro Lauf nur eine Config, kein Array — deshalb ein File pro Block statt eines
-   gemeinsamen Multi-Entry-Builds, siehe `vite.config.editor.factory.js`s Kopfkommentar fuer die
-   genaue Begruendung), die aber nur noch `createEditorBlockConfig()` aus
-   `vite.config.editor.factory.js` mit `entry`/`fileName`/`name` fuer den neuen Block aufruft (siehe
-   `vite.config.editor-ueberschrift-text.js` als Vorbild) — die eigentliche `build.lib`/
-   `esbuild.jsx*`/`rollupOptions.external`+`output.globals`-Konfiguration lebt zentral in der
-   Factory, nicht mehr dupliziert pro Block-Config. `package.json`s `build:assets`-Skript um einen
-   weiteren `&& vite build --config vite.config.editor-<name>.js` ergaenzen.
-4. **PHP-Registrierung**: in `inc/setup/theme-blocks.php`s `hengegroup_theme_register_blocks()`
-   einen weiteren `hengegroup_theme_register_theme_block('<name>', 'hengegroup-theme-<name>-editor',
-'js/blocks/<name>-edit.js')`-Aufruf ergaenzen (Vorbild: die `ueberschrift-text`-Zeile) — der
-   gemeinsame Helper registriert dabei fuer jeden Block gleichermassen zuerst den
-   Editor-Script-Handle per `wp_register_script()` (Dependencies: `wp-blocks`/`wp-element`/
-   `wp-block-editor`/`wp-components`/`wp-i18n`, plus `wp-server-side-render` bei
-   `ServerSideRender`-Nutzung) ueber `hengegroup_theme_get_vite_asset_path()`/`_uri()`, dann
-   `register_block_type()` fuer den Block-Ordner.
-5. **Kein `build.sh`-Aenderungsbedarf** — `template-parts/`/`inc/` werden bereits
-   vollstaendig nach `dist/` kopiert, neue Dateien darin sind automatisch erfasst.
+1. `template-parts/blocks/<name>/block.json` (`"category": "henge"`, `"render": "file:./render.php"`)
+   und `render.php`, das nur Base-/Komponenten-Templates komponiert.
+2. Editor: `assets/js/blocks/<name>/edit.jsx`, nur `@wordpress/*`-Imports. Vorschau per
+   `ServerSideRender`, ausser der Block braucht `RichText` im Canvas.
+3. `vite.config.editor-<name>.js` per `createEditorBlockConfig()` und in `package.json`
+   `build:assets` eintragen.
+4. In `hengegroup_theme_register_blocks()` (`inc/setup/theme-blocks.php`) registrieren.
 
-### Ein weiteres Icon ergaenzen
+## Icons
 
-`template-parts/base/icon.php` (bzw. der Helper `hengegroup_theme_render_icon()`) rendert nur
-Icons, die als statische SVG-Datei unter `assets/images/icons/<set>/` vorliegen — welche Dateien
-dort liegen, haengt vom `set`-Wert ab:
+Lucide-/Tabler-Namen als String-Literal im PHP verwenden, dann `pnpm icons:lucide` bzw.
+`pnpm icons:tabler` (laeuft auch bei `pnpm build`). Zur Laufzeit zusammengesetzte Namen findet der
+Scanner nicht: zusaetzlich in `scripts/lucide-icons.json`/`tabler-icons.json` eintragen. Eigene SVGs
+direkt unter `assets/images/icons/<set>/` ablegen.
 
-- **Lucide** (`set => 'lucide'`, z. B. `['name' => 'arrow-right', 'set' => 'lucide']`): Datei kommt
-  aus `node_modules/lucide-static`. Icon-Name im Code referenzieren (als String-Literal in der
-  `icon.php`-Config), dann `pnpm icons:lucide` ausfuehren — synct automatisch nur die tatsaechlich
-  referenzierten Icons (`scripts/find-lucide-icons.php` scannt dafuer den gesamten Theme-PHP-Code)
-  und raeumt nicht mehr benoetigte Dateien mit auf. Laeuft ausserdem automatisch bei jedem
-  `pnpm build`.
-- **Tabler** (`set => 'tabler/outline'` bzw. `'tabler/filled'`): analog ueber `pnpm icons:tabler`,
-  Quelle `node_modules/@tabler/icons`, Scanner `scripts/find-tabler-icons.php`.
-- **Name wird erst zur Laufzeit zusammengesetzt** (z. B. `['name' => $icon_name, ...]` mit
-  `$icon_name` aus einer PHP-Variable/Expression) — der statische Scanner sieht dann kein
-  String-Literal und findet das Icon nicht. In diesem Fall den Icon-Namen zusaetzlich in
-  `scripts/lucide-icons.json` bzw. `scripts/tabler-icons.json` eintragen (einfaches JSON-Array,
-  bei Tabler `{"name": "...", "variant": "outline"|"filled"}`-Objekte) — beide Sync-Skripte lesen
-  diese Datei zusaetzlich zum Scan-Ergebnis aus.
-- **Icon jenseits Lucide/Tabler** (Marken-/Custom-SVG): kein Sync-Skript noetig, einfach manuell
-  unter `assets/images/icons/<eigener-set-name>/` ablegen und mit `set => '<eigener-set-name>'`
-  referenzieren — `icon.php` liest jede vorhandene Datei unter `assets/images/icons/`, unabhaengig
-  davon, ob ein Sync-Skript sie dorthin kopiert hat.
+## Schriften
 
-Details zur Config (`name`/`set`/`class`/`decorative`/`title`/`attributes`/`data_attributes`)
-stehen im Kopfkommentar von `template-parts/base/icon.php`.
+Pro Familie ein Ordner unter `assets/fonts/` (TTF/OTF-Quelle + WOFF2 via
+`npx ttf2woff2 < in.ttf > out.woff2`), `@font-face` in `assets/css/fonts.css`.
 
-### Ein weiteres, Seiten-spezifisches SEO-Feld nutzen
+## SEO
 
-Die SEO-Ausgabe (`inc/setup/theme-seo-output.php`) folgt fuer Titel/Beschreibung/Social-Bild/
-Robots ueberall derselben Fallback-Kette: per-Seite "SEO"-Metabox-Wert (`theme-seo-admin.php`) ->
-site-weiter Settings > SEO Standard (`hengegroup_theme_get_seo_options()`) -> ein sinnvoller berechneter
-Default (Post-Excerpt, Featured Image, Permalink, ...) -> ganz weggelassen. Ein neues Feld reiht
-sich in dieselbe Kette ein, statt eine eigene Logik zu erfinden — siehe bestehende Resolver-
-Funktionen in `theme-seo-output.php` als Vorlage. Weitere Post-Types fuer die Metabox kommen ueber
-den `hengegroup_theme_seo_post_types`-Filter dazu, nicht durch Code-Aenderung an `theme-seo-admin.php`.
+- Weiteres JSON-LD: Filter `hengegroup_theme_seo_structured_data(array $schemas, int $post_id)`; jeder
+  Eintrag wird ein eigenes `<script type="application/ld+json">`. `$post_id` ist ausserhalb von
+  Einzelseiten `0`.
+- Automatische Meta-Description: Filter `hengegroup_theme_seo_description` (Beispiel:
+  `theme-careers-seo.php`). Eigenen Wert der SEO-Box nicht ueberschreiben.
+- SEO-Metabox fuer weitere Post-Types: Filter `hengegroup_theme_seo_post_types`.
 
-### Meta-Description fuer einen Post-Type automatisch erzeugen
-
-`hengegroup_theme_get_seo_description()` (`inc/setup/theme-seo-output.php`) laeuft am Ende durch den
-Filter `hengegroup_theme_seo_description(string $description, int $post_id)`. Ein Callback prueft
-zuerst, ob die SEO-Box einen eigenen Wert hat (dann `$description` unveraendert zurueckgeben), und
-liefert sonst seinen berechneten Text -- Beispiel: `hengegroup_theme_filter_seo_description_jobs()`
-in `inc/setup/theme-careers-seo.php`.
-
-### Stellenangebot anlegen / Karriereseite einrichten
-
-1. Einmalig unter Stellenangebote > Unternehmen und Stellenangebote > Standorte die Stammdaten anlegen (rechtlicher
-   Name, Logo, Farbe, Adresse; Koordinaten optional) und unter Stellenangebote > Einstellungen Karriereseite
-   und Standard-Ansprechpartner pflegen.
-2. Die Karriereseite ist eine normale Seite unter /karriere/ mit dem Block "Offene Stellen"; die
-   Startseite nutzt den Block "Karriere-Teaser".
-3. Neue Stelle: Titel, Einleitung im Editor, Auszug optional (wird Meta-Description), dann die
-   "Stellendetails"-Box ausfuellen. Der gelbe Hinweis oben in der Box nennt fehlende Angaben fuer
-   Google Jobs. Die Listen "Wir bieten dir"/"Dein Profil"/"Deine Aufgaben" stehen als Bloecke
-   "Stellen-Liste" schon in der Vorlage; "Wir bieten dir" leer lassen = Standard-Benefits des
-   Unternehmens.
-4. Stelle beenden: "Gueltig bis" setzen oder "Stelle ist besetzt" anhaken -- nicht loeschen, dann
-   greift die 301-Weiterleitung auf die Karriereseite.
-5. Neues JobPosting-Feld: in `hengegroup_theme_get_job_data()` lesen, in
-   `hengegroup_theme_build_job_posting_schema()` ausgeben (beide `inc/template-parts/careers.php`),
-   sichtbar in `single-stellenangebote.php` rendern und einen Fall in `tests/Unit/CareersTest.php`
-   ergaenzen.
-
-### Footer-Inhalte pflegen / weiteres Social-Media-Netzwerk ergaenzen
-
-- Adresse, E-Mail, Telefon, Fax und Social-Media-URLs: Einstellungen > Footer. Leere Felder werden
-  im Footer ausgeblendet.
-- Spalte "Links": Design > Menues, Menue der Position "Footermenü" zuweisen (nur oberste Ebene).
-- Weiteres Netzwerk: in `hengegroup_theme_get_footer_social_networks()`
-  (`inc/setup/theme-footer-admin.php`) einen Eintrag `'<netz>_url' => [label, icon]` ergaenzen und
-  den Key mit Default `''` in `hengegroup_theme_get_footer_options()` aufnehmen. Settings-Feld,
-  Sanitizing und Footer-Ausgabe laufen automatisch mit. Das Tabler-Icon danach per
-  `pnpm icons:tabler` synchronisieren (siehe "Ein weiteres Icon ergaenzen").
-
-### Ablageort der Bewerbungsunterlagen aendern
-
-Standard ist ein Ordner `hengegroup-bewerbungen` neben dem Website-Stammverzeichnis, also
-ausserhalb des Web-Roots (siehe `docs/entscheidungen.md` "Bewerbungsunterlagen ausserhalb des
-Web-Roots"). Ist er nicht beschreibbar, faellt das Theme auf uploads/hengegroup-bewerbungen/
-zurueck. Fuer einen anderen Pfad (z. B. einen gemounteten, gesicherten Speicher):
+## Filter
 
 ```php
-add_filter("hengegroup_theme_application_storage_dir", function (string $directory): string {
-    return "/pfad/ausserhalb/des/webroots/bewerbungen";
-});
+// Ablageort der Bewerbungsunterlagen (nicht per URL erreichbar waehlen; Dateien werden nicht verschoben)
+add_filter("hengegroup_theme_application_storage_dir", fn() => "/pfad/ausserhalb/webroot");
+
+// Wer SVGs hochladen darf (Sanitizing laeuft immer)
+add_filter("hengegroup_theme_svg_upload_capability", fn() => "edit_others_posts");
 ```
-
-- Der Pfad sollte nicht per URL erreichbar sein; `.htaccess`/`index.php` legt das Theme zwar an,
-  sie schuetzen aber nur unter Apache.
-- Bereits gespeicherte Dateien werden nicht verschoben. Gefunden werden nur Dateien im aktuellen
-  Ordner und am alten Ort unter uploads/ -- bei einem Wechsel die vorhandenen Dateien von Hand
-  mitnehmen.
-
-### SVG-Upload-Berechtigung anpassen
-
-`inc/setup/theme-svg-support.php` erlaubt SVG-Uploads standardmaessig nur fuer Nutzer mit
-`manage_options` (siehe `docs/entscheidungen.md` "SVG-Upload-Support" fuer die Begruendung, inkl.
-warum das serverseitige Sanitizing ueber `enshrined/svg-sanitize` davon unabhaengig IMMER laeuft).
-Fuer eine andere Capability (z. B. `edit_others_posts`, wenn auch Redakteure SVGs pflegen sollen
-sollen):
-
-```php
-add_filter("hengegroup_theme_svg_upload_capability", function (string $capability): string {
-    return "edit_others_posts";
-});
-```
-
-- Der Filter steuert sowohl, ob `svg` im `upload_mimes`-Dialog ueberhaupt als Dateityp erscheint,
-  als auch die zweite Pruefung in `wp_handle_upload_prefilter` (defense in depth) — eine Aenderung
-  reicht.
-- Das Sanitizing selbst (`enshrined\svgSanitize\Sanitizer`) ist NICHT Teil dieses Filters und laeuft
-  fuer jede erlaubte Rolle gleich streng — hier geht es nur darum, WER ueberhaupt hochladen darf.

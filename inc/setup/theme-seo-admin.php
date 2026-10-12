@@ -2,33 +2,11 @@
 
 declare(strict_types=1);
 
-// Backend fields for the SEO meta strategy described in docs/to-do.md #3 --
-// deliberately no SEO plugin (Yoast/RankMath/...), own admin UI instead:
-//   - Settings > SEO (this file): site-wide defaults (fallback title template, fallback
-//     description, fallback social image, robots defaults) -- always apply unless overridden.
-//   - a "SEO" meta box on every post type in hengegroup_theme_get_seo_post_types() (default: post,
-//     page; filterable via `hengegroup_theme_seo_post_types` for project themes with custom post
-//     types): per-page overrides. Left empty, the site-wide default applies -- see
-//     theme-seo-output.php, which resolves the actual per-request fallback chain.
-// robots.txt/XML-Sitemap are intentionally not reimplemented here: WordPress core already serves
-// both (virtual robots.txt via the `do_robots` hook, respecting Settings > Reading's "discourage
-// search engines" checkbox; core XML sitemaps since WP 5.5 via WP_Sitemaps) without any theme
-// code -- this file only closes the meta-tag gap core has no opinion on.
-//
-// Shares one small wp.media() image-picker widget (markup + assets/js/admin/theme-seo.js) between
-// this settings page's "Standard Social-Bild" field and the meta box's own "Social-Bild" field,
-// see hengegroup_theme_render_seo_image_picker_field()/hengegroup_theme_enqueue_seo_media_picker() below --
-// same reuse-over-duplication idea as helpers.php's shared-helper principle, just for admin-side markup instead of a
-// template-part. Inline `style` attributes in this file's admin markup are wp-admin UI, not
-// front-end component output -- outside CLAUDE.md Regel 1's Tailwind-only scope (see docs
-// #3/README "ausserhalb des Drei-Phasen-Modells").
+// SEO-Backend ohne Plugin: Einstellungen > SEO (Standardwerte) und eine "SEO"-Metabox je Post-Type
+// (Filter `hengegroup_theme_seo_post_types`) fuer Overrides. robots.txt und Sitemaps liefert core.
 
 const BASE_THEME_SEO_OPTION = 'hengegroup_theme_seo_options';
 
-/**
- * Returns the global SEO defaults, merged over hard-coded fallbacks so every key is always present
- * regardless of what has been saved so far (e.g. right after theme activation).
- */
 function hengegroup_theme_get_seo_options(): array
 {
     $defaults = [
@@ -46,10 +24,6 @@ function hengegroup_theme_get_seo_options(): array
     return array_merge($defaults, is_array($stored) ? $stored : []);
 }
 
-/**
- * Post types that get the "SEO" meta box. Filterable so a project theme with custom post types
- * (e.g. a "Produkt"/"Team"-CPT) can add its own without touching this file.
- */
 function hengegroup_theme_get_seo_post_types(): array
 {
     $post_types = apply_filters('hengegroup_theme_seo_post_types', ['post', 'page']);
@@ -105,11 +79,7 @@ function hengegroup_theme_action_admin_menu_seo_settings(): void
 add_action('admin_menu', 'hengegroup_theme_action_admin_menu_seo_settings');
 
 /**
- * wp.media()-backed "select image" field (hidden attachment-id input + preview + select/remove
- * buttons). Used both by the global "Standard Social-Bild" field below and by the per-post SEO
- * meta box's own image field -- assets/js/admin/theme-seo.js wires up every
- * `.hengegroup-theme-seo-image-picker` on the page generically, so this markup is the only thing either
- * caller needs to render.
+ * wp.media()-Bildauswahl; theme-seo.js verdrahtet jedes .hengegroup-theme-seo-image-picker.
  */
 function hengegroup_theme_render_seo_image_picker_field(
     string $field_id,
@@ -190,10 +160,6 @@ function hengegroup_theme_action_admin_enqueue_scripts_seo(string $hook_suffix):
 }
 add_action('admin_enqueue_scripts', 'hengegroup_theme_action_admin_enqueue_scripts_seo');
 
-/**
- * Renders "Settings > SEO": site-wide defaults used whenever a post/page's own "SEO" meta box
- * (see below) doesn't set a value -- see theme-seo-output.php for the actual fallback resolution.
- */
 function hengegroup_theme_render_seo_settings_page(): void
 {
     if (!current_user_can('manage_options')) {
@@ -389,10 +355,6 @@ function hengegroup_theme_action_add_meta_boxes_seo(): void
 }
 add_action('add_meta_boxes', 'hengegroup_theme_action_add_meta_boxes_seo');
 
-/**
- * Renders the per-post "SEO" meta box. Every field left empty falls back to the site-wide
- * Settings > SEO default (see theme-seo-output.php for the resolution order).
- */
 function hengegroup_theme_render_seo_meta_box(WP_Post $post): void
 {
     wp_nonce_field('hengegroup_theme_seo_save_' . $post->ID, 'hengegroup_theme_seo_nonce');
@@ -558,9 +520,7 @@ function hengegroup_theme_action_save_post_seo(int $post_id): void
         return;
     }
 
-    // Every value pulled from $data below is sanitized individually right after (sanitize_text_field()/
-    // sanitize_textarea_field()/esc_url_raw()/absint()/in_array() allow-list) before it reaches
-    // update_post_meta() -- phpcs can't see that deferred sanitization from this line alone.
+    // Jeder Wert wird unten einzeln sanitisiert (phpcs sieht das nicht).
     $data =
         isset($_POST['hengegroup_theme_seo']) && is_array($_POST['hengegroup_theme_seo'])
             ? wp_unslash($_POST['hengegroup_theme_seo']) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

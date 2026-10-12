@@ -1,14 +1,5 @@
-// Editor UI for template-parts/blocks/benefits/block.json (Eltern-Block) und
-// template-parts/blocks/benefit/block.json (Kind-Block = ein Benefit), beide in diesem Bundle
-// (vite.config.editor-benefits.js). Gleiches Muster wie auszeichnungen/edit.jsx (siehe dessen
-// Kopfkommentar): Ueberschrift/Einleitung und jeder Benefit (Titel/Text) direkt in der Canvas als
-// `RichText`, Benefits als InnerBlocks (Hinzufuegen ueber das "+" im Raster, Verschieben/
-// Duplizieren/Loeschen ueber Gutenbergs Block-Werkzeuge), das Icon ueber ein Dropdown in der
-// Toolbar des Benefits.
-//
-// Icon-Liste inkl. fertig gerendertem SVG je Icon kommt per Inline-Script aus PHP
-// (`window.hengegroupThemeBenefitIcons`, siehe hengegroup_theme_enqueue_benefit_icons_for_editor()
-// in inc/setup/theme-blocks.php) -- dieselbe Auswahl und dieselben SVGs wie im Frontend.
+// Editor for "Benefits" (parent) and "Benefit" (child), edited directly in the canvas. Icons incl.
+// SVG come from window.hengegroupThemeBenefitIcons (same list as the frontend).
 import { createElement as el, Fragment } from "@wordpress/element";
 import { createBlock, registerBlockType } from "@wordpress/blocks";
 import {
@@ -48,11 +39,7 @@ const HEADING_TAG_OPTIONS = [
     { title: __("Absatz (P)", "hengegroup-theme"), value: "p" },
 ];
 
-// Eigene "Hinzufuegen"-Kachel als letzte Rasterzelle statt Gutenbergs Standard-"+": dessen Wrapper
-// sitzt im Raster absolut positioniert ueber der letzten Karte und ist auf dunklem Grund kaum
-// sichtbar. `[&>.block-list-appender]:!static` (Important-Modifier, Gutenbergs eigene Editor-Styles
-// gewinnen sonst) am Raster (siehe `useInnerBlocksProps`) macht den
-// Wrapper zu einer normalen Rasterzelle.
+// Own "add" tile as the last grid cell (see auszeichnungen/edit.jsx).
 function AddItemTile({ rootClientId }) {
     const { insertBlock } = useDispatch("core/block-editor");
 
@@ -69,7 +56,7 @@ function AddItemTile({ rootClientId }) {
 
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag, text } = attributes;
-    // Volle Breite im Editor-Iframe, gleiche Begruendung wie produkte/edit.jsx's `alignfull`.
+    // Full width in the editor iframe (theme.json contentSize would otherwise apply).
     const blockProps = useBlockProps({
         className:
             "alignfull bg-grey-dark bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)] py-16 shadow-[inset_0_40px_40px_-40px_rgba(0,0,0,0.5),inset_0_-40px_40px_-40px_rgba(0,0,0,0.5)] md:py-24 lg:py-25",
@@ -154,8 +141,7 @@ function BenefitEdit({ attributes, setAttributes }) {
                 <span
                     className="from-henge-grey via-henge-green to-henge-blue flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-135"
                     title={ICONS[iconKey]?.label}
-                    // SVG stammt aus hengegroup_theme_render_benefit_icon() (Theme-eigene,
-                    // sanitisierte Lucide-Dateien), nicht aus Nutzereingaben.
+                    // SVG from the theme's own sanitized Lucide files, not user input.
                     dangerouslySetInnerHTML={{ __html: ICONS[iconKey]?.svg || "" }}
                 />
                 <div className="min-w-0 flex-1">
@@ -184,7 +170,7 @@ function BenefitEdit({ attributes, setAttributes }) {
 
 registerBlockType(metadata, {
     edit: Edit,
-    // Dynamischer Block (render.php), gespeichert werden nur die Kind-Bloecke.
+    // Dynamic block; only the inner blocks are saved.
     save: () => <InnerBlocks.Content />,
 });
 

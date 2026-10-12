@@ -1,20 +1,6 @@
 #!/usr/bin/env bash
-#
-# Baut das Theme und laedt das komplette dist/-Verzeichnis per FTP(S) hoch (curl --upload-file,
-# bis zu 3 Uploads parallel).
-#
-# Parallelisierung ueber `xargs -P` (laeuft mit macOS' Standard-Bash 3.2, kein bash>=4 noetig fuer
-# Job-Kontrolle/`wait -n`). xargs laesst dabei alle bereits aufgereihten Uploads durchlaufen, auch
-# wenn einer scheitert — danach wird trotzdem mit Exit-Code 1 abgebrochen (Fehlschlag = nicht
-# deployed).
-#
-# Fortschrittsanzeige: in einem echten Terminal
-# (stdout ist ein TTY) eine sich per \r ueberschreibende Zeile "[erledigt/gesamt] X% - Datei";
-# ohne TTY (Log-Datei, CI) stattdessen eine Zeile pro Upload wie zuvor, damit das Log lesbar
-# bleibt statt voller Steuerzeichen.
-#
-# --skip-build: ueberspringt den Build-Schritt z. B. wenn dist/ bereits
-# frisch gebaut ist.
+# Baut das Theme und laedt dist/ per FTP(S) hoch (3 parallel, xargs -P statt wait -n wegen Bash 3.2).
+# --skip-build ueberspringt den Build.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

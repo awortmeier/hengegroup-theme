@@ -2,18 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's InputGroupText: plain, non-interactive text inside an input-group-addon.php (e.g. a
-// currency symbol prefix like "$", a domain suffix like "@company.com"). Same idea as
-// button-group-text.php, kept as its own file rather than reused across both component families
-// (CLAUDE.md #1 -- shadcn ships these as two distinct components with their own data-slot/default
-// styling, not one shared atom) -- an inline <span> here, since this content always sits inline
-// next to a text-field control, unlike button-group-text.php's own <div> choice.
+// Plain text inside input-group-addon.php, e.g. "€" or "@domain.com".
 //
-// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own InputGroupText.
-//
-// Supported config:
-//   text   string   required. Visible content (plain text, escaped)
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   text   string   required
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

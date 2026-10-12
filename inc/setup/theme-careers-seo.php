@@ -2,23 +2,11 @@
 
 declare(strict_types=1);
 
-// SEO/GEO fuer Stellenangebote, angedockt an die bestehende SEO-Ausgabe
-// (inc/setup/theme-seo-output.php) statt einer eigenen Loesung:
-//   - JobPosting-JSON-LD (Google-Jobsuche) + BreadcrumbList ueber den Filter
-//     `hengegroup_theme_seo_structured_data`. Der eigentliche Aufbau ist die reine Funktion
-//     hengegroup_theme_build_job_posting_schema() (inc/template-parts/careers.php, unit-getestet);
-//     hier wird nur eingesammelt, was WordPress dafuer liefern muss.
-//   - Automatischer <title> ("Jobtitel in Ort – Unternehmen") und Meta-Description, solange die
-//     SEO-Box der Stelle keine eigenen Werte hat.
-// Abgelaufene Stellen bekommen kein JobPosting mehr (Google wertet veraltete Anzeigen mit aktivem
-// JobPosting als Richtlinienverstoss) -- fuer Besucher leiten sie ohnehin weiter, siehe
-// theme-careers.php; nur eingeloggte Redakteure sehen sie noch.
+// SEO fuer Stellen ueber die bestehende SEO-Ausgabe: JobPosting + BreadcrumbList, automatischer
+// Titel und Description. Abgelaufene Stellen bekommen kein JobPosting (Google-Richtlinie).
 
 /**
- * Sichtbarer Inhalt der Stelle als HTML fuer `description` -- derselbe Inhalt, den
- * single-stellenangebote.php rendert (Einleitung + "Stellen-Liste"-Bloecke inkl. Rueckgriff auf die
- * Unternehmens-Benefits, siehe stellen-liste/render.php), auf die von Google erlaubten Tags
- * reduziert.
+ * Sichtbarer Inhalt (Einleitung + Listen inkl. Standard-Benefits) mit den von Google erlaubten Tags.
  */
 function hengegroup_theme_get_job_description_html(array $job): string
 {
@@ -59,7 +47,6 @@ function hengegroup_theme_get_job_posting_schema_for_post(int $post_id): array
         'site_url' => home_url('/'),
         'timezone_offset' => wp_date('P'),
         'logo_url' => $logo_url,
-        // Bewerbungsformular direkt auf der Stellenseite (job-application-form.php).
         'direct_apply' => true,
     ]);
 }
@@ -109,9 +96,7 @@ add_filter(
 );
 
 /**
- * "Jobtitel in Ort – Unternehmen | Seitenname" -- Ort und Arbeitgeber im Titel sind die zwei
- * Begriffe, nach denen Bewerber am haeufigsten zusaetzlich suchen. Laeuft nach dem allgemeinen
- * Titel-Filter (Prioritaet 20) und greift nur, wenn die SEO-Box keinen eigenen Titel hat.
+ * "Jobtitel in Ort – Unternehmen | Seitenname", nur ohne eigenen Titel in der SEO-Box.
  */
 function hengegroup_theme_filter_pre_get_document_title_jobs(string $title): string
 {
@@ -148,9 +133,7 @@ function hengegroup_theme_filter_pre_get_document_title_jobs(string $title): str
 add_filter('pre_get_document_title', 'hengegroup_theme_filter_pre_get_document_title_jobs', 25);
 
 /**
- * Automatische Meta-Description aus den Fakten der Stelle (Arbeitgeber, Ort, Anstellungsart,
- * Gehalt), solange weder SEO-Box noch Auszug eine eigene liefern -- die site-weite
- * Standard-Beschreibung waere fuer eine Stellenanzeige zu allgemein.
+ * Description aus den Fakten der Stelle, solange SEO-Box und Auszug leer sind.
  */
 function hengegroup_theme_filter_seo_description_jobs(string $description, int $post_id): string
 {
@@ -162,8 +145,7 @@ function hengegroup_theme_filter_seo_description_jobs(string $description, int $
         return $description;
     }
 
-    // Der allgemeine Resolver zieht die site-weite Standard-Beschreibung dem Auszug vor -- fuer
-    // Stellen ist der Auszug aber immer die bessere Wahl.
+    // Fuer Stellen hat der Auszug Vorrang vor der site-weiten Standard-Beschreibung.
     if (has_excerpt($post_id)) {
         return trim(wp_strip_all_tags(get_the_excerpt($post_id)));
     }

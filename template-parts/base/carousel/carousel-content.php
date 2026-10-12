@@ -2,26 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's CarouselContent: in their embla-driven version this is actually TWO nested divs --
-// an outer `overflow-hidden` viewport plus an inner `flex -ml-4` track that embla moves via
-// `transform: translate3d(...)`, because embla itself owns the scroll position. This component
-// needs only ONE div: with a native CSS Scroll Snap container (see carousel.php's header comment),
-// the browser's own `scrollLeft`/`scrollTop` IS the track position, no separate transform-driven
-// element to keep in sync. `tabindex="0"` makes the container itself focusable, which is what
-// gives keyboard users native arrow-key scrolling for free -- a focused, scrollable region already
-// responds to arrow keys in every evergreen browser, and CSS Scroll Snap re-aligns the result to
-// the nearest slide automatically once the key-driven scroll settles, no JS required (CLAUDE.md
-// #1). Content-agnostic wrapper, same nesting pattern as carousel.php itself:
-// buffer one or more carousel-item.php calls and pass the combined HTML as `content`.
+// Scroll-snap track of the carousel. Focusable so arrow keys scroll it natively.
 //
-// Supported config:
-//   content   string   required. Pre-rendered HTML to wrap (buffered carousel-item.php calls)
-//   class / attributes / data_attributes   passthrough onto the outer
-//                       <div data-slot="carousel-content"> element
-//
-// Actual scrolling/snapping behaviour (overflow-x/y: auto, scroll-snap-type, gap between items) is
-// entirely project CSS, keyed off [data-slot="carousel-content"] and the parent carousel's
-// [data-orientation] -- no Tailwind/utility classes are generated here (CLAUDE.md #1).
+// Config:
+//   content   string   carousel-item.php markup (required)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

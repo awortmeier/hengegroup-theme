@@ -2,11 +2,7 @@
 
 declare(strict_types=1);
 
-// Editor-Vorschau-Zwilling von template-parts/blocks/karriere-teaser (nur die Stellenliste) --
-// gleiche Aufteilung und Begruendung wie produkte-raster/render.php: Ueberschrift/Text/Button
-// sind im Editor natives `RichText`, ein `ServerSideRender` gegen den ganzen Teaser-Block wuerde
-// sie doppelt zeigen. Kein eigenes Editor-Bundle, karriere-teaser/edit.jsx registriert diesen
-// Block clientseitig mit.
+// Editor-Vorschau der Stellenliste von karriere-teaser (siehe produkte-raster/render.php).
 
 if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_job_teaser_list')) {
     return;

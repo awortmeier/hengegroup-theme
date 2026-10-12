@@ -1,12 +1,5 @@
-// Editor UI for template-parts/blocks/produktkategorie/block.json. Same Vite/@wordpress-globals
-// architecture as the other blocks (see blocks/buehne/edit.jsx's header comment) -- built via
-// vite.config.editor-produktkategorie.js.
-//
-// Bewusst schlank: Kicker, Ueberschrift, Beschreibung und Produkte kommen aus der Produktkategorie
-// selbst (Produkte > Kategorien), der Block waehlt nur Kategorie und Hintergrund. Die Canvas zeigt
-// deshalb die echte Ausgabe per `ServerSideRender` -- es gibt hier nichts direkt zu tippen, anders
-// als bei produkte/offene-stellen. Die Kategorienliste kommt per Inline-Script
-// (window.hengegroupThemeProductCategories, inc/setup/theme-blocks.php) statt per REST-Abfrage.
+// Editor for "Produktkategorie": choose category and background; ServerSideRender preview.
+// Categories come from window.hengegroupThemeProductCategories.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import { InspectorControls, useBlockProps } from "@wordpress/block-editor";

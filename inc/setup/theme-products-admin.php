@@ -2,29 +2,10 @@
 
 declare(strict_types=1);
 
-// Backend-Felder des Produktbereichs (Daten-/Render-Helfer: inc/template-parts/products.php):
-//   - Produkt-Editor: Tab "Technische Daten" in WooCommerce' Produktdaten-Box (Recycling-Hinweis,
-//     chemische Analyse als freie Zeilen, Downloads aus der Mediathek) und die Box "Anwendungen"
-//     (Taxonomie `produkt_anwendung`, Checkboxen nach Gruppen sortiert).
-//   - Anwendungen (Produkte > Anwendungen): Felder fuer Gruppen (Kicker/Farbe/Ueberschrift) und
-//     Anwendungen (Kurztext/Bild/Icon), Reihenfolge fuer beide; schreibgeschuetzte Liste der
-//     zugeordneten Produkte. Zuordnung bewusst nur am Produkt (explizite Vorgabe), zusaetzlich per
-//     Quick Edit/Massenbearbeitung und Filter in der Produktliste.
-//   - Produktkategorien: Kicker, Farbe, Ueberschrift, Ansprechpartner (Term-Meta).
-//   - Produkte > Einstellungen: Uebersichtsseite und Standard-Ansprechpartner.
-//   - WooCommerce' "Up-Sells" heissen im Produkt-Editor "Verwandte Produkte" (das Feld steuert die
-//     manuell gesetzten verwandten Produkte der Detailseite, siehe
-//     hengegroup_theme_get_related_product_ids()).
-//
-// Klassische Metaboxen/Term-Formularfelder wie bei Karriere/SEO/Badge (kein ACF, kein eigenes
-// Gutenberg-Sidebar-Bundle -- der Produkt-Editor ist ohnehin der klassische WooCommerce-Editor).
-// Die wiederholbaren Zeilen (Analyse/Downloads) und die Datei-/Fotoauswahl stellt
-// assets/js/admin/theme-products.js bereit.
+// Backend des Produktbereichs: Tab "Technische Daten", Box "Anwendungen", Felder der Anwendungen
+// und Produktkategorien, Produkte > Einstellungen, Up-Sells als "Verwandte Produkte" beschriftet.
+// Wiederholbare Zeilen und Dateiauswahl: assets/js/admin/theme-products.js.
 
-/**
- * Bindet die Mediathek-Auswahl (SEO-Bildpicker fuer das Ansprechpartner-Foto) und das Skript fuer
- * wiederholbare Zeilen/Dateiauswahl auf den betroffenen Backend-Seiten ein.
- */
 function hengegroup_theme_action_admin_enqueue_scripts_products(string $hook_suffix): void
 {
     $screen = get_current_screen();
@@ -60,9 +41,6 @@ function hengegroup_theme_action_admin_enqueue_scripts_products(string $hook_suf
 }
 add_action('admin_enqueue_scripts', 'hengegroup_theme_action_admin_enqueue_scripts_products');
 
-/**
- * Tab "Technische Daten" in WooCommerce' Produktdaten-Box.
- */
 function hengegroup_theme_filter_product_data_tabs(array $tabs): array
 {
     $tabs['hengegroup_theme_technical'] = [
@@ -77,7 +55,7 @@ function hengegroup_theme_filter_product_data_tabs(array $tabs): array
 add_filter('woocommerce_product_data_tabs', 'hengegroup_theme_filter_product_data_tabs');
 
 /**
- * Eine Zeile der chemischen Analyse (auch als leere Vorlage fuer "Zeile hinzufuegen").
+ * Auch als leere Vorlage fuer "Zeile hinzufuegen".
  */
 function hengegroup_theme_render_analysis_row(string $label, string $value): void
 {
@@ -91,9 +69,6 @@ function hengegroup_theme_render_analysis_row(string $label, string $value): voi
     );
 }
 
-/**
- * Ein Download-Eintrag (auch als leere Vorlage).
- */
 function hengegroup_theme_render_download_row(array $download): void
 {
     $attachment_id = (int) ($download['attachment_id'] ?? 0);
@@ -114,9 +89,6 @@ function hengegroup_theme_render_download_row(array $download): void
     );
 }
 
-/**
- * Wiederholbare Tabelle mit Vorlage-Zeile fuer assets/js/admin/theme-products.js.
- */
 function hengegroup_theme_render_repeatable_table(
     string $key,
     array $headings,
@@ -221,8 +193,7 @@ add_action(
 );
 
 /**
- * Speichert den Tab "Technische Daten". `woocommerce_process_product_meta` laeuft erst nach
- * WooCommerce' eigener Nonce-/Rechtepruefung der Produktdaten-Box.
+ * woocommerce_process_product_meta laeuft nach WooCommerce' Nonce-/Rechtepruefung.
  */
 function hengegroup_theme_action_process_product_meta_technical(int $post_id): void
 {
@@ -282,11 +253,8 @@ add_action(
 );
 
 /**
- * Box "Anwendungen" im Produkt-Editor (`meta_box_cb` der Taxonomie, siehe
- * inc/setup/theme-products.php): Anwendungen als Checkboxen unter ihrer Gruppe; Gruppen selbst sind
- * nicht anwaehlbar. Feldname `tax_input[produkt_anwendung][]` -- gespeichert von WordPress selbst
- * (wie die Kategorien-Box), das versteckte `0` sorgt dafuer, dass "alles abgewaehlt" auch
- * gespeichert wird.
+ * Anwendungen als Checkboxen unter ihrer Gruppe (Gruppen nicht waehlbar). Das versteckte `0`
+ * speichert auch "alles abgewaehlt".
  */
 function hengegroup_theme_render_product_anwendungen_meta_box(WP_Post $post): void
 {
@@ -349,9 +317,6 @@ function hengegroup_theme_render_product_anwendungen_meta_box(WP_Post $post): vo
     );
 }
 
-/**
- * Filter "Nach Anwendung" in der Produktliste.
- */
 function hengegroup_theme_action_restrict_manage_posts_anwendungen(string $post_type): void
 {
     if ($post_type !== 'product') {
@@ -374,7 +339,7 @@ function hengegroup_theme_action_restrict_manage_posts_anwendungen(string $post_
 add_action('restrict_manage_posts', 'hengegroup_theme_action_restrict_manage_posts_anwendungen');
 
 /**
- * Wertet den Filter "Nach Anwendung" aus (die Taxonomie hat keine `query_var`, deshalb von Hand).
+ * Die Taxonomie hat keine query_var, daher von Hand.
  */
 function hengegroup_theme_action_pre_get_posts_anwendung_filter(WP_Query $query): void
 {
@@ -398,10 +363,7 @@ function hengegroup_theme_action_pre_get_posts_anwendung_filter(WP_Query $query)
 add_action('pre_get_posts', 'hengegroup_theme_action_pre_get_posts_anwendung_filter');
 
 /**
- * Zusatzfelder der Anwendungen: field => [Label, Typ, Beschreibung, Ebene]. Ebene: group (nur
- * Gruppen), item (nur Anwendungen), both. Beim Bearbeiten erscheinen nur die Felder der Ebene des
- * Terms; beim Anlegen blendet hengegroup_theme_action_admin_footer_anwendung_fields() je nach
- * gewaehlter Gruppe ("uebergeordnet") die unpassenden aus.
+ * field => [Label, Typ, Beschreibung, Ebene (group | item | both)].
  */
 function hengegroup_theme_get_anwendung_fields(): array
 {
@@ -460,10 +422,6 @@ function hengegroup_theme_get_anwendung_fields(): array
     ];
 }
 
-/**
- * Steuerelement eines Anwendungs-Felds -- Text/Bild/Farbe wie bei den Karriere-Taxonomien
- * (hengegroup_theme_get_job_term_field_control()), zusaetzlich Icon-Auswahl und Zahl.
- */
 function hengegroup_theme_get_anwendung_field_control(
     string $field,
     string $type,
@@ -513,9 +471,6 @@ function hengegroup_theme_render_anwendung_add_fields(): void
     }
 }
 
-/**
- * True auf der Liste/dem Bearbeiten-Formular der Anwendungen (Produkte > Anwendungen).
- */
 function hengegroup_theme_is_admin_anwendung_screen(): bool
 {
     $screen = get_current_screen();
@@ -526,14 +481,7 @@ function hengegroup_theme_is_admin_anwendung_screen(): bool
 }
 
 /**
- * Blendet auf Liste/Formular der Anwendungen das Feld "Titelform" (Slug) aus -- entsteht automatisch
- * aus dem Namen und dient nur als Sprunganker auf /anwendungen/, Redakteure brauchen es nicht
- * (explizite Nachfrage 2026-10-07: "alle Felder entfernen, die nicht benoetigt werden"). WordPress
- * bietet dafuer keinen Filter, das Feld ist in edit-tags.php/edit-tag-form.php fest verdrahtet --
- * deshalb rohes CSS statt Tailwind als Ausnahme (CLAUDE.md Regel 1), gleiche Begruendung wie
- * hengegroup_theme_action_admin_head_hide_woocommerce_virtual_downloadable() (theme-admin-woocommerce.php):
- * reines Backend-Feld-Ausblenden, kein Tailwind-Build in wp-admin. Ein leerer Slug wird beim
- * Speichern wie gewohnt aus dem Namen erzeugt.
+ * Slug-Feld ausblenden (wird aus dem Namen erzeugt). Kein Filter vorhanden, daher CSS im Backend.
  */
 function hengegroup_theme_action_admin_head_anwendung_fields(): void
 {
@@ -546,9 +494,7 @@ function hengegroup_theme_action_admin_head_anwendung_fields(): void
 add_action('admin_head', 'hengegroup_theme_action_admin_head_anwendung_fields');
 
 /**
- * Beim Anlegen steht die Ebene erst mit der Auswahl "Gruppe" (uebergeordnet, `#parent`) fest:
- * ohne Gruppe = neue Gruppe (nur Gruppen-Felder), mit Gruppe = Anwendung (nur Anwendungs-Felder).
- * Kleines Inline-Skript statt eigener Datei -- betrifft nur dieses eine Formular.
+ * Beim Anlegen entscheidet die gewaehlte Gruppe, welche Felder gelten.
  */
 function hengegroup_theme_action_admin_footer_anwendung_fields(): void
 {
@@ -562,9 +508,6 @@ function hengegroup_theme_action_admin_footer_anwendung_fields(): void
 }
 add_action('admin_footer', 'hengegroup_theme_action_admin_footer_anwendung_fields');
 
-/**
- * Spalte "Titelform" in der Liste der Anwendungen ausblenden (siehe oben).
- */
 function hengegroup_theme_filter_manage_anwendung_columns(array $columns): array
 {
     unset($columns['slug']);
@@ -653,8 +596,8 @@ function hengegroup_theme_action_save_anwendung(int $term_id): void
         return;
     }
 
-    // Jeder Wert wird unten je Feldtyp einzeln sanitisiert. Felder, die auf der Bearbeitungsseite
-    // fuer diese Ebene nicht angezeigt werden, fehlen im POST und bleiben unangetastet.
+    // Jeder Wert wird unten je Feldtyp sanitisiert; nicht angezeigte Felder fehlen im POST und
+    // bleiben unangetastet.
     $data =
         isset($_POST['hengegroup_theme_term']) && is_array($_POST['hengegroup_theme_term'])
             ? wp_unslash($_POST['hengegroup_theme_term']) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -692,9 +635,7 @@ add_action(
 );
 
 /**
- * Zusatzfelder der Produktkategorien: field => [Label, Typ, Beschreibung]. Typ: text | email |
- * image | variant (gleiche Steuerelemente wie die Karriere-Taxonomien,
- * hengegroup_theme_get_job_term_field_control()).
+ * field => [Label, Typ (text | email | image | variant), Beschreibung].
  */
 function hengegroup_theme_get_product_category_fields(): array
 {
@@ -826,11 +767,6 @@ function hengegroup_theme_action_save_product_category(int $term_id): void
 add_action('created_product_cat', 'hengegroup_theme_action_save_product_category');
 add_action('edited_product_cat', 'hengegroup_theme_action_save_product_category');
 
-/**
- * WooCommerce' "Up-Sells" steuern in diesem Projekt die manuell gesetzten verwandten Produkte der
- * Detailseite -- im Produkt-Editor entsprechend beschriftet, damit Redakteure das richtige Feld
- * finden (Cross-Sells bleiben unveraendert, sie gehoeren spaeter zum Warenkorb).
- */
 function hengegroup_theme_filter_gettext_upsells(
     string $translation,
     string $text,

@@ -1,43 +1,7 @@
-// Editor UI for template-parts/blocks/buehne/block.json. Deliberately NOT built with
-// @wordpress/scripts/webpack -- see docs/entscheidungen.md's "Phase-3-Block-Architektur" entry for
-// why this is instead a second Vite build entry (vite.config.js) that marks every `@wordpress/*`
-// import below as external against WordPress' own `wp.*` globals (no bundled React of our own).
-// JSX compiles through esbuild's configurable pragma (see vite.config.js's `esbuild.jsxFactory`)
-// straight to `el(...)` calls against the externalized `@wordpress/element`, exactly like
-// `React.createElement` would for a stock React/JSX setup.
-//
-// The canvas preview is a live `ServerSideRender` call against this exact block (see below)
-// instead of a second, hand-rolled JS re-implementation of template-parts/blocks/buehne/render.php
-// -- Phase-2 Tailwind styling then only ever needs to be written once, in that PHP file. This is
-// why inc/setup/theme-setup.php now also calls `add_theme_support('editor-styles')` +
-// `add_editor_style()`: without the compiled Tailwind CSS loaded into the editor's iframed canvas,
-// this preview would render unstyled.
-//
-// Folien-Felder (Bild, Badge, Titel, Text, Buttons, ...) sitzen in einem `Modal` statt dauerhaft
-// offen im Sidebar-`PanelBody` -- explizite Anfrage 2026-09-22, siehe docs/entscheidungen.md fuer
-// die Begruendung. Die Sidebar zeigt dafuer nur noch eine kompakte Liste (Titel, Verschieben,
-// Entfernen, "Bearbeiten" oeffnet das Modal fuer genau diese Folie).
-//
-// `VStack`s `spacing`-Prop (nicht Tailwind) sorgt fuer den Abstand zwischen Modal-Feldern bzw.
-// Sidebar-Zeilen -- Modal und Sidebar rendern AUSSERHALB des Editor-Canvas-Iframes (siehe
-// Kopfkommentar oben zu `add_editor_style()`), Tailwind-Klassen erreichen dort also technisch gar
-// nichts; Regel 1 der CLAUDE.md verlangt Tailwind nur, "wenn ueberhaupt Styling-Code entsteht" --
-// hier entsteht keiner, nur Komposition der ohnehin bereits genutzten `@wordpress/components`.
-// `__nextHasNoMarginBottom` auf den Feldern in `SlideFields` schaltet deren eigenen (inkonsistent
-// wirkenden) Default-Abstand ab, damit `VStack`s `spacing` die einzige, gleichmaessige Abstandsquelle
-// bleibt -- sonst addieren sich Feld-eigener Bottom-Margin und `VStack`-Gap.
-//
-// Button-Links sind bewusst interne Seiten statt freier URL-Eingabe (explizite Anfrage
-// 2026-09-22, siehe docs/entscheidungen.md) -- `PageLinkControl` unten laedt alle veroeffentlichten
-// Seiten ueber den `core`-Datenstore (`@wordpress/data`s `useSelect()` gegen den WP-REST-Endpunkt
-// `wp/v2/pages`, siehe `wp-core-data`-Dependency in inc/setup/theme-blocks.php) und bietet sie als
-// durchsuchbare `ComboboxControl`-Liste an; gespeichert wird weiterhin nur die fertige Permalink-
-// URL in `primaryButtonUrl`/`secondaryButtonUrl` -- render.php und das Attribut-Schema bleiben
-// dadurch unveraendert, nur die Editor-UI aendert sich.
-//
-// Buttons: kein "Primaeren Button anzeigen"-Schalter mehr, ein Button erscheint, sobald sein Text
-// gepflegt ist; Text und Seite stehen je Button nebeneinander (ButtonFields, explizite Nachfrage
-// 2026-10-07). Bei nur einer Folie blendet render.php den Folien-Picker unten aus.
+// Editor for "Buehne": ServerSideRender preview, slide fields in a modal, compact list in the
+// sidebar. Button links are internal pages (PageLinkControl), stored as permalink strings.
+// Sidebar/modal render outside the iframe, so VStack spacing instead of Tailwind;
+// __nextHasNoMarginBottom keeps the field margins from adding up.
 import { createElement as el, Fragment, useState } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {
@@ -70,8 +34,6 @@ import { __, sprintf } from "@wordpress/i18n";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/buehne/block.json";
 
-// Gleiches Akzentfarben-Vokabular wie template-parts/base/button.php/badge.php's `variant` (siehe
-// deren Kopfkommentare) -- keine freie Farbauswahl, siehe docs/entscheidungen.md.
 const ACCENT_OPTIONS = [
     { label: __("Henge Grün", "hengegroup-theme"), value: "henge-green" },
     { label: __("Henge Blau", "hengegroup-theme"), value: "henge-blue" },
@@ -96,9 +58,7 @@ function createSlide() {
     };
 }
 
-// `adminLabel` (siehe SlideFields' erstes Feld) hat Vorrang vor `title`/`badgeText` -- rein
-// redaktioneller Verwaltungstitel fuer Sidebar-Liste/Modal-Ueberschrift, unabhaengig vom
-// tatsaechlichen (evtl. noch leeren oder bewusst kryptischen) Folien-Inhalt.
+// adminLabel (editorial name) wins over title/badge.
 function slideLabel(slide, index) {
     return (
         slide.adminLabel ||
@@ -143,11 +103,7 @@ function SlideListItem({ slide, index, slideCount, onEdit, onRemove, onMove }) {
 
 const NO_PAGE_OPTION = { value: "", label: __("— Keine Seite —", "hengegroup-theme") };
 
-// Reine Seiten-Auswahl statt freier URL-Eingabe -- `value`/`onChange` bleiben dabei ganz normale
-// Permalink-Strings (siehe Kopfkommentar), `ComboboxControl` macht daraus nur eine durchsuchbare
-// Liste. Ohne veroeffentlichte Seiten oder waehrend des Ladens bleibt die Liste leer statt mit
-// einer Ladeanzeige -- kein zusaetzlicher State fuer einen Zustand, der in der Praxis (Seiten sind
-// bereits im Editor-Preloading-Cache) kaum sichtbar wird.
+// Pages are loaded once via the core data store; no loading indicator (usually preloaded).
 function PageLinkControl({ label, help, value, onChange }) {
     const pages = useSelect(
         (select) =>
@@ -181,11 +137,8 @@ function PageLinkControl({ label, help, value, onChange }) {
     );
 }
 
-// Ein Button als Feldgruppe: Text und Zielseite nebeneinander (explizite Nachfrage 2026-10-07).
-// Kein An/Aus-Schalter -- ohne Text erscheint der Button nicht (render.php). <fieldset>/<legend>
-// gruppiert die beiden Felder auch fuer Screenreader unter "Primaerer/Sekundaerer Button".
-// Inline-Style setzt nur Browser-Defaults des <fieldset> zurueck (wp-admin-UI ausserhalb des
-// Iframes, kein Theme-Styling, siehe Kopfkommentar).
+// Text + page side by side in a fieldset; no text = no button. The inline style only resets
+// fieldset browser defaults.
 function ButtonFields({ legend, text, url, onChange }) {
     return (
         <fieldset style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
@@ -328,7 +281,6 @@ function SlideFields({ slide, onChange }) {
 function Edit({ attributes, setAttributes }) {
     const blockProps = useBlockProps();
     const { slides, autoplay, autoplayInterval, loop, ariaLabel } = attributes;
-    // null = kein Modal offen; sonst Index der Folie, deren Felder das Modal gerade zeigt.
     const [editingIndex, setEditingIndex] = useState(null);
 
     function updateSlide(index, changes) {

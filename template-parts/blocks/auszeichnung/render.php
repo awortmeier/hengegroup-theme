@@ -2,12 +2,7 @@
 
 declare(strict_types=1);
 
-// Eine Karte im Block "Auszeichnungen" (Kind-Block, nur innerhalb von
-// hengegroup-theme/auszeichnungen einfuegbar) -- als <li>, weil der Eltern-Block die Karten in eine
-// <ul> setzt. Siegel/Logo 76px (rund oder abgerundet, wie im Design), Titel, Text, Outline-Button
-// rechtsbuendig. Links auf fremde Domains oeffnen in neuem Tab (Pressartikel/Verbandsseite -- der
-// Besucher soll die Karriereseite nicht verlieren). Ohne Titel wird nichts ausgegeben (leere,
-// frisch eingefuegte Karte).
+// Karte im Block "Auszeichnungen" (<li>). Fremde Links oeffnen in neuem Tab. Ohne Titel keine Ausgabe.
 
 if (!is_array($attributes ?? null)) {
     return;
@@ -85,8 +80,7 @@ if ($button_text !== '' && $button_url !== '') {
 echo '</div>';
 echo '</div>';
 
-// Karte selbst = template-parts/base/card.php (`raised`, `lg`); das Logo ist kein Cover-Bild,
-// darum steht die ganze Zeile (Logo + Text + Button) als `content` darin.
+// Das Logo ist kein Cover-Bild, darum steht die ganze Zeile als `content` in card.php.
 get_template_part('template-parts/base/card', null, [
     'config' => [
         'tag' => 'li',

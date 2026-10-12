@@ -3,19 +3,7 @@
 /**
  * Template Name: Component Showcase - Separator
  *
- * Dev-only page template: renders template-parts/base/separator/separator.php +
- * separator-label.php across orientation, `weight`, `style`, labeled/dot compositions and a few
- * in-context usages, for manual visual/functional review during Phase 2 styling work -- not meant
- * for production content or navigation. Analog zur page-component-showcase-kbd.php/-pagination.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Separator"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Further slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- not the full
- * one-call-per-base-component page from that entry yet, see docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

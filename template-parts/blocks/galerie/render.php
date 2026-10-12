@@ -2,14 +2,8 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/galerie/block.json (Design "Karriereseite", Abschnitt "Galerie")
-// -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die allgemeine
-// Phase-3-Block-Konvention. Bento-Raster (explizite Vorgabe 2026-10-07): Kacheln in 1x1, 2x1, 1x2
-// und 3x1, die bei jeder Bildanzahl buendig als Rechteck abschliessen -- die Formen liefert
-// hengegroup_theme_get_bento_tile_shapes() (inc/template-parts/helpers.php), `grid-flow-dense`
-// setzt sie luckenlos. Bilder werden per `object-cover` auf ihre Kachel zugeschnitten. Mobil eine
-// Spalte im 4:3-Format. Alternativtexte kommen aus der Mediathek, damit sie an einer Stelle
-// gepflegt werden.
+// Block "Galerie": Bento-Raster (hengegroup_theme_get_bento_tile_shapes()), schliesst bei jeder
+// Bildanzahl buendig ab. Mobil eine Spalte 4:3. Alt-Texte aus der Mediathek.
 
 if (!is_array($attributes ?? null)) {
     return;
@@ -49,8 +43,7 @@ if ($heading !== '') {
 
 echo '<ul class="col-span-12 grid grid-cols-1 gap-5 sm:grid-flow-dense sm:grid-cols-3">';
 
-// Literale Klassen je Form (Tailwind muss sie im Quelltext finden), identisch zu
-// assets/js/blocks/galerie/layout.js's TILE_CLASSNAMES (Editor-Vorschau).
+// Literale Klassen (Tailwind-Scanner), identisch zu TILE_CLASSNAMES in assets/js/blocks/galerie/layout.js.
 $tile_classes = [
     'square' => 'aspect-[4/3] sm:aspect-square',
     'wide' => 'aspect-[4/3] sm:col-span-2 sm:aspect-[2/1]',

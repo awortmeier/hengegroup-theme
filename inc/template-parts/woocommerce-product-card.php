@@ -2,33 +2,10 @@
 
 declare(strict_types=1);
 
-// Rendering helpers for the product box (woocommerce/content-product.php) -- "Badge" meta data
-// model lives in inc/setup/theme-woocommerce-products.php, see that file's own header comment.
-// Anwendungen (hengegroup_theme_render_product_anwendung_badges() below) are terms of the
-// `produkt_anwendung` taxonomy since 2026-10-07 (see docs/entscheidungen.md "Anwendungen:
-// Taxonomie statt Post-Type, nur Uebersichtsseite") -- read via
-// hengegroup_theme_get_product_anwendungen() (inc/template-parts/products.php); `product_cat` is
-// the real product category (sections of the product overview).
-//
-// hengegroup_theme_render_product_badge()/hengegroup_theme_render_product_anwendung_badges() call
-// get_post_meta()/get_the_terms()/get_template_part() against real template-parts/base files and
-// are intentionally left untested, same as hengegroup_theme_render_image()/
-// hengegroup_theme_render_icon() (see tests/Unit/HelpersTest.php's own header comment) -- a future
-// WP-backed integration suite's job, not Brain Monkey's (docs/to-do.md Abschnitt 1).
-//
-// hengegroup_theme_render_produkte_grid() (unten) ist der gemeinsame Nenner zwischen
-// template-parts/blocks/produkte/render.php (Frontend) und
-// template-parts/blocks/produkte-raster/render.php (Editor-Vorschau, siehe dessen Kopfkommentar
-// fuer die Begruendung, warum das ein eigener, im Inserter versteckter Block ist) -- die
-// WP_Query/`wc_get_template_part()`-Loop-Logik lebt dadurch nur an EINER Stelle, nicht in beiden
-// render.php-Dateien dupliziert.
+// Render-Helfer fuer die Produktbox und das Produktraster der Bloecke "Produkte"/"Produkte-Raster".
 
 /**
- * Renders the product's single "Badge" (see the product-editor meta box in
- * inc/setup/theme-woocommerce-products.php: `_badge_text`/`_badge_variant` product meta) as
- * buffered badge.php markup. Returns '' when no badge text is set, so callers can skip the
- * media-badge wrapper entirely (same "buffer and check for emptiness" convention as
- * hengegroup_theme_render_image()).
+ * '' ohne Badge-Text.
  */
 function hengegroup_theme_render_product_badge(int $product_id): string
 {
@@ -50,15 +27,7 @@ function hengegroup_theme_render_product_badge(int $product_id): string
         'config' => [
             'text' => $text,
             'variant' => $variant,
-            // badge.php's own `font` axis (explicit request): Crillee instead of the
-            // site-wide Outfit body font for this brand-tag pill, same `font-accent`
-            // utility hengegroup_theme_render_accent_text() already uses elsewhere for
-            // highlighted brand words (see typography.php's own header comment).
             'font' => 'accent',
-            // Additive-only classes (no property already set by badge.php's own base
-            // classes, see that file's own header comment on why this project has no
-            // tailwind-merge to safely override px-*/text-*/font-* instead) -- matches the
-            // reference design's compact, all-caps company pill.
             'class' => 'uppercase tracking-wide',
         ],
     ]);
@@ -67,13 +36,7 @@ function hengegroup_theme_render_product_badge(int $product_id): string
 }
 
 /**
- * Renders the product's assigned Anwendungen (`produkt_anwendung` terms, see
- * hengegroup_theme_get_product_anwendungen()) as an "Anwendungen" eyebrow label (matches the
- * reference design's small-caps section heading above the badge row) followed by buffered
- * badge.php markup (neutral `outline` variant -- unlike the product badge above, Anwendungen carry
- * no brand color), each a plain <span> (no `href` given): products only LIST their Anwendungen
- * (explicit request), only the Anwendungen overview links to products. Returns '' when the product
- * has no Anwendungen, so callers can skip the wrapper (and the label with it) entirely.
+ * "Anwendungen"-Label + Badges ohne Link; '' ohne Anwendungen.
  */
 function hengegroup_theme_render_product_anwendung_badges(int $product_id): string
 {
@@ -102,14 +65,6 @@ function hengegroup_theme_render_product_anwendung_badges(int $product_id): stri
             'variant' => 'body-xs',
             'tag' => 'span',
             'text' => __('Anwendungen', 'hengegroup-theme'),
-            // `color` intentionally left at its 'default' (unset here), NOT 'neutral' -- the
-            // reference design's eyebrow label is the same near-black `rgb(30,29,28)` as the
-            // title/description, not a muted grey.
-            // Additive-only classes on top of body-xs's own `text-sm leading-normal` (no
-            // font-weight/tracking/transform of its own to conflict with, same "no
-            // tailwind-merge" caveat as the firma badges above). font-medium/tracking-wider match
-            // the reference's `font-weight:500`/`letter-spacing:1px` (at 14px, 1px is closer to
-            // Tailwind's `tracking-wider` (0.05em = 0.7px) than `tracking-widest` (0.1em = 1.4px)).
             'class' => 'mb-1 block font-medium tracking-wider uppercase',
         ],
     ]);
@@ -123,19 +78,7 @@ function hengegroup_theme_render_product_anwendung_badges(int $product_id): stri
 }
 
 /**
- * Renders the "Produkte"-block's product grid as `<ul class="contents">...</ul>` (`display:
- * contents`, see template-parts/blocks/produkte/render.php's own header comment) -- each `<li>` is
- * woocommerce/content-product.php UNVERAENDERT, rendered via a dedicated `WP_Query` +
- * `wc_get_template_part('content', 'product')` loop over the given `$product_ids`, in the exact
- * order given (`orderby => post__in`, editors pick/reorder products manually, see
- * assets/js/blocks/produkte/edit.jsx's Kopfkommentar -- no implicit category/date ordering).
- * Returns '' when `$product_ids` is empty or none of the given IDs resolve to a published product
- * (so callers can skip the section/wrapper entirely, same "buffer and check for emptiness"
- * convention as the rest of this file).
- *
- * `wp_reset_postdata()` before returning -- this is always a secondary query (a real page's main
- * query loop runs separately, if any), never the main query, so callers never need to call it
- * themselves.
+ * Produktboxen als `<ul class="contents">` in der gegebenen Reihenfolge; '' ohne Treffer.
  *
  * @param int[] $product_ids
  */

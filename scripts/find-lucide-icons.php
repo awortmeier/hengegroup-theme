@@ -2,12 +2,8 @@
 
 declare(strict_types=1);
 
-// Scans the theme's own PHP files for icon.php configs that use the Lucide set
-// (['name' => '...', 'set' => 'lucide', ...]) and prints the referenced icon
-// names as a JSON array. Additionally merges in any icon names listed in
-// scripts/lucide-icons.json — a supplementary list for icons that should be
-// synced even though the theme code doesn't reference them yet (e.g. an icon
-// name assembled dynamically at runtime, which the static scan can't see).
+// Prints the Lucide icon names referenced in the theme's PHP plus scripts/lucide-icons.json
+// (for names built at runtime, which the scan can't see) as a JSON array.
 
 require __DIR__ . '/lib-icon-scanner.php';
 

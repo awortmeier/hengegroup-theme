@@ -3,39 +3,18 @@
 /**
  * Template Name: Component Showcase - Dialog
  *
- * Dev-only page template: renders template-parts/base/dialog.php across a full worked example
- * (header/content/footer, a caller-built option list), a lighter title+description-only example,
- * a static anatomy callout, and the `show_close_button`/`dismissible`/`modal` config knobs, for
- * manual visual/functional review during Phase 2 styling work -- not meant for production content
- * or navigation. Analog zu page-component-showcase-popover.php/-hover-card.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Dialog"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Design reference: https://claude.ai/code/artifact/51dedf08-71e3-4deb-9e68-19256e4cfb39
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();
 
-// Reused by both the real "Lieferform ändern" dialog (Basis) and the static anatomy callout
-// (Aufbau) -- same content, two different dialog.php config wrappers around it, same spirit as
-// hover-card.php's own showcase reusing one $product_content string across two demos.
 $delivery_options = [
     ['value' => 'big-bag', 'label' => 'Big Bag', 'meta' => '1.000 kg', 'checked' => true],
     ['value' => 'sackware', 'label' => 'Sackware', 'meta' => '25 kg'],
     ['value' => 'silo', 'label' => 'Silofahrzeug', 'meta' => 'ab 24 t'],
 ];
 
-// Not a base component of its own (see template-parts/base/radio/radio.php's own header comment --
-// its `label` config is a plain inline span, not this bordered/selectable-row look) -- dev-only
-// demo markup, same "one-off composition built from an existing atom" spirit as hover-card.php's
-// own showcase page. Each row is its own <label> wrapping the radio.php input, so the selected
-// look uses the `has-[:checked]:` parent selector rather than `peer-checked:` -- deliberately, a
-// `peer`/`peer-checked:` pair spanning repeated sibling rows would leak the LAST checked item's
-// styling onto every row after it (general-sibling selector), which `has-[:checked]:` scoped to
-// each row's own <label> cannot.
+// Demo-Optionsliste. has-[:checked]: statt peer-checked:, weil peer auf alle folgenden Zeilen wirken wuerde.
 function hengegroup_theme_showcase_dialog_options(array $options, string $name): string
 {
     $rows_markup = '';
@@ -179,11 +158,7 @@ ob_start();
                         'showcase-dialog-aufbau-delivery',
                     ),
                     'footer' => $delivery_footer,
-                    'open' => true, // convention the reference itself uses for this exact section.
-                    // Static anatomy callout, not a real interactive modal -- see dialog.php's own
-                    // Phase 1 header comment ("open: true's own zero-JS baseline ... always the
-                    // NON-modal state"). The surrounding dark box above is plain decorative markup
-                    // (this showcase page's own, not dialog.php's ::backdrop), same "device frame"
+                    'open' => true,
                     'modal' => false,
                 ],
             ]); ?>

@@ -6,15 +6,6 @@ namespace BaseTheme\Tests\Unit;
 
 use BaseTheme\Tests\TestCase;
 
-/**
- * Unit tests for hengegroup_theme_get_svg_dimensions() (inc/setup/theme-svg-support.php) -- the
- * only pure logic in that file (no WP function calls inside it, see its own docblock). Everything
- * else in that file (upload_mimes/wp_check_filetype_and_ext/wp_handle_upload_prefilter/
- * wp_generate_attachment_metadata wiring, the actual enshrined/svg-sanitize call) needs a real
- * file upload/WordPress request cycle and is intentionally left to a future WP-backed integration
- * suite instead (see docs/to-do.md Abschnitt 1), same boundary as
- * hengegroup_theme_render_icon()/hengegroup_theme_render_image() in HelpersTest.php.
- */
 final class SvgSupportTest extends TestCase
 {
     /** @var list<string> */
@@ -24,10 +15,7 @@ final class SvgSupportTest extends TestCase
     {
         parent::setUp();
 
-        // Brain Monkey only defines add_filter() (used at the top of theme-svg-support.php) lazily
-        // inside parent::setUp()'s Brain\Monkey\setUp() call, not eagerly via Composer's
-        // autoloader -- this file can only be require_once'd safely from here on, see
-        // tests/bootstrap.php's own comment for why it isn't loaded there instead.
+        // add_filter() only exists after Brain Monkey's setUp().
         require_once dirname(__DIR__, 2) . '/inc/setup/theme-svg-support.php';
     }
 

@@ -2,41 +2,11 @@
 
 declare(strict_types=1);
 
-// Site-specific navigation composition (not a template-parts/base/* component) -- maps this
-// theme's own registered "primary" wp_nav_menu() location onto navigation-menu.php's `items`
-// config (see that file's own header comment for the config shape and its panel-content recipe).
-// Lives here rather than inc/template-parts/helpers.php, which is scoped to shared render helpers
-// FOR base components (see that file's own header comment) -- this is page/template-level
-// composition of a base component, not a helper a base component itself calls.
-//
-// Why wp_nav_menu()-driven instead of a hardcoded items array: see docs/entscheidungen.md "Header:
-// Navigationsinhalt aus wp_nav_menu statt hartkodiert" -- the header's nav content is real,
-// editorially maintained business structure (product/career/company sections), not fixed chrome,
-// so it belongs in WordPress's own menu editor like any other site nav, not compiled into a
-// template.
-//
-// Only one level of children becomes a dropdown panel -- a flat, single-column list of plain
-// links, the same panel-internal "list item" recipe page-component-showcase-navigation-menu.php
-// already documents, minus that showcase's own description line (a WP menu item's own optional
-// "Description" field -- set via the block editor's menu Screen Options -- has no guaranteed
-// content for real menu items, unlike the showcase's own fixture data). Matches
-// navigation-menu.php's own scope (nested DropdownMenuSub is explicitly out of scope there, see
-// that file's header comment): a menu item nested deeper than one level (a grandchild) is silently
-// skipped, same "can't represent it, don't half-render it" convention as navigation-menu.php's own
-// invalid-entry handling.
+// Maps the "primary" wp_nav_menu() location onto navigation-menu.php items. One level of children
+// becomes a dropdown panel; deeper levels are skipped.
 
 /**
- * Builds navigation-menu.php's `items` config array from a registered wp_nav_menu() theme
- * location. Top-level items with no children become plain links; items with children become a
- * trigger + single-column dropdown panel (see the file header above for the recipe/scope).
- *
- * "Current page" state comes from `_wp_menu_item_classes_by_context()` -- the same core filter
- * wp_nav_menu() itself runs on `wp_nav_menu_objects` before walking the tree -- rather than a
- * reimplementation of WordPress's own current-item detection here.
- *
- * Returns [] when no menu is assigned to $location, so the caller can skip rendering the nav
- * entirely (matches the theme's old wp_nav_menu(['fallback_cb' => false, ...]) behaviour: no menu,
- * no fallback).
+ * [] when no menu is assigned. Current page via _wp_menu_item_classes_by_context(), like core.
  */
 function hengegroup_theme_primary_navigation_items(string $location = 'primary'): array
 {
@@ -66,10 +36,6 @@ function hengegroup_theme_primary_navigation_items(string $location = 'primary')
         $children_by_parent[$parent_id][] = $menu_item;
     }
 
-    // Caller-supplied `class` for navigation-menu-link.php's panel-internal "list item" look (see
-    // the file header above) -- same values page-component-showcase-navigation-menu.php's own
-    // $panel_link_class already uses, kept identical for one visual language across every dropdown
-    // panel in the project rather than a fresh one-off here.
     $panel_link_class = 'flex flex-col gap-1 rounded-lg p-2.5 hover:bg-henge-green/10';
 
     $items = [];

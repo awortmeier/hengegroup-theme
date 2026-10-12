@@ -16,8 +16,7 @@ function parse_po_file(string $path): array
 {
     $lines = file($path, FILE_IGNORE_NEW_LINES);
     if ($lines === false) {
-        // CLI build script, no WP runtime/HTML output, no esc_* helpers loaded; message only
-        // ever surfaces via an uncaught-exception dump to STDERR.
+        // CLI script without WordPress, no esc_* available.
         throw new RuntimeException("Unable to read PO file: {$path}"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
@@ -132,16 +131,12 @@ function compile_mo(array $entries): string
 foreach (array_slice($argv, 1) as $poFile) {
     $poPath = realpath($poFile);
     if ($poPath === false) {
-        // See justification on parse_po_file()'s RuntimeException above (CLI-only script, no
-        // esc_* helpers loaded).
         throw new RuntimeException("PO file not found: {$poFile}"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 
     $entries = parse_po_file($poPath);
     $moPath = preg_replace('/\.po$/i', '.mo', $poPath);
     if (!is_string($moPath)) {
-        // See justification on parse_po_file()'s RuntimeException above (CLI-only script, no
-        // esc_* helpers loaded).
         throw new RuntimeException("Could not determine MO path for: {$poPath}"); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
     }
 

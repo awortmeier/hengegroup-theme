@@ -2,16 +2,8 @@
 
 declare(strict_types=1);
 
-// Rendert template-parts/blocks/karriere-teaser/block.json (Design "Startseite", Sektion
-// "Karriere") -- siehe template-parts/blocks/buehne/render.php's Kopfkommentar fuer die allgemeine
-// Phase-3-Block-Konvention. Links Ueberschrift/Text/Button, rechts die neuesten aktiven Stellen mit
-// Unternehmens-Pill (hengegroup_theme_render_job_teaser_list(), inc/template-parts/careers.php --
-// geteilt mit dem Editor-Vorschau-Zwilling karriere-teaser-liste/render.php). Abgelaufene Stellen
-// filtert die gemeinsame Abfrage heraus.
-//
-// Ohne eigene Button-URL verlinkt der Button auf die Karriereseite (Stellenangebote > Einstellungen)
-// inkl. Sprungmarke zum "Offene Stellen"-Block (`#stellen`), damit der Block auch ohne manuelle
-// Verlinkung sofort funktioniert -- gleiche Idee wie der Shop-Fallback des Produkte-Blocks.
+// Block "Karriere-Teaser": Text + Button links, neueste Stellen rechts. Ohne Button-URL geht der
+// Button auf die Karriereseite (#stellen).
 
 if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_job_teaser_list')) {
     return;

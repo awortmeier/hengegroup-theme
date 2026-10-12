@@ -2,55 +2,13 @@
 
 declare(strict_types=1);
 
-// Direct translation of shadcn/ui's ButtonGroup: a content-agnostic wrapper. shadcn's own
-// implementation is just `role="group"` + adjacent-sibling CSS selectors
-// (`:not(:first-child)`/`:not(:last-child)`) that strip border-radius/border off touching
-// children so multiple buttons visually merge into one connected bar ("segmented control"/
-// split-button look) -- no JS, entirely CSS-driven (Phase 2 below).
+// Joins buttons into one segmented bar (role="group"). Divider: separator.php vertical with
+// `class: 'bg-input m-0!'`.
 //
-// Same nesting pattern as aspect-ratio.php/kbd/kbd-group.php: buffer the inner
-// button.php/separator.php/button-group-text.php output(s) and pass the combined HTML string as
-// `content`. shadcn's own ButtonGroupSeparator is nothing but their Separator with
-// orientation="vertical" plus a couple of extra override classes (no margin/--color-input instead
-// of --color-border, so it fills the group's full height and doesn't add its own gap; the
-// full-height fill itself is separator.php's own `orientation: 'vertical'` default now, see that
-// file's Bugfix note) -- no new component for that here either: reuse
-// template-parts/base/separator/separator.php unchanged and pass those two remaining overrides
-// through its own `class` config at the call site, e.g.
-// `['orientation' => 'vertical', 'class' => 'bg-input m-0!']`.
-//
-//   ob_start();
-//   get_template_part('template-parts/base/button', null, ['config' => ['text' => 'Left']]);
-//   get_template_part('template-parts/base/separator/separator', null, [
-//       'config' => [
-//           'orientation' => 'vertical',
-//           'class' => 'bg-input m-0!',
-//       ],
-//   ]);
-//   get_template_part('template-parts/base/button', null, ['config' => ['text' => 'Right']]);
-//   $group_markup = (string) ob_get_clean();
-//
-//   get_template_part('template-parts/base/button-group/button-group', null, [
-//       'config' => ['content' => $group_markup],
-//   ]);
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken 1:1 from shadcn's own
-// buttonGroupVariants() cva() definition (registry/new-york-v4/ui/button-group.tsx, live-checked
-// 2026-08-30), with one deviation: the `has-[select[aria-hidden=true]:last-child]:
-// [&>[data-slot=select-trigger]:last-of-type]:rounded-r-md` edge case (a trailing native <select>
-// fallback keeping a rounded outer corner) uses `rounded-r-lg` instead -- this project's
-// established field-surface radius (input.php/input-group.php/native-select.php's own
-// rounded-md -> rounded-lg swap, see those files' headers) rather than shadcn's stock rounded-md.
-// Kept even though no component in this theme emits `data-slot="select-trigger"` yet -- that's the
-// data-slot the planned JS-driven select.php (see native-select.php's header) will use, so this
-// selector is forward-compatible with it rather than dead weight.
-//
-// Supported config:
-//   content       string   required. Pre-rendered HTML to wrap (caller's responsibility to
-//                          escape/build, e.g. via template-parts/base/button.php)
-//   orientation   string   horizontal (default) | vertical -- sets data-orientation and switches
-//                          the merge direction (rounds/borders stripped left/right vs. top/bottom)
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   content       string   pre-rendered HTML (required)
+//   orientation   string   horizontal (default) | vertical
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

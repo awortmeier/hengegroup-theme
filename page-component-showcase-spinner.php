@@ -3,22 +3,7 @@
 /**
  * Template Name: Component Showcase - Spinner
  *
- * Dev-only page template: renders template-parts/base/spinner.php across every documented config
- * option (size, color, decorative, in-button composition, class passthrough) for manual visual/
- * functional review during Phase 2 styling work -- not meant for production content or navigation.
- * Analog zu page-component-showcase-attachment.php/-progress.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Spinner"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses
- * the existing per-page mechanism instead of a second one.
- *
- * The "Im Kontext" section's card/list chrome (borders, headings, meta text) is showcase markup,
- * not part of spinner.php itself -- same "component renders only the indicator, the caller
- * composes the surrounding chrome" minimalism as progress.php/progress-circle.php. The reference's
- * "Auf dunklem Grund" section is intentionally not reproduced here, see spinner.php's own header.
- *
- * Design reference: https://claude.ai/code/artifact/795f39d7-99e9-4211-9b9a-c15dabacc6ab
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

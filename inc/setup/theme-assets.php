@@ -47,25 +47,9 @@ function hengegroup_theme_get_vite_manifest(): array
 }
 
 /**
- * Resolves the THEME-RELATIVE path (e.g. "assets/css/app-xxxx.css", NOT an absolute URI) of a Vite
- * manifest entry's compiled CSS -- e.g. the `app` entry's compiled Tailwind output. Used by
- * hengegroup_theme_theme_setup() (inc/setup/theme-setup.php) to pass the same compiled stylesheet
- * to add_editor_style(), which loads it into the block editor's iframed canvas.
- *
- * Deliberately theme-RELATIVE, not the absolute URI hengegroup_theme_get_vite_asset_uri() would
- * give (bug fixed 2026-09-22, see docs/entscheidungen.md): WordPress's add_editor_style()
- * special-cases the two shapes differently (get_block_editor_theme_styles() in WP core). A
- * relative path is read directly off disk (get_theme_file_path()) and gets a correct `baseURL` the
- * editor iframe uses to rewrite this stylesheet's relative `url(...)` references (this theme's
- * `@font-face src: url(../fonts/...)` in particular) against. A full "https://..."-URI instead
- * gets fetched ONCE via `wp_remote_get()` and inlined WITHOUT that baseURL rewrite -- every
- * relative `url(...)` in it then resolves against nothing, breaking e.g. the accent font
- * specifically inside the editor while the frontend's normally `<link>`-loaded copy of the exact
- * same stylesheet stays unaffected (relative URLs there resolve against the linked file itself).
- *
- * Returns null when the entry/file can't be resolved (missing manifest, missing on disk), same
- * "log via hengegroup_theme_log_vite_error(), never fatal" contract as the other Vite helpers in
- * this file.
+ * Theme-relativer Pfad des kompilierten CSS fuer add_editor_style(). Relativ, weil WordPress eine
+ * absolute URI ohne baseURL inline einbettet und die relativen url()s (Fonts) dann brechen.
+ * null, wenn nicht aufloesbar.
  */
 function hengegroup_theme_get_vite_style_relative_path(string $entry): ?string
 {

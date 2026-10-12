@@ -1,14 +1,9 @@
-// Progressive-enhancement layer for template-parts/base/tooltip.php: enhances the native
-// `title`-attribute fallback into a styled, positioned floating panel. Shows on hover/focus after
-// a delay, hides on mouseleave/blur/Escape, repositions on scroll/resize while open. Positioning
-// math (single-axis flip, viewport clamp, `align` cross-axis placement) lives in
-// utils/floating-position.js -- shared with hover-card.js, which needs the exact same
-// anchored-panel placement (see that util's header comment).
+// tooltip.php: styled panel on hover/focus after a delay, hidden on leave/blur/Escape, repositioned
+// on scroll/resize. Positioning in utils/floating-position.js.
 
 import { positionFloatingElement } from "../../utils/floating-position.js";
 
-// 10px, matching the Hengegroup reference's own gap (and tooltip.php's `calc(100%+10px)` resting
-// classes) -- was 8 before Phase 2 gave this a real reference value to match.
+// Matches tooltip.php's calc(100%+10px).
 const GAP = 10;
 
 function setupTooltip(wrapper) {
@@ -73,7 +68,6 @@ function setupTooltip(wrapper) {
         }
     });
 
-    // Once JS is driving the styled panel, the native title tooltip would just duplicate it.
     wrapper.removeAttribute("title");
     wrapper.dataset.js = "tooltip";
 }

@@ -8,23 +8,11 @@ use BaseTheme\Tests\TestCase;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-/**
- * Unit tests for the pure-logic helpers in inc/template-parts/helpers.php. Only
- * covers the helpers that are meaningfully testable without a full WordPress install:
- * hengegroup_theme_render_icon()/hengegroup_theme_render_image() call get_template_part() against real
- * template-parts files and are intentionally left to a future WP-backed integration suite instead
- * (see docs/to-do.md Abschnitt 1).
- */
 final class HelpersTest extends TestCase
 {
     /**
-     * Stubs esc_attr()/esc_html() as pass-through for tests that assert on hengegroup_theme_*()'s own
-     * assembly logic (attribute order, whitespace, which words get wrapped, ...), not on core's
-     * escaping behaviour itself. Deliberately NOT a setUp() blanket stub: Mockery matches the
-     * first still-open expectation added for a given function, so a test that instead needs a
-     * strict Functions\expect(...)->once()->with(...) on the same function (see
-     * test_render_attributes_escapes_every_string_value below) must skip calling this, or its
-     * specific expectation would never be reached.
+     * Not a setUp() stub: Mockery matches the first open expectation, so tests with a strict
+     * expect()->with() on the same function must not call this.
      */
     private function stubEscapingPassthrough(): void
     {
@@ -78,11 +66,7 @@ final class HelpersTest extends TestCase
 
     public function test_render_attributes_escapes_every_string_value(): void
     {
-        // Deliberately not calling stubEscapingPassthrough() here -- a specific
-        // Functions\expect()->with(...) and the passthrough's Functions\when() would both try to
-        // handle esc_attr(), and Mockery resolves a call against the first still-open expectation,
-        // so the two must not coexist for the same function within one test (see
-        // stubEscapingPassthrough()'s doc comment above).
+        // No stubEscapingPassthrough() here (see its doc comment).
         Functions\expect('esc_attr')->once()->with('foo"bar')->andReturn('foo&quot;bar');
 
         $result = hengegroup_theme_render_attributes(['title' => 'foo"bar']);
@@ -141,8 +125,6 @@ final class HelpersTest extends TestCase
 
     public function test_render_accent_text_without_highlighted_words_still_escapes(): void
     {
-        // Same reasoning as test_render_attributes_escapes_every_string_value() above, for
-        // esc_html() instead of esc_attr().
         Functions\expect('esc_html')->once()->with('plain text')->andReturn('plain text');
 
         $result = hengegroup_theme_render_accent_text('plain text', []);
@@ -154,9 +136,7 @@ final class HelpersTest extends TestCase
     {
         $this->stubEscapingPassthrough();
 
-        // 'ship' is a substring of nothing here, but 'faster' vs. a hypothetical shorter overlap
-        // is exactly the case the longest-first sort in the implementation guards against -- this
-        // asserts both needles still resolve to independent, correctly wrapped spans.
+        // Overlapping needles: longest-first must wrap both correctly.
         $result = hengegroup_theme_render_accent_text('fast and faster', ['fast', 'faster']);
 
         $this->assertSame(
@@ -223,8 +203,7 @@ final class HelpersTest extends TestCase
 
         hengegroup_theme_warn_missing_aria_label('button.php', true, '');
 
-        // No assertion beyond the Functions\expect() above -- Brain Monkey fails the test in
-        // tearDown() if the expected call didn't happen.
+        // Brain Monkey fails in tearDown() if the expected call didn't happen.
         $this->assertTrue(true);
     }
 
@@ -358,5 +337,48 @@ final class HelpersTest extends TestCase
         );
         $this->assertSame('tel:063489838', hengegroup_theme_phone_href('06348 / 98 38'));
         $this->assertSame('', hengegroup_theme_phone_href(' - '));
+    }
+
+    public function test_contact_rows_link_obfuscate_and_label_in_render_order(): void
+    {
+        Functions\stubTranslationFunctions();
+        Functions\when('esc_url')->returnArg();
+        Functions\when('antispambot')->alias(static fn(string $email): string => 'X' . $email);
+
+        $this->assertSame(
+            [
+                [
+                    'icon' => 'mail',
+                    'label' => 'E-Mail:',
+                    'text' => 'Xinfo@example.com',
+                    'href' => 'mailto:Xinfo@example.com',
+                ],
+                [
+                    'icon' => 'phone',
+                    'label' => 'Telefon:',
+                    'text' => '+49 (0) 63 48 / 98 38-0',
+                    'href' => 'tel:+49634898380',
+                ],
+                [
+                    'icon' => 'printer',
+                    'label' => 'Fax:',
+                    'text' => '06348 / 98 38-99',
+                    'href' => null,
+                ],
+            ],
+            hengegroup_theme_get_contact_rows(
+                ' info@example.com ',
+                '+49 (0) 63 48 / 98 38-0',
+                '06348 / 98 38-99',
+            ),
+        );
+    }
+
+    public function test_contact_rows_skip_empty_values_and_undialable_phone(): void
+    {
+        Functions\stubTranslationFunctions();
+        Functions\when('esc_url')->returnArg();
+
+        $this->assertSame([], hengegroup_theme_get_contact_rows('', ' - ', ' '));
     }
 }

@@ -2,24 +2,12 @@
 
 declare(strict_types=1);
 
-// Settings > Footer: editorially maintained company contact data + social profile URLs rendered
-// by footer.php (Claude-Design "Hengegroup" footer reference). An own options page rather than
-// the Customizer, because theme-admin.php actively hides the Customizer (see docs/to-do.md
-// Phase 3 note); same register_setting()/add_options_page() idiom as theme-seo-admin.php. The
-// footer's "Links" column is NOT stored here -- it is the already registered `footer`
-// wp_nav_menu() location (theme-setup.php), same "editorial nav belongs in the menu editor"
-// reasoning as the header (see docs/entscheidungen.md).
-//
-// Every field is optional: footer.php skips an empty contact line, an empty social URL's icon,
-// and a whole column once all of its entries are empty -- no "#" placeholder links on the live
-// site. Contact defaults are the reference design's values so a fresh install already matches
-// it; social URLs default to empty (the reference only has "#" placeholders there).
+// Einstellungen > Footer: Kontaktdaten und Social-URLs. Leere Felder blendet footer.php aus.
 
 const HENGEGROUP_THEME_FOOTER_OPTION = 'hengegroup_theme_footer_options';
 
 /**
- * Social profile fields in render order: option key => [label, Tabler icon set, Tabler icon name].
- * Icon names are string literals on purpose so scripts/find-tabler-icons.php picks them up.
+ * option key => [label, Tabler-Set, Icon]. Literale Icon-Namen fuer find-tabler-icons.php.
  */
 function hengegroup_theme_get_footer_social_networks(): array
 {
@@ -39,10 +27,6 @@ function hengegroup_theme_get_footer_social_networks(): array
     ];
 }
 
-/**
- * Returns the footer options, merged over the defaults so every key is always present
- * (e.g. right after theme activation, before the settings page was ever saved).
- */
 function hengegroup_theme_get_footer_options(): array
 {
     $defaults = [
@@ -100,10 +84,6 @@ function hengegroup_theme_action_admin_menu_footer_settings(): void
 }
 add_action('admin_menu', 'hengegroup_theme_action_admin_menu_footer_settings');
 
-/**
- * One form-table row with a single-line input -- the settings page below has six nearly
- * identical rows, this keeps them from being seven copies of the same markup.
- */
 function hengegroup_theme_render_footer_settings_input_row(
     string $key,
     string $label,

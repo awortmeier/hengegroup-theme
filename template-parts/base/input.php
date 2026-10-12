@@ -2,65 +2,19 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Input has no headless-library primitive behind it either (Radix UI/Base UI/React
-// Aria alike) -- it's a styled native <input>, no JS state at all (see CLAUDE.md #1). This
-// component is the same: a plain, data-attributed
-// <input>, optionally paired with template-parts/base/label.php (same convenience
-// pattern as checkbox.php's `label` config, just stacked label-before-input instead of
-// input-then-label, matching the usual text-field layout).
+// Text input. With `data_slot: 'input-group-control'` it renders bare (input-group.php owns the
+// border/background).
 //
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken 1:1 from shadcn's own Input
-// component (registry/new-york-v4/ui/input.tsx) -- except:
-//   - `dark:`-prefixed classes dropped, same reasoning as button.php/badge.php (no dark-mode
-//     strategy yet, see docs/to-do.md).
-//   - fixed `h-9` dropped in favour of padding-driven height (design request 2026-08-30, per this
-//     project's Hengegroup Design-System-Projekt "Bewerbungsformular" reference form: all its text
-//     fields use generous `padding:12px 14px`, not a shadcn-style fixed row height) -- padding
-//     mapped to the nearest real Tailwind steps (`py-3`/`px-3.5` = 12px/14px exactly).
-//   - `rounded-md` swapped for `rounded-lg` -- the reference's `border-radius:10px` sits exactly
-//     between Tailwind's `rounded-lg` (8px) and `rounded-xl` (12px) steps; `rounded-lg` was picked
-//     to keep fields visually distinct from button.php's/badge.php's fully-pill `rounded-full`.
-//   - `selection:bg-primary`/`selection:text-primary-foreground` renamed to this project's
-//     henge-green brand tokens, same substitution button.php's variant vocabulary already made.
-//   - a `data_slot === 'input-group-control'` branch (see `data_slot` doc below) swaps the
-//     standalone field classes for shadcn's separate InputGroupInput treatment (border/background/
-//     radius/ring removed -- input-group.php's own wrapper owns those instead) rather than double-
-//     rendering a border/background inside input-group.php's own bordered box.
-//
-// Deliberately NOT included, to stay faithful to shadcn's actual Input API (don't invent
-// vocabulary shadcn doesn't have, see CLAUDE.md #1):
-//   - an icon slot (leading/trailing icon inside the field) -- stock shadcn Input has none either;
-//     compose icon.php + input.php yourself in a project-specific molecule if needed
-//   - description/error-message pairing (aria-describedby, validation messages) -- that's
-//     shadcn's separate Form/Field system built on top of Input, out of scope for this atom
-//
-// Supported config:
-//   type           string   text | email | password | number | tel | url | search | date |
-//                            datetime-local | month | week | time | color | file | range | hidden
-//                            (default: text) -- native <input type>
+// Config:
+//   type             string   native type (default text)
 //   name / value / placeholder / autocomplete / min / max / step / minlength / maxlength / pattern
-//                    string  native attributes, only rendered when given
-//   disabled / required / readonly   bool   native attributes; `disabled` also mirrors as
-//                    data-disabled="true" (shadcn's own CSS-hook convention)
-//   aria_invalid     bool    sets aria-invalid="true" plus a mirrored data-invalid="true" --
-//                    shadcn's error-state styling hooks
-//   id               string  native `id`; auto-generated via wp_unique_id() when omitted (needed
-//                            to pair with `label` via its `for` attribute)
-//   data_slot        string  overrides the root `data-slot` value (default: 'input'). Only meant
-//                            for a composing parent that needs its own CSS-scoping hook on the
-//                            same underlying native input -- e.g. input-group.php passes
-//                            'input-group-control' here, matching shadcn's own separate
-//                            InputGroupInput/Input data-slot distinction without duplicating this
-//                            file's attribute-building logic. Leave unset for
-//                            standalone use.
-//   label            string  optional visible label text; when given, nests
-//                            template-parts/base/label.php before the input, both wrapped in a
-//                            plain <div data-slot="input-field">. Omit for full manual control:
-//                            render the bare input, then compose your own label.php call +
-//                            wrapper markup at the call site
-//   aria_label       string  accessible name when no visible `label` is given
-//   class / attributes / data_attributes   passthrough onto the <input> itself (not onto the
-//                            optional wrapper div, which stays a plain, unstyled hook)
+//   disabled / required / readonly   bool   disabled also sets data-disabled
+//   aria_invalid     bool     aria-invalid + data-invalid
+//   id               string   default wp_unique_id()
+//   data_slot        string   default 'input'
+//   label            string   adds label.php, both wrapped in <div data-slot="input-field">
+//   aria_label       string
+//   class / attributes / data_attributes   on the <input>
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

@@ -1,10 +1,4 @@
-// Unit tests for initDataTable() (see data-table.js's own header comment: it purely
-// searches/sorts/filters/paginates already-server-rendered `<tr>` elements client-side --
-// no fetch, no navigation). Builds the wrapper/toolbar/table/pagination markup directly in jsdom,
-// matching the shape template-parts/base/table/data-table.php actually renders, instead of
-// importing the PHP template -- rendering real PHP output isn't available in this JS-only test
-// runner, see docs/to-do.md Abschnitt 1 for where a WP-backed integration suite would close that
-// gap.
+// Markup is built in jsdom to match data-table.php.
 import { beforeEach, describe, expect, it } from "vitest";
 import { initDataTable } from "./data-table.js";
 

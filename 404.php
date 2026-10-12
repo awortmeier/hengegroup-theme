@@ -2,20 +2,8 @@
 
 declare(strict_types=1);
 
-// 404-Seite nach Claude-Design "404": grosse "404" in der Akzentschrift (Crillee) mit dem
-// Markenverlauf als Textfarbe, daneben Ueberschrift, Hinweistext und "Zur Startseite"-Button.
-// Breite ueber `.wrapper-small` (1000px, explizite Nachfrage 2026-10-07) statt der 1400px des
-// Designs. Ab `md` stehen Zahl und Text nebeneinander, darunter umbrechend untereinander.
-//
-// Der Verlauf ist derselbe wie an Header-Oberkante/Footer-Linie (Markenfarben-Tokens statt
-// Hex-Werten, `from`/`via`/`to` wie im Benefit-Block), per `bg-clip-text` als Schriftfarbe. Die
-// "404" ist rein dekorativ (`aria-hidden`), die Aussage traegt die H1 (typography.php `headline-sm`,
-// ab `md` eine Stufe groesser -- feste Skala statt des `clamp()` aus dem Design). "Produktuebersicht"
-// im Hinweistext ist ein Link (hengegroup_theme_get_products_page_url()); der Absatz bleibt deshalb
-// eigenes Markup, typography.php escaped reinen Text. Der Button nutzt die
-// Theme-Variante `henge-green` statt des dunkleren Gruens aus dem Design -- gleiche Buttons wie auf
-// den uebrigen Seiten. Der Header ist `fixed` und liegt ueber dem Inhalt (siehe header.php) --
-// daher der grosse obere Abstand.
+// 404-Seite. Die "404" ist dekorativ (aria-hidden), die Aussage traegt die H1. Grosser oberer
+// Abstand, weil der Header fixed ueber dem Inhalt liegt.
 
 defined('ABSPATH') || exit();
 ?>

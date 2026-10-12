@@ -2,34 +2,9 @@
 
 declare(strict_types=1);
 
-// WooCommerce-Template-Override der Produktdetailseite unter /produkte/<produkt>/ (Design
-// "Produktdetailseite"). Ersetzt WooCommerce' komplettes Standard-Layout (Galerie, Preis, Warenkorb,
-// Tabs) -- es gibt noch keine Bestellfunktion. Abschnitte, jeweils nur, wenn Inhalt da ist:
-//
-//   1. Intro: Produkt-Badge (dasselbe Badge-Feld wie die Produktbox, explizite Vorgabe), Name,
-//      lange Produktbeschreibung, optionaler Recycling-Hinweis, Beitragsbild.
-//   2. Technische Daten (dunkel): "Chemische Analyse (typisch)" (freie Zeilen, Tab "Technische
-//      Daten") und "Lieferbare Koernungen" (Attribut `pa_koernung` -- wird spaeter zur
-//      Variantenauswahl, sobald Produkte bestellbar sind).
-//   3. Anwendungsbereiche: zugeordnete Anwendungen (Taxonomie `produkt_anwendung`) als Karten, bewusst
-//      OHNE Link (explizite Vorgabe: Produkte zaehlen Anwendungen nur auf; die Seite "Anwendungen"
-//      verlinkt umgekehrt zu Produkten).
-//   4. Downloads (Tab "Technische Daten", Dateien aus der Mediathek; Format/Groesse automatisch):
-//      je Datei template-parts/base/attachment/attachment.php in der Variante `card` (Icon, Titel,
-//      Format/Groesse, Beschreibung, voller Download-Button mit dem Button-Text aus dem Backend)
-//      -- Design "Downloads" der Produktdetailseite (2026-10-08).
-//   5. Ansprechpartner + Anfrageformular (#kontakt): Ansprechpartner der Produktkategorie, sonst
-//      Standard aus Produkte > Einstellungen; Anfrage landet unter Produkte > Produktanfragen.
-//   6. Verwandte Produkte: WooCommerce "Up-Sells" (im Backend "Verwandte Produkte"), mit
-//      passenden Zufallsprodukten auf 4 aufgefuellt; Produktbox in der Variante `minimal`.
-//
-// Alle Daten aus hengegroup_theme_get_product_data() (inc/template-parts/products.php). Farben/
-// Abstaende/Radien sind die Literalwerte der Referenz, wo kein Token passt (Tailwind-Arbitrary-
-// Values, CLAUDE.md Regel 1) -- gleiche Zuordnung wie in der Produktbox (neutral-50/-900 fuer die
-// Referenz-Off-White/-Fast-Schwarz, siehe woocommerce/content-product.php).
-//
-// Der Header ist `fixed` und liegt ueber dem Inhalt (siehe header.php) -- daher der groessere obere
-// Abstand des Intros.
+// Produktdetailseite (ersetzt das WC-Layout komplett, noch keine Bestellfunktion). Abschnitte nur
+// mit Inhalt: Intro, Technische Daten, Anwendungen (ohne Link), Downloads, Ansprechpartner +
+// Anfrage (#kontakt), verwandte Produkte. Daten aus hengegroup_theme_get_product_data().
 
 defined('ABSPATH') || exit();
 

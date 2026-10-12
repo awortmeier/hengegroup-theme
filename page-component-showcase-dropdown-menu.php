@@ -3,34 +3,12 @@
 /**
  * Template Name: Component Showcase - Dropdown Menu
  *
- * Dev-only page template: renders template-parts/base/dropdown-menu/*.php across an actions menu
- * (items, a shortcut, a disabled item, a destructive item), a groups/checkboxes/radio-group example,
- * and a right-aligned row-actions example over a product list, for manual visual/functional review
- * during Phase 2 styling work -- not meant for production content or navigation. Analog zu
- * page-component-showcase-popover.php/-hover-card.php.
- *
- * Note: DropdownMenuSub (nested submenus) is deliberately out of scope for v1 (see
- * dropdown-menu.php's own header comment) -- the Claude-Design reference's own "Untermenü" section
- * is therefore NOT reproduced here, a documented gap, not an oversight.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Dropdown Menu"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Design reference: https://claude.ai/code/design/p/37768540-95a8-46e1-a647-33070ca71612?file=Dropdown+Menu.dc.html
- * (only the closed triggers rendered during this session, see docs/entscheidungen.md).
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();
 
-// dropdown-menu.php's own header comment documents the constraint this helper exists for: `trigger`
-// lands inside the native <summary> that IS the dropdown menu's one interactive control -- nesting a
-// second real interactive element inside it (a genuine button.php `<button>`) breaks the browser's
-// native disclosure toggle entirely (invalid HTML content model). Every trigger below therefore
-// reuses button.php's own variant/size class-building logic (no duplicated Tailwind strings to drift
-// out of sync) but swaps its outer `<button>` tag for an inert `<span>` so it's safe to nest -- same
-// helper/reasoning as popover.php's own showcase page.
+// Trigger mit Button-Optik als <span>: in <summary> darf kein zweites interaktives Element stehen.
 $render_dropdown_menu_trigger_look = static function (array $button_config): string {
     ob_start();
     get_template_part('template-parts/base/button', null, ['config' => $button_config]);

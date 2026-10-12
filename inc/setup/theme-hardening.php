@@ -10,10 +10,7 @@ function hengegroup_theme_filter_wp_headers_remove_pingback(array $headers): arr
 }
 
 /**
- * Baseline security headers that are safe on every request (front-end, wp-admin, login) --
- * none of them restrict what scripts/styles are allowed to run, so unlike CSP below they can't
- * break wp-admin or a plugin's own inline scripts. See docs/entscheidungen.md for why
- * these run everywhere but the CSP below is front-end only.
+ * Security-Header ohne Einfluss auf Skripte (sicher auch in wp-admin).
  */
 function hengegroup_theme_send_security_headers(): void
 {
@@ -23,12 +20,9 @@ function hengegroup_theme_send_security_headers(): void
 
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    // frame-ancestors below (CSP) is the modern equivalent for browsers that support it; this is
-    // the fallback for the few that don't.
+    // Fallback fuer Browser ohne CSP frame-ancestors.
     header('X-Frame-Options: SAMEORIGIN');
-    // Off by default for browser features this theme has no built-in use for. Payment/fullscreen/
-    // autoplay etc. are deliberately left alone -- WooCommerce (theme-admin-woocommerce.php) and
-    // project-specific embeds may need those.
+    // Payment/Fullscreen/Autoplay bleiben erlaubt (WooCommerce, Embeds).
     header(
         'Permissions-Policy: camera=(), microphone=(), geolocation=(), gyroscope=(), magnetometer=(), usb=()',
     );
@@ -38,11 +32,8 @@ add_action('admin_init', 'hengegroup_theme_send_security_headers');
 add_action('login_init', 'hengegroup_theme_send_security_headers');
 
 /**
- * A deliberately loose starter Content-Security-Policy, front-end only. `frame-ancestors 'self'`
- * is already meaningfully restrictive; before relying on this for real CSP protection, drop
- * 'unsafe-inline'/'unsafe-eval' and narrow default-src/script-src/style-src/etc. to the actual
- * hosts this project loads from. See docs/entscheidungen.md for why it starts this
- * loose.
+ * Bewusst lockere Start-CSP, nur Frontend. Fuer echten Schutz unsafe-inline/unsafe-eval entfernen
+ * und die Quellen eingrenzen.
  */
 function hengegroup_theme_send_front_end_csp_header(): void
 {
@@ -94,11 +85,7 @@ function hengegroup_theme_cleanup_core_frontend_styles(): void
 }
 add_action('wp_enqueue_scripts', 'hengegroup_theme_cleanup_core_frontend_styles', 999);
 
-// Kommentare sind fuer normale Beitraege/Seiten standardmaessig zu (persoenliche Praeferenz fuer
-// dieses Base Theme, siehe docs/to-do.md). Bewusst NICHT auf 'product' (oder
-// andere Custom Post Types) angewendet: WooCommerce-Produktbewertungen laufen technisch ueber
-// denselben comments_open()-Mechanismus und sollen weiterhin funktionieren, falls ein Projekt sie
-// braucht. Kein eigenes comments.php noetig, solange comments_open() ueberall false liefert.
+// Kommentare zu fuer Beitraege/Seiten, nicht fuer Produkte (Bewertungen nutzen comments_open()).
 function hengegroup_theme_filter_close_comments_for_posts_and_pages(bool $open, int $post_id): bool
 {
     if (in_array(get_post_type($post_id), ['post', 'page'], true)) {

@@ -8,9 +8,7 @@ use Brain\Monkey;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
- * Shared Brain Monkey setup/teardown for every unit test in tests/Unit -- wires WP function
- * stubbing/expectation-tracking in and resets it after each test so mocked WP functions
- * (esc_attr(), _doing_it_wrong(), ...) never leak between test cases.
+ * Brain Monkey setup/teardown so stubbed WP functions never leak between tests.
  */
 abstract class TestCase extends PHPUnitTestCase
 {

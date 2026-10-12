@@ -2,22 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's FieldContent: a plain flex-column wrapper grouping a control with its
-// description/error, used when the label sits BESIDE the control instead of above it (`field.php`
-// with `orientation: 'horizontal'`, e.g. a checkbox/switch field). Content-agnostic, same nesting
-// pattern as field-group.php/button-group.php: buffer the control +
-// field-description.php/field-error.php output(s) and pass the combined HTML as `content`.
+// Groups control + description/error when the label sits beside the control (horizontal field).
 //
-// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldContent (registry/
-// new-york-v4/ui/field.tsx, live-checked 2026-08-30). The `group/field-content` marker is what
-// field.php's own horizontal-orientation classes key off of
-// (`has-[>[data-slot=field-content]]:items-start`) to keep a checkbox/radio control top-aligned
-// with the first line of a multi-line label instead of vertically centering it.
-//
-// Supported config:
-//   content   string   required. Pre-rendered HTML to wrap
-//   class / attributes / data_attributes   passthrough onto the outer
-//                       <div data-slot="field-content"> wrapper
+// Config:
+//   content   string   pre-rendered HTML (required)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

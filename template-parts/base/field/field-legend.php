@@ -2,22 +2,12 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's FieldLegend: a real native <legend>, paired with field-set.php's <fieldset> the same
-// way label.php pairs with a control (native HTML already provides the right element, no
-// <div role="legend"> fakery, see CLAUDE.md #1). `variant: 'label'` exists because shadcn also lets
-// a FieldLegend visually match FieldLabel's smaller sizing (e.g. a fieldset used inside a compact
-// field-group.php) while staying a real <legend> underneath -- a styling axis, not a tag change.
+// <legend> for field-set.php.
 //
-// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldLegend (registry/
-// new-york-v4/ui/field.tsx, live-checked 2026-08-30) -- the `variant` sizing is expressed as
-// `data-[variant=...]` selectors against the `data-variant` this file already sets below, same
-// data-attribute-driven idiom as field.php's own `data-orientation` selectors, instead of a PHP
-// variant-class map.
-//
-// Supported config:
-//   text      string   required. Visible content (plain text, escaped)
-//   variant   string   legend (default) | label -- sets data-variant, drives the text-size classes
-//   class / attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   text      string   required
+//   variant   string   legend (default) | label (smaller, like a field label)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

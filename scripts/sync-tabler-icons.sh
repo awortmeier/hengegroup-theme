@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# find-tabler-icons.php ermittelt Name+Variante (outline/filled) aus Templates +
-# scripts/tabler-icons.json, dieses Skript kopiert nur die benoetigten SVGs aus @tabler/icons.
+# Kopiert die im Code referenzierten Tabler-SVGs (find-tabler-icons.php) aus node_modules.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,7 +21,6 @@ fi
 
 scan_output_json="$(php "$icon_scanner_path")"
 
-# JSON-Array von {name, variant} -> eine "name<TAB>variant"-Zeile pro Icon.
 requested_icons="$(node -e '
     const data = JSON.parse(require("fs").readFileSync(0, "utf8"));
     const icons = Array.isArray(data) ? data : [data];
@@ -31,7 +29,6 @@ requested_icons="$(node -e '
 
 for destination_directory in "$outline_destination_directory" "$filled_destination_directory"; do
     mkdir -p "$destination_directory"
-    # Vorher aufraeumen, damit nicht mehr benoetigte Icons nicht als Leichen liegen bleiben.
     find "$destination_directory" -maxdepth 1 -name "*.svg" -type f -delete
 done
 

@@ -1,283 +1,35 @@
 # Changelog
 
-Alle nennenswerten Aenderungen an dieser Basis-Vorlage werden hier festgehalten.
-
-Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung nach
-[Semantic Versioning](https://semver.org/lang/de/). Die Versionsnummer ist die Single Source of
-Truth in `package.json` (`version`) und wird per `pnpm version <patch|minor|major>` automatisch
-nach `style.css` (`Version:`-Header) gespiegelt — siehe README "Versionierung".
+Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in `package.json`,
+`pnpm version` spiegelt sie nach `style.css`.
 
 ## [Unreleased]
 
+### Added
+
+- Header, Footer (Einstellungen > Footer), 404 nach Design.
+- Bloecke: Buehne, Ueberschrift & Text, Produkte, Produktkategorie, Kontakt, Anwendungsgruppe,
+  Offene Stellen, Karriere-Teaser, Stellen-Liste, Benefits, Auszeichnungen, Galerie.
+- Produktbereich: Uebersicht /produkte/, Detailseite (Technische Daten, Koernungen, Anwendungen,
+  Downloads, Anfrage, verwandte Produkte), Anwendungen-Uebersicht /anwendungen/.
+- Stellenangebote mit Google-Jobs-JSON-LD, Karriereseite, Bewerbungsformular.
+- Produktanfragen und Bewerbungen als Backend-Eintraege.
+- Komponenten `product-card`, `contact-card`, Formularfelder ueber die Field-Komponenten.
+- Styling aller Base-Komponenten, Marken-Tokens, Karten-Tokens.
+- SEO-Metabox, Sitemap-Anpassungen, SVG-Upload mit Sanitizing.
+
 ### Changed
 
-- Backend: Menuepunkte "WooCommerce" und "Zahlungen" ausgeblendet (aktuell nur Produkte noetig);
-  Menuepunkt "Karriere" heisst jetzt "Stellenangebote".
-- WooCommerce-Versand deaktiviert (aktuell kein Shop, keine Versandarten noetig).
-- Doku: `WP_DEFAULT_THEME` auf `hengegroup` in der `wp-config.php` jeder Instanz setzen
-  (`docs/how-to.md`), damit der Website-Zustand kein fehlendes Standard-Theme mehr meldet.
-- Bewerbungsunterlagen liegen jetzt ausserhalb des Web-Roots (Ordner neben dem
-  Website-Stammverzeichnis) statt unter uploads/, damit sie auch unter nginx nicht per URL
-  abrufbar sind; vorhandene Dateien am alten Ort werden weiter gefunden. Neuer Filter
-  `hengegroup_theme_application_storage_dir`.
-- Alle Produkt-Taxonomie-Archive (auch WooCommerce-Marken) leiten auf die Produktuebersicht weiter
-  und fehlen in der XML-Sitemap, nicht mehr nur Kategorien/Schlagwoerter.
-- 404-Seite nach Design, mit Link zur Produktuebersicht.
-- Formularfelder von Anfrage- und Bewerbungsformular ueber die Field-Komponenten
-  (`hengegroup_theme_render_form_field()`), Ueberschriften/Texte in Karten, Bloecken, Footer und
-  404 ueber `typography.php` (`hengegroup_theme_render_typography()`), Social-Media-Icons im Footer
-  ueber `button.php`.
-- Karten vereinheitlicht: zwei Stufen (flach/erhoeht) als Tokens in `tokens.css`, `card.php` ist
-  die Standard-Karte (neu: `elevation`, `size: lg`, `icon`, `title_variant`,
-  `orientation: horizontal`, `tag: li`) fuer Anwendungskarten, Anwendungs-Uebersicht, Faktenleiste,
-  Stellen-Zeilen und Auszeichnungen. `card.php` hat dadurch keinen Rahmen mehr.
-- Kontaktkarten von Produktdetailseite, Karriere (Stellenangebot, Block "Offene Stellen") und
-  Block "Kontakt" sind jetzt eine Komponente `contact-card.php` mit den Varianten hell, dunkel und
-  zweigeteilt (Kontakt + Adresse), im Aufbau der bisherigen Produkt-Kontaktkarte, ohne Foto.
-- Produktdetailseite: Downloads als `attachment.php` in der neuen Variante `card` (Karte mit
-  Icon, Titel, Format/Groesse, Beschreibung und vollem Download-Button, nach Design); Produkt-Chips auf der Seite /anwendungen/ als `badge.php` (`outline`).
-
-- Bewerbungen werden nicht mehr per E-Mail verschickt, sondern als Eintraege unter Karriere >
-  Bewerbungen gespeichert (Unterlagen geschuetzt ausserhalb der Mediathek, Download nur im
-  Backend); keine Eingangsbestaetigung mehr. Das Formular erscheint auch ohne gepflegte
-  Ansprechpartner-E-Mail. Siehe `docs/entscheidungen.md`.
-- Anwendungen sind eine eigene Taxonomie (Gruppen + Anwendungen) mit Uebersichtsseite
-  /anwendungen/ (neuer Block "Anwendungsgruppe"), keine Einzelseiten; Produktkategorien sind echte
-  Kategorien. Produkte liegen unter /produkte/<slug>/.
-- Produktbox als Komponente `template-parts/components/product-card.php` (Varianten
-  `default`/`minimal`).
+- Backend aufgeraeumt (ungenutzte WooCommerce-Menues, Datei-Editor, Versand aus).
 
 ### Removed
 
-- `woocommerce/archive-product.php`: es gibt keine erreichbaren Produkt-Archive mehr.
-
-- `archive-stellenangebote.php`: /karriere/ ist jetzt eine normale, mit Bloecken gebaute Seite
-  statt eines Post-Type-Archivs.
-- Windows-/PowerShell-Unterstuetzung: alle `scripts/*.ps1` und der Plattform-Dispatcher
-  `scripts/run.mjs` entfernt. Die `pnpm`-Skripte rufen die Bash-Skripte direkt auf; unterstuetzt
-  wird nur noch macOS. Siehe `docs/entscheidungen.md`.
-
-### Added
-
-- Produktbereich nach Design: Produktuebersicht als Seite aus Bloecken mit den neuen Bloecken
-  "Produktkategorie" und "Kontakt"; Produktdetailseite mit Intro, Technischen Daten (chemische
-  Analyse, Koernungen), Anwendungsbereichen, Downloads, Ansprechpartner + Anfrageformular und
-  verwandten Produkten (manuell + automatisch aufgefuellt); Anwendungen-Uebersicht; Produktdaten-Tab
-  "Technische Daten", Kategorie-Felder und Produkte > Einstellungen. Anfragen landen unter
-  Menuepunkt "Produktanfragen" (keine E-Mail). Siehe `docs/entscheidungen.md`.
-
-- Footer nach Design: Logo + Adresse, Kontakt (E-Mail/Telefon als Link, Fax), Social Media,
-  Links (Menue-Position "Footermenü"), Marken-Verlaufslinie und Copyright. Kontaktdaten und
-  Social-Media-URLs unter Einstellungen > Footer pflegbar; leere Eintraege/Spalten werden
-  ausgeblendet. Siehe `docs/entscheidungen.md`.
-- Bewerbungsformular auf der Stellen-Einzelseite nach Design (exklusiv fuer die angezeigte Stelle):
-  Speicherung als Backend-Eintrag (siehe "Changed"), Datenschutz-Checkbox, Spam-Schutz ohne Captcha, Fehlerdarstellung je Feld. Siehe
-  `docs/entscheidungen.md`.
-- Neue Bloecke "Benefits" (Icon-Raster auf dunklem Grund), "Auszeichnungen" (Karten mit
-  Siegel/Logo, Text und Link; Karten direkt im Block hinzufuegen/bearbeiten) und "Galerie" (Bento-Raster, schliesst immer buendig ab) fuer die Karriereseite. Siehe
-  `docs/entscheidungen.md`.
-- Stellenangebote fuer die Google-Jobsuche ausgebaut: Taxonomien Unternehmen/Standort/
-  Taetigkeitsbereich mit Zusatzfeldern, "Stellendetails"-Box (Anstellungsart, Gueltig bis, Eintritt,
-  Gehalt, Arbeitsmodell, Erfahrung/Abschluss, besetzt, alte Stellen-ID), Block "Stellen-Liste" fuer
-  Wir bieten dir/Profil/Aufgaben als normale Gutenberg-Listen,
-  Karriere-Einstellungen (Karriereseite, Standard-Ansprechpartner), JobPosting- und
-  BreadcrumbList-JSON-LD, automatischer Title/Description, Einzelseite nach Design mit Faktenleiste
-  und Bewerbung per E-Mail, neue Bloecke "Offene Stellen" (Karriereseite) und "Karriere-Teaser"
-  (Startseite). Abgelaufene/besetzte Stellen verschwinden aus Listen und Sitemap und leiten per 301
-  auf die Karriereseite; alte URLs /karriere/?job=<ID> leiten auf die neue Stelle weiter. Siehe
-  `docs/entscheidungen.md`.
-
-- Neuer Custom Post Type "Stellenangebote" (`inc/setup/theme-careers.php`, Karriere/Jobs):
-  Übersichtsseite unter `/karriere/`, Einzelseiten unter `/karriere/<slug>/`. Bewusst erster,
-  grober Aufschlag (Titel + Gutenberg-Inhalt + Beitragsbild, keine strukturierten Felder wie
-  Standort/Unternehmen/Bewerbungsformular). Siehe `docs/entscheidungen.md`.
-- Neuer Gutenberg-Block "Produkte" (`template-parts/blocks/produkte/`): dunkle Sektion mit
-  Ueberschrift (H1-H6/P waehlbar, Default `p`)/Text/Button direkt im Editor-Content-Bereich
-  editierbar (natives `RichText`, Button-Link ueber `LinkControl` in einem Toolbar-Popover) und
-  einem Live-Produktraster mit manueller Produktauswahl (Redakteure waehlen einzelne, bestehende
-  Produkte in frei waehlbarer Reihenfolge/Anzahl in der Sidebar aus). Die Produktkarten sind
-  `woocommerce/content-product.php` unveraendert, wiederverwendet ueber
-  `hengegroup_theme_render_produkte_grid()`; die Editor-Vorschau des Rasters laeuft ueber einen
-  eigenen, im Inserter versteckten Zwillingsblock `hengegroup-theme/produkte-raster`. Siehe
-  `docs/entscheidungen.md`.
-- Globale Block-Editor-Anpassungen (`assets/js/editor/editor-customizations.js`): "Zusaetzliche
-  CSS-Klasse(n)"-Feld im "Erweitert"-Panel fuer jeden Block (Core wie eigene) deaktiviert (widerspraeche
-  Regel 1 der CLAUDE.md), eine Reihe fuer dieses Projekt nicht vorgesehener Core-Bloecke
-  (Zitat, Code, Klassisch, RSS, ... ) aus dem Inserter ausgeblendet sowie ungewuenschte
-  `core/embed`-Anbieter-Varianten entfernt. Siehe `docs/entscheidungen.md`.
-- Produkt-Uebersichtsseite als WooCommerce-Template-Override (`woocommerce/archive-product.php`):
-  vierspaltiges Tailwind-Grid (`.wrapper`, ab `lg` vier Spalten) statt WCs eigenem
-  Float-Grid, bewusst einfach gehalten (kein Sidebar, WCs Standard-Sortier-/Pagination-Hooks
-  unangetastet). Siehe `docs/entscheidungen.md`.
-- Produktbox als WooCommerce-Template-Override (`woocommerce/content-product.php`, gilt fuer jeden
-  WC-Loop: Shop, Kategorie-/Tag-Archive, `[products]`-Shortcode, Related/Upsell/Cross-Sell) auf
-  Basis von `badge.php`/`button.php`/`typography.php`/`image.php`: ein vollbreiter "Produkt
-  ansehen"-Button in der Fusszeile verlinkt aufs Produkt (noch kein Warenkorb/Kaufen), zeigt ein
-  frei editierbares "Badge" (Text + henge-blue/henge-green/henge-grey/grey-dark-Farbwahl im
-  Produkt-Editor) im Bild, die Kurzbeschreibung (gekuerzt) sowie die einem Produkt zugeordneten
-  Produktkategorien als nicht verlinkende Badges unter einem "Anwendungen"-Label. Siehe
-  `docs/entscheidungen.md`.
-- macOS/Linux-Pendants (`scripts/*.sh`) zu allen zehn `scripts/*.ps1`-Skripten (`build`, `clean`,
-  `deploy`, `deploy-changed`, `i18n-make-pot`, `pull-base-updates`, `rename-theme`,
-  `sync-lucide-icons`, `sync-tabler-icons`, `sync-theme-tokens`, `sync-theme-version`) — bislang
-  ohne separat installierte PowerShell Core auf macOS/Linux nicht lauffaehig. `package.json`
-  "scripts" rufen jetzt `node scripts/run.mjs <name>` auf, das anhand von `process.platform`
-  automatisch die passende Fassung waehlt. `deploy.sh`/`deploy-changed.sh` zeigen dabei in einem
-  echten Terminal eine `Write-Progress`-Entsprechung (sich ueberschreibende Fortschrittszeile).
-  Siehe `docs/entscheidungen.md` fuer Details.
-- Security-Header (`inc/setup/theme-hardening.php`): `X-Content-Type-Options`, `Referrer-Policy`,
-  `X-Frame-Options`, `Permissions-Policy` auf jedem Request (Front-End/wp-admin/Login) sowie eine
-  bewusst lose Start-Content-Security-Policy nur auf dem Front-End (Direktiven-Geruest zum
-  Verschaerfen pro Projekt, siehe Kopfkommentar der jeweiligen Funktion). `pnpm audit`-Skript
-  ergaenzt (`composer audit` ist bereits ein eingebauter Composer-Befehl, kein eigenes Skript
-  moeglich). Schliesst `docs/to-do.md` Punkt 4 (Security-Header/Dependency-
-  Audit-Teile).
-- `.github/workflows/template-init.yml`: automatisiert Schritt 2 von "Neues Projekt aus dieser
-  Vorlage starten" (`scripts/rename-theme.ps1`) fuer Repos, die per GitHub "Use this template"
-  erzeugt werden — leitet den Slug aus dem neuen Repo-Namen ab, committet das Ergebnis und
-  entfernt sich danach selbst. Setzt voraus, dass dieses Repo unter Settings als "Template
-  repository" markiert ist.
-- SEO-/Meta-Grundgerüst ohne SEO-Plugin (`inc/setup/theme-seo-admin.php`,
-  `inc/setup/theme-seo-output.php`, `assets/js/admin/theme-seo.js`): eigenes "Settings > SEO"
-  fuer site-weite Standardwerte (Titel-Vorlage, Meta-Beschreibung, Social-Bild, Twitter-Handle,
-  Indexierung) plus eine "SEO"-Metabox auf Beitraegen/Seiten (`hengegroup_theme_seo_post_types`-Filter
-  fuer weitere Post-Types) fuer Seiten-spezifische Ueberschreibungen — leer gelassen greift immer
-  der site-weite Standard. Rendert `<title>`, Meta-Description, Canonical, Robots-Meta,
-  Open-Graph-/Twitter-Card-Tags sowie ein JSON-LD-Organization-Schema; Letzteres ueber den
-  `hengegroup_theme_seo_structured_data`-Filter erweiterbar (Vormerkung fuer spaeter: Product-/
-  JobPosting-Schema auf entsprechenden CPT-Templates). `robots.txt`/XML-Sitemap bleiben bewusst
-  WordPress-Core ueberlassen, `hreflang` bewusst ausgeklammert bis zur geplanten Multisite-basierten
-  Mehrsprachigkeit (siehe Kopfkommentar von `theme-seo-admin.php`/`theme-seo-output.php` sowie
-  `docs/entscheidungen.md`). Schliesst `docs/to-do.md` Punkt 3.
-- `docs/entscheidungen.md`/`docs/how-to.md`: zentraler Log fuer bewusste Architektur-/Prozess-
-  entscheidungen (Warum) und praktische Erweiterungs-Anleitungen (Wie, z. B. weiteres JSON-LD-
-  Schema per `hengegroup_theme_seo_structured_data`-Filter ergaenzen) — bisher nur verstreut in
-  Kopfkommentaren/CHANGELOG dokumentiert. `CLAUDE.md` Regel 12 macht das Pflegen dieser Dateien
-  verbindlich fuer kuenftige Entscheidungen/HowTos. Spaeter (siehe letzter Eintrag unten) aus einer
-  gemeinsamen `docs/entscheidungen-und-howtos.md` in zwei fokussierte Dateien aufgeteilt.
-- CI + Test-Tooling (`.github/workflows/ci.yml`, `composer test`, `pnpm test`,
-  `.husky/pre-commit`): `composer lint`/`composer test` (PHPUnit + `brain/monkey`, neue
-  `tests/Unit/HelpersTest.php` gegen die reinen Logik-Helper aus `inc/template-parts/helpers.php`)
-  sowie `pnpm format:check`/`pnpm test` (Vitest, neue
-  `assets/js/template-parts/base/toggle.test.js`) laufen jetzt automatisiert bei jedem Push/PR
-  (zwei Jobs, PHP/JS getrennt), plus `composer audit`/`pnpm audit` als nicht-blockierender
-  Report-Schritt. `husky` + `lint-staged` fuehren `prettier --write`/`phpcs` zusaetzlich lokal bei
-  jedem `git commit` aus (via `pnpm install`s `prepare`-Skript automatisch eingerichtet). Schliesst
-  `docs/to-do.md` Abschnitt 1 groesstenteils (CI, Pre-Commit-Hook,
-  Unit-Test-Grundgerüst) — a11y-Scan und Visual-Regression bleiben offen, siehe
-  `docs/entscheidungen.md`.
-- `docs/entscheidungen.md`, `docs/how-to.md`, `docs/to-do.md`: `docs/entscheidungen-und-howtos.md`
-  (Entscheidungen + HowTos gemischt) und `docs/luecken-und-empfehlungen.md` (offene Punkte) durch
-  drei fokussierte Dateien ersetzt — je eine pro Themenbereich, damit "bereits entschieden" und
-  "noch offen" bzw. "Warum" und "Wie" nicht mehr in derselben Datei vermischt sind. `CLAUDE.md`
-  selbst bleibt unveraendert die einzige automatisch geladene Anweisungsdatei, nur die Verweise in
-  Regel 11/12 wurden auf die drei neuen Dateien umgestellt. Siehe `docs/entscheidungen.md` fuer die
-  Begruendung.
-
-- `docs/tastatur-screenreader-testplan.md`: manuelle Checkliste (Tab-Reihenfolge, Escape/
-  Pfeiltasten/Type-Ahead) pro interaktiver Base-Komponente, abgeleitet aus dem tatsaechlich
-  implementierten Tastaturverhalten der jeweiligen `assets/js/template-parts/base/*.js`-Datei.
-  Schliesst den Testplan-Teil von `docs/to-do.md` Abschnitt 2 — die tatsaechliche Ausfuehrung
-  bleibt offen, siehe `docs/entscheidungen.md`.
-- WP-/PHP-Versionsmatrix dokumentiert (README "Anforderungen"): `style.css`s `Requires PHP` 8.1 ->
-  8.2 (aelteste noch mit Security-Fixes unterstuetzte PHP-Version), `Tested up to` 6.8 -> 7.0
-  (aktuelle WordPress-Version), `composer.json` bekommt erstmals ein explizites `require.php`.
-  `.github/workflows/ci.yml`s PHP-Job testet entsprechend jetzt 8.2 statt 8.3, damit CI die
-  tatsaechlich deklarierte Mindestversion prueft. Schliesst `docs/to-do.md` Abschnitt 4. Siehe
-  `docs/entscheidungen.md` fuer die Einordnung von "Tested up to" als deklarierte Zielmarke, nicht
-  als verifizierte Aussage.
-
-### Changed
-
-- Header: "Kontakt"-Button verlinkt auf die Kontaktseite `/kontakt/` statt auf den Anker `#kontakt`.
-
-- Stellen-Einzelseite: breiter Wrapper, Inhalt linksbuendig so breit wie die Faktenbox,
-  Ansprechpartner-Karte rechts neben der Faktenbox (statt eigenem Abschnitt unten); der Text beginnt
-  direkt unter der Faktenbox.
-- Buehne: bei nur einer Folie kein Folien-Picker und kein Autoplay; Buttons erscheinen, sobald ihr
-  Text gepflegt ist (Schalter "Primaeren Button anzeigen" entfaellt); Button-Text und -Seite im
-  Editor nebeneinander.
-- Block "Ueberschrift & Text": Ueberschrift-Element (H1-H6 oder Absatz, Default jetzt `p` statt
-  `h2`) ist ueber die Block-Toolbar waehlbar statt fest verdrahtet; die "Ausrichten"-Toolbar-
-  Kontrolle ist entfernt (`supports.align`/das `align`-Attribut raus aus `block.json`, die volle
-  Editor-Canvas-Breite kommt jetzt ueber ein hardcodiertes `alignfull` in `useBlockProps()`). Siehe
-  `docs/entscheidungen.md`.
-- Produktbeschreibung und -kurzbeschreibung im Produkt-Editor zeigen nur noch den Visual-Editor mit
-  stark reduzierter Toolbar -- kein Visual/Text-Umschalter, kein Absatz-/Ueberschriften-Format-
-  Dropdown, kein "Weiterlesen"-Tag, kein Blockzitat, kein "Medien hinzufuegen"-Button, kein
-  Vollbild und keine erweiterte zweite Toolbar-Zeile mehr. Siehe `docs/entscheidungen.md`.
-
-### Fixed
-
-- **"Vollbild"-Button blieb in der Produktkurzbeschreibungs-Toolbar trotz `teeny_mce_buttons`-Filter
-  sichtbar** -- WooCommerce ueberschreibt die daraus gebaute Toolbar vermutlich per eigenem
-  `tinymce`-Settings-Teilarray. Zusaetzlicher `tiny_mce_before_init`-Filter (letzter Filter vor der
-  Auslieferung ans Frontend) behebt das garantiert. Siehe `docs/entscheidungen.md`.
-- **"Virtuell"/"Herunterladbar" (allgemeiner Produkt-Tab) blieben trotz CSS-Ausblendung sichtbar**
-  -- der urspruenglich angenommene `_virtual_field`/`_downloadable_field`-Wrapper existiert in der
-  installierten WooCommerce-Version nicht mehr; Selektor auf `label[for="_virtual"]`/
-  `label[for="_downloadable"]` korrigiert. Siehe `docs/entscheidungen.md`.
-- **`badge.php`s `outline`-Variante zeigte keinen sichtbaren Rand** -- `base_classes` setzt fuer
-  jede Variante `border border-transparent` (reserviert dieselbe Border-Box, auch wenn sie bei
-  Solid-Varianten unsichtbar bleiben soll), `outline`s eigenes `border-grey-light` konkurrierte mit
-  genau derselben CSS-Property und verlor gegen `border-transparent`, weil Tailwind v4 Utility-
-  Regeln nach interner Reihenfolge statt nach Reihenfolge im `class`-String ausgibt. Sichtbar u. a.
-  an den "Anwendungen"-Badges der Produktbox (rendered als reiner Text ohne Pille/Rand). Fix:
-  `!border-grey-light` (Tailwind-Important-Modifier, selbes Vorgehen wie button.php's eigene
-  `!bg-*`-Varianten). Siehe `docs/entscheidungen.md`.
-- **`woocommerce.php` (Theme-Root) entfernt** -- diese generische, bereits vor der Produktbox-
-  Arbeit vorhandene Datei (nur `get_header(); woocommerce_content(); get_footer();`) hatte in
-  WooCommerces Template-Hierarchie hoehere Prioritaet als `woocommerce/archive-product.php` und
-  ueberschrieb es fuer JEDE WC-Seite (Shop, Produkt-Taxonomie-Archive, Einzelprodukt) komplett mit
-  WCs eigener, fest einprogrammierter `woocommerce_content()`-Ausgabe. Siehe
-  `docs/entscheidungen.md`.
-- `content-product.php` feuerte `woocommerce_before_shop_loop_item`/`woocommerce_after_shop_loop_item`
-  in der Annahme, das seien neutrale Marker-Hooks -- WC core haengt daran aber selbst seine
-  Standard-Callbacks (oeffnet/schliesst eine zusaetzliche `<a class="woocommerce-LoopProduct-link">`
-  um die ganze Box, rendert den Warenkorb-/"Weiterlesen"-Button), was genau das WC-Default-Markup
-  zurueckbrachte, das dieses Template ersetzen soll. Beide `do_action()`-Aufrufe entfernt. Siehe
-  `docs/entscheidungen.md`.
-- `build.ps1`/`build.sh` kopierten das neue `woocommerce/`-Verzeichnis (WooCommerce-Template-
-  Overrides wie `content-product.php`/`archive-product.php`) nicht nach `dist/` -- es fehlte in der
-  fest enumerierten `$themeDirectories`/`theme_directories`-Liste, die anders als die Top-Level-
-  `*.php`-Dateien (siehe naechster Punkt) nicht per Wildcard erfasst wird. Dadurch liefen bereits
-  deployte Umgebungen weiterhin ohne jede Produktbox-Anpassung, obwohl die Dateien lokal/im Git
-  existierten. Siehe `docs/entscheidungen.md`.
-- `build.ps1`/`build.sh` kopierten Top-Level-Theme-Dateien bislang ueber eine fest enumerierte
-  Liste (`style.css`, `functions.php`, ... `theme.json`) — ein neues Custom-Page-Template nach
-  WordPress-Template-Hierarchie (z. B. `page-{slug}.php`) landete dadurch nie in `dist/`. Beide
-  Fassungen kopieren jetzt jede Top-Level-`*.php`-Datei automatisch per Wildcard mit, statt die
-  Liste bei jedem neuen Template von Hand nachzuziehen. Siehe `docs/entscheidungen.md`.
-- Composer-/pnpm-Dependencies aktualisiert (`composer update`/`pnpm update`, u. a. `phpunit` 13.3.0
-  -> 13.3.1, `prettier` 3.8.1 -> 3.9.6, `lucide-static` 1.28.0 -> 1.31.0), alles innerhalb der
-  bestehenden Versions-Ranges. Lint/Test/Audit danach erneut gruen.
-- Von `pnpm audit` gefundene Sicherheitsluecken in Dev-Dependencies behoben: `vite` 5.4 -> 8.2,
-  `@tailwindcss/vite`/`tailwindcss` 4.1 -> 4.3 (gleicher Peer-Dependency-Bereich), dadurch
-  automatisch gepatchte transitive `esbuild`/`postcss`/`nanoid`. `immutable` (transitiv ueber
-  `vite`s ungenutzte optionale `sass`/`sass-embedded`-Peer-Deps) per neuem
-  `pnpm-workspace.yaml`-`overrides`-Eintrag auf die gepatchte Version erzwungen.
-  `vite.config.js`s `__dirname` auf `import.meta.dirname` umgestellt (Vite-8-Deprecation-Warning).
-  Build und `pnpm audit` danach verifiziert.
+- Windows-/PowerShell-Skripte, Vorlagen-Skripte (`rename-theme.sh`, `pull-base-updates.sh`), `archive-product.php`, `archive-stellenangebote.php`, `woocommerce.php`.
 
 ## [1.0.0] - 2026-08-12
 
-Erste versionierte Basis, mit Git-Historie ab diesem Stand (siehe README "Prozess & Versionierung").
-
-### Added
-
-- Erstes Git-Repository fuer die Basis-Vorlage (vorher unversioniert), inkl. Remote auf
-  `github.com/awortmeier/wordpress-hengegroup-theme`.
-- ~90 generische, projektunabhaengige Base-Komponenten unter `template-parts/base/` (Phase 1 laut
-  `CLAUDE.md`: Markup, Config-API, Verhalten, Barrierefreiheit — noch ohne visuelles Styling).
-- Progressive-Enhancement-JS fuer die interaktiveren Komponenten unter
-  `assets/js/template-parts/base/` (u. a. `select`, `combobox`, `dropdown-menu`, `calendar`,
-  `data-table`, `carousel`, `dialog`, `tabs`/`toggle`-ARIA-Schliessung).
-- WordPress-/WooCommerce-Grundgerüst (`inc/setup/`), Vite-Build (`vite.config.js`), FTP-Deploy-
-  Skripte (`scripts/deploy*.ps1`), i18n-Tooling, Icon-Sync (Lucide/Tabler).
-- `scripts/rename-theme.ps1` zum Bootstrappen neuer Projekt-Themes aus dieser Vorlage.
-- WPCS-Lint (`composer lint`) + Prettier-Formatierung als Tooling-Grundlage (siehe `CLAUDE.md`
-  Regel 11).
-- `LICENSE` (proprietaer/All Rights Reserved).
+Erste Version: Base-Komponenten, WordPress-/WooCommerce-Grundgeruest, Vite-Build, Deploy-, i18n- und
+Icon-Skripte, Lint/Format-Tooling.
 
 [Unreleased]: https://github.com/awortmeier/wordpress-hengegroup-theme/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/awortmeier/wordpress-hengegroup-theme/releases/tag/v1.0.0

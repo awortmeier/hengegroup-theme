@@ -2,171 +2,28 @@
 
 declare(strict_types=1);
 
-// API modeled on shadcn/ui's Card family (Card / CardHeader / CardTitle / CardDescription /
-// CardAction / CardContent / CardFooter) -- no headless UI primitive underneath at all, just plain
-// <div> wrappers with no interactive state, so unlike e.g. accordion.php/select.php there is no
-// native-HTML-vs-JS deliberation to make here (CLAUDE.md #1). shadcn's six sub-components
-// collapse into ONE config-driven file here instead of a six-file subfolder (the "more
-// than one file -> own subfolder" rule doesn't apply) -- same spirit as badge.php/accordion.php
-// folding their own sub-parts into config keys/arrays instead of separate files: title/
-// description/image are genuinely single-purpose slots this component renders itself by nesting
-// other base components, while action/content/footer stay content-agnostic
-// pre-rendered-HTML slots (same convention as aspect-ratio.php's `content`) because shadcn's own
-// CardAction/CardContent/CardFooter accept arbitrary children, not just text.
+// Card. Renders nothing when everything is empty; the header only when title/description/action
+// is given; the media only when image.php actually renders something.
 //
-// Nests typography.php for the title (variant 'body-lg') and description (variant 'body-sm') slots
-// via its `data_slot` escape hatch (same trick as input.php's/textarea.php's/label.php's own
-// `data_slot`, see those files' own header comments) so the rendered elements carry
-// data-slot="card-title"/"card-description" instead of typography.php's own default
-// data-slot="typography" -- lets project CSS target [data-slot="card-title"] directly without an
-// extra wrapper element. Nests image.php for the optional cover-media slot: buffer the output and
-// check for emptiness (image.php renders nothing for a missing/invalid file), skip the media
-// wrapper entirely rather than emitting an empty <div> (same pattern hengegroup_theme_render_image()
-// exists for, see inc/template-parts/helpers.php).
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
-// "Hengegroup" (https://claude.ai/code/artifact/c2fdca5b-79fc-47b7-92c8-e861966ac106, same
-// `.dc.html` reference workflow as popover.php's/toast.php's own entries, see
-// docs/entscheidungen.md for this component's entry). Card/CardHeader/CardTitle/CardDescription/
-// CardAction/CardContent/CardFooter classes are shadcn's own current ones (live-checked against
-// shadcn-ui/ui's `apps/v4/registry/new-york-v4/ui/card.tsx` on 2026-09-05), applied to this file's
-// single-file structure instead of six separate components, with these deliberate deviations:
-//   - radius bumped from shadcn's stock `rounded-xl` to `rounded-2xl` -- this project's own
-//     established radius for card/floating surfaces (popover.php's/toast.php's/calendar.php's own
-//     `rounded-2xl` cards), not the reference's literal 20px either, same "standardize across
-//     surfaces instead of over-fitting to one demo number" precedent as popover.php's own entry.
-//   - `border` alone (shadcn relies on the browser default border-color) swapped for explicit
-//     `border-border` -- this project has a purpose-built `--color-border`/`--color-card`/
-//     `--color-card-foreground` token trio already named for exactly this role (tokens.css), same
-//     "prefer an existing semantic token over an implicit default" precedent as popover.php's own
-//     `--color-popover` reuse.
-//   - `[.border-b]:pb-6` (shadcn's own optional CardHeader-bottom-divider affordance, activated by
-//     a caller manually adding a `border-b` class) is dropped entirely -- nothing in this file lets
-//     a caller reach that class on the header `<div>` (only the outer element takes a passthrough
-//     `class`), so it would be dead, unreachable code; no reference example shows a header divider
-//     either. `[.border-t]:pt-6` on the footer is KEPT because this file adds a real, reachable way
-//     to trigger it -- see `footer_divider` below.
-//   - `footer_divider` (new bool config, see below) -- PHP has no `cn()`/tailwind-merge to detect
-//     "did the caller happen to add a `border-t` class to their own footer content", so shadcn's
-//     own trick (inspect the CALLER's className for a `border-t` substring via `[.border-t]:pt-6`)
-//     can't apply to a *wrapper* div the caller doesn't control here; exposed as an explicit
-//     boolean instead, same idea (a visible top divider bumps the footer's own top padding to
-//     `pt-6`/`pt-4`), reachable this time. The reference's "Musteranfrage" form card shows this
-//     (divider above the submit button); its "Edelkorund" card shows the plain no-divider default.
-//   - `gap-3`/`gap-2` (size-dependent, see below) added to the footer's own `flex items-center` --
-//     shadcn's stock CardFooter has no gap of its own (real shadcn usage rarely concatenates more
-//     than one bare child), but this file's `footer` config is raw pre-rendered HTML, often
-//     multiple buffered button.php calls with nothing of their own to add spacing between them
-//     (same reasoning as button-group.php's own `gap-2`).
-//   - `href` (new config, see below) -- shadcn's Card has no polymorphic root, but this project
-//     already has the exact "asChild/Slot analog via `href`" idiom on two sibling components
-//     (button.php, badge.php); the reference's "Mit Bild" section needs the WHOLE card to be one
-//     clickable target (an `<a>` wrapping image+title+description+link), so this file adopts the
-//     same idiom rather than inventing a different one. Forces `tag` to `a` when given (same
-//     precedence as badge.php's own `href`). The hover-lift itself
-//     (`[a&]:hover:shadow-lg [a&]:hover:-translate-y-0.5`, matching the reference's own
-//     `box-shadow`/`translateY(-2px)` hover) uses the same `[a&]:` shadcn idiom badge.php's own
-//     `outline` variant already relies on -- inert unless the rendered root actually IS an `<a>`,
-//     so it's safe to bake into the base classes unconditionally rather than branching on `$href`.
-//   - `media_badge` (new config, see below) -- the reference's product cards overlay a colored
-//     label (badge.php's own look) on the top-left corner of the cover image; `image` alone has no
-//     room for a sibling element inside `card-media`, so this adds one narrowly-scoped slot for it
-//     rather than growing `image` itself into something it isn't (image.php stays pure `<img>`
-//     plumbing, see its own header comment).
-//   - `size: "default" | "sm"` ("uses smaller spacing", per shadcn's own Card docs prose) now
-//     actually styles both steps -- Phase 1 only wired the `data-size` hook. shadcn's own current
-//     docs mention this prop and a `--card-spacing` CSS variable, but the live-checked source file
-//     above shows neither (registry drift between docs prose and that exact file/version); rather
-//     than guess at an unconfirmed CSS-variable mechanism, `sm` here is this file's own
-//     straightforward reduced-spacing step (gap/padding one Tailwind stop down from `default`),
-//     same spirit as the documented intent.
-//   - the reference's "Auf dunklem Grund" section was NOT ported, same reason as every other
-//     component's Phase-2 entry so far (popover.php/toast.php/tooltip.php/etc.) -- this theme has
-//     no dark-mode/dark-surface strategy yet, see docs/to-do.md.
-//   - No file-per-variant split, no `card/` folder move (the task explicitly asked to check, same
-//     as popover.php's own entry). Every "variant" the reference shows -- the two-column "Basis"
-//     cards (a data-list-with-footer-buttons card and a form card, both differing only in what
-//     `content`/`footer` markup the caller supplies), the "Mit Bild" clickable product card
-//     (`image` + `media_badge` + `href`), and the "Kompakt" stat cards (`content` only, no
-//     title/description/footer) -- is markup/config the existing single-file component already
-//     models via `title`/`description`/`image`/`media_badge`/`action`/`content`/`footer`/`href`,
-//     not a structurally different composition.
-//   - `page-component-showcase-card.php` new, analog to the other showcase pages.
-//
-// Project card (Audit 2026-10-08 Punkt 1, explicit request 2026-10-08): this file is now the ONE
-// card the project's own templates use (Anwendungskarte, Anwendungs-Uebersicht, Faktenleiste
-// Stellenangebot, Stellen-Zeile, Auszeichnung) instead of each carrying its own literal
-// `rounded-*`/`bg-white`/`shadow-[...]` markup. Changes for that:
-//   - `elevation: flat | raised` replaces the stock `border border-border shadow-sm` look with the
-//     two card steps from tokens.css (`shadow-card-flat`/`rounded-card-flat` = 16px,
-//     `shadow-card-raised`/`rounded-card-raised` = 20px). No border any more -- none of the
-//     project's cards have one.
-//   - `href` hover: `shadow-card-hover` (flat) / `shadow-lg` (raised) instead of shadow + lift --
-//     the Stellen-Zeile's own design has no lift (its arrow moves instead, via the caller's
-//     `group` class), plus a visible focus ring the old version lacked.
-//   - `size: lg` (28px padding) -- the design references' most common card padding (contact card,
-//     Anwendungskarte, Download-Karte), alongside `default` (24px) and `sm` (16px).
-//   - `icon` + `icon_class`: a 44px icon box left of the title (Anwendungskarte; same box as
-//     attachment.php's `variant: 'card'`).
-//   - `title_variant`: typography.php variant for the title (default body-lg); title weight is
-//     `font-extrabold` (every project card's title), not shadcn's `font-semibold`.
-//   - `orientation: horizontal`: media as a full-height column on the left (240px from `sm` up,
-//     stacked on top below), header/content/footer in a padded body column on the right
-//     (Anwendungs-Uebersicht). A small inline logo (Auszeichnung) is NOT media -- that stays
-//     caller `content`.
-//
-// Supported config:
-//   title          string   optional. Visible title, rendered via typography.php (variant
-//                             'body-lg', data_slot 'card-title')
-//   title_tag      string   h2 | h3 | h4 | h5 | h6 (default: h3) -- overrides the rendered heading
-//                             tag while keeping the 'body-lg' visual variant, same
-//                             config-vs-visual-style split as accordion.php's `heading_tag`
-//   description    string   optional. Secondary text below the title, rendered via typography.php
-//                             (variant 'body-sm', color 'neutral', data_slot 'card-description')
-//   image          array    optional. image.php config for a cover-media slot, rendered above the
-//                             header, wrapped in <div data-slot="card-media"> -- omitted entirely
-//                             when image.php itself renders nothing (missing/invalid file); bleeds
-//                             edge-to-edge (negative top margin + rounded top corners matching the
-//                             card's own) when present
-//   media_badge    string   optional. Pre-rendered HTML (e.g. a buffered badge.php call) shown as
-//                             an absolutely-positioned overlay in the media slot's top-left corner
-//                             -- ignored when `image` doesn't actually render anything
-//   action         string   optional. Pre-rendered HTML for the header's top-right slot (shadcn's
-//                             CardAction), e.g. a buffered button.php icon-only call -- caller's
-//                             responsibility to build/escape (content-agnostic, same convention as
-//                             aspect-ratio.php's `content`)
-//   content        string   optional. Pre-rendered HTML for the card body (shadcn's CardContent) --
-//                             arbitrary markup, not limited to text
-//   footer         string   optional. Pre-rendered HTML for the footer (shadcn's CardFooter), e.g.
-//                             buffered button.php calls (same convention as button-group.php's
-//                             `content`)
-//   footer_divider bool     default false -- adds a visible top border + extra top padding above
-//                             the footer (shadcn's own optional CardFooter divider affordance, see
-//                             the Phase 2 note above); ignored when `footer` is empty
-//   href           string   optional. Renders the outer element as `<a href="...">` instead of
-//                             `tag` (shadcn asChild/Slot analog, same idiom as button.php's/
-//                             badge.php's own `href`) -- makes the WHOLE card one clickable target,
-//                             with a hover-lift affordance (see the Phase 2 note above)
-//   tag            string   div (default) | article | section | li -- semantic root element
-//                             override, e.g. `article` for an independent card, `li` for a card
-//                             that is itself the item of a caller's `<ul>`;
-//                             ignored when `href` is given (forced to `a` instead)
-//   size           string   default | sm | lg -- sets data-size on the outer element AND drives
-//                             spacing: sm 16px, default 24px, lg 28px padding (see the notes above)
-//   elevation      string   flat (default) | raised -- shadow + radius step from tokens.css
-//   orientation    string   vertical (default) | horizontal -- see the project-card note above
-//   icon           string   optional. Pre-rendered icon HTML (e.g. hengegroup_theme_render_icon())
-//                             shown in a 44px box left of the title -- only with a `title`
-//   icon_class     string   classes for that box (default `bg-muted text-foreground`), e.g. a
-//                             brand background + foreground color
-//   title_variant  string   body-lg (default) | body-base | body-sm -- typography.php variant of
-//                             the title
-//   class / attributes / data_attributes   passthrough onto the outer <div data-slot="card">
-//
-// Header (title/description/action) is only rendered when at least one of the three is given --
-// same conditional-region convention as shadcn's own CardHeader (its grid layout already changes
-// based on whether a CardAction is present). Nothing is printed at all when the whole config
-// resolves empty (no image, no header, no content, no footer).
+// Config:
+//   title            string   via typography.php
+//   title_tag        string   h2-h6 (default h3)
+//   title_variant    string   body-lg (default) | body-base | body-sm
+//   description      string
+//   image            array    image.php config (cover media)
+//   media_badge      string   pre-rendered overlay top left of the image
+//   icon             string   pre-rendered icon in a 44px box left of the title
+//   icon_class       string   classes of that box (default bg-muted text-foreground)
+//   action           string   pre-rendered HTML top right of the header
+//   content          string   pre-rendered body
+//   footer           string   pre-rendered footer
+//   footer_divider   bool     divider above the footer
+//   href             string   whole card as <a> (hover + focus ring)
+//   tag              string   div (default) | article | section | li
+//   size             string   sm (16px) | default (24px) | lg (28px)
+//   elevation        string   flat (default) | raised
+//   orientation      string   vertical (default) | horizontal (media as left column)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -235,8 +92,6 @@ if ($icon_class === '') {
 
 $horizontal = $orientation === 'horizontal';
 
-// Size -> spacing map (Phase 2, see file header): `sm` steps every gap/padding down one real
-// Tailwind stop from `default` instead of an arbitrary/guessed value.
 $size_classes = [
     'default' => [
         'outer_gap' => 'gap-6',
@@ -282,10 +137,7 @@ if ($image_config !== null) {
                 )
                 : '';
 
-        // Vertical: bleeds edge-to-edge over the outer padding, rounded top corners matching the
-        // card's own radius step. Horizontal: a full-height left column (the outer element's
-        // `overflow-hidden` rounds it), the caller's image typically `absolute inset-0 size-full
-        // object-cover`.
+        // Vertical: bleeds to the card edge. Horizontal: full-height left column.
         $media_class = $horizontal
             ? 'min-h-45'
             : $s['media_mt'] .
@@ -311,10 +163,7 @@ if ($title !== '') {
             'tag' => $title_tag,
             'text' => $title,
             'data_slot' => 'card-title',
-            // shadcn's own CardTitle is `leading-none font-semibold`; the project's cards all use
-            // extrabold titles (see the project-card note above). Line height stays typography.php's
-            // own `leading-normal` -- a second `leading-*` class here would compete with it (no
-            // tailwind-merge in PHP).
+            // No extra leading-*: it would compete with typography.php's own.
             'class' => 'font-extrabold',
         ],
     ]);
@@ -330,8 +179,6 @@ if ($description !== '') {
             'variant' => 'body-sm',
             'text' => $description,
             'data_slot' => 'card-description',
-            // shadcn's own CardDescription is `text-muted-foreground` -- typography.php's `color`
-            // axis already models this exact role (see its own header comment).
             'color' => 'neutral',
             'class' => 'text-pretty',
         ],
@@ -347,7 +194,6 @@ $action_markup =
         )
         : '';
 
-// Icon box left of the title: title (+ icon) become one row in the header grid's first cell.
 if ($title_markup !== '' && trim($icon) !== '') {
     $title_markup = sprintf(
         '<div class="flex min-w-0 items-center gap-3.5" data-slot="card-title-row"><span class="%1$s" data-slot="card-icon">%2$s</span>%3$s</div>',
@@ -404,7 +250,6 @@ if (trim($media_markup . $body_html) === '') {
     return;
 }
 
-// Horizontal: header/content/footer move into their own padded body column next to the media.
 $inner_html = $horizontal
     ? $media_markup .
         sprintf(
@@ -417,9 +262,6 @@ $inner_html = $horizontal
 
 $element_attributes = $attributes;
 
-// Base classes derived from shadcn's own Card ones (`flex flex-col gap-6 rounded-xl border bg-card
-// py-6 text-card-foreground shadow-sm`, live-checked 2026-09-05) with the elevation/hover
-// deviations documented in the file header above.
 $elevation_classes = [
     'flat' => 'rounded-card-flat shadow-card-flat [a&]:hover:shadow-card-hover',
     'raised' => 'rounded-card-raised shadow-card-raised [a&]:hover:shadow-lg',

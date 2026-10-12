@@ -2,63 +2,23 @@
 
 declare(strict_types=1);
 
-// API modeled on shadcn/ui's Button (variant/size vocabulary, icon slot, loading state,
-// polymorphic root element). Phase 2 (CLAUDE.md Regel 1): styled via Tailwind, classes taken
-// 1:1 from shadcn's own buttonVariants() cva() definition (registry/new-york-v4/ui/button.tsx,
-// live-checked 2026-08-28) with three deliberate deviations:
-//   - variant vocabulary renamed to this project's own brand-color names (see `variant` below)
-//     instead of shadcn's default/secondary -- see docs/entscheidungen.md for why.
-//   - all `dark:`-prefixed classes dropped -- this theme has no dark-mode strategy yet (see
-//     docs/to-do.md), shipping half a dark-mode path (shadcn's literal dark: utilities without
-//     this project's own tokens following suit) would be worse than shipping none.
-//   - size vocabulary renamed/reduced to sm | base | lg (+ icon-sm | icon-base | icon-lg) instead
-//     of shadcn's default | xs | sm | lg (+ icon | icon-xs | icon-sm | icon-lg) -- shadcn's
-//     `default`/`icon` dropped entirely rather than kept as a 4th step, `sm` renamed `base`
-//     (it's the new middle/most-used step) and `xs` renamed `sm` (now the smallest step) -- see
-//     docs/entscheidungen.md for why.
-// variant/size still double as data-attributes (data-variant/data-size), same hooks as before,
-// now additionally driving the actual Tailwind classes instead of being purely a future hook.
+// Button, <a> with `href`.
 //
-// Supported config:
-//   text / label   string   visible label (omit for an icon-only button)
-//   href           string   renders <a> instead of <button> (shadcn's asChild/Slot analog)
-//   variant        string   henge-green | henge-blue | henge-grey | grey-dark | grey-light |
-//                           destructive | outline | ghost | link -- project-specific brand-color
-//                           vocabulary instead of shadcn's default/secondary (henge-green replaces
-//                           default, grey-light replaces secondary; henge-blue/henge-grey/grey-dark
-//                           are new solid-fill options), destructive/outline/ghost/link unchanged
-//   size           string   sm | base | lg | icon-sm | icon-base | icon-lg -- project-specific
-//                           rename/reduction of shadcn's current Button size scale (default | xs |
-//                           sm | lg | icon | icon-xs | icon-sm | icon-lg), see file header above
-//   type           string   button | submit | reset (ignored when href is set)
-//   full_width     bool     stretches the button to 100% of its parent's width (adds `w-full`) --
-//                           combinable with every variant/size, on explicit request
-//   disabled       bool
-//   loading        bool     implies disabled; swaps the icon slot for a spinner and sets aria-busy
-//   icon           array    icon.php config, e.g. ['name' => 'arrow-right', 'set' => 'lucide'].
-//                           Rendered with a data-icon="inline-start"|"inline-end" attribute
-//                           (matching shadcn's own icon-spacing convention) reflecting
-//                           `icon_position`, unless the button is icon-only (nothing to be
-//                           "inline" relative to there)
-//   icon_position  string   start | end (ignored for icon-only buttons)
-//   spinner        array    spinner.php config overrides for the loading spinner, merged onto the
-//                           computed default (size mapped from this button's own `size`,
-//                           color: 'inherit' so the spinner takes on whichever text color `variant`
-//                           already set instead of its own default brand color -- see spinner.php's
-//                           own header for why `inherit` exists --, decorative: true since
-//                           aria-busy + the button's own text/aria-label already announce the
-//                           loading state, a second role="status" from the spinner itself would be
-//                           redundant)
-//   aria_label     string   required for icon-only buttons (no visible text to name them) -- a
-//                           missing value doesn't hard-fail the render, but triggers
-//                           a WP_DEBUG-only _doing_it_wrong() hint, see
-//                           hengegroup_theme_warn_missing_aria_label()
-//   class          string   appended AFTER the computed base/variant/size classes (plain string
-//                           concat, no tailwind-merge/cn() equivalent available in PHP) -- a
-//                           conflicting utility here is not guaranteed to win over the computed
-//                           ones, unlike shadcn's own className prop. Fine for additive classes
-//                           (margins, layout), not for overriding e.g. bg-*/text-* from `variant`
-//   attributes / data_attributes   passthrough, as in the other base parts
+// Config:
+//   text / label    string   omit for icon-only
+//   href            string   renders <a>
+//   variant         string   henge-green (default) | henge-blue | henge-grey | grey-dark |
+//                            grey-light | destructive | outline | ghost | link
+//   size            string   sm | base (default) | lg | icon-sm | icon-base | icon-lg
+//   type            string   button | submit | reset
+//   full_width      bool     w-full
+//   disabled        bool
+//   loading         bool     implies disabled, shows a spinner, sets aria-busy
+//   icon            array    icon.php config
+//   icon_position   string   start | end
+//   spinner         array    spinner.php overrides for the loading spinner
+//   aria_label      string   required for icon-only (WP_DEBUG warning otherwise)
+//   class / attributes / data_attributes   `class` is appended, not merged
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -113,26 +73,6 @@ if (!in_array($size, $allowed_sizes, true)) {
     $size = 'base';
 }
 
-// Base/variant/size classes taken 1:1 from shadcn's buttonVariants() cva() call (see file header
-// for source/deviations), except:
-//   - outline/ghost/link's hover-state colors, which use this project's grey-dark/grey-light
-//     brand tokens instead of shadcn's neutral accent/-foreground (design request 2026-08-30):
-//     outline's border also switched from --color-input to --color-grey-dark for the same reason.
-//   - shape/padding (design request 2026-08-30, per-size hengegroup.com pill-button reference):
-//     rounded-md swapped for a fully rounded pill (rounded-full) everywhere, horizontal padding
-//     widened per size (`base` matches the reference nav pill's 10px/20px exactly, `lg` matches
-//     the reference hero CTA's 28px horizontal exactly) -- vertical padding stays governed by each
-//     size's fixed h-* like before, only `base` already carried an explicit py-* (bumped
-//     proportionally, same as its px-*).
-//   - per-size font-size (design request 2026-08-30, same hengegroup.com reference pages): moved
-//     out of the shared base text-sm into $size_classes below, one step per size instead of
-//     shadcn's single shared size -- sm/icon-sm text-sm (14px), base/icon-base text-base (16px),
-//     lg/icon-lg text-lg (18px). Real Tailwind scale steps only, no arbitrary px value (see
-//     docs/entscheidungen.md for the source pixel values this was mapped from, and for why the
-//     size vocabulary itself was renamed/reduced from shadcn's default | xs | sm | lg).
-// font-family/text-color are NOT repeated here -- inherited from the site-wide `body` rule
-// (assets/css/app.css), same "only declare what deviates from the global default" pattern shadcn
-// itself uses.
 $base_classes =
     'inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-medium ' .
     'whitespace-nowrap transition-all outline-none focus-visible:border-ring ' .
@@ -140,20 +80,8 @@ $base_classes =
     'disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 ' .
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
-// bg-*/text-* utilities below are `!`-marked (Tailwind's own important-modifier, e.g.
-// `!bg-henge-blue`, same mechanism/precedent as calendar.php's own `!`-prefixed day-cell classes,
-// see that file's header comment) -- bugfix for the block editor iframe: since button.php's
-// `<a>`/`<button>` output carries `wp-element-button` (WordPress' own opt-out class from the
-// global `styles.elements.link` text color, see docs/entscheidungen.md "button.php:
-// wp-element-button gegen die globale Link-Farbe"), it now ALSO opts into WordPress' generic
-// "give `.wp-element-button` a default color/background from the site's top-level color settings
-// when `styles.elements.button` isn't defined in theme.json" behaviour (ours isn't defined) --
-// that generic default ties in specificity with these plain Tailwind classes the exact same way
-// the link-color rule did, and in the editor iframe (global-styles-inline-css loads AFTER
-// add_editor_style()'s app.css there, opposite order from the frontend) it was winning, painting
-// every solid variant white instead of its actual brand color. `!` forces these specific
-// color-bearing utilities to win regardless of load order, without touching border/shadow/
-// underline/focus-ring utilities on the same line (those never collided).
+// `!` on colors: WordPress' default .wp-element-button colors otherwise win in the editor iframe,
+// where global styles load after app.css.
 $variant_classes = [
     'henge-green' => '!bg-henge-green !text-henge-green-foreground hover:!bg-henge-green/90',
     'henge-blue' => '!bg-henge-blue !text-henge-blue-foreground hover:!bg-henge-blue/90',
@@ -191,8 +119,7 @@ if ($icon_position !== 'end') {
 $is_icon_only = $text === '' && ($has_icon || $loading);
 
 if ($loading) {
-    // Button size -> spinner size: sm/base/lg map 1:1, icon-* variants reuse their text
-    // counterpart's step (spinner.php has no icon-* concept of its own, it's never icon-shaped).
+    // icon-* sizes reuse the spinner size of their text counterpart.
     $spinner_size_map = [
         'sm' => 'sm',
         'base' => 'base',
@@ -247,16 +174,8 @@ if ($is_icon_only) {
 }
 
 $element_attributes = $attributes;
-// `wp-element-button` is WordPress core's own opt-out class: theme.json's global
-// `styles.elements.link` text color (this project's henge-green, see tokens.css/
-// docs/entscheidungen.md) is emitted as `a:where(:not(.wp-element-button))`, so WITHOUT this class
-// an <a>-rendered button's `text-*-foreground` variant class ties in specificity with that global
-// rule and can lose the cascade (visibly wrong in the block editor iframe, where the global-styles
-// stylesheet loads after add_editor_style()'s app.css) -- see docs/entscheidungen.md "button.php:
-// wp-element-button gegen die globale Link-Farbe" for the full story. Every core block that renders
-// an interactive button as an <a> (Button/Search/Pagination/...) adds this same class for the same
-// reason, native <button> elements are unaffected by that selector but get it too for consistency
-// (this IS a button, never an inline content link, regardless of `href`/tag).
+// wp-element-button exempts the button from theme.json's global link color
+// (a:where(:not(.wp-element-button))), like core's own buttons.
 $element_attributes['class'] = trim(
     $computed_class . ' wp-element-button' . ($class_name !== '' ? ' ' . $class_name : ''),
 );
@@ -279,8 +198,7 @@ $element_attributes = hengegroup_theme_merge_data_attributes($element_attributes
 
 if ($href !== '') {
     if ($disabled) {
-        // <a> has no native disabled attribute; dropping href removes it from the tab order
-        // and from navigation, aria-disabled announces the state to assistive tech.
+        // <a> has no disabled attribute: drop href, announce via aria-disabled.
         $element_attributes['aria-disabled'] = 'true';
     } else {
         $element_attributes['href'] = $href;

@@ -2,37 +2,12 @@
 
 declare(strict_types=1);
 
-// Produktbereich: Taxonomie "Anwendungen" (`produkt_anwendung`), URL-Struktur und Weiterleitungen. Backend-Felder:
-// inc/setup/theme-products-admin.php, Daten-/Render-Helfer: inc/template-parts/products.php.
-// Begruendung: docs/entscheidungen.md "Produktbereich: Datenmodell" und "Produktbereich: URLs".
-//
-// URL-Struktur (explizite Vorgabe):
-//   /produkte/                -> normale WordPress-Seite aus Bloecken (Buehne, "Produktkategorie",
-//                                "Kontakt"), KEIN WooCommerce-Shop-Archiv -- gleiches Muster wie
-//                                /karriere/. Deshalb liefert der Filter
-//                                `woocommerce_get_shop_page_id` -1: sonst wuerde WooCommerce die
-//                                Seite (falls sie als Shop-Seite eingetragen ist) mit
-//                                seinem Archiv-Template kapern und die Bloecke ignorieren.
-//   /produkte/<produkt>/      -> Produktdetailseite (woocommerce/single-product.php). Rewrite-Slug
-//                                des Post-Types `product` per Filter statt ueber die
-//                                WooCommerce-Permalink-Einstellung, damit die Struktur im Code
-//                                steht und nicht auf jeder Instanz von Hand gesetzt werden muss.
-//   /anwendungen/             -> normale Seite aus Bloecken (Buehne, "Anwendungsgruppe", "Kontakt");
-//                                Anwendungen haben keine eigenen Seiten (explizite Vorgabe).
-//
-// Produkt-Archive gibt es nicht als eigene Seiten (deshalb auch kein woocommerce/archive-product.php):
-// das Post-Type-Archiv und JEDE Produkt-Taxonomie (Kategorien, Schlagwoerter, Marken
-// `product_brand`, oeffentliche Attribute) leiten per 301 auf die Produktuebersicht weiter
-// (Kategorien direkt auf ihre Sektion, `#<kategorie-slug>`, siehe Block "Produktkategorie").
+// Produktbereich: Taxonomie "Anwendungen", URLs und Weiterleitungen. /produkte/ und /anwendungen/
+// sind Seiten aus Bloecken; Produkte liegen unter /produkte/<slug>/. Alle Produkt-Archive leiten
+// per 301 auf die Uebersicht.
 
 /**
- * Taxonomie "Anwendungen" am Produkt, hierarchisch: Ebene 1 = Gruppen (Sektionen der Seite
- * /anwendungen/), Ebene 2 = Anwendungen. Nicht oeffentlich (keine Archivseiten, keine Sitemap) --
- * angezeigt wird sie nur ueber den Block "Anwendungsgruppe", die Produktbox und die
- * Produktdetailseite. Zuordnung im Produkt-Editor ueber eine eigene, nach Gruppen sortierte Box
- * (theme-products-admin.php) sowie per Quick Edit/Massenbearbeitung in der Produktliste.
- * Begruendung: docs/entscheidungen.md "Anwendungen: Taxonomie statt Post-Type, nur
- * Uebersichtsseite".
+ * Hierarchisch (Gruppe > Anwendung), nicht oeffentlich.
  */
 function hengegroup_theme_register_anwendung_taxonomy(): void
 {
@@ -68,10 +43,6 @@ function hengegroup_theme_register_anwendung_taxonomy(): void
 }
 add_action('init', 'hengegroup_theme_register_anwendung_taxonomy');
 
-/**
- * Produkte unter /produkte/<slug>/ und ohne eigenes Post-Type-Archiv (die Uebersicht ist eine
- * Seite, siehe Dateikopf).
- */
 function hengegroup_theme_filter_register_post_type_product(array $args): array
 {
     $args['has_archive'] = false;
@@ -89,9 +60,7 @@ add_filter(
 );
 
 /**
- * Keine WooCommerce-Shop-Seite, solange nichts bestellbar ist -- siehe Dateikopf. Sobald der Shop
- * kommt, braucht es fuer Warenkorb/Kasse keine Shop-Seite; nur Links wie "Zurueck zum Shop"
- * zeigen dann auf die Produktuebersicht (siehe docs/to-do.md).
+ * Keine Shop-Seite, sonst kapert WooCommerce /produkte/ mit seinem Archiv.
  */
 function hengegroup_theme_filter_shop_page_id(): int
 {
@@ -100,8 +69,7 @@ function hengegroup_theme_filter_shop_page_id(): int
 add_filter('woocommerce_get_shop_page_id', 'hengegroup_theme_filter_shop_page_id');
 
 /**
- * Schreibt die Rewrite-Regeln einmalig neu, sobald sich die URL-Struktur aendert (Version unten
- * hochzaehlen) -- gleiches Muster wie hengegroup_theme_action_init_flush_career_rewrites().
+ * Rewrite-Regeln einmalig neu schreiben; bei URL-Aenderungen die Version erhoehen.
  */
 function hengegroup_theme_action_init_flush_product_rewrites(): void
 {
@@ -117,10 +85,7 @@ function hengegroup_theme_action_init_flush_product_rewrites(): void
 add_action('init', 'hengegroup_theme_action_init_flush_product_rewrites', 99);
 
 /**
- * Legt das globale Attribut "Koernung" (`pa_koernung`) einmalig an, falls es fehlt -- die
- * Produktdetailseite liest die lieferbaren Koernungen daraus (inc/template-parts/products.php).
- * Ein globales Attribut statt freier Zeilen, damit die Koernungen spaeter ohne Datenumbau zur
- * Variantenauswahl werden koennen ("Fuer Variationen verwenden"), sobald Produkte bestellbar sind.
+ * Legt `pa_koernung` an, falls es fehlt (globales Attribut, damit es spaeter Varianten werden kann).
  */
 function hengegroup_theme_action_init_ensure_grain_attribute(): void
 {
@@ -151,9 +116,7 @@ function hengegroup_theme_action_init_ensure_grain_attribute(): void
 add_action('init', 'hengegroup_theme_action_init_ensure_grain_attribute', 20);
 
 /**
- * /produkte/<name>/ trifft zuerst die Einzel-Regel der Produkte. Gibt es kein Produkt mit diesem
- * Slug, aber eine Unterseite der Uebersichtsseite, wird die Anfrage auf diese Seite umgebogen --
- * gleiches Muster wie hengegroup_theme_filter_request_career_child_pages().
+ * Unterseiten von /produkte/ treffen sonst die Produkt-Regel.
  */
 function hengegroup_theme_filter_request_product_child_pages(array $query_vars): array
 {
@@ -175,11 +138,7 @@ function hengegroup_theme_filter_request_product_child_pages(array $query_vars):
 add_filter('request', 'hengegroup_theme_filter_request_product_child_pages');
 
 /**
- * 301 von allen Produkt-Taxonomie-Archiven und dem Produkt-Archiv auf die Produktuebersicht --
- * Kategorien direkt auf ihre Sektion (`#<slug>`, Anker des Blocks "Produktkategorie"). Alle
- * Taxonomien am Post-Type `product` statt einer festen Liste, damit auch spaeter hinzukommende
- * (z. B. WooCommerce-Marken `product_brand`, oeffentliche Attribute) nicht auf WooCommerces
- * ungestyltem Standard-Archiv landen.
+ * 301 aller Produkt-Taxonomie-Archive (auch kuenftiger) auf die Uebersicht, Kategorien auf ihren Anker.
  */
 function hengegroup_theme_action_template_redirect_product_archives(): void
 {
@@ -198,20 +157,12 @@ function hengegroup_theme_action_template_redirect_product_archives(): void
 }
 add_action('template_redirect', 'hengegroup_theme_action_template_redirect_product_archives');
 
-/**
- * Keine Produkt-Taxonomien in der XML-Sitemap -- es gibt keine eigenen Seiten dafuer (siehe
- * Weiterleitung oben).
- */
 function hengegroup_theme_filter_wp_sitemaps_taxonomies_products(array $taxonomies): array
 {
     return array_diff_key($taxonomies, array_flip(get_object_taxonomies('product')));
 }
 add_filter('wp_sitemaps_taxonomies', 'hengegroup_theme_filter_wp_sitemaps_taxonomies_products');
 
-/**
- * Produkte bekommen die bestehende SEO-Metabox (siehe docs/how-to.md "Ein weiteres,
- * Seiten-spezifisches SEO-Feld nutzen").
- */
 function hengegroup_theme_filter_seo_post_types_products(array $post_types): array
 {
     $post_types[] = 'product';

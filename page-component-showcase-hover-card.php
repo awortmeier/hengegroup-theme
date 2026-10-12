@@ -3,25 +3,11 @@
 /**
  * Template Name: Component Showcase - Hover Card
  *
- * Dev-only page template: renders template-parts/base/hover-card.php across a rich product-preview
- * example, a contact-card example, all four `side` values, and a product-list example reusing the
- * same preview shape, for manual visual/functional review during Phase 2 styling work -- not meant
- * for production content or navigation. Analog zu page-component-showcase-popover.php/-tooltip.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Hover Card"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Design reference: https://claude.ai/code/artifact/d9a5a3e2-3a09-494f-926b-206c5fa23e93
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();
 
-// This project has no standalone avatar.php (see docs/entscheidungen.md) -- the initials circle below
-// is dev-only decorative markup for this one demo trigger, not a reusable base component, same
-// spirit as popover.php's own showcase building one-off demo markup (its filter checkbox list)
-// that isn't part of any base component either.
 $hover_card_avatar_markup =
     '<span class="inline-flex size-9 items-center justify-center rounded-full bg-henge-green ' .
     'text-sm font-semibold text-henge-green-foreground">MK</span>';

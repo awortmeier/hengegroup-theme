@@ -3,21 +3,7 @@
 /**
  * Template Name: Component Showcase - Typography
  *
- * Dev-only page template: renders template-parts/base/typography.php across every documented
- * variant (headline-lg | headline-base | headline-sm | headline-xs | body-lg | body-base |
- * body-sm | body-xs), color (default | light | neutral) and the variant/tag decoupling for
- * manual visual/functional review during Phase 2 styling work -- not meant for production content
- * or navigation. Analog zu page-component-showcase-button.php/page-component-showcase-badge.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Typography"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses
- * the existing per-page mechanism instead of a second one.
- *
- * Another slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- one page per
- * component, not the full one-call-per-base-component page from that entry yet, see
- * docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

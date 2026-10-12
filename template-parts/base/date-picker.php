@@ -2,88 +2,23 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's own docs are explicit: "The Date Picker is built using a composition of the
-// <Popover /> and the <Calendar /> components" -- it is a documented RECIPE, not a standalone
-// component with its own headless primitive. When this file was first written, this theme had no
-// standalone popover.php to compose with (this project's JS-enhanced floating-panel components --
-// select.php/combobox.php/dropdown-menu.php -- had each so far implemented their own
-// open/close/outside-click logic locally rather than sharing one "Popover" abstraction), so rather
-// than inventing a popover.php that nothing else needed yet, this file mirrored dropdown-menu.php's
-// own recipe instead: native <details>/<summary> for the zero-JS trigger/panel shell (CLAUDE.md
-// #1), with template-parts/base/calendar.php nested directly inside the panel
-// instead of a Popover wrapper -- structurally "DetailsSummary + Calendar", the same substitution
-// dropdown-menu.php already made for "DetailsSummary + Menu items".
+// Date picker: <details>/<summary> with a nested calendar.php (works without JS).
+// date-picker.js updates the trigger text, closes on selection, outside click and Escape, and
+// blocks opening while disabled (without JS `disabled` is only announced).
 //
-// template-parts/base/popover.php now exists (built to match shadcn's/Base UI's actual Popover
-// behaviour -- role="dialog", focus moves into the panel on open, see that file's header comment).
-// This file deliberately keeps its own recipe rather than being refactored to nest popover.php:
-// date-picker.js already owns the open/close/outside-click/Escape logic and the trigger-text
-// reformatting on selection, none of which a nested popover.php would simplify, and popover.php's
-// role="dialog" panel would be a misleading label for content that is really a form control's
-// picker surface, not a dialog. Revisit this pairing if/when a second consumer of popover.php
-// shows the same recipe would genuinely reduce duplication here.
-//
-// Zero-JS baseline: click (or Enter/Space on) the trigger to show/hide the panel; the nested
-// calendar.php is, per its own header comment, fully functional without JS (native radio/checkbox
-// day selection, real prev/next month links). Two honest, documented gaps in that baseline, not
-// silently dropped: the trigger's displayed date text does NOT update to reflect a pick (there is
-// no native way to reflect one element's state into another's text content), and the panel does not
-// auto-close after picking a date (same class of gap as dropdown-menu.php's own missing
-// outside-click/Escape-close in its zero-JS path). assets/js/template-parts/base/date-picker.js
-// closes both gaps: outside-click/Escape to close (mirrors dropdown-menu.js), and a listener for
-// the nested calendar's native `change` event (fires on its radio/checkbox inputs automatically, no
-// special wiring needed) that reformats the trigger text and closes the panel. Month navigation
-// inside the panel already works without a page reload for free once JS is active -- that's
-// calendar.js's own job, and it initializes independently off of `[data-slot="calendar"]`
-// regardless of whether that element happens to be nested inside a date-picker.
-//
-// Deliberately out of scope for v1: the "Range Picker" variant shadcn's own docs also show. That
-// needs calendar.php's `mode: 'range'`, which is itself an explicitly deferred, not-yet-built
-// extension point there (see that file's header comment) -- building a range date-picker on top of
-// a calendar that can't do ranges isn't possible yet, not a separate decision to make here.
-// `disabled` similarly has a known gap: <details>/<summary> has no native disabled concept (same
-// limitation accordion.php already documents), so this file only sets aria-disabled/data-disabled
-// hooks; date-picker.js intercepts the trigger's click while `data-disabled` is set and prevents
-// the native <details> toggle, so the panel actually stays closed once JS is active -- without JS,
-// the trigger remains clickable/keyboard-operable despite the hooks, an honest, documented gap
-// like the others in this file.
-//
-// CSS contract, same shape as dropdown-menu.php's: date-picker.js sets `data-js` on the outer
-// <details data-slot="date-picker"> once initialized; nothing needs hiding/showing by it (the
-// native `open` attribute already does that), but project CSS can use it to gate e.g. a fade
-// transition that would look broken without JS driving it.
-//
-// Supported config:
-//   mode              string   single | multiple (default: single) -- forwarded to the nested
-//                              calendar.php as-is, see that file's own `mode` doc
-//   selected          string|array   forwarded to calendar.php's own `selected`
-//   placeholder       string   trigger text shown when nothing is selected (default: "Pick a
-//                              date")
-//   date_format       string   date_i18n()-compatible format for the trigger's selected-date text
-//                              (default: 'F j, Y', e.g. "August 6, 2026")
-//   month / year      int      forwarded to calendar.php's own `month`/`year` (initial displayed
-//                              month)
-//   disabled_dates / min_date / max_date / week_starts_on / show_outside_days
-//                     forwarded as-is to calendar.php, see that file's own docs
-//   name              string   forwarded to calendar.php's own `name` (real form field for the
-//                              picked date(s))
-//   icon              array    icon.php config for the trigger's leading icon (default:
-//                              ['name' => 'calendar', 'set' => 'lucide'], shadcn's own choice);
-//                              pass false to omit
-//   disabled          bool     sets aria-disabled="true"/data-disabled="true" on the trigger (see
-//                              the scope note above on its zero-JS limits)
-//   aria_label        string   accessible name for the trigger when its visible text
-//                              (placeholder/selected date) isn't descriptive enough on its own
-//   id                string   native `id` on the outer <details>; auto-generated via
-//                              wp_unique_id() when omitted
-//   class / attributes / data_attributes   passthrough onto the outer
-//                              <details data-slot="date-picker"> wrapper
-//
-// Not itself config, but worth documenting: the wrapper also carries `data-placeholder` and
-// `data-count-template` (the already-translated "%d dates selected" pattern) -- date-picker.js's
-// own bootstrap data, so it can revert to the placeholder or rebuild the summary text after a live
-// pick without hardcoding a second, possibly-untranslated copy of either string (DOM stays the
-// single source of truth, not duplicated JS-side config).
+// Config:
+//   mode                 string         single (default) | multiple
+//   selected             string|array   Y-m-d
+//   placeholder          string         default "Pick a date"
+//   date_format          string         date_i18n() format, default 'F j, Y'
+//   month / year         int
+//   disabled_dates / min_date / max_date / week_starts_on / show_outside_days   see calendar.php
+//   name                 string         form name of the date(s)
+//   icon                 array|false    default calendar icon
+//   disabled             bool
+//   aria_label           string
+//   id                   string         default wp_unique_id()
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -182,17 +117,6 @@ if ($calendar_markup === '') {
     return;
 }
 
-// Phase 2 (CLAUDE.md Regel 1): the trigger gets the same field-surface Tailwind classes as
-// input.php (see that file's header for the Bewerbungsformular design-reference mapping) plus
-// button.php's own `outline` hover treatment -- matching its own `data-variant="outline"` above --
-// since a <summary> has no native pointer/hover affordance of its own. The panel itself is now just
-// an `absolute`-positioned offset (same floating-panel technique as select.php's/combobox.php's own
-// content panels, which this one was missing until now -- a real, pre-existing bug, not a deliberate
-// simplification: this panel pushed following page content down instead of floating over it,
-// unlike those two's already-`absolute` panels); it carries no border/background/padding/shadow of
-// its own anymore because the nested calendar.php now renders that entire card surface itself (see
-// that file's own header comment) -- keeping both would double-card a bordered/shadowed box inside
-// another one.
 $trigger_attributes = [
     'class' =>
         'inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border ' .
@@ -204,11 +128,7 @@ $trigger_attributes = [
         "[&_svg:not([class*='size-'])]:size-4",
     'data-slot' => 'date-picker-trigger',
     'data-variant' => 'outline',
-    // Not "dialog": that value promises a role="dialog" panel (see dropdown-menu.php's own
-    // aria-haspopup="menu" + role="menu" pairing on the same pattern), but the panel below never
-    // gets a role -- there's no focus trap/aria-modal either, it's a plain floating <div> holding
-    // calendar.php's grid, not a real dialog. "true" is the honest, generic "this trigger opens
-    // some kind of popup" value instead of announcing dialog semantics the panel doesn't have.
+    // "true" instead of "dialog": the panel is not a dialog (no role, no focus trap).
     'aria-haspopup' => 'true',
 ];
 
@@ -233,8 +153,6 @@ $content_markup = sprintf(
     $calendar_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
-// `relative` anchors the content panel's `absolute` positioning above -- same root-is-the-anchor
-// pattern as select.php's/combobox.php's own wrappers.
 $wrapper_attributes = $attributes;
 $wrapper_attributes['class'] = trim('relative' . ($class_name !== '' ? ' ' . $class_name : ''));
 $wrapper_attributes['data-slot'] = 'date-picker';

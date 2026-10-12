@@ -3,26 +3,7 @@
 /**
  * Template Name: Component Showcase - Field
  *
- * Dev-only page template: renders the template-parts/base/field/ family (field.php,
- * field-set.php, field-legend.php, field-group.php, field-content.php, field-title.php,
- * field-description.php, field-error.php, field-separator.php, field-label.php) across
- * orientation, error-state and composition scenarios, plus the form components they wrap
- * (input.php/checkbox.php/native-select.php), for manual visual/functional review during Phase 2
- * styling work -- not meant for production content or navigation. Same content-agnostic-wrapper
- * caveat as page-component-showcase-button-group.php: every section buffers its child output via
- * ob_start()/ob_get_clean() before handing it to the wrapping field.php/field-set.php/
- * field-group.php call as `content`, see those files' own header comments for the composition
- * pattern and the hengegroup_theme_field_describedby()/_description_id()/_error_id() id-wiring
- * helpers used throughout.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Field"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Further slice of the "Komponenten-Showcase-Seite" idea documented as deliberately deferred in
- * docs/entscheidungen.md ("Komponenten-Showcase-Seite und Performance-Tooling") -- not the full
- * one-call-per-base-component page from that entry yet, see docs/to-do.md.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

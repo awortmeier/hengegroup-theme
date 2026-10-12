@@ -3,57 +3,23 @@
 @import "./fonts.css";
 
 @layer components {
-    /* Erste echte Phase-2-Nutzung von --font-primary/--color-background/--color-foreground (siehe
-       tokens.css-Kopfkommentar) -- shadcns eigenes Muster: Komponenten (z. B. button.php) setzen
-       Text-/Hintergrundfarbe nur, wo sie vom globalen Default abweichen (z. B. bg-henge-green),
-       und verlassen sich sonst auf diese globale Vorgabe statt sie pro Komponente zu wiederholen.
-       Seitenhintergrund ist grey-light statt --color-background (weiss): Sektionen setzen ihn nicht
-       mehr selbst, sondern erben ihn vom Body; --color-background bleibt weiss fuer Flaechen wie
-       Inputs/Karten. */
+    /* Seitenhintergrund grey-light; --color-background bleibt weiss (Inputs, Karten). */
     body {
         @apply bg-grey-light text-foreground font-primary;
     }
 
-    /* Wiederverwendbarer 12-Spalten-Grid-Container fuer Block-Layouts
-       (template-parts/blocks/*): zentriert, deckelt bei --container-page (tokens.css, aktuell
-       1600px), responsives Seiten-Padding. Setzt `grid-cols-12` direkt auf den Container statt
-       eines zweiten Wrapper-Elements -- Bloecke platzieren Kinder einfach mit Tailwinds eigenen
-       `col-span-*`/`col-start-*`-Utilities, kein eigenes `grid-template-columns` noetig. Ein Kind
-       ohne `col-span-*` belegt wie bei jedem 12-Spalten-Grid-System nur eine Spalte -- volle
-       Breite braucht explizit `col-span-12`. Siehe docs/entscheidungen.md "12-Spalten-Grid ueber
-       .wrapper" fuer die Breiten-/Abstands-Werte und warum das hier statt in
-       template-parts/base|components liegt. `max-w-page` (generiert aus `--container-page`) statt
-       eines eigenen Arbitrary-Values, weil buehne/render.php's Dot-Reihe dieselbe Breite braucht,
-       ohne `.wrapper` selbst nutzen zu koennen (siehe dortiger Kommentar) -- ein Token statt zweier
-       unabhaengig gepflegter Werte, die sonst wie bereits einmal passiert auseinanderlaufen. */
+    /* 12-Spalten-Grid fuer Block-Layouts; Kinder brauchen col-span-*, volle Breite = col-span-12. */
     .wrapper {
         @apply max-w-page mx-auto grid w-full grid-cols-12 gap-x-4 px-4 sm:gap-x-6 sm:px-6 lg:gap-x-8 lg:px-8;
     }
 
-    /* Schmalere Variante von `.wrapper` (1000px statt --container-page) fuer schmalere
-       Block-Inhalte (z. B. Textabschnitte, Formulare) -- gleiches 12-Spalten-Grid/Padding-Schema,
-       nur mit niedrigerer Deckelung. Eigener Arbitrary-Value statt eines weiteren Tokens: wird
-       bislang nur hier gebraucht (siehe tokens.css-Konvention, Token erst anlegen, wenn eine
-       zweite Stelle den Wert tatsaechlich braucht). Siehe docs/entscheidungen.md "12-Spalten-Grid
-       ueber .wrapper". */
     .wrapper-small {
         @apply mx-auto grid w-full max-w-[1000px] grid-cols-12 gap-x-4 px-4 sm:gap-x-6 sm:px-6 lg:gap-x-8 lg:px-8;
     }
 
-    /* template-parts/base/accordion.php: open/close height transition for its native <details>
-       content panel -- documented Regel-1 raw-CSS exception, see that file's own header comment
-       for why this can't cleanly be Tailwind utilities. `interpolate-size: allow-keywords` lives
-       on the `<details>` itself so `height` can transition to/from its `auto` value;
-       `::details-content` is the UA-generated box wrapping everything in a `<details>` except its
-       `<summary>` (Baseline since ~2025) -- animating that box instead of a hand-rolled wrapper
-       div keeps this a zero-JS, zero-extra-markup technique. `content-visibility` rides along in
-       the same transition with `allow-discrete` so content stays visible/painted for the full
-       closing animation instead of vanishing the instant `[open]` is removed (the CSS Working
-       Group's own textbook example for this exact `<details>` pattern). Scoped to
-       [data-slot="accordion-item"] specifically, NOT a bare `details` selector -- dropdown-menu.php
-       also builds on native <details>, but its content floats (position: absolute) and isn't meant
-       to animate a height, so this must not reach it. No fallback needed: browsers without
-       `::details-content` support simply keep the native instant open/close snap. */
+    /* Ausnahme zu "nur Tailwind": Hoehen-Animation des Accordions ueber ::details-content und
+       interpolate-size (zwei Selektoren, nicht sinnvoll als Utilities). Nur Accordion, nicht
+       dropdown-menu. Ohne Browser-Support schnappt es ohne Animation auf. */
     [data-slot="accordion-item"] {
         interpolate-size: allow-keywords;
     }
@@ -70,15 +36,7 @@
         height: auto;
     }
 
-    /* template-parts/base/attachment/attachment-group.php: edge fade for its horizontal-scroll row
-       of attachment.php cards -- documented Regel-1 raw-CSS exception, see that file's own header
-       comment for why (no stock Tailwind utility for a `mask-image` edge fade; shadcn's own
-       `scroll-fade-x` is its own custom utility, not built into Tailwind itself -- the scrollbar
-       itself is hidden via scroll-area.php's own `scrollbar: 'none'` config instead, a Tailwind
-       class, not raw CSS). `mask-image` fades the actual scrolling content to transparent at both
-       edges -- works on any background, unlike a fake gradient-to-a-hardcoded-color overlay div.
-       Always-on (no scroll-position tracking without JS), so it also dims the first/last card when
-       nothing is actually cut off -- accepted, documented tradeoff, not a bug. */
+    /* Ausnahme: Randverlauf per mask-image (kein Tailwind-Utility); immer aktiv, auch ohne Ueberlauf. */
     [data-slot="attachment-group"] {
         mask-image: linear-gradient(
             to right,
@@ -89,13 +47,7 @@
         );
     }
 
-    /* template-parts/base/progress/progress.php: `striped: true`'s animated diagonal stripe fill --
-       documented Regel-1 raw-CSS exception, see that file's own `striped` header note for why (no
-       stock Tailwind utility for a repeating-linear-gradient background + animated
-       background-position sweep, unlike `animate-pulse`/`animate-spin`). Built on `currentColor`
-       (progress.php sets `color` via its `variant`, same value the solid non-striped fill already
-       reads via `bg-current`) so this one block covers every variant instead of needing one per
-       color. */
+    /* Ausnahme: animierte Streifen (repeating-linear-gradient), ueber currentColor fuer alle Varianten. */
     [data-slot="progress"][data-striped="true"]::-webkit-progress-value,
     [data-slot="progress"][data-striped="true"]::-moz-progress-bar {
         background-image: repeating-linear-gradient(
@@ -116,14 +68,8 @@
         }
     }
 
-    /* template-parts/base/tabs.php: panel-switching, documented Regel-1 raw-CSS exception -- see
-       that file's own header comment for the full rationale (CSS can't cross-reference two
-       elements' attribute VALUES, only their position, so a `:has()` + positional `:nth-child()`
-       pair is the only generic way to reveal the Nth panel when the Nth trigger's radio is
-       checked; Tailwind's static class scanner can't generate one rule per position for an
-       unbounded `items` array either). Generated up to 16 tabs -- comfortably above any real tab
-       bar this theme renders; raise the bound by copying the last block and bumping both
-       `:nth-child()` indices by one if a project ever needs more. */
+    /* Ausnahme: Tab-Panels per :has() + :nth-child() (Tailwind kann keine Regel je Position
+       erzeugen). Bis 16 Tabs; fuer mehr den letzten Block kopieren und beide Indizes erhoehen. */
     [data-slot="tabs-content"] {
         display: none;
     }
@@ -256,18 +202,8 @@
         display: block;
     }
 
-    /* template-parts/base/toast.php: entrance animation + auto-dismiss countdown bar, documented
-       Regel-1 raw-CSS exceptions -- see that file's own header comment for the full rationale (no
-       stock Tailwind utility composes a named, reusable keyframe set, same reasoning as
-       progress.php's own `hg-progress-stripes` below). `hg-toast-in`/`hg-toast-in-top` are two
-       separate keyframes (not one parameterized by a CSS variable) because the property that
-       differs -- `translateY`'s sign -- can't be swapped via a custom property inside a `transform`
-       function the way `hg-toast-life`'s duration can; toast.php's `[data-slot="toast"]` always
-       renders the bottom-anchored `hg-toast-in` utility, this selector swaps just the
-       `animation-name` (not the whole shorthand, so duration/timing-function are untouched) for
-       toasts inside a top-anchored viewport. `hg-toast-life`'s animation-duration is the one
-       genuinely per-toast value (toast.php's/toast.js's own `--toast-duration` custom property, set
-       inline per toast) -- see toast.php's header for why that couldn't be a static utility either. */
+    /* Ausnahme: benannte Keyframes fuer Toasts. Oben verankerte Toasts tauschen nur den
+       animation-name; die Laufzeit des Countdowns kommt per --toast-duration je Toast. */
     [data-slot="toaster"][data-position="top-left"] [data-slot="toast"],
     [data-slot="toaster"][data-position="top-center"] [data-slot="toast"],
     [data-slot="toaster"][data-position="top-right"] [data-slot="toast"] {
@@ -305,13 +241,8 @@
         }
     }
 
-    /* template-parts/base/popover.php: entrance animation, documented Regel-1 raw-CSS exception --
-       see that file's own header comment for the full rationale (no stock Tailwind utility
-       composes a named, reusable keyframe set, same reasoning as toast.php's/progress.php's own
-       entries above). Runs unconditionally on `[data-slot="popover-content"]` -- native
-       `<details>` already keeps this element out of the render tree while closed, so every open
-       re-triggers the animation for free, no JS-toggled state class needed the way toast.php's
-       always-in-DOM card would need one. */
+    /* Ausnahme: benannte Keyframes. <details> nimmt den Inhalt beim Schliessen aus dem Rendering,
+       daher startet die Animation bei jedem Oeffnen neu. */
     @keyframes hg-popover-in {
         from {
             opacity: 0;
@@ -323,20 +254,7 @@
         }
     }
 
-    /* template-parts/base/dialog.php: entrance animation for the content box AND (via the
-       `[&::backdrop]` arbitrary variant) the native `::backdrop` pseudo-element, documented Regel-1
-       raw-CSS exception -- see that file's own header comment for the full rationale (no stock
-       Tailwind utility composes a named, reusable keyframe set, same reasoning as popover.php's/
-       toast.php's own entries above). Runs unconditionally on `[data-slot="dialog-content"]`/its
-       `::backdrop` -- native `<dialog>` is `display: none` while closed (`dialog:not([open])`, UA
-       stylesheet), so every `showModal()`/`show()` call re-inserts it into the render tree and
-       re-triggers both animations for free, same "no JS-toggled state class needed" reasoning as
-       popover.php's own `hg-popover-in`. `hg-dialog-in` has no `translateY` axis (unlike
-       `hg-popover-in`) -- a dialog is centered via the UA stylesheet's own `margin: auto`, not
-       anchored to a trigger element the way a popover is, so a pure opacity+scale zoom (shadcn's own
-       real `DialogContent` animation shape, just without its `data-[state]`/tailwindcss-animate
-       plumbing since native `<dialog>` needs no open/closed state class to begin with) is the
-       correct shape here, not a borrowed floating-element axis. */
+    /* Ausnahme: benannte Keyframes fuer <dialog> und ::backdrop (laufen bei jedem Oeffnen neu). */
     @keyframes hg-dialog-in {
         from {
             opacity: 0;
@@ -357,16 +275,7 @@
         }
     }
 
-    /* template-parts/base/skeleton.php: moving-highlight shimmer sweep, documented Regel-1 raw-CSS
-       exception -- see that file's own header comment for the full rationale (no stock Tailwind
-       utility for a moving-gradient sweep, same category as progress.php's own striped-fill
-       exception above). Layered as a second `background-image` on top of `bg-accent`/`bg-grey-
-       light`'s own solid `background-color` (a separate CSS property, not a shorthand overwrite) --
-       the gradient's `transparent` stops let that solid fill show through everywhere except the
-       moving highlight band, so no extra pseudo-element/wrapper is needed. `color-mix(in oklab, ...)`
-       matches progress.php's own striped-fill technique above. Sweeps right-to-left (`background-
-       position` from a positive to a negative offset), matching the design reference's own "Ein
-       heller Streifen läuft von rechts nach links". */
+    /* Ausnahme: Schimmer-Verlauf als zweites background-image ueber der Grundfarbe, von rechts nach links. */
     [data-slot="skeleton"] {
         background-image: linear-gradient(
             90deg,
@@ -378,9 +287,6 @@
         animation: hg-skeleton-shimmer 1.8s ease-in-out infinite;
     }
 
-    /* `color: 'light'` (see skeleton.php's own header): same sweep, dimmer highlight -- the
-       reference's own "der Streifen läuft mit geringerer Deckkraft" (the stripe runs at lower
-       opacity) for a shape already sitting on a dark surface. */
     [data-slot="skeleton"][data-color="light"] {
         background-image: linear-gradient(
             90deg,

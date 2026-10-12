@@ -2,25 +2,10 @@
 
 declare(strict_types=1);
 
-// Custom Post Type "stellenangebote" (Karriere/Jobs) + Taxonomien, URL-Routing und Ablauf-Logik.
-// Backend-Felder: inc/setup/theme-careers-admin.php. JSON-LD/Title/Description:
-// inc/setup/theme-careers-seo.php. Daten-/Render-Helfer: inc/template-parts/careers.php.
-// Begruendung des Gesamtaufbaus: docs/entscheidungen.md "Stellenangebote: Datenmodell,
-// Google-Jobs-JSON-LD und Ablauf".
-//
-// URL-Struktur: jede Stelle unter /karriere/<slug>/ (`rewrite.slug`), die Uebersicht /karriere/ ist
-// KEIN Post-Type-Archiv mehr (`has_archive => false`), sondern eine normale WordPress-Seite, die
-// mit Bloecken gebaut wird (Buehne, Ueberschrift & Text, "Offene Stellen", ...) -- so bleibt die
-// Karriereseite redaktionell frei gestaltbar, statt in einem festen Archiv-Template zu stecken.
-// Weil die Einzel-Regel `karriere/<slug>` vor den Seiten-Regeln greift, faengt
-// hengegroup_theme_filter_request_career_child_pages() Unterseiten der Karriereseite
-// (z. B. /karriere/ausbildung/) ab, fuer die es keine gleichnamige Stelle gibt.
-//
-// Abgelaufene Stellen (besetzt oder `Gueltig bis` ueberschritten) bleiben im Backend erhalten,
-// verschwinden aber aus allen Listen und der XML-Sitemap und leiten per 301 auf die Karriereseite
-// weiter (explizite Vorgabe). Redakteure mit Bearbeitungsrecht sehen die Seite weiterhin, mit
-// Hinweis-Banner (single-stellenangebote.php). Alte Live-URLs der Form /karriere/?job=job-67 werden
-// ueber das Feld "Alte Stellen-ID" per 301 auf die neue Adresse umgeleitet.
+// Post-Type "stellenangebote" + Taxonomien, Routing und Ablauf. Stellen unter /karriere/<slug>/,
+// /karriere/ selbst ist eine Seite aus Bloecken. Abgelaufene Stellen: 301 auf die Karriereseite,
+// raus aus Listen und Sitemap (Redakteure sehen sie mit Hinweis). Alte URLs /karriere/?job=<id>
+// leiten ueber "Alte Stellen-ID" weiter.
 
 function hengegroup_theme_register_stellenangebote_post_type(): void
 {
@@ -47,9 +32,7 @@ function hengegroup_theme_register_stellenangebote_post_type(): void
         'show_in_rest' => true,
         'menu_icon' => 'dashicons-businessman',
         'supports' => ['title', 'editor', 'excerpt', 'revisions'],
-        // Vorlage fuer neue Stellen: Einleitung + die drei Listen als "Stellen-Liste"-Bloecke
-        // (Typ je Block, normale Gutenberg-Liste darin) -- siehe template-parts/blocks/stellen-liste.
-        // Nicht gesperrt: Redakteure duerfen Bloecke ergaenzen, umsortieren oder entfernen.
+        // Vorlage (nicht gesperrt): Einleitung + drei Stellen-Listen.
         'template' => [
             [
                 'core/paragraph',
@@ -75,11 +58,7 @@ function hengegroup_theme_register_stellenangebote_post_type(): void
 add_action('init', 'hengegroup_theme_register_stellenangebote_post_type');
 
 /**
- * Unternehmen/Standort/Taetigkeitsbereich als Taxonomien, damit Adresse, Logo, Farbe und
- * Ansprechpartner EINMAL gepflegt werden und in jeder Stelle identisch sind. Bewusst nicht
- * oeffentlich (keine eigenen, duennen Archivseiten wie /stellen_standort/offenbach/ im Index) und
- * nicht im REST/Block-Editor-Seitenpanel -- die Zuordnung passiert in der "Stellendetails"-Box
- * (Unternehmen als Einzelauswahl, Standorte als Mehrfachauswahl), siehe theme-careers-admin.php.
+ * Nicht oeffentlich (keine duennen Archivseiten); Zuordnung in der Stellendetails-Box.
  */
 function hengegroup_theme_register_stellenangebote_taxonomies(): void
 {
@@ -146,9 +125,7 @@ function hengegroup_theme_register_stellenangebote_taxonomies(): void
 add_action('init', 'hengegroup_theme_register_stellenangebote_taxonomies');
 
 /**
- * Schreibt die Rewrite-Regeln einmalig neu, sobald sich die URL-Struktur dieses Post-Types
- * aendert (Versionsnummer unten hochzaehlen) -- statt darauf zu vertrauen, dass jemand nach dem
- * Deploy "Einstellungen > Permalinks > Speichern" klickt.
+ * Rewrite-Regeln einmalig neu schreiben; bei URL-Aenderungen die Version erhoehen.
  */
 function hengegroup_theme_action_init_flush_career_rewrites(): void
 {
@@ -164,9 +141,7 @@ function hengegroup_theme_action_init_flush_career_rewrites(): void
 add_action('init', 'hengegroup_theme_action_init_flush_career_rewrites', 99);
 
 /**
- * /karriere/<name>/ trifft zuerst die Einzel-Regel dieses Post-Types. Gibt es keine Stelle mit
- * diesem Slug, aber eine Unterseite karriere/<name> (z. B. "Ausbildung", "Initiativbewerbung"),
- * wird die Anfrage auf diese Seite umgebogen statt einen 404 zu liefern.
+ * Unterseiten der Karriereseite treffen sonst die Stellen-Regel und liefern 404.
  */
 function hengegroup_theme_filter_request_career_child_pages(array $query_vars): array
 {
@@ -195,10 +170,6 @@ function hengegroup_theme_filter_request_career_child_pages(array $query_vars): 
 }
 add_filter('request', 'hengegroup_theme_filter_request_career_child_pages');
 
-/**
- * 301 fuer abgelaufene Stellen (-> Karriereseite) und alte Live-URLs /karriere/?job=<id>
- * (-> neue Stellen-URL, oder Karriereseite ohne Parameter, wenn es die Stelle nicht mehr gibt).
- */
 function hengegroup_theme_action_template_redirect_jobs(): void
 {
     $legacy_id = isset($_GET['job']) ? sanitize_text_field(wp_unslash($_GET['job'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -249,10 +220,6 @@ function hengegroup_theme_action_template_redirect_jobs(): void
 }
 add_action('template_redirect', 'hengegroup_theme_action_template_redirect_jobs');
 
-/**
- * Abgelaufene Stellen aus WordPress' eigener XML-Sitemap (wp-sitemap-posts-stellenangebote-1.xml)
- * herausnehmen -- Google soll sie gar nicht erst wieder crawlen.
- */
 function hengegroup_theme_filter_wp_sitemaps_posts_query_args_jobs(
     array $args,
     string $post_type,
@@ -273,8 +240,7 @@ add_filter(
 );
 
 /**
- * `lastmod` in der Sitemap = letzte Aenderung der Stelle (WordPress liefert fuer CPTs sonst
- * keinen), damit Google geaenderte Anzeigen schneller neu abholt.
+ * lastmod fuer Stellen (WordPress liefert fuer CPTs keinen).
  */
 function hengegroup_theme_filter_wp_sitemaps_posts_entry_jobs(
     array $entry,
@@ -294,11 +260,6 @@ add_filter(
     3,
 );
 
-/**
- * Stellenangebote bekommen die bestehende SEO-Metabox (Titel/Beschreibung/Social-Bild/Robots,
- * siehe inc/setup/theme-seo-admin.php) -- siehe docs/how-to.md "Ein weiteres, Seiten-spezifisches
- * SEO-Feld nutzen" fuer den Filter-Vertrag.
- */
 add_filter('hengegroup_theme_seo_post_types', function (array $post_types): array {
     $post_types[] = HENGEGROUP_THEME_JOB_POST_TYPE;
 

@@ -2,121 +2,20 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Tooltip wraps a headless UI primitive (historically Radix UI; shadcn now also ships
-// Base UI/React Aria variants of many components): a JS-driven floating panel, shown on
-// hover/focus, positioned relative to its trigger. Unlike most other components in this theme,
-// the plain native `title` attribute does NOT functionally replace this -- it can't be styled,
-// carries no rich content, and has unreliable/no touch support, so it's not a faithful substitute
-// (unlike e.g. native-select.php, where the native element genuinely covers shadcn's behaviour).
-// This is therefore -- like select.php -- a case where real JS is warranted.
+// Tooltip. Without JS the native `title` (via `text` or `trigger_title`). tooltip.js shows a styled
+// panel on hover/focus (delay, flip, Escape) and removes the title. The content is never `hidden`
+// (aria-describedby would break); visibility via data-state. `trigger` must be focusable itself.
 //
-// Progressive enhancement: with the `text` config, this component's wrapper gets a native
-// `title="..."` attribute for free -- a real, if unstyled, tooltip works with zero JS. On top of
-// that, assets/js/template-parts/base/tooltip.js finds these on page load and enhances them into
-// a styled floating panel (show on hover/focus with a delay, hide on mouseleave/blur/Escape,
-// simple single-axis flip if the preferred `side` doesn't fit -- not full collision detection,
-// deferred if ever needed) and removes the native `title` to avoid a duplicate browser tooltip.
-//
-// Accessibility: the tooltip content is NEVER given the `hidden` attribute (that would remove it
-// from the accessibility tree and break `aria-describedby`). It's always in the DOM, described via
-// `aria-describedby`, and only visually hidden by default -- project CSS hides/shows it via the
-// `data-state="open"|"closed"` attribute the JS toggles on the wrapper (opacity/pointer-events
-// below), never via `hidden`/`display:none` directly.
-//
-// Composition: `trigger` is caller-provided, pre-rendered HTML (same convention as
-// aspect-ratio.php's `content`) -- e.g. a buffered button.php/icon.php call. It should already be
-// focusable itself (a button, a link, or something the caller gave `tabindex="0"`); this component
-// does not add its own tabindex, since wrapping an already-focusable trigger in another focusable
-// element would create a duplicate tab stop.
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
-// "Hengegroup" (same `.dc.html` reference workflow as toast.php's/tabs.php's own entries, see
-// docs/entscheidungen.md for this component's entry). Stayed a single file, no
-// `template-parts/base/tooltip/` folder -- Regel 4 only moves a component into a folder once it's
-// more than one PHP file, and every "variant" the reference shows (four `side`s, an `align`
-// example, an icon-only trigger, a dotted-underline "help" trigger) is markup/config the existing
-// single-file component already models or a small addition to it (see `align` below), not a
-// structurally different composition the way e.g. separator.php + separator-label.php are.
-//
-// What carried over from the reference, and what didn't:
-//   - the card itself (`rgb(30,29,28)` background / `rgb(250,249,245)` text, 8px radius, 13px/1.4
-//     type, 7px/11px padding, `0 6px 18px rgba(0,0,0,.18)` shadow, 10px gap to the trigger, an 8px
-//     diamond arrow) is reproduced with real project tokens where they matched closely enough:
-//     `rgb(30,29,28)`/`rgb(250,249,245)` are near-exact matches for Tailwind's own
-//     `neutral-900`/`neutral-50` (closer than this project's existing `--color-foreground`/
-//     `-grey-dark`, which are pinned to `neutral-800`) -- used directly (`bg-neutral-900
-//     text-neutral-50`) rather than adding a new token, same "reference Tailwind's stock scales
-//     when no project token exists yet" convention tokens.css documents for e.g. toast.php's
-//     `warning` amber-600. Deliberately NOT `bg-primary text-primary-foreground` (shadcn's own
-//     stock TooltipContent classes) -- this project's `primary` role is the henge-green brand
-//     accent, and the reference's card is unambiguously a neutral near-black, not green, on every
-//     example including the icon/table ones.
-//   - the arrow reuses the content's own background via `bg-inherit` instead of repeating
-//     `bg-neutral-900` a second time -- same "derive from the one already-set value instead of a
-//     second, driftable source of truth" reasoning as toast.php's `text-current`/`bg-current`
-//     accent reuse.
-//   - a fixed `width:250px`/`240px` on the reference's two long-text examples (the table-row
-//     "SiO₂" tooltip, the dark-background "Siebrückstand" tooltip) was generalized to `max-w-xs`
-//     (320px) + `text-pretty` instead of copying either literal width: forcing every tooltip,
-//     including short ones, onto one specific caller's fixed pixel width would be over-fitting to
-//     that one demo string's length: a max-width that only engages once content is actually long
-//     enough serves both the short (`Basis`/`Positionen`/icon) and long (table-row) examples with
-//     one rule, closer to what a real per-call `text`/`content` value of arbitrary length needs
-//     from a *component*, not a caption written for one demo.
-//   - `align` (start | center (default) | end) is a new config key, not present in Phase 1 --
-//     the reference's table-row example is genuinely `align="start"` (its tooltip starts flush
-//     with the trigger's left edge instead of centering on it, same shape as the reference's other
-//     "align" case in hover-card.php's own header comment). This is real shadcn/Radix
-//     TooltipContent vocabulary this file simply hadn't implemented yet (Phase 1 focused on the
-//     functional minimum), not invented -- and hover-card.php already has the identical
-//     start/center/end vocabulary for the same reason, wired through the same shared
-//     utils/floating-position.js `align` option, so tooltip.js now passes `align` through to it
-//     exactly like hover-card.js already does.
-//   - the content box's OWN static `side`/`align` classes (its resting, pre-JS paint) come from the
-//     shared hengegroup_theme_floating_position_classes() helper (inc/template-parts/helpers.php,
-//     added 2026-09-05, extracted from popover.php's own Phase 2 pass) rather than a bespoke
-//     `group-data-[side=...]` matrix -- correct because `positionFloatingElement()` always
-//     overrides the content box's position via inline styles the moment a tooltip actually opens
-//     (see tooltip.js's own comment on why `top`/`left`/`right`/`bottom`/`transform`/`translate`
-//     all get explicitly cleared, not just `top`/`left` set), so only the ONE configured side/align
-//     combination is ever worth rendering as a class, not a reactive set covering every value
-//     `wrapper.dataset.side` could take on after a runtime flip. This incidentally also fixed a
-//     small pre-existing gap: the old static classes always centered regardless of `align`
-//     (documented as "JS-only" below) -- the resting paint now honours it too, for free, since the
-//     shared helper always takes both. The **arrow**, unlike the content box, gets NO JS
-//     positioning at all (same as the reference, which hardcodes each example's arrow inline rather
-//     than computing it) -- ITS classes therefore still need to react live to `wrapper.dataset.side`
-//     changing after a flip, so its own `group-data-[side=...]` matrix (unlike the content box's)
-//     was intentionally kept, not moved onto the shared helper. Its `align` shift is real static CSS
-//     for the same reason as before: a fixed 16px inset from the content's start/end edge, matching
-//     the reference's own literal `left:16px` value for its one shifted example, rather than trying
-//     to re-derive the trigger's exact center in pure CSS.
-//   - the reference's "Auf dunklem Grund" section was NOT ported, same reason as every other
-//     component's Phase-2 entry so far (separator.php/kbd.php/pagination.php/table/*.php/toast.php)
-//     -- this theme has no dark-mode/dark-surface strategy yet, see docs/entscheidungen.md.
-//   - `page-component-showcase-tooltip.php` new, analog to the other showcase pages.
-//
-// Supported config:
-//   trigger          string   required. Pre-rendered HTML for the trigger element
-//   text             string   tooltip content as plain text (escaped); also becomes the wrapper's
-//                              native `title` fallback automatically. Takes priority over `content`.
-//   content          string   tooltip content as pre-rendered HTML, for richer bodies than plain
-//                              text; caller's responsibility to escape/build
-//   trigger_title    string   optional plain-text native `title` fallback when using `content`
-//                              instead of `text` (which sets it automatically)
-//   side             string   top (default) | right | bottom | left -- sets data-side; the JS uses
-//                              it as the preferred placement, flipping to the opposite side if it
-//                              doesn't fit in the viewport
-//   align            string   start | center (default) | end -- sets data-align; the JS uses it
-//                              for cross-axis placement (shadcn/Radix's own TooltipContent prop,
-//                              see the Phase 2 note above -- same vocabulary as hover-card.php's
-//                              own `align`)
-//   delay            int      hover delay in ms before showing (default: 700, matches that
-//                              headless implementation's own default), read by the JS via data-delay
-//   id               string   id for the tooltip content; auto-generated via wp_unique_id() when
-//                              omitted (needed for the trigger's aria-describedby)
-//   class / attributes / data_attributes   passthrough onto the outer <span data-slot="tooltip">
-//                              wrapper (not onto `trigger`, which the caller already controls)
+// Config:
+//   trigger         string   pre-rendered (required)
+//   text            string   plain text, also the native title (wins over content)
+//   content         string   pre-rendered
+//   trigger_title   string   title fallback with `content`
+//   side            string   top (default) | right | bottom | left
+//   align           string   start | center (default) | end
+//   delay           int      default 700 ms
+//   id              string   default wp_unique_id()
+//   class / attributes / data_attributes   on the wrapper
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -183,34 +82,14 @@ if ($title_value !== '') {
 
 $wrapper_attributes = hengegroup_theme_merge_data_attributes($wrapper_attributes, $data_attributes);
 
-// `inline-flex` here (not the no-display default an unstyled <span> would have) matters for
-// correctness, not just looks: a plain inline element wrapping an inline-block child (e.g. a
-// button.php button) picks up the surrounding line box's own baseline/line-height "ghost space",
-// so getBoundingClientRect() on this wrapper -- which is exactly what the JS position math below
-// measures the trigger by -- would come back a few px taller than the actual visible trigger,
-// throwing off every side/align calculation by that same amount. A flex container's children
-// don't participate in that baseline line-box model, which is why this is the standard fix, not
-// a Regel-1 violation (see that rule's own "would the component work incorrectly without this
-// class" test).
+// inline-flex: avoids line-box ghost space that skews getBoundingClientRect().
 $trigger_markup = sprintf(
     '<span class="inline-flex" data-slot="tooltip-trigger" aria-describedby="%1$s">%2$s</span>',
     esc_attr($id),
     $trigger, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
-// Card look (bg-neutral-900/text-neutral-50, radius, shadow, gap-to-trigger per side) plus the
-// open/closed opacity transition -- see the Phase 2 file header for where each value comes from.
-// Position (the `hengegroup_theme_floating_position_classes()` call, inc/template-parts/helpers.php)
-// only ever matters for the resting/pre-JS paint: tooltip.js's `positionFloatingElement()` always
-// overrides it via inline styles the moment a tooltip actually opens (see that JS file's own
-// comment on why `top`/`left`/`right`/`bottom`/`transform`/`translate` all get explicitly
-// overridden, not just `top`/`left` set), so there is exactly one side/align combination worth
-// rendering here -- the configured one -- not a `group-data-[side=...]` matrix reacting to
-// tooltip.js's own runtime flip. That flip still happens (`wrapper.dataset.side` changes after a
-// viewport collision), it just no longer needs a matching CSS rule for the CONTENT box the way the
-// arrow below still does (no JS override there, see its own comment). This also fixes a pre-existing
-// gap: the old static classes always centered regardless of `align` (documented as JS-only), the
-// resting paint now honours `align` too, for free, from the same helper popover.php uses.
+// Position classes only paint the pre-JS state; tooltip.js overrides them inline.
 $content_classes =
     'absolute z-50 max-w-xs rounded-lg bg-neutral-900 px-[11px] py-[7px] text-[13px] ' .
     'leading-[1.4] text-neutral-50 text-pretty shadow-[0_6px_18px_rgba(0,0,0,0.18)] ' .
@@ -218,10 +97,7 @@ $content_classes =
     'group-data-[state=open]:pointer-events-auto group-data-[state=open]:opacity-100 ' .
     hengegroup_theme_floating_position_classes($side, $align);
 
-// The 8px diamond arrow -- `bg-inherit` takes the card's own `bg-neutral-900` instead of repeating
-// it (see the Phase 2 file header). Centered on the trigger's cross axis by default; `align`
-// start/end shift it to a fixed 16px inset from the content's edge instead (the one place `align`
-// DOES get static CSS, see the header comment for why that differs from the content box itself).
+// The arrow gets no JS positioning, so it reacts to data-side/data-align itself.
 $arrow_classes =
     'absolute size-2 rotate-45 bg-inherit ' .
     'group-data-[side=top]:top-full group-data-[side=top]:left-1/2 ' .

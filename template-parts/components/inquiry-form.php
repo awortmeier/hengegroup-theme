@@ -2,21 +2,13 @@
 
 declare(strict_types=1);
 
-// Produkt-Kontaktformular (Designs "Produktuebersicht", Abschnitt "Kontakt", und
-// "Produktdetailseite", Abschnitt "Ihr Ansprechpartner im Vertrieb"), verarbeitet von
-// inc/setup/theme-product-inquiries.php -- Eintrag im Menuepunkt "Produktanfragen", keine E-Mail.
+// Produkt-Anfrageformular, verarbeitet von inc/setup/theme-product-inquiries.php.
 //
-// Gleiche Bauweise wie template-parts/components/job-application-form.php (Basis-Felder aus
-// template-parts/base/, je Feld field/field.php + field-label.php + field-error.php ueber
-// hengegroup_theme_render_form_field(), Fehler je Feld mit `aria-describedby`, Zusammenfassung oben mit
-// `role="alert"`, Honeypot, Pflicht-Checkbox fuer die Datenschutzhinweise als Ergaenzung zum
-// Design). Kein eigenes Skript: reines HTML-Formular mit nativer Pflichtfeld-Pruefung.
-//
-// Supported args:
-//   product_id      int      Produkt, zu dem angefragt wird (0 = allgemeine Anfrage)
-//   with_location   bool     PLZ/Ort-Felder (Pflicht) anzeigen -- Produktuebersicht ja, Detailseite nein
-//   tone            string   light | dark -- Beschriftungsfarbe passend zum Sektionshintergrund
-//   message_label   string   Beschriftung des Nachrichtenfelds (default "Nachricht")
+// Args:
+//   product_id      int      0 = allgemeine Anfrage
+//   with_location   bool     PLZ/Ort-Pflichtfelder
+//   tone            string   light | dark (Beschriftungsfarbe)
+//   message_label   string   default "Nachricht"
 
 $product_id = (int) ($args['product_id'] ?? 0);
 $with_location = !empty($args['with_location']);
@@ -36,9 +28,7 @@ $link_class = $is_dark ? 'text-grey-light' : 'text-grey-dark';
 $label_class = 'text-sm font-semibold ' . $text_class;
 $error_class = $is_dark ? '!text-red-300' : '';
 
-// Gibt ein Feld aus hengegroup_theme_render_form_field() aus (field/field.php + field-label.php +
-// field-error.php). Die Datenschutz-Checkbox bringt ein eigenes <label> mit statt field-label.php,
-// weil ihr Text einen Link enthaelt und label.php reinen Text escaped.
+// Datenschutz-Checkbox mit eigenem <label>, weil label.php den Link escapen wuerde.
 $print_field = static function (array $field): void {
     printf(
         '%s',
@@ -82,8 +72,7 @@ $input = static function (
     ]);
 };
 
-// Feldzeilen: [Feld, Label, Typ, Pflicht, autocomplete] -- als Daten statt einzelner Aufrufe im
-// HTML-Teil (@prettier/plugin-php formatiert lange Einzelaufrufe dort nicht stabil).
+// Als Daten statt Einzelaufrufe im HTML-Teil: @prettier/plugin-php formatiert diese dort nicht stabil.
 $field_rows = [
     [
         ['company', __('Firma', 'hengegroup-theme'), 'text', true, 'organization'],

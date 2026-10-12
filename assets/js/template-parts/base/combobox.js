@@ -1,12 +1,5 @@
-// Progressive-enhancement layer for template-parts/base/combobox.php: builds a custom-styled,
-// filter-as-you-type listbox from a native <datalist>'s own <option> elements (single source of
-// truth, see that file's header comment) and wires up the WAI-ARIA "combobox with listbox popup"
-// pattern (role="combobox" + aria-expanded/aria-controls/aria-activedescendant, focus stays on the
-// text input itself). combobox.php never renders those states itself -- the popup they describe
-// only exists once this module builds it, same "PHP stays honest, JS applies the ARIA correction"
-// precedent as toggle.js/tabs.js -- so setupCombobox() applies role/aria-
-// autocomplete/aria-controls once here, before wiring up open()/close()/setActive(), which keep
-// aria-expanded/aria-activedescendant in sync afterwards.
+// Builds a styled listbox from combobox.php's <datalist> and applies the combobox ARIA pattern
+// (focus stays on the input). The ARIA states are only set here because the popup only exists with JS.
 
 function getOptions(datalist) {
     return Array.from(datalist.querySelectorAll("option"));
@@ -58,10 +51,7 @@ function buildListbox(input, content, options, indicatorTemplate, emptyTemplate,
             }
         }
 
-        // Classes taken from shadcn's own SelectItem/CommandItem (registry/new-york-v4/ui/
-        // select.tsx, command.tsx) -- same pattern as select.js's own `select-item` (see that
-        // file's comment): `relative`/`pr-8` + the indicator's own `absolute right-2` (below) keeps
-        // the checkmark from taking its own row instead of sitting next to the text inline.
+        // relative/pr-8 + absolute indicator keeps the check mark on the same line.
         const item = document.createElement("div");
         item.id = `${input.id}-option-${index}`;
         item.setAttribute("role", "option");
@@ -89,9 +79,6 @@ function buildListbox(input, content, options, indicatorTemplate, emptyTemplate,
         indicator.setAttribute("data-slot", "combobox-item-indicator");
         indicator.className = "absolute right-2 flex size-3.5 items-center justify-center";
 
-        // Only populate the indicator for the actually-selected item -- cloning the checkmark
-        // template unconditionally here (the previous bug, same as select.js's own) made it show
-        // on every item regardless of selection.
         if (indicatorTemplate && isSelected) {
             indicator.appendChild(indicatorTemplate.content.cloneNode(true));
         }
@@ -124,17 +111,12 @@ function setupCombobox(wrapper) {
 
     const options = getOptions(datalist);
 
-    // These four ARIA states describe the popup this module is about to build -- combobox.php
-    // deliberately leaves them off its zero-JS markup (see that file's header comment), so they're
-    // applied here, once, before any open()/close() call touches aria-expanded.
     input.setAttribute("role", "combobox");
     input.setAttribute("aria-autocomplete", "list");
     input.setAttribute("aria-controls", content.id);
 
-    // Resolve the initial canonical value from the input's server-rendered display text, then
-    // detach the input from the datalist so the browser's own native suggestion popup doesn't
-    // show a second, redundant UI next to the custom one (the <datalist> itself stays in the DOM
-    // as this module's own data source, see this file's header comment).
+    // Detach the input from the datalist so the native suggestions don't show next to the custom
+    // list (the datalist stays as data source).
     const initialMatch = options.find((option) => option.value === input.value);
     input.dataset.selectedValue = initialMatch
         ? initialMatch.dataset.value || initialMatch.value
@@ -225,8 +207,7 @@ function setupCombobox(wrapper) {
     });
 
     input.addEventListener("input", () => {
-        // A free-typed value no longer matches whatever was previously selected -- see this
-        // file's header comment on the v1 value===text scope decision.
+        // Free text no longer matches the previous selection.
         input.dataset.selectedValue = "";
         open();
         render();

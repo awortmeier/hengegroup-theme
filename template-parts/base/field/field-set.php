@@ -2,25 +2,11 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's FieldSet: a real native <fieldset>, semantically grouping several related fields
-// (e.g. a "Profile" section of a longer form) -- native HTML already provides the right grouping
-// element, no need to fake it with a <div role="group"> (see CLAUDE.md #1). Content-agnostic
-// wrapper, same nesting pattern as field-group.php: buffer an optional
-// field-legend.php call, an optional field-description.php call, and a field-group.php call, then
-// pass the combined HTML as `content`.
+// <fieldset> grouping related fields (legend + description + field-group).
 //
-// Phase 2 (CLAUDE.md Regel 1): classes taken 1:1 from shadcn's own FieldSet (registry/
-// new-york-v4/ui/field.tsx, live-checked 2026-08-30). The `has-[>[data-slot=radio-group]]` clause
-// is already live against this theme's own template-parts/base/radio/radio-group.php (same
-// data-slot); `has-[>[data-slot=checkbox-group]]` has no matching component yet (this theme only
-// has a single checkbox.php so far, no group variant) -- kept anyway as forward-compatible dead
-// weight, same reasoning as button-group.php's `[data-slot=select-trigger]` selector.
-//
-// Supported config:
-//   content   string   required. Pre-rendered HTML to wrap (typically field-legend.php +
-//                       field-description.php + field-group.php, in that order)
-//   class / attributes / data_attributes   passthrough onto the outer
-//                       <fieldset data-slot="field-set"> wrapper
+// Config:
+//   content   string   pre-rendered HTML (required)
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

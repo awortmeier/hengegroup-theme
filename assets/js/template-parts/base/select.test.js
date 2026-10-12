@@ -1,9 +1,4 @@
-// Unit tests for initSelect() (see select.js's header comment for the "select-only combobox" WAI-
-// ARIA pattern it builds on top of the native <select> in template-parts/base/select.php). Builds
-// the native-select + trigger/content markup select.php renders directly in jsdom instead of
-// importing the PHP template -- rendering real PHP output isn't available in this JS-only test
-// runner, see docs/to-do.md Abschnitt 1 for where a WP-backed integration suite
-// would close that gap.
+// Markup is built in jsdom to match select.php.
 import { beforeEach, describe, expect, it } from "vitest";
 import { initSelect } from "./select.js";
 

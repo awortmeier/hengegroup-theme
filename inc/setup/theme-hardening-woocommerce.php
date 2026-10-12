@@ -35,12 +35,8 @@ function hengegroup_theme_filter_disable_wp_img_auto_sizes(): bool
 }
 add_filter('wp_img_tag_add_auto_sizes', 'hengegroup_theme_filter_disable_wp_img_auto_sizes');
 
-/**
- * Versand komplett aus (explizite Nachfrage 2026-10-08): aktuell nur Produktkatalog, kein Shop --
- * ohne diesen Filter meldet WooCommerces Website-Zustand "Shipping enabled but no shipping methods
- * configured". Filter statt Option `woocommerce_ship_to_countries = disabled`, damit es auf jeder
- * Instanz gilt (siehe docs/entscheidungen.md). Fuer die spaetere Shop-Version wieder entfernen.
- */
+// Kein Versand (noch kein Shop); sonst meldet der Website-Zustand fehlende Versandarten. Filter statt
+// Option, damit es auf jeder Instanz gilt.
 add_filter('wc_shipping_enabled', '__return_false');
 
 function hengegroup_theme_cleanup_woocommerce_frontend_styles(): void

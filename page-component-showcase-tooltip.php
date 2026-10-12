@@ -3,18 +3,7 @@
 /**
  * Template Name: Component Showcase - Tooltip
  *
- * Dev-only page template: renders template-parts/base/tooltip.php across `side` (all four),
- * `align` (start/center/end), a plain-text trigger button, an icon-only toolbar and a
- * dotted-underline "help" trigger inside a data row, for manual visual/functional review during
- * Phase 2 styling work -- not meant for production content or navigation. Analog zu
- * page-component-showcase-toast.php/-tabs.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Tooltip"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Design reference: https://claude.ai/code/artifact/ee1a05dc-6403-4338-85f2-9e7531331931
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

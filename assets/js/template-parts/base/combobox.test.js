@@ -1,9 +1,4 @@
-// Unit tests for initCombobox() (see combobox.js's header comment for the WAI-ARIA "combobox with
-// listbox popup" pattern it applies on top of the native <input list="..."> + <datalist> baseline
-// in template-parts/base/combobox.php). Builds that native-input + datalist + content markup
-// directly in jsdom instead of importing the PHP template -- rendering real PHP output isn't
-// available in this JS-only test runner, see docs/to-do.md Abschnitt 1 for where
-// a WP-backed integration suite would close that gap.
+// Markup is built in jsdom to match combobox.php.
 import { beforeEach, describe, expect, it } from "vitest";
 import { initCombobox } from "./combobox.js";
 

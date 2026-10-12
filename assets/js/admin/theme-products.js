@@ -1,15 +1,12 @@
-// Wiederholbare Zeilen (chemische Analyse, Downloads) und Dateiauswahl aus der Mediathek im
-// Produkt-Tab "Technische Daten" (inc/setup/theme-products-admin.php). Gleiche Einbindung wie
-// theme-seo.js: kleines wp-admin-Skript ohne Build-Schritt, per wp_enqueue_script() geladen.
+// Repeatable rows and media-library file picker in the "Technische Daten" product tab.
 //
-// Markup-Vertrag:
-//   [data-hengegroup-repeatable="<key>"] tbody     Zeilen
-//   template[data-hengegroup-template="<key>"]     leere Vorlage-Zeile
-//   [data-hengegroup-add-row="<key>"]              haengt eine Vorlage-Zeile an
-//   [data-hengegroup-remove-row]                   entfernt die eigene Zeile
-//   [data-hengegroup-select-file]                  oeffnet wp.media(), schreibt die ID in
-//                                                  [data-hengegroup-file-input] und den Dateinamen in
-//                                                  [data-hengegroup-file-name] derselben Zeile
+//   [data-hengegroup-repeatable="<key>"] tbody     rows
+//   template[data-hengegroup-template="<key>"]     empty row template
+//   [data-hengegroup-add-row="<key>"]              appends a template row
+//   [data-hengegroup-remove-row]                   removes its row
+//   [data-hengegroup-select-file]                  opens wp.media(), writes the ID to
+//                                                  [data-hengegroup-file-input] and the name to
+//                                                  [data-hengegroup-file-name] in the same row
 document.addEventListener("click", (event) => {
     const target = event.target instanceof Element ? event.target : null;
 

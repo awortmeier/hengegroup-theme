@@ -1,17 +1,6 @@
-// Editor UI for template-parts/blocks/auszeichnungen/block.json (Eltern-Block) und
-// template-parts/blocks/auszeichnung/block.json (Kind-Block = eine Karte), beide in diesem Bundle
-// (vite.config.editor-auszeichnungen.js). Alles wird direkt in der Canvas bearbeitet (explizite
-// Nachfrage 2026-10-07):
-//   - Eltern-Block: Ueberschrift als `RichText`, Element (h1-h6/p) ueber die Block-Toolbar, die
-//     Karten als InnerBlocks -- Hinzufuegen ueber das "+" im Raster, Verschieben/Duplizieren/
-//     Loeschen ueber Gutenbergs eigene Block-Werkzeuge.
-//   - Kind-Block: Titel/Text/Button-Beschriftung als `RichText`; Bild per Klick auf das Bild (bzw.
-//     den Platzhalter) aus der Mediathek, Bildform und Button-Link ueber die Toolbar der Karte
-//     (Link als `LinkControl`-Popover wie beim Produkte-Block); nur der Alternativtext sitzt in der
-//     Sidebar, wie bei Cores eigenem Bild-Block.
-// Markup und Klassen spiegeln auszeichnungen/render.php bzw. auszeichnung/render.php (Tailwind ist
-// per add_editor_style() im Editor-Iframe geladen), damit die Canvas wie das Frontend aussieht.
-// Sidebar/Popover rendern ausserhalb des Iframes -- dort entsteht kein eigenes Styling.
+// Editor for "Auszeichnungen" (parent) and "Auszeichnung" (child card), edited directly in the canvas.
+// Markup mirrors the render.php files (Tailwind is loaded in the editor iframe); sidebar and
+// popovers render outside the iframe.
 import { createElement as el, Fragment, useEffect, useRef, useState } from "@wordpress/element";
 import { createBlock, registerBlockType } from "@wordpress/blocks";
 import {
@@ -41,8 +30,7 @@ import cardMetadata from "../../../../template-parts/blocks/auszeichnung/block.j
 
 const CHILD_BLOCK_NAME = cardMetadata.name;
 
-// Gleicher Plain-String-Rundlauf wie produkte/edit.jsx: alle Texte bleiben reine Strings, die
-// render.php-Dateien geben sie ueber esc_html() aus.
+// Texts stay plain strings; render.php escapes them.
 function toRichTextValue(text) {
     return toHTMLString({ value: create({ text }) });
 }
@@ -66,15 +54,12 @@ const SHAPE_OPTIONS = [
     { title: __("Abgerundet (Logo)", "hengegroup-theme"), value: "rounded" },
 ];
 
-// 1:1 aus template-parts/base/button.php's `variant: 'outline'`/`size: 'base'` gespiegelt.
+// Mirrors button.php outline/base.
 const BUTTON_PREVIEW_CLASSNAME =
     "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 self-end rounded-full border border-grey-dark px-4 text-base font-medium whitespace-nowrap";
 
-// Eigene "Hinzufuegen"-Kachel als letzte Rasterzelle statt Gutenbergs Standard-"+": dessen Wrapper
-// sitzt im Raster absolut positioniert ueber der letzten Karte und ist auf dunklem Grund kaum
-// sichtbar. `[&>.block-list-appender]:!static` (Important-Modifier, Gutenbergs eigene Editor-Styles
-// gewinnen sonst) am Raster (siehe `useInnerBlocksProps`) macht den
-// Wrapper zu einer normalen Rasterzelle.
+// Own "add" tile as the last grid cell: Gutenberg's appender sits absolutely over the last card and
+// is barely visible on dark backgrounds. `[&>.block-list-appender]:!static` makes it a grid cell.
 function AddItemTile({ rootClientId }) {
     const { insertBlock } = useDispatch("core/block-editor");
 
@@ -91,7 +76,7 @@ function AddItemTile({ rootClientId }) {
 
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag } = attributes;
-    // Volle Breite im Editor-Iframe, gleiche Begruendung wie produkte/edit.jsx's `alignfull`.
+    // Full width in the editor iframe (theme.json contentSize would otherwise apply).
     const blockProps = useBlockProps({
         className: "alignfull bg-neutral-200 py-16 md:py-24 lg:py-25",
     });
@@ -316,7 +301,7 @@ function CardEdit({ attributes, setAttributes, isSelected }) {
 
 registerBlockType(metadata, {
     edit: Edit,
-    // Dynamischer Block (render.php), gespeichert werden nur die Kind-Bloecke.
+    // Dynamic block; only the inner blocks are saved.
     save: () => <InnerBlocks.Content />,
 });
 

@@ -2,20 +2,9 @@
 
 declare(strict_types=1);
 
-// Daten- und Render-Helfer fuer Stellenangebote (Custom Post Type `stellenangebote`, siehe
-// inc/setup/theme-careers.php fuer Post-Type/Taxonomien/Routing, inc/setup/theme-careers-admin.php
-// fuer die Backend-Felder, inc/setup/theme-careers-seo.php fuer JobPosting-JSON-LD/Title/
-// Description). Gleiche Aufteilung wie inc/template-parts/woocommerce-product-card.php: diese Datei
-// definiert nur Funktionen (keine add_action()/WP-Aufrufe beim Einbinden), damit die reinen
-// Logik-Helfer (Formatierung, Ablaufpruefung, JobPosting-Aufbau) per Brain Monkey testbar bleiben
-// (tests/Unit/CareersTest.php).
-//
-// Eine Stelle wird ueberall als EIN normalisiertes Array gelesen
-// (hengegroup_theme_get_job_data()) -- Einzelseite, Listen-Bloecke und JSON-LD rendern aus
-// derselben Quelle, damit sichtbarer Inhalt und strukturierte Daten nicht auseinanderlaufen (Google
-// verlangt, dass alles im JobPosting auch sichtbar auf der Seite steht).
-//
-// Siehe docs/entscheidungen.md "Stellenangebote: Datenmodell, Google-Jobs-JSON-LD und Ablauf".
+// Daten- und Render-Helfer fuer Stellenangebote. Nur Funktionen (keine Hooks), damit die Logik per
+// Brain Monkey testbar bleibt. Seite, Bloecke und JSON-LD lesen dasselbe Array
+// (hengegroup_theme_get_job_data()): Google verlangt, dass alles im JobPosting auch sichtbar ist.
 
 const HENGEGROUP_THEME_JOB_POST_TYPE = 'stellenangebote';
 const HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY = 'stellen_unternehmen';
@@ -25,9 +14,7 @@ const HENGEGROUP_THEME_CAREER_OPTION = 'hengegroup_theme_career_options';
 const HENGEGROUP_THEME_APPLICATION_STORAGE_FOLDER = 'hengegroup-bewerbungen';
 
 /**
- * Post-Meta-Keys je Stelle. Leere Werte werden geloescht statt als '' gespeichert (siehe
- * hengegroup_theme_action_save_post_job_details()), damit die "NOT EXISTS"-Zweige der
- * Ablauf-Abfrage (hengegroup_theme_get_active_job_meta_query()) greifen.
+ * Leere Werte werden geloescht statt gespeichert, damit die NOT-EXISTS-Zweige der Ablaufabfrage greifen.
  */
 function hengegroup_theme_get_job_meta_keys(): array
 {
@@ -48,11 +35,7 @@ function hengegroup_theme_get_job_meta_keys(): array
 }
 
 /**
- * Google-JobPosting-`employmentType`-Werte (feste englische Enum-Werte laut
- * developers.google.com/search/docs/appearance/structured-data/job-posting) mit deutschen Labels
- * fuers Backend und die sichtbare Faktenzeile. Ausbildung/Minijob haben kein eigenes Google-Enum
- * und laufen ueber OTHER/PART_TIME -- das sichtbare Label sagt trotzdem, was gemeint ist, sobald
- * die Redaktion es im Stellentitel/Text nennt.
+ * Google-employmentType-Enums mit deutschen Labels. Ausbildung/Minijob laufen ueber OTHER/PART_TIME.
  */
 function hengegroup_theme_get_job_employment_types(): array
 {
@@ -69,7 +52,7 @@ function hengegroup_theme_get_job_employment_types(): array
 }
 
 /**
- * schema.org-`unitText`-Werte fuer `baseSalary` (Google akzeptiert genau diese fuenf).
+ * baseSalary.unitText (Google akzeptiert genau diese fuenf).
  */
 function hengegroup_theme_get_job_salary_units(): array
 {
@@ -83,9 +66,7 @@ function hengegroup_theme_get_job_salary_units(): array
 }
 
 /**
- * Arbeitsmodell. `remote` wird im JSON-LD zu `jobLocationType: TELECOMMUTE` (plus
- * `applicantLocationRequirements`), `hybrid` bleibt bei Google ein normaler Vor-Ort-Job mit
- * Standort -- Google kennt kein eigenes Hybrid-Enum, das sichtbare Label nennt es trotzdem.
+ * `remote` -> jobLocationType TELECOMMUTE; `hybrid` bleibt fuer Google ein Vor-Ort-Job (kein Enum).
  */
 function hengegroup_theme_get_job_work_models(): array
 {
@@ -97,8 +78,7 @@ function hengegroup_theme_get_job_work_models(): array
 }
 
 /**
- * Bildungsabschluss -> schema.org `EducationalOccupationalCredential.credentialCategory` (die von
- * Google dokumentierten Werte). `none` wird zu Googles Sonderwert "no requirements".
+ * -> credentialCategory; `none` wird Googles "no requirements".
  */
 function hengegroup_theme_get_job_education_levels(): array
 {
@@ -113,9 +93,7 @@ function hengegroup_theme_get_job_education_levels(): array
 }
 
 /**
- * Berufserfahrung in Monaten (schema.org `OccupationalExperienceRequirements.monthsOfExperience`).
- * 0 = ausdruecklich keine Erfahrung noetig (Google-Sonderwert "no requirements"); "nicht
- * angegeben" ist kein Eintrag hier, sondern das Fehlen des Meta-Werts.
+ * Monate Berufserfahrung; 0 = ausdruecklich keine (Google "no requirements"), fehlend = nicht angegeben.
  */
 function hengegroup_theme_get_job_experience_options(): array
 {
@@ -129,10 +107,7 @@ function hengegroup_theme_get_job_experience_options(): array
 }
 
 /**
- * Die drei Listen einer Stellenanzeige (Block "Stellen-Liste", template-parts/blocks/stellen-liste)
- * mit ihrer sichtbaren Ueberschrift, in Design-Reihenfolge. Der Typ bestimmt auch das
- * schema.org-Feld im JSON-LD (jobBenefits/qualifications/responsibilities) und dass leere
- * "Wir bieten dir"-Listen die Standard-Benefits des Unternehmens zeigen.
+ * Typen des Blocks "Stellen-Liste" mit Ueberschrift; der Typ bestimmt das schema.org-Feld.
  */
 function hengegroup_theme_get_job_list_types(): array
 {
@@ -144,10 +119,8 @@ function hengegroup_theme_get_job_list_types(): array
 }
 
 /**
- * Liest die Eintraege aller "Stellen-Liste"-Bloecke aus bereits geparsten Bloecken
- * (parse_blocks()) -- reine Funktion, damit die Zuordnung unit-getestet ist. Unterstuetzt
- * core/list mit core/list-item-Kindbloecken (WordPress >= 6.1) und das aeltere Format ohne
- * Kindbloecke (nur <li> im HTML). Verschachtelte Unterlisten werden mit eingesammelt.
+ * Eintraege aller "Stellen-Liste"-Bloecke aus parse_blocks(). Unterstuetzt core/list mit und ohne
+ * list-item-Kindbloecke; Unterlisten werden mit eingesammelt.
  */
 function hengegroup_theme_extract_job_lists(array $blocks): array
 {
@@ -229,9 +202,7 @@ function hengegroup_theme_collect_list_item_texts(array $blocks): array
 }
 
 /**
- * Zerlegt ein mehrzeiliges Backend-Textfeld (ein Punkt pro Zeile) in eine Liste. Fuehrende
- * Aufzaehlungszeichen ("-", "*", "•", "–") werden entfernt, weil Redakteure Listen oft aus Word/
- * der alten Seite inklusive Bullets einfuegen.
+ * Ein Punkt pro Zeile; fuehrende Bullets (aus Word kopiert) werden entfernt.
  */
 function hengegroup_theme_parse_job_list_lines(string $text): array
 {
@@ -249,9 +220,7 @@ function hengegroup_theme_parse_job_list_lines(string $text): array
 }
 
 /**
- * Sichtbare Standortzeile im Stil des Designs ("D-06463 Falkenstein/Harz OT Ermsleben"):
- * Laenderkennzeichen + PLZ + Ort. Deutschland bekommt das gewohnte "D", andere Laender ihren
- * ISO-Code. Faellt auf den Term-Namen zurueck, wenn PLZ/Ort fehlen.
+ * "D-06463 Falkenstein/Harz"; andere Laender mit ISO-Code, sonst Term-Name.
  */
 function hengegroup_theme_format_job_location_label(array $location): string
 {
@@ -270,8 +239,7 @@ function hengegroup_theme_format_job_location_label(array $location): string
 }
 
 /**
- * Deutsches Zahlenformat ohne WordPress-Abhaengigkeit (Testbarkeit): Tausenderpunkt, Nachkommastellen
- * nur wenn vorhanden (15,50 statt 15,5; 3.200 statt 3.200,00).
+ * 15,50 / 3.200 (Nachkommastellen nur wenn vorhanden), ohne WP-Abhaengigkeit.
  */
 function hengegroup_theme_format_job_amount(float $amount): string
 {
@@ -281,8 +249,7 @@ function hengegroup_theme_format_job_amount(float $amount): string
 }
 
 /**
- * Sichtbare Gehaltsangabe, z. B. "3.200 – 3.800 € brutto pro Monat", "ab 3.200 € …",
- * "bis 3.800 € …". Leerer String, wenn weder Min noch Max gepflegt ist.
+ * "3.200 – 3.800 € brutto pro Monat", "ab …", "bis …"; '' ohne Min und Max.
  */
 function hengegroup_theme_format_job_salary(?float $min, ?float $max, string $unit): string
 {
@@ -327,9 +294,7 @@ function hengegroup_theme_format_job_salary(?float $min, ?float $max, string $un
 }
 
 /**
- * Ablauf-Regel als reine Funktion (Testbarkeit): besetzt ODER `validThrough` liegt vor `$today`
- * (beide 'Y-m-d', String-Vergleich ist bei diesem Format chronologisch korrekt). Ein leeres
- * `validThrough` laeuft nie automatisch ab.
+ * Besetzt oder validThrough < $today (Y-m-d, String-Vergleich reicht). Leeres validThrough laeuft nie ab.
  */
 function hengegroup_theme_is_job_expired_on(
     string $valid_through,
@@ -353,9 +318,7 @@ function hengegroup_theme_is_valid_job_date(string $date): bool
 }
 
 /**
- * Welche fuer Google Jobs relevanten Angaben fehlen noch -- fuer den Hinweis in der
- * "Stellendetails"-Box im Backend. `title`/`description`/`datePosted` ergeben sich immer aus dem
- * Beitrag selbst, deshalb prueft das nur die Felder, die die Redaktion vergessen kann.
+ * Fuer Google Jobs fehlende Angaben (Hinweis in der Stellendetails-Box).
  */
 function hengegroup_theme_get_job_posting_missing_fields(array $job): array
 {
@@ -385,16 +348,8 @@ function hengegroup_theme_get_job_posting_missing_fields(array $job): array
 }
 
 /**
- * Baut das schema.org-JobPosting aus dem normalisierten Stellen-Array
- * (hengegroup_theme_get_job_data()) -- als reine Funktion ohne WP-Aufrufe, damit die
- * Google-relevante Struktur unit-getestet ist (tests/Unit/CareersTest.php). Alles, was WordPress
- * liefern muss (Beschreibungs-HTML, Logo-URL, Website-Name, Zeitzone), kommt ueber `$context`:
- *   description_html  string  sichtbarer Inhalt als HTML (Google erlaubt <p>, <ul>, <li>, <br>,
- *                             <h1>-<h6>, <strong>, <em>)
- *   site_name         string  Name der Dachmarke (parentOrganization)
- *   site_url          string
- *   timezone_offset   string  z. B. "+02:00", fuer `validThrough` (Ende des Tages, Ortszeit)
- *   logo_url          string  Unternehmenslogo (optional)
+ * schema.org-JobPosting, ohne WP-Aufrufe (unit-getestet). $context: description_html, site_name,
+ * site_url, timezone_offset (z. B. "+02:00" fuer validThrough), logo_url, direct_apply.
  */
 function hengegroup_theme_build_job_posting_schema(array $job, array $context): array
 {
@@ -430,10 +385,7 @@ function hengegroup_theme_build_job_posting_schema(array $job, array $context): 
             'name' => $company['legal_name'] !== '' ? $company['legal_name'] : $company['name'],
         ];
 
-        // Unternehmensseite auf dieser Website (Stellenangebote > Unternehmen, Seitenauswahl) als `url`
-        // des Arbeitgebers -- nicht `sameAs`, das ist fuer fremde Auftritte (eigene Domain,
-        // LinkedIn) gedacht; alle Firmen haben nur Unterseiten dieser Website (explizite Vorgabe
-        // 2026-10-07).
+        // Unternehmensseite als `url`, nicht `sameAs` (das ist fuer fremde Auftritte).
         if (($company['url'] ?? '') !== '') {
             $organization['url'] = $company['url'];
         }
@@ -570,16 +522,11 @@ function hengegroup_theme_build_job_posting_schema(array $job, array $context): 
         }
     }
 
-    // true, sobald man sich direkt auf der Stellenseite bewerben kann (Bewerbungsformular).
     $schema['directApply'] = !empty($context['direct_apply']);
 
     return $schema;
 }
 
-/**
- * Plugin-/Theme-weite Karriere-Einstellungen (Backend: Stellenangebote > Einstellungen, siehe
- * inc/setup/theme-careers-admin.php), mit festen Defaults fuer jeden Key.
- */
 function hengegroup_theme_get_career_options(): array
 {
     $defaults = [
@@ -596,9 +543,7 @@ function hengegroup_theme_get_career_options(): array
 }
 
 /**
- * URL der Karriereseite (eine normale WordPress-Seite mit dem "Offene Stellen"-Block, siehe
- * docs/entscheidungen.md) -- Ziel fuer abgelaufene Stellen, Breadcrumbs und die Teaser-Buttons.
- * Faellt auf eine Seite mit Slug "karriere" und zuletzt auf die Startseite zurueck.
+ * Karriereseite (Einstellung, sonst Slug "karriere", sonst Startseite).
  */
 function hengegroup_theme_get_career_page_url(): string
 {
@@ -616,9 +561,6 @@ function hengegroup_theme_get_career_page_url(): string
     return home_url('/');
 }
 
-/**
- * Permalink einer veroeffentlichten Seite, sonst '' (z. B. Seite geloescht oder Entwurf).
- */
 function hengegroup_theme_get_published_page_url(int $page_id): string
 {
     return $page_id > 0 && get_post_status($page_id) === 'publish'
@@ -695,9 +637,7 @@ function hengegroup_theme_get_job_location(WP_Term $term): array
 }
 
 /**
- * Ansprechpartner fuer eine Stelle: der beim Unternehmen hinterlegte (falls Name ODER E-Mail
- * gepflegt), sonst der globale Standard aus den Karriere-Einstellungen -- aktuell gibt es einen
- * fuer alle Unternehmen, pro Unternehmen ueberschreibbar, wenn sich das aendert.
+ * Ansprechpartner des Unternehmens (wenn Name oder E-Mail gepflegt), sonst der Standard.
  */
 function hengegroup_theme_get_job_contact(?array $company): array
 {
@@ -721,8 +661,7 @@ function hengegroup_theme_get_job_contact(?array $company): array
 }
 
 /**
- * Normalisiertes Daten-Array einer Stelle -- siehe Dateikopf. Benefits fallen auf die
- * Standard-Benefits des Unternehmens zurueck, wenn die Stelle selbst keine eigenen hat.
+ * Normalisiertes Daten-Array einer Stelle; Benefits fallen auf die des Unternehmens zurueck.
  */
 function hengegroup_theme_get_job_data(int $post_id): array
 {
@@ -814,9 +753,7 @@ function hengegroup_theme_is_job_expired(int $post_id): bool
 }
 
 /**
- * meta_query fuer "nur aktive Stellen" (nicht besetzt, `validThrough` leer oder heute/spaeter) --
- * geteilt zwischen den Listen-Bloecken, der XML-Sitemap und allen anderen Frontend-Abfragen, damit
- * abgelaufene Stellen nirgends mehr verlinkt werden.
+ * Nur aktive Stellen; fuer alle Frontend-Abfragen und die Sitemap.
  */
 function hengegroup_theme_get_active_job_meta_query(): array
 {
@@ -842,9 +779,6 @@ function hengegroup_theme_get_active_job_meta_query(): array
     ];
 }
 
-/**
- * IDs aller aktiven Stellen, neueste zuerst. `$limit` -1 = alle.
- */
 function hengegroup_theme_get_active_job_ids(int $limit = -1): array
 {
     $query = new WP_Query([
@@ -861,10 +795,6 @@ function hengegroup_theme_get_active_job_ids(int $limit = -1): array
     return array_map('intval', $query->posts);
 }
 
-/**
- * Firmen-Pill (badge.php) in der Unternehmensfarbe -- gleiche Optik wie die Produkt-Badges
- * (Crillee, Grossbuchstaben), siehe hengegroup_theme_render_product_badge().
- */
 function hengegroup_theme_render_job_company_badge(array $company, string $class = ''): string
 {
     ob_start();
@@ -881,8 +811,7 @@ function hengegroup_theme_render_job_company_badge(array $company, string $class
 }
 
 /**
- * Textfarbe passend zur Badge-Variante des Unternehmens (Gruppen-Ueberschrift auf der
- * Karriereseite). Literale Klassen, damit Tailwind sie beim Scannen findet.
+ * Literale Klassen, damit Tailwind sie findet.
  */
 function hengegroup_theme_get_job_company_text_class(string $variant): string
 {
@@ -897,13 +826,8 @@ function hengegroup_theme_get_job_company_text_class(string $variant): string
 }
 
 /**
- * Eine klickbare Stellen-Zeile (template-parts/base/card.php, flach, mit `href`: Titel, Pfeil) als
- * `<li>` -- Design "Startseite"/
- * "Karriereseite". Mit `$with_company_badge` steht die Firmen-Pill vor dem Titel (Startseite); auf
- * der Karriereseite gruppiert die Ueberschrift bereits nach Unternehmen.
- *
- * Die Textfarbe sitzt zusaetzlich am inneren <span> (auch in der Kontaktkarte): Im Block-Editor
- * gewinnt sonst die Link-Farbe aus theme.json (`styles.elements.link`) gegen die Klasse am <a>.
+ * Stellen-Zeile als <li>. Die Textfarbe steht zusaetzlich am inneren <span>, weil im Editor sonst
+ * die Link-Farbe aus theme.json gewinnt.
  */
 function hengegroup_theme_render_job_row(array $job, bool $with_company_badge): string
 {
@@ -933,9 +857,7 @@ function hengegroup_theme_render_job_row(array $job, bool $with_company_badge): 
 }
 
 /**
- * Aktive Stellen gruppiert nach Unternehmen (Design "Karriereseite"): Unternehmensname in
- * Firmenfarbe + Standort(e) der Gruppe, darunter die Stellen-Zeilen. Stellen ohne Unternehmen
- * landen in einer Gruppe unter dem Seitennamen.
+ * Aktive Stellen nach Unternehmen; ohne Unternehmen unter dem Seitennamen.
  */
 function hengegroup_theme_render_jobs_grouped(): string
 {
@@ -1013,10 +935,6 @@ function hengegroup_theme_render_jobs_grouped(): string
     return $markup;
 }
 
-/**
- * Kompakte Liste der neuesten aktiven Stellen mit Firmen-Pill (Design "Startseite", Block
- * "Karriere-Teaser"). Leerer String, wenn keine Stelle aktiv ist.
- */
 function hengegroup_theme_render_job_teaser_list(int $limit): string
 {
     $rows = implode(
@@ -1034,10 +952,8 @@ function hengegroup_theme_render_job_teaser_list(int $limit): string
 }
 
 /**
- * Icon-Auswahl fuer den Benefits-Block (template-parts/blocks/benefits): Schluessel => Label +
- * icon.php-Konfiguration. Literale Konfigurationen, damit scripts/find-lucide-icons.php sie beim
- * Build findet. Die Labels gehen per Inline-Script an den Block-Editor (inc/setup/theme-blocks.php)
- * -- eine Quelle fuer Frontend und Editor-Auswahl.
+ * Literale Icon-Konfigurationen, damit find-lucide-icons.php sie findet. Die Labels gehen auch an
+ * den Editor (theme-blocks.php).
  */
 function hengegroup_theme_get_benefit_icons(): array
 {
@@ -1107,9 +1023,7 @@ function hengegroup_theme_get_benefit_icons(): array
 }
 
 /**
- * Linke Spalte des "Offene Stellen"-Blocks: gruppierte Stellen oder -- wenn keine aktiv ist -- ein
- * Hinweis mit Initiativbewerbungs-Adresse. Geteilt zwischen offene-stellen/render.php (Frontend)
- * und dem Editor-Vorschau-Zwilling offene-stellen-vorschau/render.php.
+ * Gruppierte Stellen oder Hinweis auf Initiativbewerbung.
  */
 function hengegroup_theme_render_open_jobs_list(): string
 {
@@ -1142,11 +1056,6 @@ function hengegroup_theme_render_open_jobs_list(): string
     return (string) ob_get_clean();
 }
 
-/**
- * SVG eines Benefit-Icons in der Kachel-Groesse/-Farbe des Designs -- geteilt zwischen
- * benefit/render.php (Frontend) und der Icon-Vorschau im Block-Editor (inc/setup/theme-blocks.php
- * reicht die fertigen SVGs per Inline-Script an benefits/edit.jsx).
- */
 function hengegroup_theme_render_benefit_icon(string $key): string
 {
     $icons = hengegroup_theme_get_benefit_icons();
@@ -1156,11 +1065,6 @@ function hengegroup_theme_render_benefit_icon(string $key): string
     return hengegroup_theme_render_icon($icon_config);
 }
 
-/**
- * Auswahlwerte des Bewerbungsformulars (Design "Stellenangebot einzelseite"): Wert => Label.
- * Geteilt zwischen Formular (template-parts/components/job-application-form.php), Pruefung
- * (hengegroup_theme_validate_job_application()) und Bewerbungs-E-Mail.
- */
 function hengegroup_theme_get_job_application_options(): array
 {
     return [
@@ -1182,10 +1086,7 @@ function hengegroup_theme_get_job_application_options(): array
 }
 
 /**
- * Prueft die (bereits sanitisierten) Textfelder einer Bewerbung -- reine Funktion, unit-getestet
- * (tests/Unit/CareersTest.php). Dateien prueft der Formular-Handler separat
- * (inc/setup/theme-careers-application.php), weil das WordPress' Dateityp-Erkennung braucht.
- * Rueckgabe: Feldname => Fehlermeldung, leer = alles gueltig.
+ * Prueft die Textfelder einer Bewerbung (Dateien prueft der Handler). Feld => Fehlermeldung.
  */
 function hengegroup_theme_validate_job_application(array $values): array
 {
@@ -1248,12 +1149,8 @@ function hengegroup_theme_validate_job_application(array $values): array
 }
 
 /**
- * Ablageordner fuer Bewerbungsunterlagen ausserhalb des Web-Roots: Geschwister-Ordner des
- * Website-Stammverzeichnisses (`$site_root`, i. d. R. get_home_path(), z. B. `.../httpdocs/` ->
- * `.../hengegroup-bewerbungen`). Reine Funktion, unit-getestet (tests/Unit/CareersTest.php); ob der
- * Ordner angelegt werden kann, prueft hengegroup_theme_get_application_storage_dir()
- * (inc/setup/theme-careers-application.php). Leerer String, wenn `$site_root` bereits das
- * Dateisystem-Wurzelverzeichnis ist (kein Ordner darueber).
+ * Ordner neben dem Website-Stammverzeichnis (.../httpdocs -> .../hengegroup-bewerbungen); '' wenn
+ * es kein Elternverzeichnis gibt.
  */
 function hengegroup_theme_get_private_storage_dir(string $site_root): string
 {
@@ -1267,11 +1164,7 @@ function hengegroup_theme_get_private_storage_dir(string $site_root): string
 }
 
 /**
- * Ob PHPs `open_basedir` (`$open_basedir`, Wert von ini_get(), leer = keine Beschraenkung) den
- * Zugriff auf `$path` erlaubt -- damit hengegroup_theme_get_application_storage_dir() den Ordner
- * ausserhalb des Web-Roots gar nicht erst prueft, wenn der Host das sperrt (sonst eine PHP-Warnung
- * je Aufruf). Gleiche Regel wie PHP selbst: jeder Eintrag ist ein Pfad-Praefix. Reine Funktion,
- * unit-getestet (tests/Unit/CareersTest.php).
+ * Ob open_basedir (Praefix-Liste, leer = frei) $path erlaubt -- sonst gaebe es pro Aufruf eine Warnung.
  */
 function hengegroup_theme_is_path_within_open_basedir(string $path, string $open_basedir): bool
 {

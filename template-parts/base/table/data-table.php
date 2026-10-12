@@ -2,173 +2,31 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's Data Table is explicitly NOT a component in the usual sense -- their own docs open
-// with "This is not a data-table component. It is a set of instructions for how to build your own
-// using @tanstack/react-table." There is no fixed props API to mirror the way there is for
-// Button/Card/Carousel: sorting, pagination, filtering, row selection and column visibility are
-// all client-side TanStack Table state, wired up per-project in example code, not a shipped
-// component (CLAUDE.md #1's "welche Props/Varianten/States gibt es" question has no single stable
-// answer to check against here).
+// Data table built from the table/* family. All rows render server-side; search, category filter,
+// sorting, column toggles and paging run client-side (data-table.js) by hiding/reordering <tr>s.
+// Without JS all rows are visible and the toolbar is inert.
 //
-// Unlike calendar.php (which bakes its own day-grid <table> markup because a calendar grid is a
-// genuinely special shape), a data table's body is exactly the generic tabular markup
-// template-parts/base/table/*.php already provides -- so this component NESTS that whole family
-// (table.php/table-header.php/table-body.php/table-row.php/table-head.php/table-cell.php,
-// table-caption.php) instead of duplicating <table>/<thead>/<tbody>/<tr>/<td> markup a second time.
-// It stays a single file (no subfolder) because "take columns + rows data and render a sortable,
-// filterable, paginated table" is one coherent, data-driven operation -- same reasoning as
-// accordion.php's `items` array collapsing shadcn's separate Accordion/AccordionItem/
-// AccordionTrigger/AccordionContent into one file instead of a subfolder.
-//
-// ARCHITECTURE (design request 2026-09-04, supersedes this file's original v1 shape): `rows` is now
-// the caller's COMPLETE dataset, rendered in full on the server -- sorting, search, the category
-// filter and pagination are all real client-side JS state
-// (assets/js/template-parts/base/data-table.js), not `add_query_arg()` reload links. This is a
-// deliberate reversal of v1's own "genuinely functional with zero JS, not a fake/inert control"
-// stance (see git history) -- CLAUDE.md's Kernhaltung has no categorical preference for zero-JS
-// solutions, UX/DX decide per case, and the caller explicitly asked for this component to load once
-// and page/sort/filter entirely client-side instead of round-tripping the server for every
-// interaction. Concretely, this means:
-//   - `orderby`/`order` are now only the INITIAL sort state for the first render (which column/
-//     direction the caller's own pre-sorted `rows` are already in) -- clicking a sortable header
-//     re-sorts the already-rendered `<tr>` elements in place via data-table.js, no navigation, no
-//     re-query.
-//   - There is no more `pagination` config / real prev/next/first/last `<a href>` footer. Paging is
-//     `per_page`-driven and rendered via template-parts/base/pagination/pagination-compact.php
-//     (design request: reuse the existing Pagination family instead of hand-rolling a third
-//     prev/next bar) -- see the Phase 2 note below for how that nested, unmodified component's
-//     Previous/Next buttons get repurposed for client paging.
-//   - A new toolbar (`data-slot="data-table-toolbar"`) adds free-text search, an optional
-//     single-column category filter and optional per-column visibility toggles -- the reference's
-//     own toolbar row, previously the explicitly out-of-scope-for-v1 half of this component.
-// Without JS: every row renders, unpaginated and unfiltered (still fully readable/scrollable, not
-// broken), the toolbar controls are present but inert (a search input that does nothing when typed
-// into, filter/column-toggle buttons that do nothing when clicked), and the pagination-compact bar
-// always shows "Page 1 of 1" with both Previous/Next disabled (there is only ever one server-
-// rendered page now, see below) -- an accepted, deliberate regression from v1's own genuinely-
-// functional-without-JS pagination/sorting, not an oversight; there is no meaningful zero-JS
-// re-query story left once ALL rows already sit in the DOM (a "Page 2" link would just reload the
-// exact same markup).
-//
-// JS enhancement: assets/js/template-parts/base/data-table.js. Reads every row's `data-search`/
-// `data-filter`/`data-sort-<column_key>` attributes (computed server-side below, see the `search`/
-// `sort_values` row-level overrides in the config doc) to search/sort/filter/paginate purely by
-// showing/hiding already-rendered `<tr>` elements (native `hidden` attribute, same "hidden as
-// default, JS toggles visibility" idiom CLAUDE.md Regel 1 already sanctions) and reordering them
-// in the DOM for sorting -- no fetch, no new PHP endpoint, nothing to re-query.
-//
-// Deliberately still out of scope (each a separate, larger feature with no concrete consumer yet,
-// same "not a variant of this one" reasoning as native-select.php's `multiple`/combobox.php's chips
-// mode/dropdown-menu.php's submenus):
-//   - Row selection (checkboxes + bulk actions) -- WordPress's own admin list tables solve this via
-//     a real <form>-based bulk-action submit (checkbox `name="post[]"` + a bulk-action select), a
-//     substantial separate feature, not added speculatively without a concrete consumer.
-//   - Multi-column/combined filtering -- `filter_column` is intentionally a single column (matching
-//     the Claude-Design reference "Hengegroup"'s own one-dimension "Kategorie" filter); a caller
-//     needing more can still filter `rows` itself before calling this component (same "the caller
-//     owns re-querying" split the old server-driven design used, just applied before render instead
-//     of on every navigation).
-//
-// Moved into template-parts/base/table/ (previously template-parts/base/data-table.php) alongside
-// the table/* family it nests -- shadcn's own Data Table docs open by calling it "not a data-table
-// component" but a pattern built ON TOP OF Table (see above), so it belongs in the same folder as
-// the primitives it composes rather than getting a folder of its own; unlike table.php's own
-// siblings it stays a single file with no `table-` prefix (Rule 4 only mandates the shared folder
-// once a component is more than one file, not a shared filename prefix for every file inside it).
-// get_template_part() callers now need the doubled 'template-parts/base/table/data-table' path,
-// same doubled-path convention as every other multi-file component folder.
-//
-// Phase 2 (CLAUDE.md Regel 1): styled via Tailwind on the strength of the Claude-Design reference
-// "Hengegroup" (same `.dc.html` reference workflow as table.php's own entry, see
-// docs/entscheidungen.md for this component's entry). The table itself needs no styling of its own
-// here -- it already comes from the nested, already-Phase-2-styled table/* family (table.php's own
-// card look, table-head.php's sortable-header-ready uppercase treatment, table-row.php's
-// henge-green `selected` tint). What this file adds on top:
-//   - the sortable header `<button data-slot="data-table-sort">` (a `<button>`, not an `<a>` -- see
-//     the ARCHITECTURE note above: there is no longer a URL a click actually navigates to, a
-//     `<button>` communicates that honestly instead of implying navigation that never happens):
-//     `inline-flex items-center gap-1.5` to lay out label + chevron, a static
-//     `data-[state=active]:text-henge-green` class alongside a plain `text-muted-foreground
-//     hover:text-henge-green` base -- data-table.js only ever toggles this button's `data-state`
-//     attribute, the brand-color swap itself is a plain Tailwind variant already baked into the
-//     class string (same `data-[state=selected]:bg-henge-green/5` idiom table-row.php's own header
-//     comment documents), matching the reference's own active-column color swap
-//     (`color: active ? accent : muted`). The sort indicator renders all three possible icons
-//     (ascending/descending/unsorted) up front, two of them `hidden` -- data-table.js swaps which
-//     one is `hidden` instead of trying to swap SVG contents (there is no CSS way to morph one
-//     glyph into another); the unsorted glyph gets `opacity-35`, the nearest real Tailwind opacity
-//     step to the reference's own inactive-arrow `opacity:0.35`.
-//   - the toolbar (`data-slot="data-table-toolbar"`): search via input.php + input-group.php's own
-//     documented leading-icon-addon composition (see input-group.php's header comment, reused
-//     verbatim, not reinvented); the category filter and column-visibility toggles are hand-built
-//     (no existing base component covers a segmented single-select pill row or a toggleable-chip
-//     row) using the same `data-[state=active]:` static-class-plus-JS-toggles-the-attribute idiom
-//     as the sort button above -- kept out of button.php's own variant vocabulary since neither
-//     shape is a general-purpose button variant, just this toolbar's own look.
-//   - pagination: template-parts/base/pagination/pagination-compact.php, unmodified, nested as-is
-//     (design request: reuse Pagination instead of a third hand-rolled prev/next bar) -- its
-//     Previous/Next buttons already carry a `data-action="previous"|"next"` hook (added to that
-//     file for this exact purpose, see its own header comment) that data-table.js uses to manage
-//     `href`/`aria-disabled` client-side once the true page count is known up front.
-//   - the outer `<div data-slot="data-table">` wrapper: `flex flex-col gap-4` to space the
-//     toolbar/table card/pagination bar apart, matching the reference's own vertical rhythm.
-//
-// Supported config:
-//   columns        array   required, ordered list of:
-//     key              string   required. Looks up each row's cell value by this key (or, for the
-//                                 "rich row" shape below, `cells[key]`)
-//     label            string   required. Visible column header text
-//     sortable         bool     default false. Renders the header as a `<button>` that re-sorts the
-//                                 already-rendered rows client-side (see ARCHITECTURE note above)
-//     align            string   start (default) | center | end -- passed straight through as
-//                                 table-head.php's/table-cell.php's own `align` config on both the
-//                                 <th> and every <td> in this column
-//     toggleable       bool     default false. Adds a column-visibility toggle button to the
-//                                 toolbar for this column (see `data-column` below)
-//   rows           array   required (may be empty -- renders `empty_text` instead). The FULL
-//                          dataset (see ARCHITECTURE note above), not just one page. Each row is
-//                          EITHER a flat `[column_key => cell_html]` map (the common case) OR, for
-//                          per-row metadata, a "rich row" `{ cells: [column_key => cell_html],
-//                          selected?, class?, attributes?, data_attributes?, search?, sort_values?
-//                          }` -- disambiguated by the presence of a `cells` key, same auto-detect
-//                          idiom as native-select.php's flat-option-vs-optgroup `options` shape.
-//                          Every cell value is pre-rendered HTML (plain escaped text or nested
-//                          component markup, e.g. a badge.php/button.php call) -- caller's
-//                          responsibility to escape/build, same convention as table-cell.php's own
-//                          `content`; a missing key renders a deliberately blank cell.
-//     search           string   optional (rich row only). Overrides the auto-computed search
-//                                haystack for this row (default: every cell's HTML with tags
-//                                stripped, lowercased and joined by a space via
-//                                `wp_strip_all_tags()`) -- set this when a cell's visible text
-//                                doesn't reflect what should be searchable (e.g. an icon-only cell)
-//     sort_values      array    optional (rich row only), `[column_key => string|int|float]`.
-//                                Overrides the auto-computed sort key for one or more SORTABLE
-//                                columns (default: that column's cell HTML with tags stripped) --
-//                                set this when the visible cell text sorts wrong as a plain string
-//                                (e.g. a "12 t" cell needs `sort_values: ['bestand' => 12]` to sort
-//                                numerically instead of lexicographically)
-//   caption        string   optional. table-caption.php text
-//   empty_text     string   shown as a single full-width row instead of `rows` when it's empty, AND
-//                          reused by data-table.js as the client-side "no results" message once
-//                          search/filter hide every row (default: translated "No results.",
-//                          component-owned UI text, same i18n precedent as calendar.php's own nav
-//                          labels)
-//   orderby        string   the column `key` `rows` are already sorted by, for the initial render's
-//                          `aria-sort`/active-icon state only (see ARCHITECTURE note above); empty
-//                          means unsorted
-//   order          string   asc (default) | desc -- the initial sort direction, paired with
-//                          `orderby`
-//   per_page       int|null   default 10. Client-side page size; `null`/`0` disables pagination
-//                          entirely (all rows shown, no pagination-compact.php bar rendered) --
-//                          search/sort/filter still apply
-//   search         bool    default true. Shows/hides the toolbar's search input
-//   search_placeholder   string   default: translated "Search..."
-//   filter_column  string|null   optional. A column `key` whose distinct cell values (HTML tags
-//                          stripped) become a row of category-filter pills in the toolbar, plus an
-//                          "All" pill that clears the filter. Omit/empty for no category filter.
-//   filter_all_label   string   default: translated "All" -- the reset pill's label
-//   class / attributes / data_attributes   passthrough onto the outer
-//                          <div data-slot="data-table"> wrapper
+// Config:
+//   columns   array   required, each:
+//     key          string   cell lookup key (required)
+//     label        string   header text (required)
+//     sortable     bool     header becomes a sort button
+//     align        string   start (default) | center | end
+//     toggleable   bool     adds a column-visibility toggle
+//   rows      array   full dataset. Either [key => cell_html] or a rich row
+//                     { cells, selected?, class?, attributes?, data_attributes?, search?, sort_values? }.
+//                     Cells are pre-rendered HTML (caller escapes).
+//     search        string   overrides the search text (default: stripped cell text)
+//     sort_values   array    [key => value] overrides the sort key, e.g. numeric sorting
+//   caption              string
+//   empty_text           string   also the client-side "no results" text (default "No results.")
+//   orderby / order      string   initial sort state of the pre-sorted rows (asc|desc)
+//   per_page             int|null default 10; 0/null disables paging
+//   search               bool     default true
+//   search_placeholder   string
+//   filter_column        string   column key whose distinct values become filter pills
+//   filter_all_label     string   default "All"
+//   class / attributes / data_attributes   on the outer wrapper
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;
@@ -232,11 +90,7 @@ foreach ($columns_config as $column_config) {
         $align = 'start';
     }
 
-    // Attribute-name-safe form of `key`, for `data-sort-<key>` -- `key` itself stays free-form
-    // (already used as-is in labels/lookups), only the derived attribute NAME needs sanitizing,
-    // not the value. Falls back to the column's ordinal position if `key` has no safe characters
-    // at all (e.g. a purely non-ASCII key), so two such columns can't collide on an empty
-    // `data-sort-` attribute name.
+    // Attribute-name-safe key for data-sort-<key>; falls back to the position so keys can't collide.
     $safe_key = preg_replace('/[^a-z0-9-]/', '', strtolower($key));
 
     if ($safe_key === '') {
@@ -260,7 +114,6 @@ if ($columns === []) {
 $has_filter_column =
     $filter_column !== '' && in_array($filter_column, array_column($columns, 'key'), true);
 
-// Header row: one buffered table-head.php call per column, wrapped in one table-row.php call.
 $header_cells_markup = '';
 
 foreach ($columns as $column) {
@@ -303,9 +156,7 @@ foreach ($columns as $column) {
 
         $header_content = sprintf(
             '<button type="button" data-slot="data-table-sort" data-sort-key="%1$s" data-state="%2$s" class="inline-flex items-center gap-1.5 text-muted-foreground hover:text-henge-green data-[state=active]:text-henge-green">%3$s%4$s</button>',
-            // `safe_key`, not `key` -- must match the row-level `data-sort-<safe_key>` attribute
-            // suffix built below 1:1 so data-table.js's plain string-concat lookup
-            // (`data-sort-${sortKey}`) finds it, see that file's own header comment.
+            // Must match the row-level data-sort-<safe_key> that data-table.js looks up.
             esc_attr($column['safe_key']),
             $is_active ? 'active' : 'inactive',
             esc_html($column['label']),
@@ -339,7 +190,6 @@ get_template_part('template-parts/base/table/table-header', null, [
 ]);
 $header_markup = (string) ob_get_clean();
 
-// Body rows.
 $body_rows_markup = '';
 
 if ($rows_config === []) {
@@ -463,8 +313,6 @@ get_template_part('template-parts/base/table/table', null, [
 ]);
 $table_markup = (string) ob_get_clean();
 
-// Toolbar: search + category filter + column-visibility toggles. Only rendered when at least one
-// is actually enabled/configured, same "no empty wrapper" convention as the pagination footer below.
 $row_count = count($rows_config);
 $show_toggles =
     $row_count > 0 &&
@@ -599,9 +447,7 @@ if ($show_search || $show_filter || $show_toggles) {
     );
 }
 
-// "No results after filtering" message -- hidden by default, shown by data-table.js once
-// search/filter leave zero rows visible (see ARCHITECTURE note above; the `rows_config === []`
-// case above already covers "no rows at all" server-side, this covers "no rows MATCH" client-side).
+// Shown by data-table.js when search/filter leave no row visible.
 $empty_state_markup = '';
 
 if ($row_count > 0) {
@@ -611,12 +457,6 @@ if ($row_count > 0) {
     );
 }
 
-// Pagination: template-parts/base/pagination/pagination-compact.php, unmodified (design request:
-// reuse Pagination instead of a hand-rolled bar, see file header). Rendered for the initial
-// server-side state (page 1 of ceil(rows / per_page)); data-table.js manages `current_page`/
-// `total_pages` client-side from there via that component's `data-action="previous"|"next"` hook
-// (see pagination-compact.php's own header comment) plus its `data-slot="pagination-compact-status"`
-// label -- no re-render, no new PHP endpoint.
 $pagination_markup = '';
 
 if ($per_page > 0 && $row_count > 0) {

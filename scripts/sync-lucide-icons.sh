@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# find-lucide-icons.php ermittelt die benoetigten Icon-Namen (Templates + scripts/lucide-icons.json),
-# dieses Skript kopiert nur die tatsaechlich benoetigten SVGs aus node_modules/lucide-static.
+# Kopiert die im Code referenzierten Lucide-SVGs (find-lucide-icons.php) aus node_modules.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,7 +20,6 @@ fi
 
 scan_output_json="$(php "$icon_scanner_path")"
 
-# JSON-Array -> eine Zeile pro Icon-Name (node ist ueber pnpm/vite ohnehin schon Voraussetzung).
 icon_names="$(node -e '
     const data = JSON.parse(require("fs").readFileSync(0, "utf8"));
     const names = Array.isArray(data) ? data : [data];
@@ -30,7 +28,6 @@ icon_names="$(node -e '
 
 mkdir -p "$destination_directory"
 
-# Vorher aufraeumen, damit im Code nicht mehr referenzierte Icons nicht als Leichen liegen bleiben.
 find "$destination_directory" -maxdepth 1 -name "*.svg" -type f -delete
 
 if [ -z "$icon_names" ]; then

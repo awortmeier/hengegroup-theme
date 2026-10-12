@@ -8,11 +8,6 @@ use BaseTheme\Tests\TestCase;
 use Brain\Monkey\Functions;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-/**
- * Unit tests for the pure-logic job helpers in inc/template-parts/careers.php (formatting, expiry
- * rule, Google-JobPosting structure). Everything that reads post/term meta or renders template
- * parts stays out of scope here, same boundary as HelpersTest (see docs/to-do.md Abschnitt 1).
- */
 final class CareersTest extends TestCase
 {
     protected function setUp(): void

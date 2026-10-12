@@ -10,24 +10,8 @@
 <?php wp_body_open(); ?>
 <div class="flex min-h-screen flex-col">
     <?php
-// Full-width, fixed dark header with a scroll-triggered translucent/blurred state and a
-// brand-gradient top edge, composed from template-parts/base/* components on top of the
-// Claude-Design "Hengegroup" header reference. Replaces the base-theme scaffold's own
-// shrink-to-pill scroll behaviour (see docs/entscheidungen.md "Header: Scroll-Verhalten aus
-// dem Referenzdesign statt der Vorlagen-eigenen Pill-Logik"). Overlays whatever content
-// follows with no spacer/offset -- the reference's own hero section sits directly underneath
-// at the same top:0, by design.
-//
-// `data-scrolled` is toggled by assets/js/components/header.js (a plain scroll listener, no
-// IntersectionObserver/sentinel needed now that the header no longer changes position) --
-// background/blur are the only two properties that change, expressed as `data-[scrolled=true]:`
-// Tailwind variants (CLAUDE.md Regel 1), the same state-attribute pattern `group-open:`/
-// `aria-invalid:` already use elsewhere in this project's base components.
-//
-// `[border-image:...]` is a Tailwind ARBITRARY VALUE (CLAUDE.md Regel 1 explicitly allows
-// these, not a raw-CSS exception) -- no stock border-* utility supports a multi-stop gradient
-// on one edge, so the reference's own literal gradient is expressed inline via this project's
-// brand color tokens instead of a hardcoded hex triplet.
+// Fixierter Header ueber dem Inhalt (kein Abstandshalter). header.js setzt data-scrolled fuer
+// Transparenz/Blur. Der Verlauf oben als border-image, weil border-* keinen Verlauf kann.
 ?>
     <header
         class="fixed inset-x-0 top-0 z-50 border-t-2 border-t-transparent bg-grey-dark px-6 py-4.5 transition-[background-color,backdrop-filter] duration-300 ease-out sm:px-12 data-[scrolled=true]:bg-grey-dark/70 data-[scrolled=true]:backdrop-blur-[6px] [border-image:linear-gradient(90deg,var(--color-henge-grey),var(--color-henge-green),var(--color-henge-blue))_1]"
@@ -72,16 +56,8 @@
                 ]); ?>
 
                 <?php
-                // Language switcher: UI only, no real translation logic yet -- see
-                // docs/entscheidungen.md "Header: Sprachumschalter als reines UI-Element". This
-                // project's planned multi-language approach is a WordPress Multisite network
-                // (one site per language), not a single-site plugin -- see that same file's
-                // "Mehrsprachigkeit ueber Multisite" entry; wiring real per-language URLs belongs
-                // there, once that network exists.
-                //
-                // The trigger is plain inline markup, not a button.php call -- dropdown-menu.php's
-                // own header comment: `trigger` must not itself be a focusable element, since its
-                // <summary> is already the one interactive control.
+                // Sprachumschalter ist bis zum Multisite-Netzwerk nur Optik. Der Trigger ist kein
+                // button.php, weil <summary> schon das interaktive Element ist.
                 $language_trigger = sprintf(
                     '<span class="inline-flex items-center gap-1.5 rounded-full border border-grey-light/35 px-3.5 py-2 text-sm font-medium text-grey-light transition-colors hover:bg-grey-light/10">%1$s%2$s</span>',
                     esc_html__('DE', 'hengegroup-theme'),
@@ -114,6 +90,6 @@
     </header>
 
     <?php
-// flex-1: main fuellt die Resthoehe, damit der Footer auch bei wenig/keinem Inhalt am unteren Rand steht.
+// flex-1: Footer bleibt auch bei wenig Inhalt unten.
 ?>
     <main class="flex-1">

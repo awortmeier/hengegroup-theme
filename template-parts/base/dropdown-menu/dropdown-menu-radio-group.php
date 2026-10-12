@@ -2,25 +2,12 @@
 
 declare(strict_types=1);
 
-// shadcn/ui's DropdownMenuRadioGroup: `role="group"` around several DropdownMenuRadioItem, JS
-// enforces the mutual exclusivity (unlike radio-group.php's native <input type="radio">
-// `name`-sharing, there is no native grouping mechanism here at all -- see
-// dropdown-menu-radio-item.php's header comment on why these are JS-only controls). Nests several
-// template-parts/base/dropdown-menu/dropdown-menu-radio-item.php calls and wires up `checked` from
-// a single `value` (same convenience pattern as radio-group.php/radio.php).
+// Group of dropdown-menu-radio-item.php; dropdown-menu.js enforces exclusivity.
 //
-// Supported config:
-//   items    array    required, ordered list of:
-//     value      string   required. This item's value
-//     text       string   visible label (default: `value`)
-//     disabled   bool     per-item disabled
-//   value    string   the currently checked item's `value`
-//   class / attributes / data_attributes   passthrough onto the outer
-//                    <div role="group" data-slot="dropdown-menu-radio-group"> wrapper
-//
-// Phase 2 (CLAUDE.md Regel 1): no classes added -- shadcn's own real stock DropdownMenuRadioGroup
-// (live-checked against current docs) carries none either, same reasoning as
-// dropdown-menu-group.php's own Phase 2 note.
+// Config:
+//   items   array    required, each { value (required), text (default value), disabled }
+//   value   string   checked item
+//   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
     return;

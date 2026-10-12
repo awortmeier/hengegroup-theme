@@ -3,22 +3,7 @@
 /**
  * Template Name: Component Showcase - Card
  *
- * Dev-only page template: renders template-parts/base/card.php across a data-list card with
- * footer actions, a form card with a `footer_divider`, a `href`+`media_badge` clickable product
- * grid, `size: 'sm'` stat cards (content-only, no header/footer), for manual visual/functional
- * review during Phase 2 styling work -- not meant for production content or navigation. Analog zu
- * page-component-showcase-popover.php/-toast.php.
- *
- * Usage: create a WP Page, assign this template via the block editor's Page Attributes panel
- * ("Component Showcase - Card"), and tick "noindex" in that page's own SEO metabox
- * (inc/setup/theme-seo-admin.php) so it never gets indexed -- no noindex hardcoded here, reuses the
- * existing per-page mechanism instead of a second one.
- *
- * Design reference: https://claude.ai/code/artifact/c2fdca5b-79fc-47b7-92c8-e861966ac106
- *
- * The inline SVG data-URIs below are self-contained placeholder images (no Media Library
- * dependency), same technique as page-component-showcase-attachment.php's own
- * `$placeholder_image_src` -- swap for a real `attachment_id`/`src` in actual content.
+ * Dev-Seite zur visuellen Pruefung der Komponente (Seite mit noindex anlegen).
  */
 
 get_header();

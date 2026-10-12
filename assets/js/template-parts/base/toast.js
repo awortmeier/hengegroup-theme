@@ -1,31 +1,7 @@
-// Public API + progressive-enhancement layer for template-parts/base/toast.php, rebuilt against
-// the real "sonner" npm package's own calling convention: a positional `message` argument plus a
-// `type`-per-method shape (toast.success()/.error()/.warning()/.info()/.loading()/.message()),
-// instead of a single toast({ title, variant }) options object. import { toast } from this module
-// in any other JS to show a toast imperatively; initToast() wires up any server-rendered flash
-// toasts (the `toasts` config) the same way. Assumes a single toaster viewport per page (render
-// toast.php once, e.g. in footer.php).
-//
-// Every toast (server-rendered or JS-created) has a real DOM `id` -- either PHP's auto-generated
-// one or, for JS-created toasts, one generated here -- so toast.dismiss(id) and toast.promise()
-// can target/update a specific toast later instead of only acting on the element toast() happened
-// to return.
-//
-// Note: the close/cancel/"Close" fallback strings are hardcoded here (unlike the PHP side, which
-// uses esc_html__()/esc_attr__() for the same strings) -- this module has no access to WordPress'
-// i18n system on its own; bridging that needs wp_set_script_translations(), not solved here.
-//
-// Not supported from the JS-side toast()/toast.success()/etc. API (PHP-only, see toast.php):
-//   - a per-call custom icon -- only `icon: false` (disable) works here; a real custom icon needs
-//     the toaster-level `icons` override or a pre-rendered `toasts[].icon`, both PHP config
-//   - swipe-to-dismiss (touch gesture handling)
-//
-// Phase 2 (CLAUDE.md Regel 1): the CLASSES constants below are literal copies of toast.php's own
-// Tailwind class strings -- same "className duplicated between PHP and its JS-enhancement layer"
-// idiom select.js/combobox.js/calendar.js already use for the DOM they build client-side. Keep both
-// files' classes in sync when either changes; see toast.php's own header for the design rationale
-// (accent-color mapping, why only `error` tints the card, the life bar's `--toast-duration` custom
-// property, etc.) -- not re-explained here.
+// Toast API following sonner: toast(message, options), .success/.error/.warning/.info/.loading/
+// .message/.custom(html)/.dismiss(id)/.promise(). initToast() wires server-rendered toasts. One
+// viewport per page. Every toast has a DOM id. Strings are hardcoded (no WP i18n in JS). The
+// CLASSES below mirror toast.php; keep both in sync.
 
 const DEFAULT_DURATION = 4000;
 
@@ -57,8 +33,7 @@ const CARD_BASE_CLASSES =
 const CARD_CLASSES_DEFAULT = "border-foreground/8 bg-card";
 const CARD_CLASSES_ERROR = "border-destructive/25 bg-destructive/6";
 
-// Read by the icon (inherited `currentColor`) and the life bar (`bg-current`) -- title/description/
-// close stay neutral for every type except `error`, tinted separately below, see toast.php's header.
+// Icon and countdown bar use the type color via currentColor; only error tints the text.
 const TYPE_ACCENT_CLASSES = {
     default: "text-muted-foreground",
     success: "text-henge-green",
@@ -133,10 +108,7 @@ function armTimer(id, toastEl, duration) {
     timers.set(id, state);
 }
 
-// Pauses/resumes both the dismiss timer AND the visible life-bar countdown together (CSS
-// `animation-play-state` naturally resumes an animation from wherever it was paused, matching the
-// timer's own recalculated `remaining` closely enough without needing to also rewrite the bar's
-// `--toast-duration`/restart its animation on every hover).
+// Pauses the dismiss timer and the countdown animation together.
 function wireHoverPause(toastEl) {
     if (toastEl.dataset.hoverWired) {
         return;
@@ -179,11 +151,7 @@ function wireHoverPause(toastEl) {
     });
 }
 
-// Wires close/cancel buttons already present in toastEl's DOM (server-rendered or just built by
-// show() below) to a plain dismiss, plus hover-pause and the auto-dismiss timer from
-// data-duration. Action buttons are NOT wired here: a pre-rendered `<a href>` action needs no JS,
-// and a JS-created action's optional onClick is attached directly in show() instead (see below) --
-// this function's job is only the two buttons that always just mean "dismiss".
+// Wires close/cancel (dismiss), hover pause and auto-dismiss. Actions are handled in show().
 function wireToast(toastEl) {
     const closeButton = toastEl.querySelector('[data-slot="toast-close"]');
 
@@ -217,12 +185,8 @@ export function initToast() {
     viewport.setAttribute("data-js", "toast");
 }
 
-// Core builder shared by toast()/toast.success()/.../toast.custom()/toast.promise(). When
-// `options.id` matches an already-visible toast, rebuilds that element in place (used by
-// toast.promise() to turn a "loading" toast into "success"/"error") instead of creating a second
-// one -- same id, same DOM position, no stacking-order jump. The card's own entrance animation
-// (data-slot="toast", see app.css's `hg-toast-in`) only plays once per real DOM element, so an
-// in-place rebuild does NOT re-trigger it -- only a genuinely new toast slides/fades in.
+// Shared builder. An existing `options.id` is rebuilt in place (used by toast.promise()), so the
+// entrance animation does not replay.
 function show(message, options = {}, type = "default") {
     const viewport = getViewport();
 
@@ -300,9 +264,7 @@ function show(message, options = {}, type = "default") {
 
     toastEl.appendChild(contentEl);
 
-    // toast.custom(): caller-provided pre-rendered HTML, same convention as tooltip.php's
-    // `trigger`/attachment.php's `actions` -- appended after title/description, not replacing
-    // them, so a custom toast can still carry a normal message plus rich content.
+    // toast.custom(): HTML is appended after title/description.
     if (html) {
         contentEl.insertAdjacentHTML("beforeend", html);
     }
@@ -418,10 +380,7 @@ toast.dismiss = (id) => {
     dismissById(id);
 };
 
-// sonner's own toast.promise(): shows a "loading" toast immediately (no auto-dismiss while
-// pending, duration: 0), then rewrites that SAME toast in place to "success"/"error" once the
-// promise settles -- `success`/`error` may be a plain string or a function(data|err) => string,
-// matching sonner's own API.
+// Loading toast without auto-dismiss, updated in place to success/error (string or function).
 toast.promise = (promise, { loading = "", success, error } = {}) => {
     const id = show(loading, { duration: 0 }, "loading");
 
@@ -439,12 +398,6 @@ toast.promise = (promise, { loading = "", success, error } = {}) => {
     return id;
 };
 
-// Convenience global for callers that aren't themselves an ES module -- a plain inline `onclick`
-// (see page-component-showcase-toast.php's trigger buttons), the browser console, or a project
-// script loaded the old-fashioned way. Every other real caller should still
-// `import { toast } from "./toast.js"` directly, this file's own documented API surface (see file
-// header) -- this is an ADDITIONAL door in, not a replacement. Namespaced under `hengegroupTheme`
-// rather than a bare `window.toast` so this doesn't collide with an unrelated global a consuming
-// project might already have.
+// Global for non-module callers (inline onclick, console).
 window.hengegroupTheme = window.hengegroupTheme || {};
 window.hengegroupTheme.toast = toast;

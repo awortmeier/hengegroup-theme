@@ -1,11 +1,5 @@
-// Editor UI for template-parts/blocks/anwendungsgruppe/block.json. Same Vite/@wordpress-globals
-// architecture as the other blocks (see blocks/buehne/edit.jsx's header comment) -- built via
-// vite.config.editor-anwendungsgruppe.js.
-//
-// Gleiches Muster wie produktkategorie/edit.jsx: Kicker, Ueberschrift, Beschreibung und Anwendungen
-// kommen aus der Gruppe (Produkte > Anwendungen), der Block waehlt nur Gruppe und Hintergrund; die
-// Canvas zeigt die echte Ausgabe per `ServerSideRender`. Die Gruppenliste kommt per Inline-Script
-// (window.hengegroupThemeAnwendungGroups, inc/setup/theme-blocks.php).
+// Editor for "Anwendungsgruppe": choose group and background; ServerSideRender preview. Groups come
+// from window.hengegroupThemeAnwendungGroups (theme-blocks.php).
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import { InspectorControls, useBlockProps } from "@wordpress/block-editor";
