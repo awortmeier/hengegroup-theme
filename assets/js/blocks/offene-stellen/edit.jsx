@@ -5,19 +5,10 @@ import { registerBlockType } from "@wordpress/blocks";
 import { InspectorControls, RichText, useBlockProps } from "@wordpress/block-editor";
 import { PanelBody, ToggleControl } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
-import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/offene-stellen/block.json";
 import vorschauMetadata from "../../../../template-parts/blocks/offene-stellen-vorschau/block.json";
-
-// Plain string; render.php escapes it.
-function toRichTextValue(text) {
-    return toHTMLString({ value: create({ text }) });
-}
-
-function fromRichTextValue(html) {
-    return create({ html }).text;
-}
+import { ACCENT_FORMATS } from "../shared.jsx";
 
 function Edit({ attributes, setAttributes }) {
     const { showContact, contactHeading } = attributes;
@@ -55,12 +46,10 @@ function Edit({ attributes, setAttributes }) {
                             <RichText
                                 tagName="h2"
                                 className="mb-5 text-3xl leading-tight font-semibold"
-                                value={toRichTextValue(contactHeading)}
-                                onChange={(html) =>
-                                    setAttributes({ contactHeading: fromRichTextValue(html) })
-                                }
+                                value={contactHeading}
+                                onChange={(html) => setAttributes({ contactHeading: html })}
                                 placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                                allowedFormats={[]}
+                                allowedFormats={ACCENT_FORMATS}
                                 disableLineBreaks
                             />
                             <ServerSideRender

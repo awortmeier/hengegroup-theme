@@ -28,6 +28,7 @@ if ($heading !== '' || $text !== '') {
                 'variant' => 'headline-sm',
                 'tag' => 'h2',
                 'text' => $heading,
+                'accent_markup' => true,
                 'class' => 'mb-5 lg:text-[42px]',
             ],
         ]);

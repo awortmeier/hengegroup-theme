@@ -8,7 +8,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 ### Added
 
 - Header, Footer (Einstellungen > Footer), 404 nach Design.
-- Bloecke: Buehne, Buehne (statisch), Ueberschrift & Text, Produkte, Produktkategorie, Kontakt, Anwendungsgruppe,
+- Bloecke: Buehne, Buehne (statisch), Textabschnitt, Produkte, Produktkategorie, Kontakt, Anwendungsgruppe,
   Offene Stellen, Karriere-Teaser, Stellen-Liste, Benefits, Auszeichnungen, Galerie, Historie, Personen,
   Kennzahlen, Unternehmen der Gruppe.
 - Benefits wahlweise als Karten (Unternehmensseite), neue Icons Entwicklung und Nachhaltigkeit.
@@ -22,6 +22,8 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 - Komponenten `product-card`, `contact-card`, Formularfelder ueber die Field-Komponenten.
 - Styling aller Base-Komponenten, Marken-Tokens, Karten-Tokens.
 - SEO-Metabox, Sitemap-Anpassungen, SVG-Upload mit Sanitizing.
+- Inline-Format "Akzent-Schrift" als eigener Toolbar-Button in "Textabschnitt", den Bereichsueberschriften
+  der Bloecke sowie Core-Ueberschrift und -Absatz.
 
 ### Changed
 

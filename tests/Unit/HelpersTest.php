@@ -145,6 +145,31 @@ final class HelpersTest extends TestCase
         );
     }
 
+    public function test_render_accent_markup_keeps_only_the_accent_span(): void
+    {
+        Functions\when('esc_html')->alias(
+            static fn(string $text): string => htmlspecialchars($text, ENT_QUOTES),
+        );
+
+        $result = hengegroup_theme_render_accent_markup(
+            'A <span class="font-accent">B</span> <span class="x">C</span> <strong>D</strong> &amp; &lt;i&gt;',
+        );
+
+        $this->assertSame('A <span class="font-accent">B</span> C D &amp; &lt;i&gt;', $result);
+    }
+
+    public function test_render_accent_markup_balances_spans(): void
+    {
+        $this->stubEscapingPassthrough();
+
+        $this->assertSame(
+            '<span class="font-accent">AB</span>',
+            hengegroup_theme_render_accent_markup(
+                '</span><span class="font-accent">A<span class="font-accent">B',
+            ),
+        );
+    }
+
     public function test_render_accent_text_ignores_blank_highlighted_words(): void
     {
         $this->stubEscapingPassthrough();

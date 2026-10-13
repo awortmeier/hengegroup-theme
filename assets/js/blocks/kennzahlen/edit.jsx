@@ -12,6 +12,7 @@ import {
 import { ToolbarGroup } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 import {
+    ACCENT_FORMATS,
     accentClasses,
     AccentDropdown,
     AddItemTile,
@@ -61,10 +62,10 @@ function Edit({ attributes, setAttributes, clientId }) {
                     <RichText
                         tagName={headingTag}
                         className="text-grey-light col-span-12 text-4xl leading-tight font-semibold"
-                        value={toRichTextValue(heading)}
-                        onChange={(html) => setAttributes({ heading: fromRichTextValue(html) })}
+                        value={heading}
+                        onChange={(html) => setAttributes({ heading: html })}
                         placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
+                        allowedFormats={ACCENT_FORMATS}
                         disableLineBreaks
                     />
                     <ul {...innerBlocksProps} />

@@ -23,6 +23,7 @@ import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/karriere-teaser/block.json";
 import listeMetadata from "../../../../template-parts/blocks/karriere-teaser-liste/block.json";
+import { ACCENT_FORMATS } from "../shared.jsx";
 
 function toRichTextValue(text) {
     return toHTMLString({ value: create({ text }) });
@@ -106,10 +107,10 @@ function Edit({ attributes, setAttributes, isSelected }) {
                         <RichText
                             tagName={headingTag}
                             className="mb-5 text-5xl leading-tight font-semibold"
-                            value={toRichTextValue(heading)}
-                            onChange={(html) => setAttributes({ heading: fromRichTextValue(html) })}
+                            value={heading}
+                            onChange={(html) => setAttributes({ heading: html })}
                             placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={[]}
+                            allowedFormats={ACCENT_FORMATS}
                             disableLineBreaks
                         />
                         <RichText

@@ -1,11 +1,11 @@
 {
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
-    "name": "hengegroup-theme/ueberschrift-text",
-    "title": "Überschrift & Text",
+    "name": "hengegroup-theme/textabschnitt",
+    "title": "Textabschnitt",
     "category": "henge",
     "icon": "heading",
-    "description": "Zentrierte oder linksbündige Überschrift (mit optionaler Akzent-Hervorhebung einzelner Wörter) gefolgt von einem Textabsatz.",
+    "description": "Zentrierte oder linksbündige Überschrift mit Text. Einzelne Wörter über „Akzent-Schrift“ in der Werkzeugleiste hervorheben.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "heading": {
@@ -15,13 +15,6 @@
         "headingTag": {
             "type": "string",
             "default": "p"
-        },
-        "accentWords": {
-            "type": "array",
-            "default": [],
-            "items": {
-                "type": "string"
-            }
         },
         "text": {
             "type": "string",
@@ -39,6 +32,6 @@
     "supports": {
         "html": false
     },
-    "editorScript": "hengegroup-theme-ueberschrift-text-editor",
+    "editorScript": "hengegroup-theme-textabschnitt-editor",
     "render": "file:./render.php"
 }

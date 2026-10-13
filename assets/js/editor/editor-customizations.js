@@ -1,8 +1,13 @@
 // Editor-wide adjustments (loaded via enqueue_block_editor_assets).
+import { BlockControls } from "@wordpress/block-editor";
 import { unregisterBlockVariation } from "@wordpress/blocks";
+import { ToolbarButton } from "@wordpress/components";
 import { dispatch } from "@wordpress/data";
 import domReady from "@wordpress/dom-ready";
+import { createElement as el } from "@wordpress/element";
 import { addFilter } from "@wordpress/hooks";
+import { __ } from "@wordpress/i18n";
+import { registerFormatType, toggleFormat } from "@wordpress/rich-text";
 
 // No "Additional CSS class(es)" field on any block (anchors stay available).
 addFilter(
@@ -16,6 +21,28 @@ addFilter(
         },
     })
 );
+
+// Marks words in the accent font; hengegroup_theme_render_accent_markup() relies on exactly this markup.
+const ACCENT_FORMAT = "hengegroup-theme/akzent";
+
+registerFormatType(ACCENT_FORMAT, {
+    title: __("Akzent-Schrift", "hengegroup-theme"),
+    tagName: "span",
+    className: "font-accent",
+    // BlockControls instead of RichTextToolbarButton, which would hide it in the "More" dropdown.
+    // Format edits only render for the focused RichText, so there is one button per block.
+    edit: ({ isActive, value, onChange }) =>
+        el(
+            BlockControls,
+            { group: "inline" },
+            el(ToolbarButton, {
+                icon: "editor-textcolor",
+                label: __("Akzent-Schrift", "hengegroup-theme"),
+                isPressed: isActive,
+                onClick: () => onChange(toggleFormat(value, { type: ACCENT_FORMAT })),
+            })
+        ),
+});
 
 // Hidden from the inserter only; existing content keeps working.
 const HIDDEN_BLOCK_TYPES = [

@@ -39,6 +39,7 @@ if ($heading !== '' || $text !== '') {
         get_template_part('template-parts/base/typography', null, [
             'config' => [
                 'text' => $heading,
+                'accent_markup' => true,
                 'variant' => 'headline-sm',
                 'tag' => $heading_tag,
                 'color' => 'light',

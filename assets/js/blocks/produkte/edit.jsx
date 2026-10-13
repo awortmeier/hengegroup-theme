@@ -30,6 +30,7 @@ import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/produkte/block.json";
 import produkteRasterMetadata from "../../../../template-parts/blocks/produkte-raster/block.json";
+import { ACCENT_FORMATS } from "../shared.jsx";
 
 // Texts stay plain strings (render.php escapes them); create()/toHTMLString() only handles entity
 // escaping inside RichText.
@@ -206,10 +207,10 @@ function Edit({ attributes, setAttributes, isSelected }) {
                         <RichText
                             tagName={headingTag}
                             className="text-grey-light mb-4 text-5xl leading-tight font-semibold"
-                            value={toRichTextValue(heading)}
-                            onChange={(html) => setAttributes({ heading: fromRichTextValue(html) })}
+                            value={heading}
+                            onChange={(html) => setAttributes({ heading: html })}
                             placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={[]}
+                            allowedFormats={ACCENT_FORMATS}
                             disableLineBreaks
                         />
                         <RichText

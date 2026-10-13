@@ -8,6 +8,7 @@ import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/kontakt/block.json";
 import vorschauMetadata from "../../../../template-parts/blocks/kontakt-vorschau/block.json";
+import { ACCENT_FORMATS } from "../shared.jsx";
 
 // Texts stay plain strings; render.php escapes them.
 function toRichTextValue(text) {
@@ -30,10 +31,10 @@ function Edit({ attributes, setAttributes }) {
                         <RichText
                             tagName="h2"
                             className="mb-5 text-4xl leading-tight font-semibold lg:text-[42px]"
-                            value={toRichTextValue(heading)}
-                            onChange={(html) => setAttributes({ heading: fromRichTextValue(html) })}
+                            value={heading}
+                            onChange={(html) => setAttributes({ heading: html })}
                             placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={[]}
+                            allowedFormats={ACCENT_FORMATS}
                             disableLineBreaks
                         />
                         <RichText

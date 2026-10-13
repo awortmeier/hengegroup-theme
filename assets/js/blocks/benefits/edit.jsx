@@ -12,6 +12,7 @@ import {
 import { ToolbarDropdownMenu, ToolbarGroup } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 import {
+    ACCENT_FORMATS,
     AddItemTile,
     APPENDER_GRID_CELL_CLASSNAME,
     fromRichTextValue,
@@ -82,10 +83,10 @@ function Edit({ attributes, setAttributes, clientId }) {
                         <RichText
                             tagName={headingTag}
                             className="text-grey-light mb-5 text-4xl leading-tight font-semibold"
-                            value={toRichTextValue(heading)}
-                            onChange={(html) => setAttributes({ heading: fromRichTextValue(html) })}
+                            value={heading}
+                            onChange={(html) => setAttributes({ heading: html })}
                             placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={[]}
+                            allowedFormats={ACCENT_FORMATS}
                             disableLineBreaks
                         />
                         <RichText

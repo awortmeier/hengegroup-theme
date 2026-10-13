@@ -12,6 +12,7 @@ declare(strict_types=1);
 //   tag              string   default depends on variant
 //   color            string   default | light (on dark backgrounds) | neutral (muted)
 //   accent_words     array    words in the accent font
+//   accent_markup    bool     text is RichText HTML with the "Akzent" format (false)
 //   data_slot        string   default 'typography'
 //   class / attributes / data_attributes   `class` is appended, not merged
 
@@ -28,6 +29,7 @@ $color = trim((string) ($config['color'] ?? 'default'));
 $data_slot = trim((string) ($config['data_slot'] ?? ''));
 $class_name = trim((string) ($config['class'] ?? ''));
 $accent_words = is_array($config['accent_words'] ?? null) ? $config['accent_words'] : [];
+$accent_markup = ($config['accent_markup'] ?? false) === true;
 $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : [];
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
 
@@ -100,9 +102,13 @@ $element_attributes['data-color'] = $color;
 
 $element_attributes = hengegroup_theme_merge_data_attributes($element_attributes, $data_attributes);
 
+$content = $accent_markup
+    ? hengegroup_theme_render_accent_markup($text)
+    : hengegroup_theme_render_accent_text($text, $accent_words);
+
 printf(
     '<%1$s%2$s>%3$s</%1$s>',
     esc_html($tag),
     hengegroup_theme_render_attributes($element_attributes), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    hengegroup_theme_render_accent_text($text, $accent_words), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    $content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

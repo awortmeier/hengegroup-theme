@@ -64,9 +64,9 @@ function hengegroup_theme_register_blocks(): void
         'js/blocks/buehne-statisch-edit.js',
     );
     hengegroup_theme_register_theme_block(
-        'ueberschrift-text',
-        'hengegroup-theme-ueberschrift-text-editor',
-        'js/blocks/ueberschrift-text-edit.js',
+        'textabschnitt',
+        'hengegroup-theme-textabschnitt-editor',
+        'js/blocks/textabschnitt-edit.js',
     );
     hengegroup_theme_register_theme_block(
         'produkte',
@@ -279,7 +279,19 @@ function hengegroup_theme_enqueue_editor_assets(): void
         hengegroup_theme_get_vite_asset_uri($script_relative_path),
         // wp-edit-post fuer hideBlockTypes(), wp-block-library damit die Embed-Varianten schon
         // registriert sind, bevor sie entfernt werden.
-        ['wp-block-library', 'wp-blocks', 'wp-data', 'wp-dom-ready', 'wp-edit-post', 'wp-hooks'],
+        [
+            'wp-block-editor',
+            'wp-block-library',
+            'wp-blocks',
+            'wp-components',
+            'wp-data',
+            'wp-dom-ready',
+            'wp-edit-post',
+            'wp-element',
+            'wp-hooks',
+            'wp-i18n',
+            'wp-rich-text',
+        ],
         filemtime($script_path),
         true,
     );

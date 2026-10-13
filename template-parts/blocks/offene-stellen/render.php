@@ -34,6 +34,7 @@ if ($contact_markup !== '') {
                 'variant' => 'headline-xs',
                 'tag' => 'h2',
                 'text' => $contact_heading,
+                'accent_markup' => true,
                 'class' => 'mb-5',
             ],
         ]);

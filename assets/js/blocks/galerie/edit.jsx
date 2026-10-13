@@ -13,17 +13,9 @@ import {
 import { ToolbarButton, ToolbarDropdownMenu, ToolbarGroup } from "@wordpress/components";
 import { useSelect } from "@wordpress/data";
 import { __, sprintf } from "@wordpress/i18n";
-import { create, toHTMLString } from "@wordpress/rich-text";
 import metadata from "../../../../template-parts/blocks/galerie/block.json";
 import { getBentoTileShapes, TILE_CLASSNAMES } from "./layout.js";
-
-function toRichTextValue(text) {
-    return toHTMLString({ value: create({ text }) });
-}
-
-function fromRichTextValue(html) {
-    return create({ html }).text;
-}
+import { ACCENT_FORMATS } from "../shared.jsx";
 
 const HEADING_TAG_OPTIONS = [
     { title: __("Überschrift 1 (H1)", "hengegroup-theme"), value: "h1" },
@@ -108,10 +100,10 @@ function Edit({ attributes, setAttributes }) {
                     <RichText
                         tagName={headingTag}
                         className="col-span-12 text-4xl leading-tight font-semibold"
-                        value={toRichTextValue(heading)}
-                        onChange={(html) => setAttributes({ heading: fromRichTextValue(html) })}
+                        value={heading}
+                        onChange={(html) => setAttributes({ heading: html })}
                         placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
+                        allowedFormats={ACCENT_FORMATS}
                         disableLineBreaks
                     />
                     {imageIds.length > 0 && (

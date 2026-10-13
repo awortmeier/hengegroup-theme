@@ -106,6 +106,48 @@ function hengegroup_theme_render_accent_text(string $content, array $highlighted
     return $output;
 }
 
+/**
+ * RichText HTML with the "Akzent" format -> escaped text in which only <span class="font-accent">
+ * survives. Not wp_kses(): it would allow any class on the span.
+ */
+function hengegroup_theme_render_accent_markup(string $html): string
+{
+    $open_tag = '<span class="font-accent">';
+    $parts = preg_split(
+        '#(' . preg_quote($open_tag, '#') . '|</span>)#',
+        $html,
+        -1,
+        PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY,
+    );
+
+    if (!is_array($parts)) {
+        return '';
+    }
+
+    $output = '';
+    $depth = 0;
+
+    foreach ($parts as $part) {
+        if ($part === $open_tag) {
+            $output .= $depth === 0 ? $open_tag : '';
+            $depth++;
+            continue;
+        }
+
+        if ($part === '</span>') {
+            if ($depth > 0) {
+                $depth--;
+                $output .= $depth === 0 ? '</span>' : '';
+            }
+            continue;
+        }
+
+        $output .= esc_html(html_entity_decode(strip_tags($part), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+
+    return $depth > 0 ? $output . '</span>' : $output;
+}
+
 function hengegroup_theme_render_icon(array $icon_config): string
 {
     ob_start();

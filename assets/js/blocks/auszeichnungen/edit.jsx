@@ -27,6 +27,7 @@ import { __ } from "@wordpress/i18n";
 import { create, toHTMLString } from "@wordpress/rich-text";
 import metadata from "../../../../template-parts/blocks/auszeichnungen/block.json";
 import cardMetadata from "../../../../template-parts/blocks/auszeichnung/block.json";
+import { ACCENT_FORMATS } from "../shared.jsx";
 
 const CHILD_BLOCK_NAME = cardMetadata.name;
 
@@ -113,10 +114,10 @@ function Edit({ attributes, setAttributes, clientId }) {
                     <RichText
                         tagName={headingTag}
                         className="col-span-12 text-3xl leading-tight font-semibold"
-                        value={toRichTextValue(heading)}
-                        onChange={(html) => setAttributes({ heading: fromRichTextValue(html) })}
+                        value={heading}
+                        onChange={(html) => setAttributes({ heading: html })}
                         placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
+                        allowedFormats={ACCENT_FORMATS}
                         disableLineBreaks
                     />
                     <ul {...innerBlocksProps} />

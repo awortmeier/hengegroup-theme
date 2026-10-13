@@ -16,6 +16,9 @@ export function fromRichTextValue(html) {
     return create({ html }).text;
 }
 
+// Format from editor-customizations.js; render.php keeps only this one (accent_markup).
+export const ACCENT_FORMATS = ["hengegroup-theme/akzent"];
+
 const HEADING_TAG_OPTIONS = [
     { title: __("Überschrift 1 (H1)", "hengegroup-theme"), value: "h1" },
     { title: __("Überschrift 2 (H2)", "hengegroup-theme"), value: "h2" },

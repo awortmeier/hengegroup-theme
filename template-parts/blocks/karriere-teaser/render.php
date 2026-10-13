@@ -30,6 +30,7 @@ if ($heading !== '') {
     get_template_part('template-parts/base/typography', null, [
         'config' => [
             'text' => $heading,
+            'accent_markup' => true,
             'variant' => 'headline-base',
             'tag' => $heading_tag,
             'class' => 'mb-5',
