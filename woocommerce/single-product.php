@@ -59,7 +59,7 @@ while (have_posts()):
           ]); ?>
 
           <?php if (trim($data['description']) !== ''): ?>
-            <div class="mb-7 text-lg leading-relaxed text-grey-dark lg:text-[19px] [&_a]:text-henge-green [&_a]:underline [&_li]:leading-[1.7] [&_ol]:mb-3.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3.5 [&_p:last-child]:mb-0 [&_ul]:mb-3.5 [&_ul]:list-disc [&_ul]:pl-5">
+            <div class="mb-7 text-lg leading-relaxed text-grey-dark lg:text-[19px] rich-text">
               <?php echo wp_kses_post(wc_format_content($data['description'])); ?>
             </div>
           <?php endif; ?>
@@ -99,7 +99,7 @@ while (have_posts()):
 
     <?php if ($data['analysis'] !== [] || $data['grain_sizes'] !== []): ?>
       <section
-        class="bg-grey-dark bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)] py-16 shadow-[inset_0_40px_40px_-40px_rgba(0,0,0,0.5),inset_0_-40px_40px_-40px_rgba(0,0,0,0.5)] md:py-25"
+        class="section-dark section-spacing"
         aria-label="<?php esc_attr_e('Technische Daten', 'hengegroup-theme'); ?>"
       >
         <div class="wrapper gap-y-12">
@@ -160,7 +160,7 @@ while (have_posts()):
     <?php endif; ?>
 
     <?php if ($data['anwendungen'] !== []): ?>
-      <section class="py-16 md:py-25">
+      <section class="section-spacing">
         <div class="wrapper">
           <div class="col-span-12">
             <?php $section_heading(__('Anwendungsbereiche', 'hengegroup-theme')); ?>
@@ -178,7 +178,7 @@ while (have_posts()):
     <?php endif; ?>
 
     <?php if ($data['downloads'] !== []): ?>
-      <section id="downloads" class="bg-neutral-200 py-16 md:py-25">
+      <section id="downloads" class="bg-neutral-200 section-spacing">
         <div class="wrapper">
           <div class="col-span-12">
             <?php $section_heading(__('Downloads', 'hengegroup-theme')); ?>
@@ -232,7 +232,7 @@ while (have_posts()):
     <?php $contact_card = hengegroup_theme_render_contact_card($data['contact'], [
         'variant' => 'light',
     ]); ?>
-    <section id="kontakt" class="scroll-mt-24 bg-grey-dark py-16 md:py-25" aria-labelledby="kontakt-titel">
+    <section id="kontakt" class="scroll-mt-24 bg-grey-dark section-spacing" aria-labelledby="kontakt-titel">
       <div class="wrapper gap-y-12">
         <div class="col-span-12 max-w-3xl">
           <?php get_template_part('template-parts/base/typography', null, [
@@ -293,7 +293,7 @@ while (have_posts()):
         'minimal',
     ); ?>
     <?php if ($related_markup !== ''): ?>
-      <section class="bg-neutral-50 py-16 md:py-25" aria-labelledby="verwandte-titel">
+      <section class="bg-neutral-50 section-spacing" aria-labelledby="verwandte-titel">
         <div class="wrapper gap-y-6">
           <div class="col-span-12">
             <?php get_template_part('template-parts/base/typography', null, [

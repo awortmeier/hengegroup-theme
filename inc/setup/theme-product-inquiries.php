@@ -57,8 +57,6 @@ function hengegroup_theme_handle_product_inquiry(): void
     $nonce = isset($_POST['_hengegroup_theme_inquiry_nonce'])
         ? sanitize_text_field(wp_unslash($_POST['_hengegroup_theme_inquiry_nonce']))
         : '';
-    $honeypot = isset($_POST['website']) ? sanitize_text_field(wp_unslash($_POST['website'])) : '';
-    $started = isset($_POST['started']) ? absint($_POST['started']) : 0;
     $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
     $with_location = !empty($_POST['with_location']);
 
@@ -83,7 +81,7 @@ function hengegroup_theme_handle_product_inquiry(): void
         hengegroup_theme_redirect_after_inquiry($return_id, ['anfrage' => 'abgelaufen']);
     }
 
-    if (hengegroup_theme_is_form_bot($honeypot, $started)) {
+    if (hengegroup_theme_is_form_bot()) {
         hengegroup_theme_redirect_after_inquiry($return_id, ['anfrage' => 'gesendet']);
     }
 

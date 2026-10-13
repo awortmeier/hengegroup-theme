@@ -1,21 +1,22 @@
-// Buehne: crossfade between slides plus dot navigation. goToIndex() sets data-state on the slides
-// and aria-hidden/inert on the inactive ones.
+// Buehne: crossfade between slides plus dot navigation and a pause toggle for autoplay.
+
+import { prefersReducedMotion } from "../../utils/reduced-motion.js";
 
 function getItems(carousel) {
     return Array.from(carousel.querySelectorAll(':scope > [data-slot="carousel-item"]'));
 }
 
-function prefersReducedMotion() {
-    return (
-        typeof window.matchMedia === "function" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    );
+function isKeyboardFocus(element) {
+    try {
+        return element.matches(":focus-visible");
+    } catch {
+        return true;
+    }
 }
 
 function setupBuehne(carousel) {
-    const dotsWrapper = carousel.parentElement
-        ? carousel.parentElement.querySelector("[data-buehne-dots]")
-        : null;
+    const root = carousel.parentElement;
+    const dotsWrapper = root ? root.querySelector("[data-buehne-dots]") : null;
 
     if (!dotsWrapper) {
         return;
@@ -29,24 +30,26 @@ function setupBuehne(carousel) {
     }
 
     const loop = carousel.getAttribute("data-loop") === "true";
-    const autoplay = carousel.getAttribute("data-autoplay") === "true";
+    const autoplay =
+        carousel.getAttribute("data-autoplay") === "true" &&
+        items.length > 1 &&
+        !prefersReducedMotion();
     const autoplayInterval = parseInt(
         carousel.getAttribute("data-autoplay-interval") || "6000",
         10
     );
+    const pauseButton = dotsWrapper.querySelector("[data-buehne-pause]");
+    const playIconTemplate = dotsWrapper.querySelector("template[data-buehne-play-icon]");
+    const pauseIcon = pauseButton ? pauseButton.querySelector("svg") : null;
+    const playIcon = playIconTemplate
+        ? playIconTemplate.content.querySelector("svg")?.cloneNode(true)
+        : null;
 
     let currentIndex = 0;
     let timer = null;
-
-    function setActiveDot(index) {
-        dots.forEach((dot, dotIndex) => {
-            if (dotIndex === index) {
-                dot.setAttribute("data-active", "true");
-            } else {
-                dot.removeAttribute("data-active");
-            }
-        });
-    }
+    let hovered = false;
+    let focused = false;
+    let paused = false;
 
     function goToIndex(index) {
         items.forEach((item, itemIndex) => {
@@ -61,19 +64,17 @@ function setupBuehne(carousel) {
             }
         });
 
+        dots.forEach((dot, dotIndex) => {
+            if (dotIndex === index) {
+                dot.setAttribute("data-active", "true");
+                dot.setAttribute("aria-current", "true");
+            } else {
+                dot.removeAttribute("data-active");
+                dot.removeAttribute("aria-current");
+            }
+        });
+
         currentIndex = index;
-        setActiveDot(index);
-    }
-
-    dots.forEach((dot, index) => {
-        dot.addEventListener("click", () => goToIndex(index));
-    });
-
-    function stopAutoplay() {
-        if (timer !== null) {
-            window.clearInterval(timer);
-            timer = null;
-        }
     }
 
     function goToNext() {
@@ -91,22 +92,78 @@ function setupBuehne(carousel) {
         goToIndex(nextIndex);
     }
 
-    function startAutoplay() {
-        if (!autoplay || items.length < 2 || prefersReducedMotion()) {
+    // Restarting also resets the interval, so a manual slide change gets the full display time.
+    function updateAutoplay() {
+        if (timer !== null) {
+            window.clearInterval(timer);
+            timer = null;
+        }
+
+        const running = autoplay && !paused && !hovered && !focused;
+
+        if (running) {
+            timer = window.setInterval(goToNext, autoplayInterval);
+        }
+
+        // Announce slide changes only when they are user-initiated.
+        carousel.setAttribute("aria-live", running ? "off" : "polite");
+    }
+
+    dots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+            goToIndex(index);
+            updateAutoplay();
+        });
+    });
+
+    if (pauseButton && autoplay) {
+        pauseButton.hidden = false;
+        pauseButton.setAttribute("data-state", "playing");
+        pauseButton.addEventListener("click", () => {
+            paused = !paused;
+            pauseButton.setAttribute("aria-pressed", paused ? "true" : "false");
+            pauseButton.setAttribute("data-state", paused ? "paused" : "playing");
+
+            const nextIcon = paused ? playIcon : pauseIcon;
+            const currentIcon = pauseButton.querySelector("svg");
+
+            if (nextIcon && currentIcon && nextIcon !== currentIcon) {
+                currentIcon.replaceWith(nextIcon);
+            }
+
+            updateAutoplay();
+        });
+    }
+
+    // The dots sit outside the carousel element, so hover/focus are tracked on the shared wrapper.
+    root.addEventListener("mouseenter", () => {
+        hovered = true;
+        updateAutoplay();
+    });
+    root.addEventListener("mouseleave", () => {
+        hovered = false;
+        updateAutoplay();
+    });
+    // Chrome focuses buttons on mouse click; only keyboard focus should hold the slide.
+    root.addEventListener("focusin", (event) => {
+        if (!isKeyboardFocus(event.target)) {
             return;
         }
 
-        stopAutoplay();
-        timer = window.setInterval(goToNext, autoplayInterval);
-    }
+        focused = true;
+        updateAutoplay();
+    });
+    root.addEventListener("focusout", (event) => {
+        if (root.contains(event.relatedTarget)) {
+            return;
+        }
 
-    carousel.addEventListener("mouseenter", stopAutoplay);
-    carousel.addEventListener("mouseleave", startAutoplay);
-    carousel.addEventListener("focusin", stopAutoplay);
-    carousel.addEventListener("focusout", startAutoplay);
+        focused = false;
+        updateAutoplay();
+    });
 
-    setActiveDot(0);
-    startAutoplay();
+    goToIndex(0);
+    updateAutoplay();
     carousel.setAttribute("data-js", "buehne");
 }
 

@@ -1,7 +1,7 @@
 // Editor for "Benefits" (parent) and "Benefit" (child), edited directly in the canvas. Icons incl.
 // SVG come from window.hengegroupThemeBenefitIcons (same list as the frontend).
 import { createElement as el, Fragment } from "@wordpress/element";
-import { createBlock, registerBlockType } from "@wordpress/blocks";
+import { registerBlockType } from "@wordpress/blocks";
 import {
     BlockControls,
     InnerBlocks,
@@ -10,9 +10,14 @@ import {
     useInnerBlocksProps,
 } from "@wordpress/block-editor";
 import { ToolbarDropdownMenu, ToolbarGroup } from "@wordpress/components";
-import { useDispatch } from "@wordpress/data";
 import { __ } from "@wordpress/i18n";
-import { create, toHTMLString } from "@wordpress/rich-text";
+import {
+    AddItemTile,
+    APPENDER_GRID_CELL_CLASSNAME,
+    fromRichTextValue,
+    HeadingTagDropdown,
+    toRichTextValue,
+} from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/benefits/block.json";
 import benefitMetadata from "../../../../template-parts/blocks/benefit/block.json";
 
@@ -21,41 +26,13 @@ const CHILD_BLOCK_NAME = benefitMetadata.name;
 const ICONS = window.hengegroupThemeBenefitIcons || {};
 const DEFAULT_ICON = Object.keys(ICONS)[0] || "";
 
-function toRichTextValue(text) {
-    return toHTMLString({ value: create({ text }) });
-}
-
-function fromRichTextValue(html) {
-    return create({ html }).text;
-}
-
-const HEADING_TAG_OPTIONS = [
-    { title: __("Überschrift 1 (H1)", "hengegroup-theme"), value: "h1" },
-    { title: __("Überschrift 2 (H2)", "hengegroup-theme"), value: "h2" },
-    { title: __("Überschrift 3 (H3)", "hengegroup-theme"), value: "h3" },
-    { title: __("Überschrift 4 (H4)", "hengegroup-theme"), value: "h4" },
-    { title: __("Überschrift 5 (H5)", "hengegroup-theme"), value: "h5" },
-    { title: __("Überschrift 6 (H6)", "hengegroup-theme"), value: "h6" },
-    { title: __("Absatz (P)", "hengegroup-theme"), value: "p" },
+const VARIANT_OPTIONS = [
+    { title: __("Liste", "hengegroup-theme"), value: "list" },
+    { title: __("Karten", "hengegroup-theme"), value: "cards" },
 ];
 
-// Own "add" tile as the last grid cell (see auszeichnungen/edit.jsx).
-function AddItemTile({ rootClientId }) {
-    const { insertBlock } = useDispatch("core/block-editor");
-
-    return (
-        <button
-            type="button"
-            className="border-grey-light/40 text-grey-light/80 hover:border-grey-light hover:text-grey-light flex min-h-16 w-full cursor-pointer items-center justify-center rounded-xl border-2 border-dashed bg-transparent text-base font-semibold"
-            onClick={() => insertBlock(createBlock(CHILD_BLOCK_NAME), undefined, rootClientId)}
-        >
-            {__("+ Benefit hinzufügen", "hengegroup-theme")}
-        </button>
-    );
-}
-
 function Edit({ attributes, setAttributes, clientId }) {
-    const { heading, headingTag, text } = attributes;
+    const { heading, headingTag, text, variant } = attributes;
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
     const blockProps = useBlockProps({
         className:
@@ -63,14 +40,20 @@ function Edit({ attributes, setAttributes, clientId }) {
     });
     const innerBlocksProps = useInnerBlocksProps(
         {
-            className:
-                "col-span-12 grid gap-7 sm:grid-cols-2 lg:grid-cols-3 [&>.block-list-appender]:!static [&>.block-list-appender]:!m-0 [&>.block-list-appender]:!w-full",
+            className: `col-span-12 grid sm:grid-cols-2 lg:grid-cols-3 ${variant === "cards" ? "gap-6" : "gap-7"} ${APPENDER_GRID_CELL_CLASSNAME}`,
         },
         {
             allowedBlocks: [benefitMetadata.name],
             template: [[benefitMetadata.name]],
             orientation: "horizontal",
-            renderAppender: () => <AddItemTile rootClientId={clientId} />,
+            renderAppender: () => (
+                <AddItemTile
+                    rootClientId={clientId}
+                    blockName={CHILD_BLOCK_NAME}
+                    label={__("+ Benefit hinzufügen", "hengegroup-theme")}
+                    className="border-grey-light/40 text-grey-light/80 hover:border-grey-light hover:text-grey-light min-h-16 rounded-xl"
+                />
+            ),
         }
     );
 
@@ -78,13 +61,17 @@ function Edit({ attributes, setAttributes, clientId }) {
         <Fragment>
             <BlockControls group="block">
                 <ToolbarGroup>
+                    <HeadingTagDropdown
+                        value={headingTag}
+                        onChange={(value) => setAttributes({ headingTag: value })}
+                    />
                     <ToolbarDropdownMenu
-                        icon="heading"
-                        label={__("Überschrift-Element ändern", "hengegroup-theme")}
-                        controls={HEADING_TAG_OPTIONS.map((option) => ({
+                        icon="grid-view"
+                        label={__("Darstellung", "hengegroup-theme")}
+                        controls={VARIANT_OPTIONS.map((option) => ({
                             title: option.title,
-                            isActive: option.value === headingTag,
-                            onClick: () => setAttributes({ headingTag: option.value }),
+                            isActive: option.value === variant,
+                            onClick: () => setAttributes({ variant: option.value }),
                         }))}
                     />
                 </ToolbarGroup>
@@ -117,10 +104,45 @@ function Edit({ attributes, setAttributes, clientId }) {
     );
 }
 
-function BenefitEdit({ attributes, setAttributes }) {
+function BenefitEdit({ attributes, setAttributes, context }) {
     const { icon, title, text } = attributes;
-    const blockProps = useBlockProps({ className: "flex items-start gap-4" });
+    const isCard = context["hengegroup-theme/benefitsVariant"] === "cards";
+    // Card mirrors card.php raised/lg with icon box.
+    const blockProps = useBlockProps({
+        className: isCard
+            ? "bg-card text-card-foreground rounded-card-raised shadow-card-raised flex flex-col gap-4 py-7"
+            : "flex items-start gap-4",
+    });
     const iconKey = ICONS[icon] ? icon : DEFAULT_ICON;
+    const iconElement = (
+        <span
+            className={`from-henge-grey via-henge-green to-henge-blue flex shrink-0 items-center justify-center rounded-xl bg-linear-135 ${isCard ? "size-11" : "size-12"}`}
+            title={ICONS[iconKey]?.label}
+            // SVG from the theme's own sanitized Lucide files, not user input.
+            dangerouslySetInnerHTML={{ __html: ICONS[iconKey]?.svg || "" }}
+        />
+    );
+    const titleField = (className) => (
+        <RichText
+            tagName="h3"
+            className={className}
+            value={toRichTextValue(title)}
+            onChange={(html) => setAttributes({ title: fromRichTextValue(html) })}
+            placeholder={__("Titel eingeben…", "hengegroup-theme")}
+            allowedFormats={[]}
+            disableLineBreaks
+        />
+    );
+    const textField = (className) => (
+        <RichText
+            tagName="p"
+            className={className}
+            value={toRichTextValue(text)}
+            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
+            placeholder={__("Text eingeben…", "hengegroup-theme")}
+            allowedFormats={[]}
+        />
+    );
 
     return (
         <Fragment>
@@ -137,33 +159,23 @@ function BenefitEdit({ attributes, setAttributes }) {
                     />
                 </ToolbarGroup>
             </BlockControls>
-            <li {...blockProps}>
-                <span
-                    className="from-henge-grey via-henge-green to-henge-blue flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-135"
-                    title={ICONS[iconKey]?.label}
-                    // SVG from the theme's own sanitized Lucide files, not user input.
-                    dangerouslySetInnerHTML={{ __html: ICONS[iconKey]?.svg || "" }}
-                />
-                <div className="min-w-0 flex-1">
-                    <RichText
-                        tagName="h3"
-                        className="text-grey-light mb-1.5 text-lg font-bold"
-                        value={toRichTextValue(title)}
-                        onChange={(html) => setAttributes({ title: fromRichTextValue(html) })}
-                        placeholder={__("Titel eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
-                        disableLineBreaks
-                    />
-                    <RichText
-                        tagName="p"
-                        className="text-grey-light/85 text-base leading-normal"
-                        value={toRichTextValue(text)}
-                        onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-                        placeholder={__("Text eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
-                    />
-                </div>
-            </li>
+            {isCard ? (
+                <li {...blockProps}>
+                    <div className="flex min-w-0 items-center gap-3.5 px-7">
+                        {iconElement}
+                        {titleField("min-w-0 flex-1 text-lg leading-normal font-extrabold")}
+                    </div>
+                    <div className="px-7">{textField("text-base leading-normal text-pretty")}</div>
+                </li>
+            ) : (
+                <li {...blockProps}>
+                    {iconElement}
+                    <div className="min-w-0 flex-1">
+                        {titleField("text-grey-light mb-1.5 text-lg font-bold")}
+                        {textField("text-grey-light/85 text-base leading-normal")}
+                    </div>
+                </li>
+            )}
         </Fragment>
     );
 }

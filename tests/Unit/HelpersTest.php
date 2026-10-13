@@ -381,4 +381,16 @@ final class HelpersTest extends TestCase
 
         $this->assertSame([], hengegroup_theme_get_contact_rows('', ' - ', ' '));
     }
+
+    public function test_accent_classes_fall_back_to_grey_dark(): void
+    {
+        $this->assertSame(
+            ['bg' => 'bg-henge-blue', 'border' => 'border-henge-blue'],
+            hengegroup_theme_get_accent_classes('henge-blue'),
+        );
+        $this->assertSame(
+            ['bg' => 'bg-grey-dark', 'border' => 'border-grey-dark'],
+            hengegroup_theme_get_accent_classes('pink'),
+        );
+    }
 }

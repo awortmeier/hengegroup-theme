@@ -25,13 +25,17 @@ function renderBuehne({ count = 3, autoplay = true, autoplayInterval = 6000, loo
                 data-loop="${loop}"
                 ${autoplay ? `data-autoplay="true" data-autoplay-interval="${autoplayInterval}"` : ""}
             >${items}</div>
-            <div data-buehne-dots>${dots}</div>
+            <div data-buehne-dots>
+                ${dots}
+                ${autoplay ? '<button data-buehne-pause aria-pressed="false" hidden><svg data-icon="pause"></svg></button><template data-buehne-play-icon><svg data-icon="play"></svg></template>' : ""}
+            </div>
         </div>
     `;
 
     return {
         items: Array.from(document.querySelectorAll('[data-slot="carousel-item"]')),
         dots: Array.from(document.querySelectorAll("[data-buehne-dot]")),
+        pauseButton: document.querySelector("[data-buehne-pause]"),
     };
 }
 
@@ -51,7 +55,9 @@ describe("initBuehne", () => {
         initBuehne();
 
         expect(dots[0].getAttribute("data-active")).toBe("true");
+        expect(dots[0].getAttribute("aria-current")).toBe("true");
         expect(dots[1].hasAttribute("data-active")).toBe(false);
+        expect(dots[1].hasAttribute("aria-current")).toBe(false);
     });
 
     it("crossfades to the matching slide when a dot is clicked", () => {
@@ -67,6 +73,8 @@ describe("initBuehne", () => {
         expect(items[0].getAttribute("aria-hidden")).toBe("true");
         expect(items[0].hasAttribute("inert")).toBe(true);
         expect(dots[2].getAttribute("data-active")).toBe("true");
+        expect(dots[2].getAttribute("aria-current")).toBe("true");
+        expect(dots[0].hasAttribute("aria-current")).toBe(false);
     });
 
     it("advances to the next slide on autoplay", () => {
@@ -125,15 +133,84 @@ describe("initBuehne", () => {
         expect(items[1].getAttribute("data-state")).toBe("inactive");
     });
 
-    it("pauses autoplay while the carousel is hovered", () => {
+    it("pauses autoplay while the stage including the dots is hovered", () => {
         vi.useFakeTimers();
         const { items } = renderBuehne({ autoplayInterval: 1000 });
 
         initBuehne();
-        document.querySelector('[data-slot="carousel"]').dispatchEvent(new Event("mouseenter"));
+        document.querySelector(".relative").dispatchEvent(new Event("mouseenter"));
         vi.advanceTimersByTime(5000);
 
         expect(items[0].getAttribute("data-state")).toBe("active");
         expect(items[1].getAttribute("data-state")).toBe("inactive");
+    });
+
+    it("pauses autoplay while a dot has keyboard focus", () => {
+        vi.useFakeTimers();
+        const { items, dots } = renderBuehne({ autoplayInterval: 1000 });
+
+        initBuehne();
+        // jsdom derives :focus-visible from the last input, which is a click from earlier tests.
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab" }));
+        dots[0].focus();
+        vi.advanceTimersByTime(5000);
+
+        expect(items[0].getAttribute("data-state")).toBe("active");
+
+        dots[0].blur();
+        vi.advanceTimersByTime(1000);
+
+        expect(items[1].getAttribute("data-state")).toBe("active");
+    });
+
+    it("restarts the autoplay interval after a dot click", () => {
+        vi.useFakeTimers();
+        const { items, dots } = renderBuehne({ autoplayInterval: 1000 });
+
+        initBuehne();
+        vi.advanceTimersByTime(800);
+        dots[2].click();
+        vi.advanceTimersByTime(800);
+
+        expect(items[2].getAttribute("data-state")).toBe("active");
+
+        vi.advanceTimersByTime(200);
+
+        expect(items[0].getAttribute("data-state")).toBe("active");
+    });
+
+    it("toggles autoplay with the pause button", () => {
+        vi.useFakeTimers();
+        const { items, pauseButton } = renderBuehne({ autoplayInterval: 1000 });
+
+        initBuehne();
+
+        expect(pauseButton.hidden).toBe(false);
+
+        pauseButton.click();
+        vi.advanceTimersByTime(5000);
+
+        expect(items[0].getAttribute("data-state")).toBe("active");
+        expect(pauseButton.getAttribute("aria-pressed")).toBe("true");
+        expect(pauseButton.querySelector("svg").getAttribute("data-icon")).toBe("play");
+        expect(document.querySelector('[data-slot="carousel"]').getAttribute("aria-live")).toBe(
+            "polite"
+        );
+
+        pauseButton.click();
+        vi.advanceTimersByTime(1000);
+
+        expect(items[1].getAttribute("data-state")).toBe("active");
+        expect(pauseButton.getAttribute("aria-pressed")).toBe("false");
+        expect(pauseButton.querySelector("svg").getAttribute("data-icon")).toBe("pause");
+    });
+
+    it("keeps the pause button hidden when the visitor prefers reduced motion", () => {
+        stubMatchMedia(true);
+        const { pauseButton } = renderBuehne();
+
+        initBuehne();
+
+        expect(pauseButton.hidden).toBe(true);
     });
 });

@@ -21,7 +21,7 @@ if (!in_array($heading_tag, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'], true)) {
     $heading_tag = 'h2';
 }
 
-echo '<section class="bg-neutral-200 py-16 md:py-24 lg:py-25">';
+echo '<section class="bg-neutral-200 section-spacing">';
 echo '<div class="wrapper gap-y-10">';
 
 if ($heading !== '') {

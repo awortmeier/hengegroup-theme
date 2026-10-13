@@ -27,7 +27,7 @@ if ($image_ids === []) {
     return;
 }
 
-echo '<section class="py-16 md:py-24 lg:py-25">';
+echo '<section class="section-spacing">';
 echo '<div class="wrapper gap-y-10">';
 
 if ($heading !== '') {

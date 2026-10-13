@@ -42,12 +42,23 @@ Kontaktdaten und Social-URLs unter Einstellungen > Footer, Links ueber die Menue
 "Footermenü". Weiteres Netzwerk: Eintrag in `hengegroup_theme_get_footer_social_networks()` und Key
 in `hengegroup_theme_get_footer_options()`, dann `pnpm icons:tabler`.
 
+## Neues Formular
+
+1. Komponente unter `template-parts/components/`: Felder per `hengegroup_theme_render_form_field()`
+   in einen Puffer rendern und als `content` an `components/request-form` geben (Banner, Honeypot,
+   Datenschutz, Pflichtfeld-Hinweis, Absenden kommen von dort).
+2. Handler per `admin_post(_nopriv)_<action>`: Nonce pruefen, dann `hengegroup_theme_is_form_bot()`,
+   bei Fehlern `hengegroup_theme_store_form_state()` und Redirect; Zustand fuers Template per
+   `hengegroup_theme_read_form_state()`.
+3. Als Eingang: Post-Type und Felder in `inc/setup/theme-requests.php` ergaenzen.
+
 ## Neuer Gutenberg-Block
 
 1. `template-parts/blocks/<name>/block.json` (`"category": "henge"`, `"render": "file:./render.php"`)
    und `render.php`, das nur Base-/Komponenten-Templates komponiert.
-2. Editor: `assets/js/blocks/<name>/edit.jsx`, nur `@wordpress/*`-Imports. Vorschau per
-   `ServerSideRender`, ausser der Block braucht `RichText` im Canvas.
+2. Editor: `assets/js/blocks/<name>/edit.jsx`, nur `@wordpress/*`-Imports und
+   `assets/js/blocks/shared.jsx` (RichText-Werte, Ueberschrift-/Akzent-Auswahl, Bildwahl,
+   Hinzufuegen-Kachel). Vorschau per `ServerSideRender`, ausser der Block braucht `RichText` im Canvas.
 3. `vite.config.editor-<name>.js` per `createEditorBlockConfig()` und in `package.json`
    `build:assets` eintragen.
 4. In `hengegroup_theme_register_blocks()` (`inc/setup/theme-blocks.php`) registrieren.

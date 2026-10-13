@@ -26,6 +26,8 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
 
 - **Nur Tailwind** (`CLAUDE.md`). Rohes CSS nur im Backend (wp-admin hat keinen Tailwind-Build),
   z. B. zum Ausblenden von Kernfeldern ohne Filter.
+- **Wiederkehrende Klassenketten als `@utility`** in `app.css` (nur `@apply`), nicht als
+  PHP-Konstanten: bleibt fuer den Tailwind-Scanner sichtbar und funktioniert mit Varianten.
 - **Kein `tailwind-merge` in PHP**: `class`-Passthrough ist additiv. Konkurrieren zwei Utilities um
   dieselbe CSS-Property, entscheidet Tailwinds Ausgabereihenfolge, nicht die Reihenfolge im
   String -- dann `!`-Modifier verwenden.
@@ -41,6 +43,9 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
 - **Karten**: zwei Stufen als Token (`card-flat`/`card-raised`, nicht `card`, weil `shadow-card` mit
   der Farbe `--color-card` kollidieren wuerde). `card.php` ist die Standard-Karte; Kontaktkarte,
   Download-Karte und Produktbox sind bewusst eigene Komponenten.
+- **Reduced Motion zentral** in `app.css` (Dauer auf 0.01ms), nicht per `motion-reduce:` je
+  Komponente: deckt auch neue Komponenten ab. Ausgenommen Spinner und Toast-Countdown (Status).
+  JS-Scrollen und Autoplay fragen `utils/reduced-motion.js`.
 - **Kein Dark Mode** (`dark:`-Klassen aus shadcn entfernt).
 - **`button.php`** setzt `wp-element-button` und `!`-Farben, weil WordPress' globale Link-Farbe sonst
   im Editor gewinnt.
@@ -60,6 +65,8 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
 - **Core-Bloecke ausgeblendet**, die das Theme nicht stylt; `customClassName` global aus
   (`editor-customizations.js`).
 - **Eigene Block-Kategorie `henge`**, an erster Stelle im Inserter.
+- **Zwei Buehnen-Bloecke** statt einer Variante: `buehne` (Slider mit Box, Buttons, Reitern) und
+  `buehne-statisch` (ein Bild, Titel, Unterzeile) teilen nur Hoehe, Bild und Verlauf.
 - **Keine `if/else`-Alternativsyntax mit Kommentaren um grosse HTML-Bereiche**:
   `@prettier/plugin-php` verschiebt/vervielfacht Kommentare dort.
 

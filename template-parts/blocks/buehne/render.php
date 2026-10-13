@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-// Block "Buehne": Folien liegen gestapelt in carousel.php und wechseln per Opacity-Crossfade
-// (buehne.js). Inaktive Folien sind aria-hidden + inert. Die Dot-Reihe liegt absolut ueber allen
-// Folien (darum pb-24 als Abstand) und nutzt max-w-page wie .wrapper. Kicker-Logos sind inaktiv
+// Block "Buehne": Slides liegen gestapelt in carousel.php und wechseln per Opacity-Crossfade
+// (buehne.js). Inaktive Slides sind aria-hidden + inert. Die Dot-Reihe liegt absolut ueber allen
+// Slides (darum pb-24 als Abstand) und nutzt max-w-page wie .wrapper. Kicker-Logos sind inaktiv
 // entsaettigt (group-data-[active]). Dots brechen per break-words/min-w-0 um statt ueberzulaufen.
 
 if (!is_array($attributes ?? null)) {
@@ -187,8 +187,8 @@ foreach ($slides as $slide) {
         $badge_text !== ''
             ? $badge_text
             : sprintf(
-                /* translators: %d: Foliennummer (1-basiert) */
-                __('Folie %d', 'hengegroup-theme'),
+                /* translators: %d: Slide-Nummer (1-basiert) */
+                __('Slide %d', 'hengegroup-theme'),
                 $index + 1,
             );
 
@@ -220,7 +220,7 @@ foreach ($slides as $slide) {
         '<button type="button" class="group inline-flex min-w-0 items-center border-b-2 ' .
             'border-grey-light/25 pt-2 pb-1 text-xs font-bold tracking-normal text-grey-light/50 ' .
             'uppercase italic break-words transition-colors sm:pt-3 sm:pb-1.5 sm:text-sm ' .
-            'sm:tracking-wide %4$s"%1$s ' .
+            'sm:tracking-wide %4$s"%1$s aria-controls="%2$s" ' .
             'data-buehne-dot="%2$s">%3$s</button>',
         $dot_aria_label_attribute, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         esc_attr($item_id),
@@ -237,7 +237,7 @@ if ($carousel_items === '') {
 
 $carousel_data_attributes = ['block' => 'buehne'];
 
-// Bei einer Folie kein Picker und kein Autoplay (buehne.js bricht ohne [data-buehne-dots] ab).
+// Bei einer Slide kein Picker und kein Autoplay (buehne.js bricht ohne [data-buehne-dots] ab).
 $has_multiple_slides = $index > 1;
 
 if ($autoplay && $has_multiple_slides) {
@@ -266,10 +266,34 @@ if (!$has_multiple_slides) {
     return;
 }
 
+$pause_control = '';
+
+// Nur sichtbar, wenn buehne.js Autoplay wirklich startet (nicht bei reduced motion).
+if ($autoplay) {
+    ob_start();
+    get_template_part('template-parts/base/button', null, [
+        'config' => [
+            'icon' => ['name' => 'pause', 'set' => 'lucide'],
+            'variant' => 'ghost',
+            'size' => 'icon-base',
+            'aria_label' => __('Automatischen Slidewechsel anhalten', 'hengegroup-theme'),
+            'class' => 'self-center text-grey-light/70',
+            'attributes' => ['aria-pressed' => 'false', 'hidden' => true],
+            'data_attributes' => ['buehne-pause' => ''],
+        ],
+    ]);
+    $pause_control =
+        (string) ob_get_clean() .
+        '<template data-buehne-play-icon>' .
+        hengegroup_theme_render_icon(['name' => 'play', 'set' => 'lucide']) .
+        '</template>';
+}
+
 printf(
     '<div class="relative">%1$s<div class="absolute inset-x-0 bottom-7 z-10 mx-auto flex ' .
         'max-w-page flex-wrap justify-center gap-2 px-4 sm:gap-5 sm:px-6 lg:px-8" ' .
-        'data-buehne-dots>%2$s</div></div>',
+        'data-buehne-dots>%2$s%3$s</div></div>',
     $carousel_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $dots, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    $pause_control, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );

@@ -8,8 +8,13 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 ### Added
 
 - Header, Footer (Einstellungen > Footer), 404 nach Design.
-- Bloecke: Buehne, Ueberschrift & Text, Produkte, Produktkategorie, Kontakt, Anwendungsgruppe,
-  Offene Stellen, Karriere-Teaser, Stellen-Liste, Benefits, Auszeichnungen, Galerie.
+- Bloecke: Buehne, Buehne (statisch), Ueberschrift & Text, Produkte, Produktkategorie, Kontakt, Anwendungsgruppe,
+  Offene Stellen, Karriere-Teaser, Stellen-Liste, Benefits, Auszeichnungen, Galerie, Historie, Personen,
+  Kennzahlen, Unternehmen der Gruppe.
+- Benefits wahlweise als Karten (Unternehmensseite), neue Icons Entwicklung und Nachhaltigkeit.
+- Hauptmenue: Punkte mit Unterpunkten und echter URL bleiben Links zur Seite, das Dropdown oeffnet per
+  Hover oder ueber einen eigenen Chevron-Button; Punkte mit "#" bleiben reine Dropdowns.
+- Benefits mit HTML-Anker (Erweitert > HTML-Anker); Sprungziele halten Abstand zum Sticky-Header.
 - Produktbereich: Uebersicht /produkte/, Detailseite (Technische Daten, Koernungen, Anwendungen,
   Downloads, Anfrage, verwandte Produkte), Anwendungen-Uebersicht /anwendungen/.
 - Stellenangebote mit Google-Jobs-JSON-LD, Karriereseite, Bewerbungsformular.
@@ -21,6 +26,21 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 ### Changed
 
 - Backend aufgeraeumt (ungenutzte WooCommerce-Menues, Datei-Editor, Versand aus).
+- Produktraster der Bloecke und verwandte Produkte laufen ueber eine Funktion
+  (`hengegroup_theme_render_product_cards()`).
+- Buehne: "Folie" heisst in Editor, Frontend-Labels und Code durchgehend "Slide".
+- Sektionsabstaende einheitlich ueber `section-spacing`/`section-spacing-lg`, Footer im `.wrapper`-Raster,
+  Footer-Links ohne Hover-Farbe.
+- Anfrage- und Bewerbungsformular teilen sich die Huelle `components/request-form` (Banner,
+  Spam-Schutz, Datenschutz, Absenden); die Anfrage fokussiert jetzt auch ihre Statusmeldung.
+- Wiederkehrende Klassenketten als Utilities `section-dark`, `brand-gradient`, `rich-text`
+  (`app.css`); Kopf von Produktkategorie und Anwendungsgruppe als Komponente `section-intro`.
+- Bei `prefers-reduced-motion` laufen Transitionen und Animationen sofort durch, Carousel-Navigation
+  scrollt ohne Smooth-Scrolling.
+- Seiten, die mit einer Buehne beginnen, zeigen den Seitentitel nur noch fuer Screenreader bzw. gar
+  nicht, wenn die statische Buehne die h1 liefert.
+- Buehne: Pause-Button fuer Autoplay, aktiver Dot mit `aria-current`, Hover/Tastaturfokus auf den
+  Dots haelt den Wechsel an, Dot-Klick startet das Intervall neu.
 
 ### Removed
 

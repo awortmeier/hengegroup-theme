@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/firmen",
+    "title": "Unternehmen der Gruppe",
+    "category": "henge",
+    "icon": "building",
+    "description": "Überschrift und Karten mit Logo, Text und Link je Unternehmen. Unternehmen direkt im Block hinzufügen.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        }
+    },
+    "allowedBlocks": ["hengegroup-theme/firma"],
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-firmen-editor",
+    "render": "file:./render.php"
+}

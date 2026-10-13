@@ -10,7 +10,7 @@ if (!is_array($attributes ?? null)) {
     return;
 }
 
-if (!function_exists('hengegroup_theme_render_produkte_grid')) {
+if (!function_exists('hengegroup_theme_render_product_cards')) {
     return;
 }
 
@@ -26,13 +26,13 @@ $button_text = trim((string) ($attributes['buttonText'] ?? ''));
 $button_url = trim((string) ($attributes['buttonUrl'] ?? ''));
 $product_ids = array_map('intval', (array) ($attributes['productIds'] ?? []));
 
-$grid_markup = hengegroup_theme_render_produkte_grid($product_ids);
+$grid_markup = hengegroup_theme_render_product_cards($product_ids);
 
 if ($grid_markup === '') {
     return;
 }
 
-echo '<section class="bg-grey-dark py-16 md:py-24 lg:py-35">';
+echo '<section class="bg-grey-dark section-spacing-lg">';
 echo '<div class="wrapper gap-y-10">';
 echo '<div class="col-span-12 max-w-2xl">';
 

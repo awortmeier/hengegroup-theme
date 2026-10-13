@@ -11,12 +11,12 @@ if (!is_array($attributes ?? null)) {
     return;
 }
 
-if (!function_exists('hengegroup_theme_render_produkte_grid')) {
+if (!function_exists('hengegroup_theme_render_product_cards')) {
     return;
 }
 
 $product_ids = array_map('intval', (array) ($attributes['productIds'] ?? []));
 
-$grid_markup = hengegroup_theme_render_produkte_grid($product_ids);
+$grid_markup = hengegroup_theme_render_product_cards($product_ids);
 
 echo $grid_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

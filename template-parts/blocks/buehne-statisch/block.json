@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/buehne-statisch",
+    "title": "Bühne (statisch)",
+    "category": "henge",
+    "icon": "cover-image",
+    "description": "Vollbreites Bild mit großem Titel in der Akzent-Schrift und Unterzeile.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "align": {
+            "type": "string",
+            "default": "full"
+        },
+        "imageId": {
+            "type": "number",
+            "default": 0
+        },
+        "imageAlt": {
+            "type": "string",
+            "default": ""
+        },
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "titleTag": {
+            "type": "string",
+            "default": "h1"
+        },
+        "text": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "align": ["wide", "full"],
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-buehne-statisch-editor",
+    "render": "file:./render.php"
+}

@@ -37,7 +37,7 @@ if (!in_array($container_width, ['default', 'small'], true)) {
 $align_class = $text_align === 'center' ? 'text-center' : 'text-left';
 $wrapper_class = $container_width === 'small' ? 'wrapper-small' : 'wrapper';
 
-echo '<section class="py-16 md:py-24 lg:py-35">';
+echo '<section class="section-spacing-lg">';
 echo '<div class="' . esc_attr($wrapper_class) . '">';
 echo '<div class="col-span-12 ' . esc_attr($align_class) . '">';
 

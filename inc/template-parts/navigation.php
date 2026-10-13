@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 // Maps the "primary" wp_nav_menu() location onto navigation-menu.php items. One level of children
-// becomes a dropdown panel; deeper levels are skipped.
+// becomes a dropdown panel; deeper levels are skipped. A parent with a real URL stays a link.
 
 /**
  * [] when no menu is assigned. Current page via _wp_menu_item_classes_by_context(), like core.
@@ -78,6 +78,9 @@ function hengegroup_theme_primary_navigation_items(string $location = 'primary')
 
         $items[] = [
             'text' => $item_text,
+            // "#" or empty: pure dropdown without a target page.
+            'href' => ltrim($item_href, '#') !== '' ? $item_href : '',
+            'active' => $item_active,
             'content' =>
                 '<div class="grid grid-cols-[minmax(14rem,1fr)] gap-0.5">' .
                 $panel_links_markup .

@@ -21,14 +21,9 @@ $values = $state['values'];
 $errors = $state['errors'];
 $form_id = wp_unique_id('hengegroup-theme-inquiry-');
 $value = static fn(string $field): string => (string) ($values[$field] ?? '');
-$text_class = $is_dark ? 'text-grey-light' : 'text-grey-dark';
-$muted_class = $is_dark ? 'text-grey-light/70' : 'text-grey-dark/70';
-$link_class = $is_dark ? 'text-grey-light' : 'text-grey-dark';
-
-$label_class = 'text-sm font-semibold ' . $text_class;
+$label_class = 'text-sm font-semibold ' . ($is_dark ? 'text-grey-light' : 'text-grey-dark');
 $error_class = $is_dark ? '!text-red-300' : '';
 
-// Datenschutz-Checkbox mit eigenem <label>, weil label.php den Link escapen wuerde.
 $print_field = static function (array $field): void {
     printf(
         '%s',
@@ -72,7 +67,6 @@ $input = static function (
     ]);
 };
 
-// Als Daten statt Einzelaufrufe im HTML-Teil: @prettier/plugin-php formatiert diese dort nicht stabil.
 $field_rows = [
     [
         ['company', __('Firma', 'hengegroup-theme'), 'text', true, 'organization'],
@@ -92,146 +86,48 @@ $field_rows[] = [
     ['phone', __('Telefon', 'hengegroup-theme'), 'tel', false, 'tel'],
 ];
 
-$privacy_url = get_privacy_policy_url();
-$privacy_label =
-    $privacy_url !== ''
-        ? sprintf(
-            /* translators: %s: link to the privacy policy. */
-            esc_html__(
-                'Ich habe die %s gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Anfrage einverstanden.*',
-                'hengegroup-theme',
-            ),
-            '<a class="' .
-                esc_attr($link_class) .
-                ' underline underline-offset-4" href="' .
-                esc_url($privacy_url) .
-                '" target="_blank" rel="noopener">' .
-                esc_html__('Datenschutzhinweise', 'hengegroup-theme') .
-                '</a>',
-        )
-        : esc_html__(
-            'Ich bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Anfrage einverstanden.*',
-            'hengegroup-theme',
-        );
-?>
-<?php if ($state['status'] === 'gesendet'): ?>
-  <div class="rounded-2xl bg-henge-green px-6 py-5 text-base text-henge-green-foreground" role="status" tabindex="-1">
-    <?php echo esc_html($state['message']); ?>
-  </div>
-<?php endif; ?>
-<?php if ($state['status'] !== 'gesendet'): ?>
-  <form
-    id="<?php echo esc_attr($form_id); ?>"
-    class="flex flex-col gap-5"
-    action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
-    method="post"
-    data-slot="inquiry-form"
-  >
-    <?php if ($state['message'] !== ''): ?>
-      <div class="rounded-2xl border border-destructive/40 bg-red-50 px-6 py-4 text-base text-grey-dark" role="alert" tabindex="-1">
-        <p class="font-semibold"><?php echo esc_html($state['message']); ?></p>
-        <?php if ($errors !== []): ?>
-          <ul class="mt-2 list-disc pl-5 text-sm">
-            <?php foreach ($errors as $message): ?>
-              <li><?php echo esc_html((string) $message); ?></li>
-            <?php endforeach; ?>
-          </ul>
-        <?php endif; ?>
-      </div>
-    <?php endif; ?>
+ob_start();
 
-    <input type="hidden" name="action" value="<?php echo esc_attr(
-        HENGEGROUP_THEME_INQUIRY_ACTION,
-    ); ?>">
-    <input type="hidden" name="product_id" value="<?php echo esc_attr((string) $product_id); ?>">
-    <input type="hidden" name="return_id" value="<?php echo esc_attr(
-        (string) get_queried_object_id(),
-    ); ?>">
-    <input type="hidden" name="with_location" value="<?php echo $with_location ? '1' : ''; ?>">
-    <input type="hidden" name="started" value="<?php echo esc_attr((string) time()); ?>">
-    <?php wp_nonce_field(
-        HENGEGROUP_THEME_INQUIRY_ACTION,
-        '_hengegroup_theme_inquiry_nonce',
-        false,
-    ); ?>
-    <div class="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
-      <label for="<?php echo esc_attr($form_id . '-website'); ?>">Website</label>
-      <input type="text" id="<?php echo esc_attr(
-          $form_id . '-website',
-      ); ?>" name="website" tabindex="-1" autocomplete="off">
-    </div>
+foreach ($field_rows as $field_row) {
+    echo '<div class="grid gap-5 sm:grid-cols-2">';
 
-    <?php foreach ($field_rows as $field_row): ?>
-      <div class="grid gap-5 sm:grid-cols-2">
-        <?php foreach ($field_row as $field_config) {
-            $input(...$field_config);
-        } ?>
-      </div>
-    <?php endforeach; ?>
+    foreach ($field_row as $field_config) {
+        $input(...$field_config);
+    }
 
-    <?php
-    ob_start();
-    get_template_part('template-parts/base/textarea', null, [
-        'config' => [
-            'id' => $form_id . '-message',
-            'name' => 'message',
-            'value' => $value('message'),
-            'rows' => 4,
-            'maxlength' => '5000',
+    echo '</div>';
+}
+
+ob_start();
+get_template_part('template-parts/base/textarea', null, [
+    'config' => [
+        'id' => $form_id . '-message',
+        'name' => 'message',
+        'value' => $value('message'),
+        'rows' => 4,
+        'maxlength' => '5000',
+    ],
+]);
+$print_field([
+    'control_id' => $form_id . '-message',
+    'control' => (string) ob_get_clean(),
+    'label' => $message_label,
+    'label_class' => $label_class,
+]);
+
+get_template_part('template-parts/components/request-form', null, [
+    'config' => [
+        'id' => $form_id,
+        'action' => HENGEGROUP_THEME_INQUIRY_ACTION,
+        'nonce_name' => '_hengegroup_theme_inquiry_nonce',
+        'state' => $state,
+        'content' => (string) ob_get_clean(),
+        'hidden' => [
+            'product_id' => (string) $product_id,
+            'return_id' => (string) get_queried_object_id(),
+            'with_location' => $with_location ? '1' : '',
         ],
-    ]);
-    $print_field([
-        'control_id' => $form_id . '-message',
-        'control' => (string) ob_get_clean(),
-        'label' => $message_label,
-        'label_class' => $label_class,
-    ]);
-    ?>
-
-    <?php
-    ob_start();
-    get_template_part('template-parts/base/checkbox', null, [
-        'config' => [
-            'id' => $form_id . '-privacy',
-            'name' => 'privacy',
-            'value' => '1',
-            'required' => true,
-            'checked' => $value('privacy') === '1',
-            'aria_invalid' => isset($errors['privacy']),
-            'class' => 'mt-0.5',
-            'attributes' => isset($errors['privacy'])
-                ? ['aria-describedby' => hengegroup_theme_field_error_id($form_id . '-privacy')]
-                : [],
-        ],
-    ]);
-    $privacy_control = sprintf(
-        '<div class="flex items-start gap-3">%1$s<label for="%2$s" class="%3$s">%4$s</label></div>',
-        (string) ob_get_clean(),
-        esc_attr($form_id . '-privacy'),
-        esc_attr('text-sm leading-normal ' . $text_class),
-        wp_kses_post($privacy_label),
-    );
-    $print_field([
-        'control_id' => $form_id . '-privacy',
-        'control' => $privacy_control,
-        'error' => (string) ($errors['privacy'] ?? ''),
-        'error_class' => $error_class,
-    ]);
-    ?>
-
-    <div class="flex flex-col-reverse items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <p class="<?php echo esc_attr('text-sm ' . $muted_class); ?>"><?php esc_html_e(
-    '* Pflichtfelder',
-    'hengegroup-theme',
-); ?></p>
-      <?php get_template_part('template-parts/base/button', null, [
-          'config' => [
-              'text' => __('Senden', 'hengegroup-theme'),
-              'type' => 'submit',
-              'variant' => 'henge-green',
-              'size' => 'lg',
-          ],
-      ]); ?>
-    </div>
-  </form>
-<?php endif; ?>
+        'tone' => $is_dark ? 'dark' : 'light',
+        'data_attributes' => ['form' => 'inquiry'],
+    ],
+]);

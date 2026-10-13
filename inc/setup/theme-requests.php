@@ -156,10 +156,15 @@ function hengegroup_theme_get_request_status(int $post_id): string
 }
 
 /**
- * Honeypot ausgefuellt oder schneller als 3 Sekunden abgeschickt.
+ * Honeypot ausgefuellt oder schneller als 3 Sekunden abgeschickt (Felder aus request-form.php).
  */
-function hengegroup_theme_is_form_bot(string $honeypot, int $started): bool
+function hengegroup_theme_is_form_bot(): bool
 {
+    // phpcs:disable WordPress.Security.NonceVerification.Missing -- Aufrufer prueft die Nonce vorher.
+    $honeypot = isset($_POST['website']) ? sanitize_text_field(wp_unslash($_POST['website'])) : '';
+    $started = isset($_POST['started']) ? absint($_POST['started']) : 0;
+    // phpcs:enable WordPress.Security.NonceVerification.Missing
+
     return $honeypot !== '' || $started <= 0 || time() - $started < 3;
 }
 

@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/person",
+    "title": "Person",
+    "category": "henge",
+    "icon": "admin-users",
+    "description": "Eine Karte im Block „Personen“: Porträt, Name und Funktion.",
+    "textdomain": "hengegroup-theme",
+    "parent": ["hengegroup-theme/personen"],
+    "attributes": {
+        "imageId": {
+            "type": "number",
+            "default": 0
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "role": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false
+    },
+    "render": "file:./render.php"
+}

@@ -64,7 +64,7 @@ function slideLabel(slide, index) {
         slide.adminLabel ||
         slide.title ||
         slide.badgeText ||
-        sprintf(__("Folie %d", "hengegroup-theme"), index + 1)
+        sprintf(__("Slide %d", "hengegroup-theme"), index + 1)
     );
 }
 
@@ -227,7 +227,7 @@ function SlideFields({ slide, onChange }) {
                 __nextHasNoMarginBottom
                 label={__("Kicker-Bild: Alternativtext", "hengegroup-theme")}
                 help={__(
-                    "Erscheint anstelle des Textlabels im Auswahl-Button unten am Slider, nicht in der Folie selbst.",
+                    "Erscheint anstelle des Textlabels im Auswahl-Button unten am Slider, nicht in der Slide selbst.",
                     "hengegroup-theme"
                 )}
                 value={slide.kickerImageAlt}
@@ -335,7 +335,7 @@ function Edit({ attributes, setAttributes }) {
                     )}
                     <ToggleControl
                         label={__(
-                            "Nach der letzten Folie zur ersten zurückspringen",
+                            "Nach der letzten Slide zur ersten zurückspringen",
                             "hengegroup-theme"
                         )}
                         checked={loop}
@@ -347,7 +347,7 @@ function Edit({ attributes, setAttributes }) {
                         onChange={(value) => setAttributes({ ariaLabel: value })}
                     />
                 </PanelBody>
-                <PanelBody title={__("Folien", "hengegroup-theme")} initialOpen>
+                <PanelBody title={__("Slides", "hengegroup-theme")} initialOpen>
                     <VStack spacing={3}>
                         {slides.map((slide, index) => (
                             <SlideListItem
@@ -362,7 +362,7 @@ function Edit({ attributes, setAttributes }) {
                         ))}
                     </VStack>
                     <Button variant="primary" onClick={addSlide}>
-                        {__("Folie hinzufügen", "hengegroup-theme")}
+                        {__("Slide hinzufügen", "hengegroup-theme")}
                     </Button>
                 </PanelBody>
             </InspectorControls>
@@ -382,7 +382,7 @@ function Edit({ attributes, setAttributes }) {
                     <Card>
                         <CardBody>
                             {__(
-                                "Noch keine Folien — im rechten Bereich Folien hinzufügen.",
+                                "Noch keine Slides — im rechten Bereich Slides hinzufügen.",
                                 "hengegroup-theme"
                             )}
                         </CardBody>

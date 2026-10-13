@@ -59,7 +59,7 @@ $heading_markup = hengegroup_theme_render_typography([
 ]);
 
 printf(
-    '<section class="my-6 text-base text-grey-dark [&_li]:leading-[1.7] [&_ul]:list-disc [&_ul]:pl-5" data-slot="job-list" data-type="%1$s">%2$s%3$s</section>',
+    '<section class="my-6 text-base text-grey-dark rich-text" data-slot="job-list" data-type="%1$s">%2$s%3$s</section>',
     esc_attr($type),
     $heading_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $list_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

@@ -22,7 +22,6 @@ $options = hengegroup_theme_get_job_application_options();
 $form_id = 'hengegroup-theme-application-' . (int) $job['id'];
 $value = static fn(string $field): string => (string) ($values[$field] ?? '');
 
-// Datenschutz-Checkbox mit eigenem <label>, weil label.php den Link escapen wuerde.
 $print_field = static function (array $field): void {
     printf(
         '%s',
@@ -107,70 +106,8 @@ $certificates_label = sprintf(
     HENGEGROUP_THEME_APPLICATION_MAX_CERTIFICATES,
 );
 
-$privacy_url = get_privacy_policy_url();
-$privacy_label =
-    $privacy_url !== ''
-        ? sprintf(
-            /* translators: %s: link to the privacy policy. */
-            esc_html__(
-                'Ich habe die %s gelesen und bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Bewerbung einverstanden. *',
-                'hengegroup-theme',
-            ),
-            '<a class="text-grey-dark underline underline-offset-4" href="' .
-                esc_url($privacy_url) .
-                '" target="_blank" rel="noopener">' .
-                esc_html__('Datenschutzhinweise', 'hengegroup-theme') .
-                '</a>',
-        )
-        : esc_html__(
-            'Ich bin mit der Verarbeitung meiner Angaben zur Bearbeitung meiner Bewerbung einverstanden. *',
-            'hengegroup-theme',
-        );
+ob_start();
 ?>
-<?php if ($state['status'] === 'gesendet'): ?>
-  <div class="rounded-2xl bg-henge-green px-6 py-5 text-base text-henge-green-foreground" role="status" tabindex="-1" data-application-status>
-    <?php echo esc_html($state['message']); ?>
-  </div>
-<?php endif; ?>
-<?php if ($state['status'] !== 'gesendet'): ?>
-  <form
-    id="<?php echo esc_attr($form_id); ?>"
-    class="flex flex-col gap-5"
-    action="<?php echo esc_url(admin_url('admin-post.php')); ?>"
-    method="post"
-    enctype="multipart/form-data"
-    data-application-form
-  >
-    <?php if ($state['message'] !== ''): ?>
-      <div class="rounded-2xl border border-destructive/40 bg-red-50 px-6 py-4 text-base text-grey-dark" role="alert" tabindex="-1" data-application-status>
-        <p class="font-semibold"><?php echo esc_html($state['message']); ?></p>
-        <?php if ($errors !== []): ?>
-          <ul class="mt-2 list-disc pl-5 text-sm">
-            <?php foreach ($errors as $message): ?>
-              <li><?php echo esc_html((string) $message); ?></li>
-            <?php endforeach; ?>
-          </ul>
-        <?php endif; ?>
-      </div>
-    <?php endif; ?>
-
-    <input type="hidden" name="action" value="<?php echo esc_attr(
-        HENGEGROUP_THEME_APPLICATION_ACTION,
-    ); ?>">
-    <input type="hidden" name="job_id" value="<?php echo esc_attr((string) $job['id']); ?>">
-    <input type="hidden" name="started" value="<?php echo esc_attr((string) time()); ?>">
-    <?php wp_nonce_field(
-        HENGEGROUP_THEME_APPLICATION_ACTION . '_' . (int) $job['id'],
-        '_hengegroup_theme_application_nonce',
-        false,
-    ); ?>
-    <div class="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
-      <label for="<?php echo esc_attr($form_id . '-website'); ?>">Website</label>
-      <input type="text" id="<?php echo esc_attr(
-          $form_id . '-website',
-      ); ?>" name="website" tabindex="-1" autocomplete="off">
-    </div>
-
     <div class="grid gap-5 sm:grid-cols-2">
       <?php
       ob_start();
@@ -370,47 +307,18 @@ $privacy_label =
     );
     ?>
 
-    <?php
-    ob_start();
-    get_template_part('template-parts/base/checkbox', null, [
-        'config' => [
-            'id' => $form_id . '-privacy',
-            'name' => 'privacy',
-            'value' => '1',
-            'required' => true,
-            'checked' => $value('privacy') === '1',
-            'aria_invalid' => isset($errors['privacy']),
-            'class' => 'mt-0.5',
-            'attributes' => $control_attributes($form_id . '-privacy', 'privacy'),
-        ],
-    ]);
-    $field(
-        $form_id . '-privacy',
-        'privacy',
-        '',
-        sprintf(
-            '<div class="flex items-start gap-3">%1$s<label for="%2$s" class="text-sm leading-normal text-grey-dark">%3$s</label></div>',
-            (string) ob_get_clean(),
-            esc_attr($form_id . '-privacy'),
-            wp_kses_post($privacy_label),
-        ),
-    );
-    ?>
-
-    <div class="flex flex-col-reverse items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <p class="text-sm text-grey-dark/70"><?php esc_html_e(
-          '* Pflichtfelder',
-          'hengegroup-theme',
-      ); ?></p>
-      <?php get_template_part('template-parts/base/button', null, [
-          'config' => [
-              'text' => __('Bewerbung senden', 'hengegroup-theme'),
-              'type' => 'submit',
-              'variant' => 'henge-green',
-              'size' => 'lg',
-              'data_attributes' => ['application-submit' => 'true'],
-          ],
-      ]); ?>
-    </div>
-  </form>
-<?php endif; ?>
+<?php get_template_part('template-parts/components/request-form', null, [
+    'config' => [
+        'id' => $form_id,
+        'action' => HENGEGROUP_THEME_APPLICATION_ACTION,
+        'nonce_action' => HENGEGROUP_THEME_APPLICATION_ACTION . '_' . (int) $job['id'],
+        'nonce_name' => '_hengegroup_theme_application_nonce',
+        'state' => $state,
+        'content' => (string) ob_get_clean(),
+        'hidden' => ['job_id' => (string) $job['id']],
+        'consent_purpose' => __('zur Bearbeitung meiner Bewerbung', 'hengegroup-theme'),
+        'submit_text' => __('Bewerbung senden', 'hengegroup-theme'),
+        'multipart' => true,
+        'data_attributes' => ['form' => 'application'],
+    ],
+]); ?>

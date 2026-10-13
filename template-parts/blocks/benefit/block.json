@@ -22,6 +22,7 @@
             "default": ""
         }
     },
+    "usesContext": ["hengegroup-theme/benefitsVariant"],
     "supports": {
         "html": false,
         "reusable": false

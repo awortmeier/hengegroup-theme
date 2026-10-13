@@ -1,6 +1,5 @@
-// Enhancement for the application form (works without it): shows chosen file names, checks the size
-// limit before submit (setCustomValidity), prevents double submit and focuses the status message
-// after the redirect so screen readers announce it.
+// Enhancement for the application form (works without it): shows chosen file names and checks the
+// size limit before submit (setCustomValidity).
 
 function formatNames(files, emptyLabel) {
     if (!files || files.length === 0) {
@@ -25,11 +24,7 @@ export function validateFileSizes(files, maxBytes) {
 }
 
 export function initJobApplication(root = document) {
-    root.querySelectorAll("[data-application-status]").forEach((status) => {
-        status.focus({ preventScroll: true });
-    });
-
-    root.querySelectorAll("[data-application-form]").forEach((form) => {
+    root.querySelectorAll('[data-form="application"]').forEach((form) => {
         form.querySelectorAll("[data-application-file]").forEach((input) => {
             const nameTarget = form.querySelector(`[data-application-file-name="${input.id}"]`);
             const emptyLabel = nameTarget ? nameTarget.textContent : "";
@@ -46,22 +41,6 @@ export function initJobApplication(root = document) {
 
                 input.reportValidity();
             });
-        });
-
-        form.addEventListener("submit", (event) => {
-            const submit = form.querySelector("[data-application-submit]");
-
-            if (!submit || submit.getAttribute("aria-busy") === "true") {
-                if (submit) {
-                    event.preventDefault();
-                }
-
-                return;
-            }
-
-            submit.setAttribute("aria-busy", "true");
-            submit.dataset.originalText = submit.textContent;
-            submit.textContent = "Wird gesendet …";
         });
     });
 }

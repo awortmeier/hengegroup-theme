@@ -795,21 +795,6 @@ function hengegroup_theme_get_active_job_ids(int $limit = -1): array
     return array_map('intval', $query->posts);
 }
 
-function hengegroup_theme_render_job_company_badge(array $company, string $class = ''): string
-{
-    ob_start();
-    get_template_part('template-parts/base/badge', null, [
-        'config' => [
-            'text' => $company['name'],
-            'variant' => $company['variant'],
-            'font' => 'accent',
-            'class' => trim('uppercase tracking-wide ' . $class),
-        ],
-    ]);
-
-    return (string) ob_get_clean();
-}
-
 /**
  * Literale Klassen, damit Tailwind sie findet.
  */
@@ -833,7 +818,11 @@ function hengegroup_theme_render_job_row(array $job, bool $with_company_badge): 
 {
     $badge =
         $with_company_badge && $job['company'] !== null
-            ? hengegroup_theme_render_job_company_badge($job['company'], 'shrink-0')
+            ? hengegroup_theme_render_label_badge(
+                $job['company']['name'],
+                $job['company']['variant'],
+                'shrink-0',
+            )
             : '';
 
     $arrow = hengegroup_theme_render_icon([
@@ -1019,6 +1008,11 @@ function hengegroup_theme_get_benefit_icons(): array
             __('Geschenk / Prämie', 'hengegroup-theme'),
             ['name' => 'gift', 'set' => 'lucide'],
         ],
+        'trending-up' => [
+            __('Entwicklung / Wachstum', 'hengegroup-theme'),
+            ['name' => 'trending-up', 'set' => 'lucide'],
+        ],
+        'leaf' => [__('Nachhaltigkeit', 'hengegroup-theme'), ['name' => 'leaf', 'set' => 'lucide']],
     ];
 }
 

@@ -1,0 +1,38 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/firma",
+    "title": "Unternehmen",
+    "category": "henge",
+    "icon": "building",
+    "description": "Eine Karte im Block „Unternehmen der Gruppe“: Logo, Text, Link und Akzentfarbe.",
+    "textdomain": "hengegroup-theme",
+    "parent": ["hengegroup-theme/firmen"],
+    "attributes": {
+        "logoId": {
+            "type": "number",
+            "default": 0
+        },
+        "text": {
+            "type": "string",
+            "default": ""
+        },
+        "buttonText": {
+            "type": "string",
+            "default": "Zum Unternehmen"
+        },
+        "buttonUrl": {
+            "type": "string",
+            "default": ""
+        },
+        "accent": {
+            "type": "string",
+            "default": "henge-green"
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false
+    },
+    "render": "file:./render.php"
+}

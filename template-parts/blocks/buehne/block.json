@@ -5,7 +5,7 @@
     "title": "Bühne",
     "category": "henge",
     "icon": "images-alt2",
-    "description": "Rotierender Bild-Slider mit Kicker, Titel, Text und Call-to-Actions je Folie.",
+    "description": "Rotierender Bild-Slider mit Kicker, Titel, Text und Call-to-Actions je Slide.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "align": {

@@ -3,8 +3,7 @@
 
 <?php
 // Footer: Logo/Adresse, Kontakt, Social Media, Links (Menue `footer`). Daten aus Einstellungen >
-// Footer; leere Eintraege/Spalten entfallen. Hover-Farbe #8fd6ab, weil henge-green auf grey-dark
-// zu dunkel ist.
+// Footer; leere Eintraege/Spalten entfallen.
 $footer_options = hengegroup_theme_get_footer_options();
 
 $footer_address_lines = array_filter(
@@ -57,14 +56,14 @@ $footer_heading = static function (string $text, array $attributes = []): void {
         ],
     ]);
 };
-$footer_link_class = 'text-grey-light no-underline transition-colors hover:text-[#8fd6ab]';
+$footer_link_class = 'text-grey-light no-underline';
 ?>
 
 <footer
-    class="bg-grey-dark px-6 py-14 text-grey-light shadow-[inset_0_40px_40px_-40px_rgb(0_0_0/0.5)] sm:px-12"
+    class="bg-grey-dark py-14 text-grey-light shadow-[inset_0_40px_40px_-40px_rgb(0_0_0/0.5)] sm:px-12"
 >
-    <div class="mx-auto grid max-w-[1400px] grid-cols-1 gap-12 pb-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div>
+    <div class="wrapper gap-y-12 pb-8">
+        <div class="col-span-12 sm:col-span-6 lg:col-span-4">
             <div class="mb-4">
                 <?php if (has_custom_logo()): ?>
                     <div class="[&_img]:h-7 [&_img]:w-auto">
@@ -94,7 +93,7 @@ $footer_link_class = 'text-grey-light no-underline transition-colors hover:text-
         </div>
 
         <?php if ($footer_contact_rows !== []): ?>
-            <div>
+            <div class="col-span-12 sm:col-span-6 lg:col-span-3">
                 <?php $footer_heading(__('Kontakt', 'hengegroup-theme')); ?>
                 <ul class="flex flex-col gap-2.5">
                     <?php foreach ($footer_contact_rows as $contact_row): ?>
@@ -126,7 +125,7 @@ $footer_link_class = 'text-grey-light no-underline transition-colors hover:text-
         <?php endif; ?>
 
         <?php if ($footer_social_links !== []): ?>
-            <div>
+            <div class="col-span-12 sm:col-span-6 lg:col-span-2">
                 <?php $footer_heading(__('Social Media', 'hengegroup-theme')); ?>
                 <ul class="flex gap-3.5">
                     <?php foreach ($footer_social_links as $social_link): ?>
@@ -152,11 +151,11 @@ $footer_link_class = 'text-grey-light no-underline transition-colors hover:text-
         <?php endif; ?>
 
         <?php if ($footer_menu): ?>
-            <nav aria-labelledby="footer-links-heading">
+            <nav class="col-span-12 sm:col-span-6 lg:col-span-3" aria-labelledby="footer-links-heading">
                 <?php $footer_heading(__('Links', 'hengegroup-theme'), [
                     'id' => 'footer-links-heading',
                 ]); ?>
-                <div class="text-sm [&_a]:text-grey-light [&_a]:no-underline [&_a]:transition-colors [&_a:hover]:text-[#8fd6ab]">
+                <div class="text-sm [&_a]:text-grey-light [&_a]:no-underline">
                     <?php printf(
                         '%s',
                         $footer_menu, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -166,14 +165,15 @@ $footer_link_class = 'text-grey-light no-underline transition-colors hover:text-
         <?php endif; ?>
     </div>
 
-    <div
-        class="mx-auto h-0.5 max-w-[1400px] bg-linear-to-r from-henge-grey via-henge-green to-henge-blue"
-        aria-hidden="true"
-    ></div>
+    <div class="wrapper">
+        <div class="col-span-12 h-0.5 bg-linear-to-r brand-gradient" aria-hidden="true"></div>
 
-    <p class="mx-auto max-w-[1400px] pt-6 text-[13px]">
-        &copy; <?php echo esc_html(wp_date('Y')); ?> <?php echo esc_html(get_bloginfo('name')); ?>
-    </p>
+        <p class="col-span-12 pt-6 text-[13px]">
+            &copy; <?php echo esc_html(wp_date('Y')); ?> <?php echo esc_html(
+     get_bloginfo('name'),
+ ); ?>
+        </p>
+    </div>
 </footer>
 
 </div>

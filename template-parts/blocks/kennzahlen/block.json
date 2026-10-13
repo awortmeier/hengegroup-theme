@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/kennzahlen",
+    "title": "Kennzahlen",
+    "category": "henge",
+    "icon": "chart-bar",
+    "description": "Dunkle Sektion mit Überschrift und großen Zahlen mit Beschriftung. Kennzahlen direkt im Block hinzufügen.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        }
+    },
+    "allowedBlocks": ["hengegroup-theme/kennzahl"],
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-kennzahlen-editor",
+    "render": "file:./render.php"
+}

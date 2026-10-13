@@ -131,6 +131,27 @@ function hengegroup_theme_render_card(array $card_config): string
 }
 
 /**
+ * Badge in Versalien mit Akzentschrift.
+ */
+function hengegroup_theme_render_label_badge(
+    string $text,
+    string $variant,
+    string $class = '',
+): string {
+    ob_start();
+    get_template_part('template-parts/base/badge', null, [
+        'config' => [
+            'text' => $text,
+            'variant' => $variant,
+            'font' => 'accent',
+            'class' => trim('uppercase tracking-wide ' . $class),
+        ],
+    ]);
+
+    return (string) ob_get_clean();
+}
+
+/**
  * Empty string when image.php renders nothing (e.g. missing file).
  */
 function hengegroup_theme_render_image(array $image_config): string
@@ -392,4 +413,22 @@ function hengegroup_theme_get_contact_rows(string $email, string $phone, string 
     }
 
     return $rows;
+}
+
+/**
+ * Background/border class per brand color (badge variants), as literals for the Tailwind scanner.
+ * Unknown variants fall back to grey-dark.
+ *
+ * @return array{bg: string, border: string}
+ */
+function hengegroup_theme_get_accent_classes(string $variant): array
+{
+    $classes = [
+        'henge-blue' => ['bg' => 'bg-henge-blue', 'border' => 'border-henge-blue'],
+        'henge-green' => ['bg' => 'bg-henge-green', 'border' => 'border-henge-green'],
+        'henge-grey' => ['bg' => 'bg-henge-grey', 'border' => 'border-henge-grey'],
+        'grey-dark' => ['bg' => 'bg-grey-dark', 'border' => 'border-grey-dark'],
+    ];
+
+    return $classes[$variant] ?? $classes['grey-dark'];
 }

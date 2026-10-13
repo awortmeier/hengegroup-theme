@@ -96,8 +96,9 @@ while (have_posts()):
 
         <?php if ($job['company'] !== null): ?>
           <div class="mb-4.5">
-            <?php $company_badge = hengegroup_theme_render_job_company_badge(
-                $job['company'],
+            <?php $company_badge = hengegroup_theme_render_label_badge(
+                $job['company']['name'],
+                $job['company']['variant'],
                 'px-3.5 tracking-[1.5px]',
             ); ?>
             <?php printf(
@@ -188,14 +189,14 @@ while (have_posts()):
         </aside>
       <?php endif; ?>
 
-      <div class="col-span-12 text-base leading-relaxed text-grey-dark lg:col-span-8 [&_a]:text-henge-green [&_a]:underline [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_li]:leading-[1.7] [&_ol]:mb-3.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3.5 [&_ul]:mb-3.5 [&_ul]:list-disc [&_ul]:pl-5">
+      <div class="col-span-12 text-base leading-relaxed text-grey-dark lg:col-span-8 rich-text">
         <?php the_content(); ?>
 
       </div>
     </div>
   </article>
 
-  <section id="bewerbung" class="bg-neutral-200 py-16 md:py-24" aria-labelledby="bewerbung-titel">
+  <section id="bewerbung" class="bg-neutral-200 section-spacing" aria-labelledby="bewerbung-titel">
       <div class="wrapper-small">
         <div class="col-span-12">
           <?php get_template_part('template-parts/base/typography', null, [

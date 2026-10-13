@@ -55,7 +55,12 @@ function setupNavigationMenu(nav) {
             }, closeDelay);
         };
 
-        [trigger, content].forEach((element) => {
+        // Split items: the link next to the <details> also opens the panel on hover.
+        const link = details.parentElement.querySelector(
+            ':scope > [data-slot="navigation-menu-link"]'
+        );
+
+        [link, trigger, content].filter(Boolean).forEach((element) => {
             element.addEventListener("mouseenter", scheduleOpen);
             element.addEventListener("mouseleave", scheduleClose);
         });

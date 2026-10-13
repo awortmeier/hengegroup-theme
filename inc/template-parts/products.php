@@ -633,37 +633,6 @@ function hengegroup_theme_render_company_contact_card(): string
 }
 
 /**
- * Als `<ul class="contents">`, damit die <li> im umgebenden .wrapper-Grid liegen. '' ohne Produkte.
- *
- * @param int[] $product_ids
- */
-function hengegroup_theme_render_product_cards(
-    array $product_ids,
-    string $variant = 'default',
-): string {
-    $markup = '';
-
-    foreach ($product_ids as $product_id) {
-        $product = function_exists('wc_get_product') ? wc_get_product((int) $product_id) : null;
-
-        if (!($product instanceof WC_Product) || !$product->is_visible()) {
-            continue;
-        }
-
-        ob_start();
-        echo '<li class="col-span-12 sm:col-span-6 lg:col-span-3">';
-        get_template_part('template-parts/components/product-card', null, [
-            'product' => $product,
-            'variant' => $variant,
-        ]);
-        echo '</li>';
-        $markup .= (string) ob_get_clean();
-    }
-
-    return $markup !== '' ? '<ul class="contents">' . $markup . '</ul>' : '';
-}
-
-/**
  * Feld => Fehlermeldung. Mit $with_location sind PLZ/Ort Pflicht.
  */
 function hengegroup_theme_validate_product_inquiry(array $values, bool $with_location): array

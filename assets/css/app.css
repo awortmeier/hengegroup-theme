@@ -2,6 +2,52 @@
 @import "./tokens.css";
 @import "./fonts.css";
 
+/* Wiederkehrende Klassenketten als eigene Utilities (per @apply), damit Varianten wie lg: greifen. */
+@utility section-dark {
+    @apply bg-grey-dark bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)] shadow-[inset_0_40px_40px_-40px_rgba(0,0,0,0.5),inset_0_-40px_40px_-40px_rgba(0,0,0,0.5)];
+}
+
+/* Vertikaler Abstand einer Seitensektion; -lg fuer Sektionen mit mehr Luft. */
+@utility section-spacing {
+    @apply py-16 md:py-25;
+}
+
+@utility section-spacing-lg {
+    @apply py-16 md:py-25 lg:py-35;
+}
+
+/* Nur die Farbstopps; Richtung per bg-linear-* an der Aufrufstelle. */
+@utility brand-gradient {
+    @apply from-henge-grey via-henge-green to-henge-blue;
+}
+
+/* Fliesstext aus dem Editor (the_content, Produktbeschreibung); Groesse/Farbe setzt der Aufrufer. */
+@utility rich-text {
+    @apply [&_a]:text-henge-green [&_a]:underline [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_li]:leading-[1.7] [&_ol]:mb-3.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3.5 [&_p:last-child]:mb-0 [&_ul]:mb-3.5 [&_ul]:list-disc [&_ul]:pl-5;
+}
+
+@layer base {
+    /* Ausnahme: zentrale Bremse statt motion-reduce: an jeder Stelle. Minimale Dauer statt none,
+       damit animationend/transitionend feuern und forwards-Endzustaende stehen. Spinner und
+       Toast-Countdown bleiben, sie transportieren Status. */
+    @media (prefers-reduced-motion: reduce) {
+        *:not([data-slot="spinner"], [data-slot="toast-life"]),
+        ::before,
+        ::after,
+        ::backdrop {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+
+        /* Eigene Regel: ein unbekanntes Pseudo-Element wuerde die ganze Liste oben ungueltig machen. */
+        ::details-content {
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
 @layer components {
     /* Seitenhintergrund grey-light; --color-background bleibt weiss (Inputs, Karten). */
     body {

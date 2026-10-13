@@ -2,13 +2,15 @@
 // snap). Buttons are found via data-carousel-nav; the current slide is tracked with an
 // IntersectionObserver on the scroll container to disable prev/next at the ends (not with loop).
 
+import { prefersReducedMotion } from "../../utils/reduced-motion.js";
+
 function getItems(content) {
     return Array.from(content.querySelectorAll(':scope > [data-slot="carousel-item"]'));
 }
 
 function scrollToItem(item, vertical) {
     item.scrollIntoView({
-        behavior: "smooth",
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
         block: vertical ? "start" : "nearest",
         inline: vertical ? "nearest" : "start",
     });

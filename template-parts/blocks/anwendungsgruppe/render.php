@@ -30,44 +30,18 @@ $background = ($attributes['background'] ?? 'light') === 'muted' ? 'bg-neutral-2
 printf(
     '<section id="%1$s" class="%2$s" data-slot="anwendungsgruppe">',
     esc_attr($group['slug']),
-    esc_attr(trim('scroll-mt-24 py-16 md:py-25 ' . $background)),
+    esc_attr(trim('scroll-mt-24 section-spacing ' . $background)),
 );
 echo '<div class="wrapper gap-y-6">';
-echo '<div class="col-span-12 mb-4">';
-
-if ($group['kicker'] !== '') {
-    echo '<div class="mb-4.5">';
-    get_template_part('template-parts/base/badge', null, [
-        'config' => [
-            'text' => $group['kicker'],
-            'variant' => $group['variant'],
-            'font' => 'accent',
-            'class' => 'px-3.5 tracking-[1.5px] uppercase',
-        ],
-    ]);
-    echo '</div>';
-}
-
-get_template_part('template-parts/base/typography', null, [
+get_template_part('template-parts/components/section-intro', null, [
     'config' => [
-        'variant' => 'headline-sm',
-        'tag' => 'h2',
-        'text' => $group['heading'],
-        'class' => 'mb-4.5 text-pretty lg:text-[34px]',
+        'kicker' => $group['kicker'],
+        'kicker_variant' => $group['variant'],
+        'heading' => $group['heading'],
+        'text' => $group['description'],
+        'class' => 'col-span-12 mb-4',
     ],
 ]);
-
-if ($group['description'] !== '') {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'variant' => 'body-base',
-            'text' => $group['description'],
-            'class' => 'max-w-[900px]',
-        ],
-    ]);
-}
-
-echo '</div>';
 echo '<ul class="col-span-12 flex flex-col gap-6">';
 
 foreach ($anwendungen as $anwendung) {

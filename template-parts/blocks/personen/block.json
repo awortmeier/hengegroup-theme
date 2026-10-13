@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/personen",
+    "title": "Personen",
+    "category": "henge",
+    "icon": "groups",
+    "description": "Überschrift und Karten mit Porträt, Name und Funktion – z. B. für die Geschäftsleitung. Personen direkt im Block hinzufügen.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        }
+    },
+    "allowedBlocks": ["hengegroup-theme/person"],
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-personen-editor",
+    "render": "file:./render.php"
+}

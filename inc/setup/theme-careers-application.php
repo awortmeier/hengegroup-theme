@@ -179,8 +179,6 @@ function hengegroup_theme_handle_job_application(): void
     $nonce = isset($_POST['_hengegroup_theme_application_nonce'])
         ? sanitize_text_field(wp_unslash($_POST['_hengegroup_theme_application_nonce']))
         : '';
-    $honeypot = isset($_POST['website']) ? sanitize_text_field(wp_unslash($_POST['website'])) : '';
-    $started = isset($_POST['started']) ? absint($_POST['started']) : 0;
     // phpcs:enable WordPress.Security.NonceVerification.Missing
 
     if (!wp_verify_nonce($nonce, HENGEGROUP_THEME_APPLICATION_ACTION . '_' . $job_id)) {
@@ -188,7 +186,7 @@ function hengegroup_theme_handle_job_application(): void
     }
 
     // Bots bekommen dieselbe Erfolgsmeldung, damit sie nicht lernen, was sie verraten hat.
-    if (hengegroup_theme_is_form_bot($honeypot, $started)) {
+    if (hengegroup_theme_is_form_bot()) {
         hengegroup_theme_redirect_after_application($job_id, ['bewerbung' => 'gesendet']);
     }
 

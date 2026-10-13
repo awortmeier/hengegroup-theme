@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/kennzahl",
+    "title": "Kennzahl",
+    "category": "henge",
+    "icon": "chart-bar",
+    "description": "Eine Zahl im Block „Kennzahlen“: Wert, Beschriftung und Akzentfarbe der Linie.",
+    "textdomain": "hengegroup-theme",
+    "parent": ["hengegroup-theme/kennzahlen"],
+    "attributes": {
+        "value": {
+            "type": "string",
+            "default": ""
+        },
+        "label": {
+            "type": "string",
+            "default": ""
+        },
+        "accent": {
+            "type": "string",
+            "default": "henge-green"
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false
+    },
+    "render": "file:./render.php"
+}

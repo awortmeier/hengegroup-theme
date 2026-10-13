@@ -59,6 +59,11 @@ function hengegroup_theme_register_blocks(): void
         'js/blocks/buehne-edit.js',
     );
     hengegroup_theme_register_theme_block(
+        'buehne-statisch',
+        'hengegroup-theme-buehne-statisch-editor',
+        'js/blocks/buehne-statisch-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
         'ueberschrift-text',
         'hengegroup-theme-ueberschrift-text-editor',
         'js/blocks/ueberschrift-text-edit.js',
@@ -128,9 +133,34 @@ function hengegroup_theme_register_blocks(): void
     );
     register_block_type(get_template_directory() . '/template-parts/blocks/kontakt-vorschau');
 
-    // Kind-Bloecke, clientseitig in auszeichnungen/benefits edit.jsx registriert.
-    register_block_type(get_template_directory() . '/template-parts/blocks/auszeichnung');
-    register_block_type(get_template_directory() . '/template-parts/blocks/benefit');
+    hengegroup_theme_register_theme_block(
+        'historie',
+        'hengegroup-theme-historie-editor',
+        'js/blocks/historie-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
+        'personen',
+        'hengegroup-theme-personen-editor',
+        'js/blocks/personen-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
+        'kennzahlen',
+        'hengegroup-theme-kennzahlen-editor',
+        'js/blocks/kennzahlen-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
+        'firmen',
+        'hengegroup-theme-firmen-editor',
+        'js/blocks/firmen-edit.js',
+    );
+
+    // Kind-Bloecke, clientseitig im edit.jsx des Eltern-Blocks registriert.
+    foreach (
+        ['auszeichnung', 'benefit', 'historie-eintrag', 'person', 'kennzahl', 'firma']
+        as $child
+    ) {
+        register_block_type(get_template_directory() . '/template-parts/blocks/' . $child);
+    }
 }
 add_action('init', 'hengegroup_theme_register_blocks');
 

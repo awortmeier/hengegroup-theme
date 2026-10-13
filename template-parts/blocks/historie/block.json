@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/historie",
+    "title": "Historie",
+    "category": "henge",
+    "icon": "backup",
+    "description": "Überschrift und Zeitstrahl mit Jahr, Titel und Text je Eintrag. Einträge direkt im Block hinzufügen.",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        }
+    },
+    "allowedBlocks": ["hengegroup-theme/historie-eintrag"],
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-historie-editor",
+    "render": "file:./render.php"
+}

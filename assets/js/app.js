@@ -20,6 +20,7 @@ import { initPopover } from "./template-parts/base/popover.js";
 import { initDataTable } from "./template-parts/base/data-table.js";
 import { initBuehne } from "./template-parts/blocks/buehne.js";
 import { initJobApplication } from "./components/job-application.js";
+import { initRequestForm } from "./components/request-form.js";
 
 onDomReady(() => {
     initHeader();
@@ -40,5 +41,6 @@ onDomReady(() => {
     initPopover();
     initDataTable();
     initBuehne();
+    initRequestForm();
     initJobApplication();
 });

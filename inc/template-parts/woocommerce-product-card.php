@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// Render-Helfer fuer die Produktbox und das Produktraster der Bloecke "Produkte"/"Produkte-Raster".
+// Render-Helfer fuer die Produktbox und das Produktraster.
 
 /**
  * '' ohne Badge-Text.
@@ -22,17 +22,7 @@ function hengegroup_theme_render_product_badge(int $product_id): string
         $variant = $variants[0];
     }
 
-    ob_start();
-    get_template_part('template-parts/base/badge', null, [
-        'config' => [
-            'text' => $text,
-            'variant' => $variant,
-            'font' => 'accent',
-            'class' => 'uppercase tracking-wide',
-        ],
-    ]);
-
-    return (string) ob_get_clean();
+    return hengegroup_theme_render_label_badge($text, $variant);
 }
 
 /**
@@ -78,41 +68,41 @@ function hengegroup_theme_render_product_anwendung_badges(int $product_id): stri
 }
 
 /**
- * Produktboxen als `<ul class="contents">` in der gegebenen Reihenfolge; '' ohne Treffer.
+ * Produktboxen in der gegebenen Reihenfolge als `<ul class="contents">`, damit die <li> im
+ * umgebenden .wrapper-Grid liegen; '' ohne sichtbare Produkte.
  *
  * @param int[] $product_ids
  */
-function hengegroup_theme_render_produkte_grid(array $product_ids): string
-{
-    if (!function_exists('wc_get_template_part') || $product_ids === []) {
+function hengegroup_theme_render_product_cards(
+    array $product_ids,
+    string $variant = 'default',
+): string {
+    if (!function_exists('wc_get_product') || $product_ids === []) {
         return '';
     }
 
-    $products_query = new WP_Query([
-        'post_type' => 'product',
-        'post_status' => 'publish',
-        'post__in' => $product_ids,
-        'orderby' => 'post__in',
-        'posts_per_page' => count($product_ids),
-        'no_found_rows' => true,
-        'ignore_sticky_posts' => true,
-    ]);
+    $product_ids = array_map('intval', $product_ids);
+    // Laedt Posts, Meta und Terms in einer Abfrage statt einzeln pro wc_get_product().
+    _prime_post_caches($product_ids);
 
-    if (!$products_query->have_posts()) {
-        return '';
+    $markup = '';
+
+    foreach ($product_ids as $product_id) {
+        $product = wc_get_product($product_id);
+
+        if (!($product instanceof WC_Product) || !$product->is_visible()) {
+            continue;
+        }
+
+        ob_start();
+        echo '<li class="col-span-12 sm:col-span-6 lg:col-span-3">';
+        get_template_part('template-parts/components/product-card', null, [
+            'product' => $product,
+            'variant' => $variant,
+        ]);
+        echo '</li>';
+        $markup .= (string) ob_get_clean();
     }
 
-    ob_start();
-    echo '<ul class="contents">';
-
-    while ($products_query->have_posts()) {
-        $products_query->the_post();
-        wc_get_template_part('content', 'product');
-    }
-
-    echo '</ul>';
-
-    wp_reset_postdata();
-
-    return (string) ob_get_clean();
+    return $markup !== '' ? '<ul class="contents">' . $markup . '</ul>' : '';
 }

@@ -7,8 +7,9 @@ declare(strict_types=1);
 // click/Escape and Left/Right/Home/End navigation. Panels sit directly under their trigger.
 //
 // Config:
-//   items         array    required, each { text/label (required), href (link item) or content
-//                          (panel HTML, wins over href), active, id }
+//   items         array    required, each { text/label (required), href, content (panel HTML),
+//                          active, id }. href + content: link plus a separate chevron toggle,
+//                          because a link cannot also be the disclosure button.
 //   orientation   string   horizontal (default) | vertical
 //   color         string   default | light (on dark backgrounds)
 //   delay         int      hover-open delay in ms (default 50)
@@ -72,6 +73,7 @@ $color_classes = [
         'panel_bg' => 'bg-popover',
         'panel_text' => 'text-popover-foreground',
         'panel_shadow' => 'shadow-[0_12px_32px_rgba(0,0,0,0.14)]',
+        'split_item' => 'hover:bg-henge-green/10 has-[details[open]]:bg-henge-green/10',
     ],
     'light' => [
         'idle' => 'text-grey-light/85',
@@ -81,6 +83,7 @@ $color_classes = [
         'panel_bg' => 'bg-neutral-800',
         'panel_text' => 'text-grey-light',
         'panel_shadow' => 'shadow-[0_20px_48px_rgba(0,0,0,0.45)]',
+        'split_item' => 'hover:bg-grey-light/10 has-[details[open]]:bg-grey-light/10',
     ],
 ];
 
@@ -88,6 +91,11 @@ $trigger_button_base =
     'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none ' .
     'transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 ' .
     $color_classes[$color]['hover'];
+
+$split_part_base =
+    'inline-flex items-center rounded-lg py-2.5 text-sm font-medium outline-none transition-colors ' .
+    'focus-visible:ring-[3px] focus-visible:ring-ring/50 group-hover/item:text-henge-green ' .
+    'group-has-[details[open]]/item:text-henge-green';
 
 $icon_class =
     'pointer-events-none size-3.5 shrink-0 transition-transform duration-200 group-open:-scale-y-100';
@@ -148,6 +156,49 @@ foreach ($items_config as $item) {
             esc_attr($content_classes),
             $item_content, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         );
+
+        if ($item_href !== '') {
+            ob_start();
+            get_template_part('template-parts/base/navigation-menu/navigation-menu-link', null, [
+                'config' => [
+                    'text' => $item_text,
+                    'href' => $item_href,
+                    'active' => $item_active,
+                    'class' => trim(
+                        ($item_active ? '' : $color_classes[$color]['idle']) .
+                            ' pl-3.5 pr-1 ' .
+                            $split_part_base,
+                    ),
+                ],
+            ]);
+            $link_markup = (string) ob_get_clean();
+
+            // The panel is positioned against the <li>, so it starts under the link.
+            $items_markup .= sprintf(
+                '<li class="%1$s" data-slot="navigation-menu-item">%2$s' .
+                    '<details class="group" data-slot="navigation-menu-trigger-item" name="%3$s" id="%4$s">' .
+                    '<summary class="%5$s" data-slot="navigation-menu-trigger" aria-haspopup="true" aria-label="%6$s">%7$s</summary>%8$s' .
+                    '</details></li>',
+                esc_attr(
+                    'group/item relative flex items-center rounded-lg transition-colors ' .
+                        $color_classes[$color]['split_item'],
+                ),
+                $link_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                esc_attr($group_name),
+                esc_attr($item_id),
+                esc_attr(
+                    $color_classes[$color]['idle'] .
+                        ' list-none cursor-pointer pl-1 pr-3 [&::-webkit-details-marker]:hidden ' .
+                        $split_part_base,
+                ),
+                /* translators: %s: menu item label. */
+                esc_attr(sprintf(__('Untermenü %s', 'hengegroup-theme'), $item_text)),
+                $icon_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            );
+
+            continue;
+        }
 
         $items_markup .= sprintf(
             '<li data-slot="navigation-menu-item">' .

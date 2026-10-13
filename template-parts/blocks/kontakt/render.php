@@ -16,7 +16,7 @@ if (
 $heading = trim((string) ($attributes['heading'] ?? ''));
 $text = trim((string) ($attributes['text'] ?? ''));
 
-echo '<section id="kontakt" class="scroll-mt-24 py-16 md:py-25" data-slot="kontakt">';
+echo '<section id="kontakt" class="scroll-mt-24 section-spacing" data-slot="kontakt">';
 echo '<div class="wrapper gap-y-12">';
 
 if ($heading !== '' || $text !== '') {
