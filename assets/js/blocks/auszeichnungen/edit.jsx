@@ -2,7 +2,7 @@
 // Markup mirrors the render.php files (Tailwind is loaded in the editor iframe); sidebar and
 // popovers render outside the iframe.
 import { createElement as el, Fragment, useEffect, useRef, useState } from "@wordpress/element";
-import { createBlock, registerBlockType } from "@wordpress/blocks";
+import { registerBlockType } from "@wordpress/blocks";
 import {
     BlockControls,
     InnerBlocks,
@@ -22,12 +22,27 @@ import {
     ToolbarDropdownMenu,
     ToolbarGroup,
 } from "@wordpress/components";
-import { useDispatch, useSelect } from "@wordpress/data";
+import { useSelect } from "@wordpress/data";
 import { __ } from "@wordpress/i18n";
 import { create, toHTMLString } from "@wordpress/rich-text";
 import metadata from "../../../../template-parts/blocks/auszeichnungen/block.json";
 import cardMetadata from "../../../../template-parts/blocks/auszeichnung/block.json";
-import { ACCENT_FORMATS } from "../shared.jsx";
+import {
+    ACCENT_FORMATS,
+    AddItemTile,
+    APPENDER_GRID_CELL_CLASSNAME,
+    CardInner,
+    cardClassName,
+    cardVariant,
+    cardVariations,
+    buttonPreviewClassName,
+    cardButtonVariant,
+    CardToolbar,
+    cardTitleClassName,
+    TileLayoutDropdown,
+    tileGridClass,
+    useInnerBlockCount,
+} from "../shared.jsx";
 
 const CHILD_BLOCK_NAME = cardMetadata.name;
 
@@ -55,42 +70,29 @@ const SHAPE_OPTIONS = [
     { title: __("Abgerundet (Logo)", "hengegroup-theme"), value: "rounded" },
 ];
 
-// Mirrors button.php outline/base.
-const BUTTON_PREVIEW_CLASSNAME =
-    "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 self-end rounded-full border border-grey-dark px-4 text-base font-medium whitespace-nowrap";
-
-// Own "add" tile as the last grid cell: Gutenberg's appender sits absolutely over the last card and
-// is barely visible on dark backgrounds. `[&>.block-list-appender]:!static` makes it a grid cell.
-function AddItemTile({ rootClientId }) {
-    const { insertBlock } = useDispatch("core/block-editor");
-
-    return (
-        <button
-            type="button"
-            className="hover:border-grey-dark hover:text-grey-dark flex min-h-40 w-full cursor-pointer items-center justify-center rounded-[20px] border-2 border-dashed border-neutral-400 bg-transparent text-base font-semibold text-neutral-600"
-            onClick={() => insertBlock(createBlock(CHILD_BLOCK_NAME), undefined, rootClientId)}
-        >
-            {__("+ Auszeichnung hinzufügen", "hengegroup-theme")}
-        </button>
-    );
-}
-
 function Edit({ attributes, setAttributes, clientId }) {
-    const { heading, headingTag } = attributes;
+    const { heading, headingTag, layout } = attributes;
+    const gridClass = tileGridClass(layout, useInnerBlockCount(clientId), "md:grid-cols-2");
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
     const blockProps = useBlockProps({
-        className: "alignfull bg-neutral-200 py-16 md:py-24 lg:py-25",
+        className: "alignfull bg-neutral-200 section-spacing",
     });
     const innerBlocksProps = useInnerBlocksProps(
         {
-            className:
-                "col-span-12 grid gap-8 md:grid-cols-2 [&>.block-list-appender]:!static [&>.block-list-appender]:!m-0 [&>.block-list-appender]:!w-full",
+            className: `col-span-12 grid gap-8 ${gridClass} ${APPENDER_GRID_CELL_CLASSNAME}`,
         },
         {
             allowedBlocks: [cardMetadata.name],
             template: [[cardMetadata.name]],
             orientation: "horizontal",
-            renderAppender: () => <AddItemTile rootClientId={clientId} />,
+            renderAppender: () => (
+                <AddItemTile
+                    rootClientId={clientId}
+                    blockName={CHILD_BLOCK_NAME}
+                    label={__("+ Auszeichnung hinzufügen", "hengegroup-theme")}
+                    className="h-full min-h-40"
+                />
+            ),
         }
     );
 
@@ -98,6 +100,11 @@ function Edit({ attributes, setAttributes, clientId }) {
         <Fragment>
             <BlockControls group="block">
                 <ToolbarGroup>
+                    <TileLayoutDropdown
+                        value={layout}
+                        onChange={(value) => setAttributes({ layout: value })}
+                        withDefault
+                    />
                     <ToolbarDropdownMenu
                         icon="heading"
                         label={__("Überschrift-Element ändern", "hengegroup-theme")}
@@ -128,10 +135,11 @@ function Edit({ attributes, setAttributes, clientId }) {
 }
 
 function CardEdit({ attributes, setAttributes, isSelected }) {
-    const { imageId, imageAlt, imageShape, title, text, buttonText, buttonUrl } = attributes;
+    const { imageId, imageAlt, imageShape, title, text, buttonText, buttonUrl, accent } =
+        attributes;
+    const variant = cardVariant(cardMetadata, attributes.variant);
     const blockProps = useBlockProps({
-        className:
-            "flex items-start gap-6 rounded-[20px] bg-white p-6 shadow-[0_8px_24px_rgba(0,0,0,0.08)] sm:p-8",
+        className: cardClassName({ variant, accent }),
     });
     const media = useSelect(
         (select) => (imageId ? select("core").getMedia(imageId) : null),
@@ -156,6 +164,12 @@ function CardEdit({ attributes, setAttributes, isSelected }) {
         <Fragment>
             <BlockControls group="block">
                 <ToolbarGroup>
+                    <CardToolbar
+                        metadata={cardMetadata}
+                        variant={variant}
+                        accent={accent}
+                        setAttributes={setAttributes}
+                    />
                     <MediaUploadCheck>
                         <MediaUpload
                             onSelect={selectImage}
@@ -194,7 +208,10 @@ function CardEdit({ attributes, setAttributes, isSelected }) {
                 <ToolbarGroup>
                     <ToolbarButton
                         icon="admin-links"
-                        label={__("Button-Link bearbeiten", "hengegroup-theme")}
+                        label={__(
+                            "Link bearbeiten (ohne Button-Text: ganze Karte)",
+                            "hengegroup-theme"
+                        )}
                         onClick={() => setIsEditingLink(true)}
                         isPressed={isEditingLink}
                     />
@@ -216,85 +233,97 @@ function CardEdit({ attributes, setAttributes, isSelected }) {
                 </PanelBody>
             </InspectorControls>
             <li {...blockProps}>
-                <MediaUploadCheck>
-                    <MediaUpload
-                        onSelect={selectImage}
-                        allowedTypes={["image"]}
-                        value={imageId}
-                        render={({ open }) =>
-                            imageUrl ? (
-                                <button
-                                    type="button"
-                                    className="shrink-0 cursor-pointer border-0 bg-transparent p-0"
-                                    onClick={open}
-                                    aria-label={__("Bild ändern", "hengegroup-theme")}
-                                >
-                                    <img
-                                        src={imageUrl}
-                                        alt=""
-                                        className={`size-19 object-cover ${shapeClassName}`}
-                                    />
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    className={`flex size-19 shrink-0 cursor-pointer items-center justify-center border-2 border-dashed border-neutral-300 bg-transparent text-sm text-neutral-500 ${shapeClassName}`}
-                                    onClick={open}
-                                >
-                                    {__("Bild", "hengegroup-theme")}
-                                </button>
-                            )
-                        }
-                    />
-                </MediaUploadCheck>
-                <div className="flex min-w-0 flex-1 flex-col">
-                    <RichText
-                        tagName="h3"
-                        className="text-grey-dark mb-2 text-lg font-bold"
-                        value={toRichTextValue(title)}
-                        onChange={(html) => setAttributes({ title: fromRichTextValue(html) })}
-                        placeholder={__("Titel eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
-                        disableLineBreaks
-                    />
-                    <RichText
-                        tagName="p"
-                        className="text-grey-dark mb-4 text-base leading-normal"
-                        value={toRichTextValue(text)}
-                        onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-                        placeholder={__("Text eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
-                    />
-                    <span ref={buttonRef} className="relative self-end">
+                <CardInner
+                    variant={variant}
+                    accent={accent}
+                    leading={
+                        <MediaUploadCheck>
+                            <MediaUpload
+                                onSelect={selectImage}
+                                allowedTypes={["image"]}
+                                value={imageId}
+                                render={({ open }) =>
+                                    imageUrl ? (
+                                        <button
+                                            type="button"
+                                            className="shrink-0 cursor-pointer border-0 bg-transparent p-0"
+                                            onClick={open}
+                                            aria-label={__("Bild ändern", "hengegroup-theme")}
+                                        >
+                                            <img
+                                                src={imageUrl}
+                                                alt=""
+                                                className={`size-19 object-cover ${shapeClassName}`}
+                                            />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            className={`flex size-19 shrink-0 cursor-pointer items-center justify-center border-2 border-dashed border-neutral-300 bg-transparent text-sm text-neutral-500 ${shapeClassName}`}
+                                            onClick={open}
+                                        >
+                                            {__("Bild", "hengegroup-theme")}
+                                        </button>
+                                    )
+                                }
+                            />
+                        </MediaUploadCheck>
+                    }
+                    title={
                         <RichText
-                            tagName="span"
-                            className={BUTTON_PREVIEW_CLASSNAME}
-                            value={toRichTextValue(buttonText)}
-                            onChange={(html) =>
-                                setAttributes({ buttonText: fromRichTextValue(html) })
-                            }
-                            placeholder={__("Button-Text…", "hengegroup-theme")}
+                            tagName="h3"
+                            className={cardTitleClassName(variant, "body-base")}
+                            value={toRichTextValue(title)}
+                            onChange={(html) => setAttributes({ title: fromRichTextValue(html) })}
+                            placeholder={__("Titel eingeben…", "hengegroup-theme")}
                             allowedFormats={[]}
                             disableLineBreaks
                         />
-                        {isEditingLink && isSelected && (
-                            <Popover
-                                placement="bottom-end"
-                                anchor={buttonRef.current}
-                                onClose={() => setIsEditingLink(false)}
-                            >
-                                <LinkControl
-                                    value={{ url: buttonUrl }}
-                                    onChange={(nextValue) =>
-                                        setAttributes({ buttonUrl: nextValue.url || "" })
-                                    }
-                                    onRemove={() => setAttributes({ buttonUrl: "" })}
-                                    settings={[]}
-                                />
-                            </Popover>
-                        )}
-                    </span>
-                </div>
+                    }
+                    content={
+                        <RichText
+                            tagName="p"
+                            className="text-base leading-normal"
+                            value={toRichTextValue(text)}
+                            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
+                            placeholder={__("Text eingeben…", "hengegroup-theme")}
+                            allowedFormats={[]}
+                        />
+                    }
+                    footer={
+                        <span ref={buttonRef} className="relative ml-auto">
+                            <RichText
+                                tagName="span"
+                                className={buttonPreviewClassName(cardButtonVariant(variant))}
+                                value={toRichTextValue(buttonText)}
+                                onChange={(html) =>
+                                    setAttributes({ buttonText: fromRichTextValue(html) })
+                                }
+                                placeholder={__("Button-Text…", "hengegroup-theme")}
+                                allowedFormats={[]}
+                                disableLineBreaks
+                            />
+                            {isEditingLink && isSelected && (
+                                <Popover
+                                    placement="bottom-end"
+                                    anchor={buttonRef.current}
+                                    onClose={() => setIsEditingLink(false)}
+                                >
+                                    <LinkControl
+                                        value={{ url: buttonUrl }}
+                                        onChange={(nextValue) =>
+                                            setAttributes({
+                                                buttonUrl: nextValue.url || "",
+                                            })
+                                        }
+                                        onRemove={() => setAttributes({ buttonUrl: "" })}
+                                        settings={[]}
+                                    />
+                                </Popover>
+                            )}
+                        </span>
+                    }
+                />
             </li>
         </Fragment>
     );
@@ -308,5 +337,6 @@ registerBlockType(metadata, {
 
 registerBlockType(cardMetadata, {
     edit: CardEdit,
+    variations: cardVariations(cardMetadata),
     save: () => null,
 });

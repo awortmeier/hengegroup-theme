@@ -36,7 +36,13 @@ if ($heading !== '') {
     ]);
 }
 
-echo '<ul class="col-span-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">';
+$grid_class = hengegroup_theme_get_tile_grid_class(
+    (string) ($attributes['layout'] ?? ''),
+    isset($block) && $block instanceof WP_Block ? count($block->inner_blocks) : 0,
+    'md:grid-cols-2 lg:grid-cols-3',
+);
+
+echo '<ul class="' . esc_attr('col-span-12 grid gap-6 ' . $grid_class) . '">';
 echo $cards; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 echo '</ul>';
 echo '</div>';

@@ -6,10 +6,8 @@ declare(strict_types=1);
 // of wrapping the card, so action buttons are not nested inside a link.
 //
 // Config:
-//   variant       string   default (row) | card (stacked download card; ignores size/orientation)
 //   title         string   required unless `media` is given
 //   description   string   meta line, e.g. type + size
-//   text          string   body text, card variant only
 //   media         array    { variant: icon (default) | image, icon, image, class }
 //   actions       string   pre-rendered button.php markup
 //   progress      array    progress.php config, shown below the title
@@ -29,8 +27,6 @@ $config = $args['config'];
 
 $title = trim((string) ($config['title'] ?? ''));
 $description = trim((string) ($config['description'] ?? ''));
-$variant = trim((string) ($config['variant'] ?? 'default'));
-$text = trim((string) ($config['text'] ?? ''));
 $media_config = is_array($config['media'] ?? null) ? $config['media'] : null;
 $actions = (string) ($config['actions'] ?? '');
 $progress_config = is_array($config['progress'] ?? null) ? $config['progress'] : null;
@@ -48,15 +44,10 @@ if ($title === '' && $media_config === null) {
     return;
 }
 
-$allowed_variants = ['default', 'card'];
 $allowed_states = ['idle', 'uploading', 'processing', 'error', 'done'];
 $allowed_sizes = ['default', 'sm', 'xs'];
 $allowed_orientations = ['horizontal', 'vertical'];
 $allowed_media_variants = ['icon', 'image'];
-
-if (!in_array($variant, $allowed_variants, true)) {
-    $variant = 'default';
-}
 
 if (!in_array($state, $allowed_states, true)) {
     $state = 'done';
@@ -67,11 +58,6 @@ if (!in_array($size, $allowed_sizes, true)) {
 }
 
 if (!in_array($orientation, $allowed_orientations, true)) {
-    $orientation = 'horizontal';
-}
-
-if ($variant === 'card') {
-    $size = 'default';
     $orientation = 'horizontal';
 }
 
@@ -124,9 +110,7 @@ if ($media_config !== null) {
             'group-data-[state=error]/attachment:bg-destructive/10 ' .
             'group-data-[state=error]/attachment:text-destructive ' .
             "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 " .
-            "group-data-[size=xs]/attachment:[&_svg:not([class*='size-'])]:size-3.5 " .
-            'group-data-[variant=card]/attachment:w-11 group-data-[variant=card]/attachment:text-foreground ' .
-            "group-data-[variant=card]/attachment:[&_svg:not([class*='size-'])]:size-5";
+            "group-data-[size=xs]/attachment:[&_svg:not([class*='size-'])]:size-3.5";
 
         if ($media_variant === 'image') {
             $media_class .=
@@ -167,9 +151,6 @@ if ($title !== '' || $description !== '' || $progress_markup !== '') {
             ? sprintf(
                 '<div data-slot="attachment-title" class="%1$s">%2$s</div>',
                 'block max-w-full min-w-0 truncate text-base font-semibold text-foreground ' .
-                    'group-data-[variant=card]/attachment:text-lg ' .
-                    'group-data-[variant=card]/attachment:font-extrabold ' .
-                    'group-data-[variant=card]/attachment:whitespace-normal ' .
                     'group-data-[size=sm]/attachment:text-sm group-data-[size=xs]/attachment:text-sm ' .
                     'group-data-[state=error]/attachment:text-destructive ' .
                     'group-data-[state=uploading]/attachment:animate-pulse ' .
@@ -204,10 +185,6 @@ $actions_markup =
         ? sprintf(
             '<div data-slot="attachment-actions" class="%1$s">%2$s</div>',
             'relative z-20 flex shrink-0 items-center gap-1 ' .
-                'group-data-[variant=card]/attachment:flex-col ' .
-                'group-data-[variant=card]/attachment:items-stretch ' .
-                'group-data-[variant=card]/attachment:mt-auto ' .
-                'group-data-[variant=card]/attachment:gap-2 ' .
                 'group-data-[orientation=vertical]/attachment:absolute ' .
                 'group-data-[orientation=vertical]/attachment:top-2.5 ' .
                 'group-data-[orientation=vertical]/attachment:right-2.5',
@@ -218,8 +195,8 @@ $actions_markup =
 $base_classes =
     'group/attachment relative flex min-w-0 items-center gap-3 rounded-2xl ' .
     'border border-border bg-card text-card-foreground shadow-xs ' .
-    'transition-[color,box-shadow,border-color] hover:shadow-md has-[>a]:hover:bg-muted/50 ' .
-    'focus-within:ring-[3px] focus-within:ring-ring/50 ' .
+    'transition-[color,box-shadow,border-color] has-[>a]:hover:shadow-md has-[>a]:hover:bg-muted/50 ' .
+    'has-[>a:focus-visible]:ring-[3px] has-[>a:focus-visible]:ring-ring/50 ' .
     'data-[state=idle]:border-dashed data-[state=error]:border-destructive/40 ' .
     'data-[state=error]:bg-destructive/5 ' .
     'data-[orientation=vertical]:w-24 data-[orientation=vertical]:flex-col ' .
@@ -233,42 +210,10 @@ $base_classes =
     'data-[size=xs]:has-data-[slot=attachment-content]:py-1.5 ' .
     'data-[size=xs]:has-data-[slot=attachment-media]:p-1.5';
 
-if ($variant === 'card') {
-    // Own class string: the row's px-*/p-* variants would otherwise win over p-7.
-    $base_classes =
-        'group/attachment relative flex min-w-0 flex-col gap-5 rounded-card-flat bg-card p-7 ' .
-        'text-card-foreground shadow-card-flat transition-[color,box-shadow,border-color] ' .
-        'hover:shadow-card-hover ' .
-        'focus-within:ring-[3px] focus-within:ring-ring/50 ' .
-        'data-[state=idle]:border data-[state=idle]:border-dashed data-[state=idle]:border-border ' .
-        'data-[state=error]:border data-[state=error]:border-destructive/40 ' .
-        'data-[state=error]:bg-destructive/5';
-
-    $header_markup =
-        $media_markup . $content_markup !== ''
-            ? sprintf(
-                '<div data-slot="attachment-header" class="flex min-w-0 items-center gap-3.5">%1$s</div>',
-                $media_markup . $content_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            )
-            : '';
-    $text_markup =
-        $text !== ''
-            ? sprintf(
-                '<div data-slot="attachment-text" class="%1$s">%2$s</div>',
-                'flex-1 text-base leading-normal text-foreground',
-                esc_html($text),
-            )
-            : '';
-
-    $media_markup = $header_markup;
-    $content_markup = $text_markup;
-}
-
 $wrapper_attributes = $attributes;
 $wrapper_attributes['class'] = trim($base_classes . ($class_name !== '' ? ' ' . $class_name : ''));
 
 $wrapper_attributes['data-slot'] = 'attachment';
-$wrapper_attributes['data-variant'] = $variant;
 $wrapper_attributes['data-state'] = $state;
 $wrapper_attributes['data-size'] = $size;
 $wrapper_attributes['data-orientation'] = $orientation;

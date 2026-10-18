@@ -15,6 +15,20 @@ final class ProductsTest extends TestCase
         Functions\stubTranslationFunctions();
     }
 
+    public function test_contact_block_contact_keeps_only_filled_fields(): void
+    {
+        $this->assertSame(
+            ['name' => 'KOMINEX', 'address' => "Am Selkebad 2\nD-06463 Ermsleben"],
+            hengegroup_theme_get_contact_block_contact([
+                'accent' => 'henge-blue',
+                'contactName' => ' KOMINEX ',
+                'contactEmail' => '  ',
+                'contactAddress' => "Am Selkebad 2\nD-06463 Ermsleben",
+            ]),
+        );
+        $this->assertSame([], hengegroup_theme_get_contact_block_contact(['heading' => 'Kontakt']));
+    }
+
     public function test_analysis_rows_keep_order_and_drop_empty_rows(): void
     {
         $this->assertSame(
@@ -75,6 +89,28 @@ final class ProductsTest extends TestCase
             ['Schleifmittelindustrie', 'Feuerfestindustrie', 'Glasindustrie', 'Baubranche'],
             array_column($sorted, 'name'),
         );
+    }
+
+    public function test_legacy_badges_map_to_migrated_companies(): void
+    {
+        $this->assertSame(
+            'KOMINEX',
+            hengegroup_theme_get_legacy_badge_company(' Kominex / Imexco '),
+        );
+        $this->assertSame('IMEXCO', hengegroup_theme_get_legacy_badge_company('IMEXCO'));
+        $this->assertSame('HENGE', hengegroup_theme_get_legacy_badge_company('HENGE BAUSTOFF'));
+        $this->assertSame('B E S', hengegroup_theme_get_legacy_badge_company('B E S'));
+        $this->assertSame('', hengegroup_theme_get_legacy_badge_company('HENGEGROUP'));
+
+        foreach (
+            ['KOMINEX / IMEXCO', 'kominex', 'imexco', 'henge', 'henge / o+h', 'b e s', 'o+h']
+            as $text
+        ) {
+            $this->assertArrayHasKey(
+                hengegroup_theme_get_legacy_badge_company($text),
+                hengegroup_theme_get_migrated_companies(),
+            );
+        }
     }
 
     private function inquiry(array $overrides = []): array

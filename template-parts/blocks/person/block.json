@@ -20,6 +20,15 @@
         "role": {
             "type": "string",
             "default": ""
+        },
+        "variant": {
+            "type": "string",
+            "enum": ["default", "filled"],
+            "default": "default"
+        },
+        "accent": {
+            "type": "string",
+            "default": "grey-dark"
         }
     },
     "supports": {

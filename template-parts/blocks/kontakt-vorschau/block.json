@@ -7,7 +7,32 @@
     "icon": "email",
     "description": "Nur fuer die Editor-Vorschau des Kontakt-Blocks -- rendert Kontaktkarte und Formular ohne Ueberschrift, kein eigener Insertable Block.",
     "textdomain": "hengegroup-theme",
-    "attributes": {},
+    "attributes": {
+        "accent": {
+            "type": "string",
+            "default": "henge-grey"
+        },
+        "contactName": {
+            "type": "string",
+            "default": ""
+        },
+        "contactEmail": {
+            "type": "string",
+            "default": ""
+        },
+        "contactPhone": {
+            "type": "string",
+            "default": ""
+        },
+        "contactFax": {
+            "type": "string",
+            "default": ""
+        },
+        "contactAddress": {
+            "type": "string",
+            "default": ""
+        }
+    },
     "supports": {
         "inserter": false,
         "html": false

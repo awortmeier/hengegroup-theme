@@ -5,7 +5,7 @@
     "title": "Anwendungsgruppe",
     "category": "henge",
     "icon": "screenoptions",
-    "description": "Sektion einer Anwendungsgruppe: Kicker, Überschrift und Beschreibung aus der Gruppe, darunter automatisch alle Anwendungen der Gruppe mit ihren Produkten.",
+    "description": "Sektion einer Anwendungsgruppe: Kicker, Überschrift und Beschreibung (leer = aus der Gruppe), darunter automatisch alle Anwendungen der Gruppe mit ihren Produkten.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "groupId": {
@@ -16,6 +16,26 @@
             "type": "string",
             "enum": ["light", "muted"],
             "default": "light"
+        },
+        "kicker": {
+            "type": "string",
+            "default": ""
+        },
+        "kickerVariant": {
+            "type": "string",
+            "default": ""
+        },
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        },
+        "text": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

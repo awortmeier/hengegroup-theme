@@ -95,7 +95,7 @@ $footer_link_class = 'text-grey-light no-underline';
         <?php if ($footer_contact_rows !== []): ?>
             <div class="col-span-12 sm:col-span-6 lg:col-span-3">
                 <?php $footer_heading(__('Kontakt', 'hengegroup-theme')); ?>
-                <ul class="flex flex-col gap-2.5">
+                <ul class="flex flex-col gap-1">
                     <?php foreach ($footer_contact_rows as $contact_row): ?>
                         <?php $contact_icon = hengegroup_theme_render_icon([
                             'name' => $contact_row['icon'],

@@ -24,6 +24,11 @@
         "accent": {
             "type": "string",
             "default": "henge-green"
+        },
+        "variant": {
+            "type": "string",
+            "enum": ["default", "ghost"],
+            "default": "default"
         }
     },
     "supports": {

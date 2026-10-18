@@ -407,15 +407,50 @@ final class HelpersTest extends TestCase
         $this->assertSame([], hengegroup_theme_get_contact_rows('', ' - ', ' '));
     }
 
-    public function test_accent_classes_fall_back_to_grey_dark(): void
+    public function test_accent_classes_fall_back(): void
     {
         $this->assertSame(
-            ['bg' => 'bg-henge-blue', 'border' => 'border-henge-blue'],
+            [
+                'bg' => 'bg-henge-blue',
+                'border' => 'border-henge-blue',
+                'fg' => 'text-henge-blue-foreground',
+            ],
             hengegroup_theme_get_accent_classes('henge-blue'),
         );
+        $this->assertSame('bg-grey-dark', hengegroup_theme_get_accent_classes('pink')['bg']);
         $this->assertSame(
-            ['bg' => 'bg-grey-dark', 'border' => 'border-grey-dark'],
-            hengegroup_theme_get_accent_classes('pink'),
+            'bg-henge-grey',
+            hengegroup_theme_get_accent_classes('', 'henge-grey')['bg'],
         );
+    }
+
+    public function test_pick_card_variant_uses_allow_list_then_fallback(): void
+    {
+        $allowed = ['ghost', 'default', 'filled'];
+
+        $this->assertSame('filled', hengegroup_theme_pick_card_variant('filled', $allowed));
+        $this->assertSame(
+            'default',
+            hengegroup_theme_pick_card_variant('glass', $allowed, 'default'),
+        );
+        $this->assertSame('ghost', hengegroup_theme_pick_card_variant('', $allowed, 'split'));
+        $this->assertSame('default', hengegroup_theme_pick_card_variant('', []));
+    }
+
+    public function test_link_attributes_open_other_hosts_in_new_tab(): void
+    {
+        Functions\when('home_url')->justReturn('https://dev.hengegroup.com/');
+        Functions\when('wp_parse_url')->alias('parse_url');
+
+        $this->assertSame(
+            ['target' => '_blank', 'rel' => 'noopener'],
+            hengegroup_theme_get_link_attributes('https://example.com/siegel.pdf'),
+        );
+        $this->assertSame([], hengegroup_theme_get_link_attributes('/kominex/'));
+        $this->assertSame(
+            [],
+            hengegroup_theme_get_link_attributes('https://dev.hengegroup.com/a/'),
+        );
+        $this->assertSame([], hengegroup_theme_get_link_attributes(''));
     }
 }

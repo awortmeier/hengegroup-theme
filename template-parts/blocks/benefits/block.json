@@ -5,7 +5,7 @@
     "title": "Benefits",
     "category": "henge",
     "icon": "awards",
-    "description": "Überschrift, Einleitung und ein Raster aus Benefits (Icon, Titel, Text) auf dunkler Fläche, als Liste oder Karten. Benefits direkt im Block hinzufügen.",
+    "description": "Überschrift, Einleitung und ein Raster aus Benefits (Icon, Titel, Text) auf dunkler Fläche, jeder Benefit als Karte oder transparent. Benefits direkt im Block hinzufügen.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "heading": {
@@ -23,6 +23,10 @@
         "variant": {
             "type": "string",
             "default": "list"
+        },
+        "layout": {
+            "type": "string",
+            "default": "default"
         }
     },
     "providesContext": {

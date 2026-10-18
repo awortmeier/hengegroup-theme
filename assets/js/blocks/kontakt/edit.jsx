@@ -1,8 +1,9 @@
-// Editor for "Kontakt": heading/text as RichText, card + form via ServerSideRender of
-// kontakt-vorschau (a preview of this block would show the texts twice).
+// Editor for "Kontakt": heading/text as RichText, card data in the sidebar, card + form via
+// ServerSideRender of kontakt-vorschau (a preview of this block would show the texts twice).
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
-import { RichText, useBlockProps } from "@wordpress/block-editor";
+import { InspectorControls, RichText, useBlockProps } from "@wordpress/block-editor";
+import { PanelBody, SelectControl, TextControl, TextareaControl } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
@@ -19,12 +20,65 @@ function fromRichTextValue(html) {
     return create({ html }).text;
 }
 
+const ACCENT_OPTIONS = [
+    { label: __("Blau", "hengegroup-theme"), value: "henge-blue" },
+    { label: __("Grün", "hengegroup-theme"), value: "henge-green" },
+    { label: __("Grau", "hengegroup-theme"), value: "henge-grey" },
+    { label: __("Dunkelgrau", "hengegroup-theme"), value: "grey-dark" },
+];
+
+const CONTACT_FIELDS = [
+    ["contactName", __("Name", "hengegroup-theme")],
+    ["contactEmail", __("E-Mail", "hengegroup-theme")],
+    ["contactPhone", __("Telefon", "hengegroup-theme")],
+    ["contactFax", __("Fax", "hengegroup-theme")],
+];
+
 function Edit({ attributes, setAttributes }) {
-    const { heading, text } = attributes;
-    const blockProps = useBlockProps({ className: "alignfull py-16 md:py-25" });
+    const { heading, text, accent, contactAddress } = attributes;
+    const previewAttributes = {
+        accent,
+        contactAddress,
+        ...Object.fromEntries(CONTACT_FIELDS.map(([key]) => [key, attributes[key]])),
+    };
+    const blockProps = useBlockProps({ className: "alignfull section-spacing" });
 
     return (
         <Fragment>
+            <InspectorControls>
+                <PanelBody title={__("Kontaktkarte", "hengegroup-theme")} initialOpen>
+                    <SelectControl
+                        __nextHasNoMarginBottom
+                        __next40pxDefaultSize
+                        label={__("Akzentfarbe", "hengegroup-theme")}
+                        value={accent}
+                        options={ACCENT_OPTIONS}
+                        onChange={(value) => setAttributes({ accent: value })}
+                    />
+                    <p>
+                        {__(
+                            "Alle Felder leer = Daten aus Einstellungen > Footer.",
+                            "hengegroup-theme"
+                        )}
+                    </p>
+                    {CONTACT_FIELDS.map(([key, label]) => (
+                        <TextControl
+                            key={key}
+                            __nextHasNoMarginBottom
+                            __next40pxDefaultSize
+                            label={label}
+                            value={attributes[key]}
+                            onChange={(value) => setAttributes({ [key]: value })}
+                        />
+                    ))}
+                    <TextareaControl
+                        __nextHasNoMarginBottom
+                        label={__("Adresse (eine Zeile pro Zeile)", "hengegroup-theme")}
+                        value={contactAddress}
+                        onChange={(value) => setAttributes({ contactAddress: value })}
+                    />
+                </PanelBody>
+            </InspectorControls>
             <section {...blockProps}>
                 <div className="wrapper mb-12">
                     <div className="col-span-12 max-w-3xl">
@@ -47,7 +101,7 @@ function Edit({ attributes, setAttributes }) {
                         />
                     </div>
                 </div>
-                <ServerSideRender block={vorschauMetadata.name} />
+                <ServerSideRender block={vorschauMetadata.name} attributes={previewAttributes} />
             </section>
         </Fragment>
     );

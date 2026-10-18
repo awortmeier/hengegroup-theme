@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// Block "Stellen-Liste": Ueberschrift je Typ + Gutenberg-Liste. Der Typ bestimmt das JSON-LD-Feld
+// Block "Stellen-Liste": Ueberschrift (leer = die des Typs) + Gutenberg-Liste. Der Typ bestimmt das JSON-LD-Feld
 // (hengegroup_theme_extract_job_lists()). Leere "Wir bieten dir"-Liste = Standard-Benefits des
 // Unternehmens, andere leere Listen entfallen.
 
@@ -51,10 +51,11 @@ if (!$has_items) {
     return;
 }
 
+$heading = trim((string) ($attributes['heading'] ?? ''));
 $heading_markup = hengegroup_theme_render_typography([
     'variant' => 'body-lg',
     'tag' => 'h2',
-    'text' => $types[$type],
+    'text' => $heading !== '' ? $heading : $types[$type],
     'class' => 'mb-3 font-bold',
 ]);
 

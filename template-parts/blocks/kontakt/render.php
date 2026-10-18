@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-// Block "Kontakt": Ueberschrift, Firmen-Kontaktkarte (Einstellungen > Footer) und Anfrageformular.
+// Block "Kontakt": Ueberschrift, Kontaktkarte (eigene Daten oder Einstellungen > Footer) und
+// Anfrageformular.
 // Kopf als volle Rasterzeile, sonst rutscht die Karte per Auto-Placement daneben.
 // `id="kontakt"` ist Sprungziel und Redirect-Ziel, daher `supports.multiple: false`.
 
@@ -47,6 +48,11 @@ if ($heading !== '' || $text !== '') {
     echo '</div>';
 }
 
-echo hengegroup_theme_render_company_contact_row(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+$contact_row = hengegroup_theme_render_company_contact_row(
+    hengegroup_theme_get_contact_block_contact($attributes),
+    (string) ($attributes['accent'] ?? 'henge-grey'),
+);
+
+echo $contact_row; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 echo '</div>';
 echo '</section>';

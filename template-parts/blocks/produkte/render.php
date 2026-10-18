@@ -32,7 +32,7 @@ if ($grid_markup === '') {
     return;
 }
 
-echo '<section class="bg-grey-dark section-spacing-lg">';
+echo '<section class="bg-grey-dark section-spacing">';
 echo '<div class="wrapper gap-y-10">';
 echo '<div class="col-span-12 max-w-2xl">';
 

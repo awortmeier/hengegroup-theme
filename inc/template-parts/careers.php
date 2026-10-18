@@ -592,6 +592,9 @@ function hengegroup_theme_get_job_company(int $term_id): ?array
             (string) get_term_meta($term->term_id, '_hengegroup_theme_company_benefits', true),
         ),
         'logo_id' => (int) get_term_meta($term->term_id, '_hengegroup_theme_company_logo_id', true),
+        'address' => trim(
+            (string) get_term_meta($term->term_id, '_hengegroup_theme_company_address', true),
+        ),
         'variant' => in_array($variant, $variants, true) ? $variant : $variants[0],
         'contact' => [
             'name' => (string) get_term_meta(
@@ -779,9 +782,9 @@ function hengegroup_theme_get_active_job_meta_query(): array
     ];
 }
 
-function hengegroup_theme_get_active_job_ids(int $limit = -1): array
+function hengegroup_theme_get_active_job_ids(int $limit = -1, int $company_id = 0): array
 {
-    $query = new WP_Query([
+    $query_args = [
         'post_type' => HENGEGROUP_THEME_JOB_POST_TYPE,
         'post_status' => 'publish',
         'posts_per_page' => $limit > 0 ? $limit : -1,
@@ -790,7 +793,20 @@ function hengegroup_theme_get_active_job_ids(int $limit = -1): array
         'fields' => 'ids',
         'no_found_rows' => true,
         'meta_query' => hengegroup_theme_get_active_job_meta_query(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-    ]);
+    ];
+
+    if ($company_id > 0) {
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+        $query_args['tax_query'] = [
+            [
+                'taxonomy' => HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY,
+                'field' => 'term_id',
+                'terms' => $company_id,
+            ],
+        ];
+    }
+
+    $query = new WP_Query($query_args);
 
     return array_map('intval', $query->posts);
 }
@@ -924,16 +940,19 @@ function hengegroup_theme_render_jobs_grouped(): string
     return $markup;
 }
 
-function hengegroup_theme_render_job_teaser_list(int $limit): string
+/**
+ * Mit $company_id nur dessen Stellen, dann ohne Unternehmens-Badge.
+ */
+function hengegroup_theme_render_job_teaser_list(int $limit, int $company_id = 0): string
 {
     $rows = implode(
         '',
         array_map(
             static fn(int $job_id): string => hengegroup_theme_render_job_row(
                 hengegroup_theme_get_job_data($job_id),
-                true,
+                $company_id <= 0,
             ),
-            hengegroup_theme_get_active_job_ids(max(1, $limit)),
+            hengegroup_theme_get_active_job_ids(max(1, $limit), $company_id),
         ),
     );
 
@@ -1019,35 +1038,35 @@ function hengegroup_theme_get_benefit_icons(): array
 /**
  * Gruppierte Stellen oder Hinweis auf Initiativbewerbung.
  */
-function hengegroup_theme_render_open_jobs_list(): string
+function hengegroup_theme_render_open_jobs_list(string $empty_text): string
 {
     $groups_markup = hengegroup_theme_render_jobs_grouped();
 
-    if ($groups_markup !== '') {
+    if ($groups_markup !== '' || trim($empty_text) === '') {
         return $groups_markup;
     }
 
-    $contact = hengegroup_theme_get_job_contact(null);
-
-    ob_start();
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'variant' => 'body-base',
-            'text' =>
-                $contact['email'] !== ''
-                    ? sprintf(
-                        /* translators: %s: application e-mail address. */
-                        __(
-                            'Aktuell sind keine Stellen ausgeschrieben. Initiativbewerbungen sind jederzeit willkommen: %s',
-                            'hengegroup-theme',
-                        ),
-                        $contact['email'],
-                    )
-                    : __('Aktuell sind keine Stellen ausgeschrieben.', 'hengegroup-theme'),
-        ],
+    return hengegroup_theme_render_typography([
+        'variant' => 'body-base',
+        'text' => trim($empty_text),
     ]);
+}
 
-    return (string) ob_get_clean();
+/**
+ * Ansprechpartner des Blocks "Offene Stellen" (wenn Name oder E-Mail gepflegt), sonst der Standard.
+ */
+function hengegroup_theme_get_open_jobs_contact(array $attributes): array
+{
+    $contact = [
+        'name' => trim((string) ($attributes['contactName'] ?? '')),
+        'role' => trim((string) ($attributes['contactRole'] ?? '')),
+        'email' => trim((string) ($attributes['contactEmail'] ?? '')),
+        'phone' => trim((string) ($attributes['contactPhone'] ?? '')),
+    ];
+
+    return $contact['name'] !== '' || $contact['email'] !== ''
+        ? $contact
+        : hengegroup_theme_get_job_contact(null);
 }
 
 function hengegroup_theme_render_benefit_icon(string $key): string

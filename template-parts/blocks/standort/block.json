@@ -1,0 +1,40 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/standort",
+    "title": "Standort",
+    "category": "henge",
+    "icon": "location-alt",
+    "description": "Eine Karte im Block „Standorte“: Name, Adresse und Zeiten.",
+    "textdomain": "hengegroup-theme",
+    "parent": ["hengegroup-theme/standorte"],
+    "usesContext": ["hengegroup-theme/standorte-accent"],
+    "attributes": {
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "address": {
+            "type": "string",
+            "default": ""
+        },
+        "hoursLabel": {
+            "type": "string",
+            "default": "Ladezeiten"
+        },
+        "hours": {
+            "type": "string",
+            "default": ""
+        },
+        "variant": {
+            "type": "string",
+            "enum": ["split", "filled"],
+            "default": "split"
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false
+    },
+    "render": "file:./render.php"
+}

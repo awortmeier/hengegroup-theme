@@ -11,10 +11,10 @@ if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_
 
 if (($attributes['part'] ?? 'list') === 'contact') {
     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-    echo hengegroup_theme_render_contact_card(hengegroup_theme_get_job_contact(null), [
-        'variant' => 'dark',
+    echo hengegroup_theme_render_contact_card(hengegroup_theme_get_open_jobs_contact($attributes), [
+        'variant' => 'filled',
     ]);
     return;
 }
 
-echo hengegroup_theme_render_open_jobs_list(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_open_jobs_list((string) ($attributes['emptyText'] ?? '')); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

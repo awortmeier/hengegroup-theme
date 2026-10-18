@@ -38,8 +38,8 @@ function setupBuehne(carousel) {
         carousel.getAttribute("data-autoplay-interval") || "6000",
         10
     );
-    const pauseButton = dotsWrapper.querySelector("[data-buehne-pause]");
-    const playIconTemplate = dotsWrapper.querySelector("template[data-buehne-play-icon]");
+    const pauseButton = root.querySelector("[data-buehne-pause]");
+    const playIconTemplate = root.querySelector("template[data-buehne-play-icon]");
     const pauseIcon = pauseButton ? pauseButton.querySelector("svg") : null;
     const playIcon = playIconTemplate
         ? playIconTemplate.content.querySelector("svg")?.cloneNode(true)

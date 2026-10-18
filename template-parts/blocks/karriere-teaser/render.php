@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-// Block "Karriere-Teaser": Text + Button links, neueste Stellen rechts. Ohne Button-URL geht der
-// Button auf die Karriereseite (#stellen).
+// Block "Karriere-Teaser": Text + Button links, neueste Stellen rechts (companyId > 0: nur dieses
+// Unternehmen). Ohne Button-URL geht der Button auf die Karriereseite (#stellen).
 
 if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_job_teaser_list')) {
     return;
@@ -20,9 +20,17 @@ $text = trim((string) ($attributes['text'] ?? ''));
 $button_text = trim((string) ($attributes['buttonText'] ?? ''));
 $button_url = trim((string) ($attributes['buttonUrl'] ?? ''));
 $limit = (int) ($attributes['limit'] ?? 4);
-$list_markup = hengegroup_theme_render_job_teaser_list($limit);
+$company_id = (int) ($attributes['companyId'] ?? 0);
+$empty_text = trim((string) ($attributes['emptyText'] ?? ''));
+$is_dark = ($attributes['variant'] ?? 'light') === 'dark';
+$color = $is_dark ? 'light' : 'default';
+$list_markup = hengegroup_theme_render_job_teaser_list($limit, $company_id);
 
-echo '<section class="section-spacing">';
+printf(
+    '<section class="%1$s" data-block="karriere-teaser" data-variant="%2$s">',
+    esc_attr($is_dark ? 'section-dark section-spacing' : 'section-spacing'),
+    esc_attr($is_dark ? 'dark' : 'light'),
+);
 echo '<div class="wrapper items-start gap-y-10">';
 echo '<div class="col-span-12 lg:col-span-6 lg:pr-8">';
 
@@ -33,6 +41,7 @@ if ($heading !== '') {
             'accent_markup' => true,
             'variant' => 'headline-base',
             'tag' => $heading_tag,
+            'color' => $color,
             'class' => 'mb-5',
         ],
     ]);
@@ -43,6 +52,7 @@ if ($text !== '') {
         'config' => [
             'text' => $text,
             'variant' => 'body-lg',
+            'color' => $color,
             'class' => $button_text !== '' ? 'mb-8' : '',
         ],
     ]);
@@ -56,7 +66,7 @@ if ($button_text !== '') {
                 $button_url !== ''
                     ? $button_url
                     : hengegroup_theme_get_career_page_url() . '#stellen',
-            'variant' => 'grey-dark',
+            'variant' => $is_dark ? 'grey-light' : 'grey-dark',
             'size' => 'lg',
         ],
     ]);
@@ -67,12 +77,12 @@ echo '<div class="col-span-12 lg:col-span-6">';
 
 if ($list_markup !== '') {
     echo $list_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-} else {
+} elseif ($empty_text !== '') {
     get_template_part('template-parts/base/typography', null, [
         'config' => [
             'variant' => 'body-base',
-            'color' => 'neutral',
-            'text' => __('Aktuell sind keine Stellen ausgeschrieben.', 'hengegroup-theme'),
+            'color' => $is_dark ? 'light' : 'neutral',
+            'text' => $empty_text,
         ],
     ]);
 }

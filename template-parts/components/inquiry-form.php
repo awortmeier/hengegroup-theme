@@ -8,6 +8,7 @@ declare(strict_types=1);
 //   product_id      int      0 = allgemeine Anfrage
 //   with_location   bool     PLZ/Ort-Pflichtfelder
 //   tone            string   light | dark (Beschriftungsfarbe)
+//   accent          string   siehe request-form.php
 //   message_label   string   default "Nachricht"
 
 $product_id = (int) ($args['product_id'] ?? 0);
@@ -128,6 +129,7 @@ get_template_part('template-parts/components/request-form', null, [
             'with_location' => $with_location ? '1' : '',
         ],
         'tone' => $is_dark ? 'dark' : 'light',
+        'accent' => (string) ($args['accent'] ?? ''),
         'data_attributes' => ['form' => 'inquiry'],
     ],
 ]);

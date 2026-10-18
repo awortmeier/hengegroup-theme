@@ -5,7 +5,7 @@
     "title": "Produktkategorie",
     "category": "henge",
     "icon": "category",
-    "description": "Sektion einer Produktkategorie: Kicker, Überschrift und Beschreibung aus der Kategorie, darunter automatisch alle Produkte dieser Kategorie.",
+    "description": "Sektion einer Produktkategorie: Kicker, Überschrift und Beschreibung (leer = aus der Kategorie), darunter automatisch alle Produkte dieser Kategorie.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "categoryId": {
@@ -16,6 +16,26 @@
             "type": "string",
             "enum": ["light", "muted"],
             "default": "light"
+        },
+        "kicker": {
+            "type": "string",
+            "default": ""
+        },
+        "kickerVariant": {
+            "type": "string",
+            "default": ""
+        },
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        },
+        "text": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

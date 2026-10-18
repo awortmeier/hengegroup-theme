@@ -1,6 +1,6 @@
 // Editor for "Karriere-Teaser" (same pattern as produkte/edit.jsx): RichText texts, heading tag and
 // link via toolbar, job list via ServerSideRender of karriere-teaser-liste. An empty link means the
-// career page, so the popover shows a hint.
+// career page, so the popover shows a hint. Companies come from window.hengegroupThemeJobCompanies.
 import { createElement as el, Fragment, useEffect, useRef, useState } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {
@@ -14,6 +14,8 @@ import {
     PanelBody,
     Popover,
     RangeControl,
+    SelectControl,
+    TextareaControl,
     ToolbarButton,
     ToolbarDropdownMenu,
     ToolbarGroup,
@@ -23,7 +25,7 @@ import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/karriere-teaser/block.json";
 import listeMetadata from "../../../../template-parts/blocks/karriere-teaser-liste/block.json";
-import { ACCENT_FORMATS } from "../shared.jsx";
+import { ACCENT_FORMATS, buttonPreviewClassName } from "../shared.jsx";
 
 function toRichTextValue(text) {
     return toHTMLString({ value: create({ text }) });
@@ -43,14 +45,27 @@ const HEADING_TAG_OPTIONS = [
     { title: __("Absatz (P)", "hengegroup-theme"), value: "p" },
 ];
 
-// Mirrors button.php grey-dark/lg.
-const BUTTON_PREVIEW_CLASSNAME =
-    "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-7 text-lg font-medium whitespace-nowrap !bg-grey-dark !text-grey-dark-foreground";
+const companies = Array.isArray(window.hengegroupThemeJobCompanies)
+    ? window.hengegroupThemeJobCompanies
+    : [];
 
 function Edit({ attributes, setAttributes, isSelected }) {
-    const { heading, headingTag, text, buttonText, buttonUrl, limit } = attributes;
+    const {
+        heading,
+        headingTag,
+        text,
+        buttonText,
+        buttonUrl,
+        limit,
+        companyId,
+        variant,
+        emptyText,
+    } = attributes;
+    const isDark = variant === "dark";
     const blockProps = useBlockProps({
-        className: "alignfull bg-grey-light py-16 md:py-24 lg:py-25",
+        className: `alignfull section-spacing ${
+            isDark ? "section-dark text-grey-light" : "bg-grey-light"
+        }`,
     });
     const buttonRef = useRef();
     const [isEditingButtonUrl, setIsEditingButtonUrl] = useState(false);
@@ -99,6 +114,38 @@ function Edit({ attributes, setAttributes, isSelected }) {
                         value={limit}
                         onChange={(value) => setAttributes({ limit: value || 4 })}
                     />
+                    <SelectControl
+                        __nextHasNoMarginBottom
+                        __next40pxDefaultSize
+                        label={__("Unternehmen", "hengegroup-theme")}
+                        value={String(companyId || 0)}
+                        options={[
+                            { value: "0", label: __("Alle Unternehmen", "hengegroup-theme") },
+                            ...companies.map((company) => ({
+                                value: String(company.id),
+                                label: company.name,
+                            })),
+                        ]}
+                        onChange={(value) => setAttributes({ companyId: parseInt(value, 10) || 0 })}
+                    />
+                    <SelectControl
+                        __nextHasNoMarginBottom
+                        __next40pxDefaultSize
+                        label={__("Hintergrund", "hengegroup-theme")}
+                        value={variant}
+                        options={[
+                            { value: "light", label: __("Hell", "hengegroup-theme") },
+                            { value: "dark", label: __("Dunkel", "hengegroup-theme") },
+                        ]}
+                        onChange={(value) => setAttributes({ variant: value })}
+                    />
+                    <TextareaControl
+                        __nextHasNoMarginBottom
+                        label={__("Text ohne offene Stellen", "hengegroup-theme")}
+                        help={__("Leer lassen = kein Hinweis.", "hengegroup-theme")}
+                        value={emptyText}
+                        onChange={(value) => setAttributes({ emptyText: value })}
+                    />
                 </PanelBody>
             </InspectorControls>
             <section {...blockProps}>
@@ -126,7 +173,10 @@ function Edit({ attributes, setAttributes, isSelected }) {
                         <span ref={buttonRef} className="relative inline-block">
                             <RichText
                                 tagName="span"
-                                className={BUTTON_PREVIEW_CLASSNAME}
+                                className={buttonPreviewClassName(
+                                    isDark ? "grey-light" : "grey-dark",
+                                    "lg"
+                                )}
                                 value={toRichTextValue(buttonText)}
                                 onChange={(html) =>
                                     setAttributes({ buttonText: fromRichTextValue(html) })
@@ -168,7 +218,10 @@ function Edit({ attributes, setAttributes, isSelected }) {
                         </span>
                     </div>
                     <div className="col-span-12 lg:col-span-6">
-                        <ServerSideRender block={listeMetadata.name} attributes={{ limit }} />
+                        <ServerSideRender
+                            block={listeMetadata.name}
+                            attributes={{ limit, companyId, emptyText }}
+                        />
                     </div>
                 </div>
             </section>

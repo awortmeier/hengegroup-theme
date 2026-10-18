@@ -5,13 +5,17 @@
     "title": "Stellen-Liste",
     "category": "henge",
     "icon": "editor-ul",
-    "description": "Liste einer Stellenanzeige mit fester Überschrift: „Wir bieten dir“, „Dein Profil“ oder „Deine Aufgaben“. Darin eine normale Liste.",
+    "description": "Liste einer Stellenanzeige vom Typ „Wir bieten dir“, „Dein Profil“ oder „Deine Aufgaben“ (Überschrift änderbar). Darin eine normale Liste.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "type": {
             "type": "string",
             "enum": ["benefits", "profile", "tasks"],
             "default": "benefits"
+        },
+        "heading": {
+            "type": "string",
+            "default": ""
         }
     },
     "usesContext": ["postId"],

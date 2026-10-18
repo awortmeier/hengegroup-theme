@@ -9,7 +9,8 @@ defined('ABSPATH') || exit();
 ?>
 <?php get_header(); ?>
 
-<section class="wrapper-small min-h-[70vh] content-center pt-36 pb-24 sm:pt-40 lg:pt-44 lg:pb-32">
+<div class="header-offset">
+<section class="wrapper-small min-h-[70vh] content-center section-spacing">
     <div
         class="col-span-12 flex flex-wrap items-center justify-center gap-x-14 gap-y-6"
         data-slot="not-found"
@@ -55,5 +56,6 @@ defined('ABSPATH') || exit();
         </div>
     </div>
 </section>
+</div>
 
 <?php get_footer(); ?>

@@ -11,15 +11,15 @@ if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_
 
 $show_contact = !empty($attributes['showContact'] ?? true);
 $contact_heading = trim((string) ($attributes['contactHeading'] ?? ''));
-$list_markup = hengegroup_theme_render_open_jobs_list();
+$list_markup = hengegroup_theme_render_open_jobs_list((string) ($attributes['emptyText'] ?? ''));
 $contact_markup = $show_contact
-    ? hengegroup_theme_render_contact_card(hengegroup_theme_get_job_contact(null), [
-        'variant' => 'dark',
+    ? hengegroup_theme_render_contact_card(hengegroup_theme_get_open_jobs_contact($attributes), [
+        'variant' => 'filled',
     ])
     : '';
 $list_span = $contact_markup !== '' ? 'lg:col-span-8' : '';
 
-echo '<section id="stellen" class="scroll-mt-24 section-spacing">';
+echo '<section id="stellen" class="scroll-mt-24 section-spacing-bottom">';
 echo '<div class="wrapper items-start gap-y-12">';
 printf('<div class="col-span-12 %s">', esc_attr($list_span));
 echo $list_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

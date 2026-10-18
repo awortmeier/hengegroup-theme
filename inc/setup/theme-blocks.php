@@ -69,6 +69,11 @@ function hengegroup_theme_register_blocks(): void
         'js/blocks/textabschnitt-edit.js',
     );
     hengegroup_theme_register_theme_block(
+        'bild-text',
+        'hengegroup-theme-bild-text-editor',
+        'js/blocks/bild-text-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
         'produkte',
         'hengegroup-theme-produkte-editor',
         'js/blocks/produkte-edit.js',
@@ -153,10 +158,29 @@ function hengegroup_theme_register_blocks(): void
         'hengegroup-theme-firmen-editor',
         'js/blocks/firmen-edit.js',
     );
+    hengegroup_theme_register_theme_block(
+        'ansprechpartner',
+        'hengegroup-theme-ansprechpartner-editor',
+        'js/blocks/ansprechpartner-edit.js',
+    );
+    hengegroup_theme_register_theme_block(
+        'standorte',
+        'hengegroup-theme-standorte-editor',
+        'js/blocks/standorte-edit.js',
+    );
 
     // Kind-Bloecke, clientseitig im edit.jsx des Eltern-Blocks registriert.
     foreach (
-        ['auszeichnung', 'benefit', 'historie-eintrag', 'person', 'kennzahl', 'firma']
+        [
+            'auszeichnung',
+            'benefit',
+            'historie-eintrag',
+            'person',
+            'kennzahl',
+            'firma',
+            'ansprechpartner-person',
+            'standort',
+        ]
         as $child
     ) {
         register_block_type(get_template_directory() . '/template-parts/blocks/' . $child);
@@ -198,6 +222,41 @@ function hengegroup_theme_enqueue_job_list_types_for_editor(): void
 }
 add_action('enqueue_block_editor_assets', 'hengegroup_theme_enqueue_job_list_types_for_editor');
 
+function hengegroup_theme_enqueue_job_companies_for_editor(): void
+{
+    $terms = get_terms([
+        'taxonomy' => HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY,
+        'hide_empty' => false,
+    ]);
+    $companies = array_map(
+        static fn(WP_Term $term): array => [
+            'id' => (int) $term->term_id,
+            'name' => html_entity_decode($term->name),
+        ],
+        is_array($terms) ? $terms : [],
+    );
+
+    wp_add_inline_script(
+        'hengegroup-theme-karriere-teaser-editor',
+        'window.hengegroupThemeJobCompanies = ' . wp_json_encode($companies) . ';',
+        'before',
+    );
+}
+add_action('enqueue_block_editor_assets', 'hengegroup_theme_enqueue_job_companies_for_editor');
+
+/**
+ * Platzhalter der Kopf-Felder von Produktkategorie/Anwendungsgruppe im Editor.
+ */
+function hengegroup_theme_get_section_intro_defaults(array $term_data): array
+{
+    return [
+        'kicker' => html_entity_decode($term_data['kicker']),
+        'kickerVariant' => $term_data['variant'],
+        'heading' => html_entity_decode($term_data['heading']),
+        'text' => html_entity_decode($term_data['description']),
+    ];
+}
+
 /**
  * Per Inline-Script statt REST; ohne "Unkategorisiert".
  */
@@ -226,6 +285,9 @@ function hengegroup_theme_enqueue_product_categories_for_editor(): void
                 $categories[] = [
                     'id' => (int) $term->term_id,
                     'name' => str_repeat('— ', $depth) . html_entity_decode($term->name),
+                    'intro' => hengegroup_theme_get_section_intro_defaults(
+                        hengegroup_theme_get_product_category_data($term),
+                    ),
                 ];
                 $walk((int) $term->term_id, $depth + 1);
             }
@@ -252,6 +314,9 @@ function hengegroup_theme_enqueue_anwendung_groups_for_editor(): void
         static fn(WP_Term $term): array => [
             'id' => (int) $term->term_id,
             'name' => html_entity_decode($term->name),
+            'intro' => hengegroup_theme_get_section_intro_defaults(
+                hengegroup_theme_get_anwendung_group_data($term),
+            ),
         ],
         hengegroup_theme_sort_anwendung_terms(is_array($terms) ? $terms : []),
     );

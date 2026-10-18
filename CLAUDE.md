@@ -37,6 +37,13 @@ HTML-Semantik ist ein guter Start, aber keine Pflicht.
 - Projektspezifisches gehoert nach `template-parts/components/` bzw. `template-parts/blocks/`, nicht
   nach `base/`.
 
+## Gutenberg-Bloecke
+
+- Alles, was Redakteure pflegen, ist direkt im Block-Editor einstellbar (Canvas oder Inspector),
+  nicht in Theme-Code, Customizer oder Options-Seiten.
+- Ausnahme: Wird der Inspector dadurch unuebersichtlich, Optionen gruppieren (`PanelBody`,
+  standardmaessig zugeklappt) oder selten genutzte auf sinnvolle Defaults festlegen.
+
 ## Kommentare und Doku
 
 So knapp wie moeglich. Code, der sich selbst erklaert, bekommt keinen Kommentar.

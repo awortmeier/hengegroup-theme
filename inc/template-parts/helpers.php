@@ -173,6 +173,60 @@ function hengegroup_theme_render_card(array $card_config): string
 }
 
 /**
+ * Class lists of card.php, shared with the block editor (assets/js/blocks/shared.jsx).
+ */
+function hengegroup_theme_get_card_classes(): array
+{
+    static $classes = null;
+
+    if ($classes === null) {
+        $json = (string) file_get_contents(
+            get_template_directory() . '/template-parts/base/card-classes.json',
+        );
+        $classes = (array) json_decode($json, true);
+    }
+
+    return $classes;
+}
+
+/**
+ * Button variant that stays readable on the surface of a card variant.
+ */
+function hengegroup_theme_get_card_button_variant(string $card_variant): string
+{
+    $classes = hengegroup_theme_get_card_classes();
+
+    return in_array($card_variant, (array) $classes['darkVariants'], true)
+        ? (string) $classes['button']['dark']
+        : (string) $classes['button']['light'];
+}
+
+/**
+ * Subheading inside a card (e.g. "Adresse"), same look as a body-base card title.
+ */
+function hengegroup_theme_render_card_subheading(string $text): string
+{
+    return hengegroup_theme_render_typography([
+        'variant' => 'body-base',
+        'tag' => 'p',
+        'text' => $text,
+        'class' => 'font-extrabold',
+    ]);
+}
+
+/**
+ * target/rel for links to other hosts, which open in a new tab.
+ */
+function hengegroup_theme_get_link_attributes(string $url): array
+{
+    $host = $url !== '' ? (string) wp_parse_url($url, PHP_URL_HOST) : '';
+
+    return $host !== '' && $host !== (string) wp_parse_url(home_url('/'), PHP_URL_HOST)
+        ? ['target' => '_blank', 'rel' => 'noopener']
+        : [];
+}
+
+/**
  * Badge in Versalien mit Akzentschrift.
  */
 function hengegroup_theme_render_label_badge(
@@ -401,6 +455,31 @@ function hengegroup_theme_render_contact_card(array $contact, array $args = []):
 }
 
 /**
+ * Spaltenklassen eines Kachel-Rasters: `full` verteilt die Kacheln auf die ganze Zeile (Spalten =
+ * Anzahl, hoechstens 4), `grid-4` ist ein festes 4er-Raster, sonst gelten die Block-Klassen.
+ */
+function hengegroup_theme_get_tile_grid_class(
+    string $layout,
+    int $count,
+    string $default_class,
+): string {
+    if ($layout === 'grid-4') {
+        return 'sm:grid-cols-2 lg:grid-cols-4';
+    }
+
+    if ($layout !== 'full') {
+        return $default_class;
+    }
+
+    return match (true) {
+        $count <= 1 => '',
+        $count === 2 => 'sm:grid-cols-2',
+        $count === 3 => 'sm:grid-cols-2 lg:grid-cols-3',
+        default => 'sm:grid-cols-2 lg:grid-cols-4',
+    };
+}
+
+/**
  * Phone number -> tel: URI. The German trunk prefix "(0)" after the country code is dropped.
  */
 function hengegroup_theme_phone_href(string $phone): string
@@ -458,19 +537,93 @@ function hengegroup_theme_get_contact_rows(string $email, string $phone, string 
 }
 
 /**
- * Background/border class per brand color (badge variants), as literals for the Tailwind scanner.
- * Unknown variants fall back to grey-dark.
+ * Background/border/text classes per brand color, as literals for the Tailwind scanner. Unknown
+ * colors fall back to $fallback.
  *
- * @return array{bg: string, border: string}
+ * @return array{bg: string, border: string, fg: string}
  */
-function hengegroup_theme_get_accent_classes(string $variant): array
+function hengegroup_theme_get_accent_classes(string $color, string $fallback = 'grey-dark'): array
 {
     $classes = [
-        'henge-blue' => ['bg' => 'bg-henge-blue', 'border' => 'border-henge-blue'],
-        'henge-green' => ['bg' => 'bg-henge-green', 'border' => 'border-henge-green'],
-        'henge-grey' => ['bg' => 'bg-henge-grey', 'border' => 'border-henge-grey'],
-        'grey-dark' => ['bg' => 'bg-grey-dark', 'border' => 'border-grey-dark'],
+        'henge-blue' => [
+            'bg' => 'bg-henge-blue',
+            'border' => 'border-henge-blue',
+            'fg' => 'text-henge-blue-foreground',
+        ],
+        'henge-green' => [
+            'bg' => 'bg-henge-green',
+            'border' => 'border-henge-green',
+            'fg' => 'text-henge-green-foreground',
+        ],
+        'henge-grey' => [
+            'bg' => 'bg-henge-grey',
+            'border' => 'border-henge-grey',
+            'fg' => 'text-henge-grey-foreground',
+        ],
+        'grey-dark' => [
+            'bg' => 'bg-grey-dark',
+            'border' => 'border-grey-dark',
+            'fg' => 'text-grey-dark-foreground',
+        ],
     ];
 
-    return $classes[$variant] ?? $classes['grey-dark'];
+    return $classes[$color] ?? ($classes[$fallback] ?? $classes['grey-dark']);
+}
+
+/**
+ * Card variant of a card block. The allowed values are the `enum` of its `variant` attribute in
+ * block.json (shared with the editor); without a valid value $fallback, else the first one.
+ */
+function hengegroup_theme_get_block_card_variant(
+    array $attributes,
+    ?WP_Block $block,
+    string $fallback = '',
+): string {
+    $allowed =
+        $block !== null && $block->block_type !== null
+            ? array_values((array) ($block->block_type->attributes['variant']['enum'] ?? []))
+            : [];
+
+    return hengegroup_theme_pick_card_variant(
+        (string) ($attributes['variant'] ?? ''),
+        $allowed,
+        $fallback,
+    );
+}
+
+/**
+ * Base config of a card block's card (<li>, variant from block.json, accent attribute); $config
+ * adds to or overrides it.
+ */
+function hengegroup_theme_get_block_card_config(
+    array $attributes,
+    ?WP_Block $block,
+    array $config = [],
+    string $variant_fallback = '',
+): array {
+    return $config + [
+        'tag' => 'li',
+        'variant' => hengegroup_theme_get_block_card_variant(
+            $attributes,
+            $block,
+            $variant_fallback,
+        ),
+        'accent' => (string) ($attributes['accent'] ?? ''),
+    ];
+}
+
+function hengegroup_theme_pick_card_variant(
+    string $variant,
+    array $allowed,
+    string $fallback = '',
+): string {
+    if (in_array($variant, $allowed, true)) {
+        return $variant;
+    }
+
+    if (in_array($fallback, $allowed, true)) {
+        return $fallback;
+    }
+
+    return (string) ($allowed[0] ?? 'default');
 }

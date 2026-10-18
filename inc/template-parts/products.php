@@ -68,16 +68,6 @@ function hengegroup_theme_get_anwendung_icons(): array
     ];
 }
 
-function hengegroup_theme_get_variant_background_class(string $variant): string
-{
-    return [
-        'henge-blue' => 'bg-henge-blue text-henge-blue-foreground',
-        'henge-green' => 'bg-henge-green text-henge-green-foreground',
-        'henge-grey' => 'bg-henge-grey text-henge-grey-foreground',
-        'grey-dark' => 'bg-grey-dark text-grey-dark-foreground',
-    ][$variant] ?? 'bg-grey-dark text-grey-dark-foreground';
-}
-
 /**
  * Analyse-Zeilen aus den parallelen Formular-Arrays; Zeilen ohne Bezeichnung und Wert entfallen.
  *
@@ -381,6 +371,29 @@ function hengegroup_theme_get_product_category_data(WP_Term $term): array
     ];
 }
 
+/**
+ * section-intro.php-Config aus Gruppen-/Kategoriedaten; gepflegte Block-Attribute gewinnen.
+ */
+function hengegroup_theme_get_section_intro_config(array $term_data, array $attributes): array
+{
+    $value = static function (string $attribute, string $fallback) use ($attributes): string {
+        $override = trim((string) ($attributes[$attribute] ?? ''));
+
+        return $override !== '' ? $override : $fallback;
+    };
+    $variant = $value('kickerVariant', $term_data['variant']);
+
+    return [
+        'kicker' => $value('kicker', $term_data['kicker']),
+        'kicker_variant' => in_array($variant, hengegroup_theme_get_badge_variants(), true)
+            ? $variant
+            : $term_data['variant'],
+        'heading' => $value('heading', $term_data['heading']),
+        'heading_tag' => (string) ($attributes['headingTag'] ?? 'h2'),
+        'text' => $value('text', $term_data['description']),
+    ];
+}
+
 function hengegroup_theme_get_product_options(): array
 {
     $stored = get_option(HENGEGROUP_THEME_PRODUCT_OPTION, []);
@@ -448,6 +461,46 @@ function hengegroup_theme_get_product_contact(int $product_id): array
     ];
 }
 
+function hengegroup_theme_get_product_company(int $product_id): ?array
+{
+    $terms = get_the_terms($product_id, HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY);
+
+    return is_array($terms) && $terms !== []
+        ? hengegroup_theme_get_job_company((int) $terms[0]->term_id)
+        : null;
+}
+
+/**
+ * Unternehmen, die die Badge-Migration anlegt, falls sie fehlen: Name => Farbe.
+ */
+function hengegroup_theme_get_migrated_companies(): array
+{
+    return [
+        'KOMINEX' => 'henge-blue',
+        'IMEXCO' => 'henge-blue',
+        'HENGE' => 'henge-green',
+        'B E S' => 'henge-green',
+        'O+H' => 'henge-green',
+    ];
+}
+
+/**
+ * Freitext-Badge -> Name aus hengegroup_theme_get_migrated_companies(), '' ohne Zuordnung.
+ */
+function hengegroup_theme_get_legacy_badge_company(string $badge_text): string
+{
+    return [
+        'kominex / imexco' => 'KOMINEX',
+        'kominex' => 'KOMINEX',
+        'imexco' => 'IMEXCO',
+        'henge' => 'HENGE',
+        'henge / o+h' => 'HENGE',
+        'henge baustoff' => 'HENGE',
+        'b e s' => 'B E S',
+        'o+h' => 'O+H',
+    ][strtolower(trim($badge_text))] ?? '';
+}
+
 function hengegroup_theme_get_product_data(WC_Product $product): array
 {
     $id = $product->get_id();
@@ -483,6 +536,7 @@ function hengegroup_theme_get_product_data(WC_Product $product): array
         ];
     }
 
+    $company = hengegroup_theme_get_product_company($id);
     $grain_sizes = taxonomy_exists('pa_' . HENGEGROUP_THEME_GRAIN_ATTRIBUTE)
         ? wc_get_product_terms($id, 'pa_' . HENGEGROUP_THEME_GRAIN_ATTRIBUTE, [
             'fields' => 'names',
@@ -494,13 +548,11 @@ function hengegroup_theme_get_product_data(WC_Product $product): array
         'name' => $product->get_name(),
         'description' => (string) $product->get_description(),
         'image_id' => (int) $product->get_image_id(),
-        'badge_variant' => in_array(
-            (string) get_post_meta($id, '_badge_variant', true),
-            hengegroup_theme_get_badge_variants(),
-            true,
-        )
-            ? (string) get_post_meta($id, '_badge_variant', true)
-            : hengegroup_theme_get_badge_variants()[0],
+        'accent' => $company['variant'] ?? 'henge-green',
+        'address' =>
+            ($company['address'] ?? '') !== ''
+                ? $company['address']
+                : (string) hengegroup_theme_get_footer_options()['address'],
         'recycling' => trim((string) get_post_meta($id, $keys['recycling'], true)),
         'analysis' => is_array($analysis) ? $analysis : [],
         'grain_sizes' => array_values(array_map('strval', (array) $grain_sizes)),
@@ -527,14 +579,14 @@ function hengegroup_theme_render_anwendung_card(WP_Term $term, string $variant):
 {
     $anwendung = hengegroup_theme_get_anwendung_data($term);
     $icon = hengegroup_theme_render_anwendung_icon($anwendung['icon'], 'size-[22px]');
+    $accent = hengegroup_theme_get_accent_classes($variant);
 
     return hengegroup_theme_render_card([
         'tag' => 'li',
-        'size' => 'lg',
         'title' => $anwendung['name'],
         'title_variant' => 'body-base',
         'icon' => $icon,
-        'icon_class' => hengegroup_theme_get_variant_background_class($variant),
+        'icon_class' => $accent['bg'] . ' ' . $accent['fg'],
         'content' =>
             $anwendung['short'] !== ''
                 ? hengegroup_theme_render_typography([
@@ -582,12 +634,12 @@ function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
     $products =
         $chips !== ''
             ? sprintf(
-                '%1$s<ul class="flex flex-wrap gap-2">%2$s</ul>',
+                '<div class="flex flex-col gap-2">%1$s<ul class="flex flex-wrap gap-2">%2$s</ul></div>',
                 hengegroup_theme_render_typography([
                     'variant' => 'body-xs',
                     'tag' => 'p',
                     'text' => __('Produkte', 'hengegroup-theme'),
-                    'class' => 'mb-2.5 font-medium tracking-wider uppercase',
+                    'class' => 'font-medium tracking-wider uppercase',
                 ]),
                 $chips,
             )
@@ -595,9 +647,7 @@ function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
 
     return hengegroup_theme_render_card([
         'tag' => 'li',
-        'elevation' => 'raised',
         'orientation' => 'horizontal',
-        'size' => 'lg',
         'image' => $image_config,
         'title' => $anwendung['name'],
         'content' =>
@@ -605,7 +655,6 @@ function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
                 ? hengegroup_theme_render_typography([
                     'variant' => 'body-sm',
                     'text' => $anwendung['description'],
-                    'class' => 'mb-4.5',
                 ])
                 : '') . $products,
         'class' => 'scroll-mt-24',
@@ -614,22 +663,51 @@ function hengegroup_theme_render_anwendung_overview_card(WP_Term $term): string
 }
 
 /**
- * Daten aus Einstellungen > Footer, wie footer.php.
+ * Ohne eigene Angaben ($contact leer) die Daten aus Einstellungen > Footer, wie footer.php.
  */
-function hengegroup_theme_render_company_contact_card(): string
-{
-    $options = hengegroup_theme_get_footer_options();
-
-    return hengegroup_theme_render_contact_card(
-        [
-            'name' => __('Kontakt', 'hengegroup-theme'),
+function hengegroup_theme_render_company_contact_card(
+    array $contact = [],
+    string $accent = 'henge-grey',
+): string {
+    if ($contact === []) {
+        $options = hengegroup_theme_get_footer_options();
+        $contact = [
             'email' => (string) $options['email'],
             'phone' => (string) $options['phone'],
             'fax' => (string) $options['fax'],
             'address' => (string) $options['address'],
-        ],
-        ['variant' => 'split'],
+        ];
+    }
+
+    return hengegroup_theme_render_contact_card(
+        $contact + ['name' => __('Kontakt', 'hengegroup-theme')],
+        ['variant' => 'split', 'accent' => $accent],
     );
+}
+
+/**
+ * Eigene Kontaktdaten des Kontakt-Blocks; leer, wenn keine gepflegt sind.
+ */
+function hengegroup_theme_get_contact_block_contact(array $attributes): array
+{
+    $fields = [
+        'name' => 'contactName',
+        'email' => 'contactEmail',
+        'phone' => 'contactPhone',
+        'fax' => 'contactFax',
+        'address' => 'contactAddress',
+    ];
+    $contact = [];
+
+    foreach ($fields as $key => $attribute) {
+        $value = trim((string) ($attributes[$attribute] ?? ''));
+
+        if ($value !== '') {
+            $contact[$key] = $value;
+        }
+    }
+
+    return $contact;
 }
 
 /**
@@ -677,9 +755,11 @@ function hengegroup_theme_validate_product_inquiry(array $values, bool $with_loc
     return $errors;
 }
 
-function hengegroup_theme_render_company_contact_row(): string
-{
-    $card = hengegroup_theme_render_company_contact_card();
+function hengegroup_theme_render_company_contact_row(
+    array $contact = [],
+    string $accent = 'henge-grey',
+): string {
+    $card = hengegroup_theme_render_company_contact_card($contact, $accent);
 
     ob_start();
     get_template_part('template-parts/components/inquiry-form', null, [

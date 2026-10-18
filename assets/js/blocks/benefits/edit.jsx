@@ -14,10 +14,19 @@ import { __ } from "@wordpress/i18n";
 import {
     ACCENT_FORMATS,
     AddItemTile,
+    CardInner,
+    cardClassName,
+    cardTitleClassName,
+    cardVariant,
+    cardVariations,
+    CardToolbar,
     APPENDER_GRID_CELL_CLASSNAME,
     fromRichTextValue,
     HeadingTagDropdown,
     toRichTextValue,
+    TileLayoutDropdown,
+    tileGridClass,
+    useInnerBlockCount,
 } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/benefits/block.json";
 import benefitMetadata from "../../../../template-parts/blocks/benefit/block.json";
@@ -27,21 +36,21 @@ const CHILD_BLOCK_NAME = benefitMetadata.name;
 const ICONS = window.hengegroupThemeBenefitIcons || {};
 const DEFAULT_ICON = Object.keys(ICONS)[0] || "";
 
-const VARIANT_OPTIONS = [
-    { title: __("Liste", "hengegroup-theme"), value: "list" },
-    { title: __("Karten", "hengegroup-theme"), value: "cards" },
-];
-
 function Edit({ attributes, setAttributes, clientId }) {
-    const { heading, headingTag, text, variant } = attributes;
+    const { heading, headingTag, text, layout } = attributes;
+    const gridClass = tileGridClass(
+        layout,
+        useInnerBlockCount(clientId),
+        "sm:grid-cols-2 lg:grid-cols-3"
+    );
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
     const blockProps = useBlockProps({
         className:
-            "alignfull bg-grey-dark bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)] py-16 shadow-[inset_0_40px_40px_-40px_rgba(0,0,0,0.5),inset_0_-40px_40px_-40px_rgba(0,0,0,0.5)] md:py-24 lg:py-25",
+            "alignfull bg-grey-dark bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)] shadow-[inset_0_40px_40px_-40px_rgba(0,0,0,0.5),inset_0_-40px_40px_-40px_rgba(0,0,0,0.5)] section-spacing",
     });
     const innerBlocksProps = useInnerBlocksProps(
         {
-            className: `col-span-12 grid sm:grid-cols-2 lg:grid-cols-3 ${variant === "cards" ? "gap-6" : "gap-7"} ${APPENDER_GRID_CELL_CLASSNAME}`,
+            className: `text-grey-light col-span-12 grid gap-6 ${gridClass} ${APPENDER_GRID_CELL_CLASSNAME}`,
         },
         {
             allowedBlocks: [benefitMetadata.name],
@@ -52,7 +61,8 @@ function Edit({ attributes, setAttributes, clientId }) {
                     rootClientId={clientId}
                     blockName={CHILD_BLOCK_NAME}
                     label={__("+ Benefit hinzufügen", "hengegroup-theme")}
-                    className="border-grey-light/40 text-grey-light/80 hover:border-grey-light hover:text-grey-light min-h-16 rounded-xl"
+                    tone="dark"
+                    className="min-h-16"
                 />
             ),
         }
@@ -66,14 +76,10 @@ function Edit({ attributes, setAttributes, clientId }) {
                         value={headingTag}
                         onChange={(value) => setAttributes({ headingTag: value })}
                     />
-                    <ToolbarDropdownMenu
-                        icon="grid-view"
-                        label={__("Darstellung", "hengegroup-theme")}
-                        controls={VARIANT_OPTIONS.map((option) => ({
-                            title: option.title,
-                            isActive: option.value === variant,
-                            onClick: () => setAttributes({ variant: option.value }),
-                        }))}
+                    <TileLayoutDropdown
+                        value={layout}
+                        onChange={(value) => setAttributes({ layout: value })}
+                        withDefault
                     />
                 </ToolbarGroup>
             </BlockControls>
@@ -106,49 +112,28 @@ function Edit({ attributes, setAttributes, clientId }) {
 }
 
 function BenefitEdit({ attributes, setAttributes, context }) {
-    const { icon, title, text } = attributes;
-    const isCard = context["hengegroup-theme/benefitsVariant"] === "cards";
-    // Card mirrors card.php raised/lg with icon box.
+    const { icon, title, text, accent } = attributes;
+    // Benefits without their own variant follow the former parent setting (as render.php).
+    const variant = cardVariant(
+        benefitMetadata,
+        attributes.variant,
+        context["hengegroup-theme/benefitsVariant"] === "cards" ? "default" : "ghost"
+    );
     const blockProps = useBlockProps({
-        className: isCard
-            ? "bg-card text-card-foreground rounded-card-raised shadow-card-raised flex flex-col gap-4 py-7"
-            : "flex items-start gap-4",
+        className: cardClassName({ variant, accent }),
     });
     const iconKey = ICONS[icon] ? icon : DEFAULT_ICON;
-    const iconElement = (
-        <span
-            className={`from-henge-grey via-henge-green to-henge-blue flex shrink-0 items-center justify-center rounded-xl bg-linear-135 ${isCard ? "size-11" : "size-12"}`}
-            title={ICONS[iconKey]?.label}
-            // SVG from the theme's own sanitized Lucide files, not user input.
-            dangerouslySetInnerHTML={{ __html: ICONS[iconKey]?.svg || "" }}
-        />
-    );
-    const titleField = (className) => (
-        <RichText
-            tagName="h3"
-            className={className}
-            value={toRichTextValue(title)}
-            onChange={(html) => setAttributes({ title: fromRichTextValue(html) })}
-            placeholder={__("Titel eingeben…", "hengegroup-theme")}
-            allowedFormats={[]}
-            disableLineBreaks
-        />
-    );
-    const textField = (className) => (
-        <RichText
-            tagName="p"
-            className={className}
-            value={toRichTextValue(text)}
-            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-            placeholder={__("Text eingeben…", "hengegroup-theme")}
-            allowedFormats={[]}
-        />
-    );
 
     return (
         <Fragment>
             <BlockControls group="block">
                 <ToolbarGroup>
+                    <CardToolbar
+                        metadata={benefitMetadata}
+                        variant={variant}
+                        accent={accent}
+                        setAttributes={setAttributes}
+                    />
                     <ToolbarDropdownMenu
                         icon="art"
                         label={__("Icon wählen", "hengegroup-theme")}
@@ -160,23 +145,42 @@ function BenefitEdit({ attributes, setAttributes, context }) {
                     />
                 </ToolbarGroup>
             </BlockControls>
-            {isCard ? (
-                <li {...blockProps}>
-                    <div className="flex min-w-0 items-center gap-3.5 px-7">
-                        {iconElement}
-                        {titleField("min-w-0 flex-1 text-lg leading-normal font-extrabold")}
-                    </div>
-                    <div className="px-7">{textField("text-base leading-normal text-pretty")}</div>
-                </li>
-            ) : (
-                <li {...blockProps}>
-                    {iconElement}
-                    <div className="min-w-0 flex-1">
-                        {titleField("text-grey-light mb-1.5 text-lg font-bold")}
-                        {textField("text-grey-light/85 text-base leading-normal")}
-                    </div>
-                </li>
-            )}
+            <li {...blockProps}>
+                <CardInner
+                    variant={variant}
+                    accent={accent}
+                    icon={
+                        <span
+                            className="flex"
+                            title={ICONS[iconKey]?.label}
+                            // SVG from the theme's own sanitized Lucide files, not user input.
+                            dangerouslySetInnerHTML={{ __html: ICONS[iconKey]?.svg || "" }}
+                        />
+                    }
+                    iconClassName="from-henge-grey via-henge-green to-henge-blue bg-linear-135 text-grey-light"
+                    title={
+                        <RichText
+                            tagName="h3"
+                            className={`min-w-0 flex-1 ${cardTitleClassName(variant, "body-base")}`}
+                            value={toRichTextValue(title)}
+                            onChange={(html) => setAttributes({ title: fromRichTextValue(html) })}
+                            placeholder={__("Titel eingeben…", "hengegroup-theme")}
+                            allowedFormats={[]}
+                            disableLineBreaks
+                        />
+                    }
+                    content={
+                        <RichText
+                            tagName="p"
+                            className={`text-base leading-normal text-pretty ${variant === "ghost" ? "opacity-85" : ""}`}
+                            value={toRichTextValue(text)}
+                            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
+                            placeholder={__("Text eingeben…", "hengegroup-theme")}
+                            allowedFormats={[]}
+                        />
+                    }
+                />
+            </li>
         </Fragment>
     );
 }
@@ -189,5 +193,6 @@ registerBlockType(metadata, {
 
 registerBlockType(benefitMetadata, {
     edit: BenefitEdit,
+    variations: cardVariations(benefitMetadata),
     save: () => null,
 });

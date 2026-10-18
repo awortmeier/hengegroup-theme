@@ -1,12 +1,14 @@
-// Editor for "Produktkategorie": choose category and background; ServerSideRender preview.
-// Categories come from window.hengegroupThemeProductCategories.
+// Editor for "Produktkategorie": category, background and section head in the sidebar;
+// ServerSideRender preview. Categories (with head defaults) come from
+// window.hengegroupThemeProductCategories.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
-import { InspectorControls, useBlockProps } from "@wordpress/block-editor";
-import { PanelBody, Placeholder, SelectControl } from "@wordpress/components";
+import { BlockControls, InspectorControls, useBlockProps } from "@wordpress/block-editor";
+import { PanelBody, Placeholder, SelectControl, ToolbarGroup } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/produktkategorie/block.json";
+import { HeadingTagDropdown, SectionIntroPanel } from "../shared.jsx";
 
 const categories = Array.isArray(window.hengegroupThemeProductCategories)
     ? window.hengegroupThemeProductCategories
@@ -32,11 +34,22 @@ function CategorySelect({ value, onChange }) {
 }
 
 function Edit({ attributes, setAttributes }) {
-    const { categoryId, background } = attributes;
+    const { categoryId, background, headingTag } = attributes;
+    const selected = categories.find((category) => category.id === categoryId);
     const blockProps = useBlockProps({ className: "alignfull" });
 
     return (
         <Fragment>
+            {selected && (
+                <BlockControls group="block">
+                    <ToolbarGroup>
+                        <HeadingTagDropdown
+                            value={headingTag}
+                            onChange={(value) => setAttributes({ headingTag: value })}
+                        />
+                    </ToolbarGroup>
+                </BlockControls>
+            )}
             <InspectorControls>
                 <PanelBody title={__("Einstellungen", "hengegroup-theme")} initialOpen>
                     <CategorySelect
@@ -53,12 +66,15 @@ function Edit({ attributes, setAttributes }) {
                             { value: "muted", label: __("Grau", "hengegroup-theme") },
                         ]}
                         onChange={(next) => setAttributes({ background: next })}
-                        help={__(
-                            "Kicker, Überschrift, Text und Ansprechpartner werden unter Produkte > Kategorien gepflegt.",
-                            "hengegroup-theme"
-                        )}
                     />
                 </PanelBody>
+                {selected && (
+                    <SectionIntroPanel
+                        attributes={attributes}
+                        setAttributes={setAttributes}
+                        defaults={selected.intro}
+                    />
+                )}
             </InspectorControls>
             <div {...blockProps}>
                 {categoryId > 0 ? (

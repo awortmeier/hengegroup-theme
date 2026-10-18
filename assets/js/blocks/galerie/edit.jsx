@@ -32,7 +32,7 @@ const TILE_BUTTON_CLASSNAME =
 
 function Edit({ attributes, setAttributes }) {
     const { heading, headingTag, imageIds } = attributes;
-    const blockProps = useBlockProps({ className: "alignfull py-16 md:py-24 lg:py-25" });
+    const blockProps = useBlockProps({ className: "alignfull section-spacing" });
     const mediaById = useSelect(
         (select) => Object.fromEntries(imageIds.map((id) => [id, select("core").getMedia(id)])),
         [imageIds]

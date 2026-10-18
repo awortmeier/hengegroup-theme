@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-// Block "Produktkategorie": Kopf aus der Kategorie, Produktboxen = alle Produkte der Kategorie inkl.
-// Unterkategorien. `id` = Kategorie-Slug (Sprungziel, auch fuer die 301 alter Kategorie-URLs).
+// Block "Produktkategorie": Kopf aus dem Block (leer = aus der Kategorie), Produktboxen = alle
+// Produkte der Kategorie inkl. Unterkategorien. `id` = Kategorie-Slug (Sprungziel, auch fuer die 301
+// alter Kategorie-URLs).
 // Kopf als volle Rasterzeile (Auto-Placement), Ueberschrift ohne text-balance.
 // Hintergrund: light = body, muted = neutral-200.
 
@@ -35,11 +36,7 @@ printf(
 );
 echo '<div class="wrapper gap-y-6">';
 get_template_part('template-parts/components/section-intro', null, [
-    'config' => [
-        'kicker' => $category['kicker'],
-        'kicker_variant' => $category['variant'],
-        'heading' => $category['heading'],
-        'text' => $category['description'],
+    'config' => hengegroup_theme_get_section_intro_config($category, $attributes) + [
         'class' => 'col-span-12 mb-4',
     ],
 ]);

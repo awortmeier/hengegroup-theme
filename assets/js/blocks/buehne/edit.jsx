@@ -35,9 +35,9 @@ import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/buehne/block.json";
 
 const ACCENT_OPTIONS = [
-    { label: __("Henge Grün", "hengegroup-theme"), value: "henge-green" },
-    { label: __("Henge Blau", "hengegroup-theme"), value: "henge-blue" },
-    { label: __("Henge Grau", "hengegroup-theme"), value: "henge-grey" },
+    { label: __("Blau", "hengegroup-theme"), value: "henge-blue" },
+    { label: __("Grün", "hengegroup-theme"), value: "henge-green" },
+    { label: __("Grau", "hengegroup-theme"), value: "henge-grey" },
 ];
 
 function createSlide() {

@@ -1,12 +1,13 @@
-// Editor for "Anwendungsgruppe": choose group and background; ServerSideRender preview. Groups come
-// from window.hengegroupThemeAnwendungGroups (theme-blocks.php).
+// Editor for "Anwendungsgruppe": group, background and section head in the sidebar; ServerSideRender
+// preview. Groups (with head defaults) come from window.hengegroupThemeAnwendungGroups.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
-import { InspectorControls, useBlockProps } from "@wordpress/block-editor";
-import { PanelBody, Placeholder, SelectControl } from "@wordpress/components";
+import { BlockControls, InspectorControls, useBlockProps } from "@wordpress/block-editor";
+import { PanelBody, Placeholder, SelectControl, ToolbarGroup } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/anwendungsgruppe/block.json";
+import { HeadingTagDropdown, SectionIntroPanel } from "../shared.jsx";
 
 const groups = Array.isArray(window.hengegroupThemeAnwendungGroups)
     ? window.hengegroupThemeAnwendungGroups
@@ -29,11 +30,22 @@ function GroupSelect({ value, onChange }) {
 }
 
 function Edit({ attributes, setAttributes }) {
-    const { groupId, background } = attributes;
+    const { groupId, background, headingTag } = attributes;
+    const selected = groups.find((group) => group.id === groupId);
     const blockProps = useBlockProps({ className: "alignfull" });
 
     return (
         <Fragment>
+            {selected && (
+                <BlockControls group="block">
+                    <ToolbarGroup>
+                        <HeadingTagDropdown
+                            value={headingTag}
+                            onChange={(value) => setAttributes({ headingTag: value })}
+                        />
+                    </ToolbarGroup>
+                </BlockControls>
+            )}
             <InspectorControls>
                 <PanelBody title={__("Einstellungen", "hengegroup-theme")} initialOpen>
                     <GroupSelect
@@ -50,12 +62,15 @@ function Edit({ attributes, setAttributes }) {
                             { value: "muted", label: __("Grau", "hengegroup-theme") },
                         ]}
                         onChange={(next) => setAttributes({ background: next })}
-                        help={__(
-                            "Kicker, Überschrift, Text und die Anwendungen werden unter Produkte > Anwendungen gepflegt.",
-                            "hengegroup-theme"
-                        )}
                     />
                 </PanelBody>
+                {selected && (
+                    <SectionIntroPanel
+                        attributes={attributes}
+                        setAttributes={setAttributes}
+                        defaults={selected.intro}
+                    />
+                )}
             </InspectorControls>
             <div {...blockProps}>
                 {groupId > 0 ? (

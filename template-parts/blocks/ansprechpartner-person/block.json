@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/ansprechpartner-person",
+    "title": "Ansprechpartner",
+    "category": "henge",
+    "icon": "admin-users",
+    "description": "Eine Kontaktkarte im Block „Ansprechpartner“.",
+    "textdomain": "hengegroup-theme",
+    "parent": ["hengegroup-theme/ansprechpartner"],
+    "usesContext": ["hengegroup-theme/ansprechpartner-accent"],
+    "attributes": {
+        "imageId": {
+            "type": "number",
+            "default": 0
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "role": {
+            "type": "string",
+            "default": ""
+        },
+        "email": {
+            "type": "string",
+            "default": ""
+        },
+        "phone": {
+            "type": "string",
+            "default": ""
+        },
+        "fax": {
+            "type": "string",
+            "default": ""
+        },
+        "variant": {
+            "type": "string",
+            "enum": ["split", "filled"],
+            "default": "split"
+        }
+    },
+    "supports": {
+        "html": false,
+        "reusable": false
+    },
+    "render": "file:./render.php"
+}

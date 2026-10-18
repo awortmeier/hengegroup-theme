@@ -371,7 +371,10 @@ function hengegroup_theme_get_anwendung_fields(): array
         'kicker' => [
             __('Kicker', 'hengegroup-theme'),
             'text',
-            __('Kleine Pill über der Überschrift, z. B. "Kominex / Imexco".', 'hengegroup-theme'),
+            __(
+                'Kleine Pill über der Überschrift, z. B. "Kominex / Imexco". Standard, im Block überschreibbar.',
+                'hengegroup-theme',
+            ),
             'group',
         ],
         'variant' => [
@@ -384,7 +387,7 @@ function hengegroup_theme_get_anwendung_fields(): array
             __('Überschrift', 'hengegroup-theme'),
             'text',
             __(
-                'Überschrift der Sektion auf der Seite "Anwendungen". Leer = Name. Der Text darunter ist die Beschreibung.',
+                'Überschrift der Sektion auf der Seite "Anwendungen". Leer = Name. Der Text darunter ist die Beschreibung. Beides Standard, im Block überschreibbar.',
                 'hengegroup-theme',
             ),
             'group',
@@ -644,7 +647,7 @@ function hengegroup_theme_get_product_category_fields(): array
             __('Kicker', 'hengegroup-theme'),
             'text',
             __(
-                'Kleine Pill über der Überschrift der Sektion auf der Produktübersicht, z. B. "Kominex / Imexco".',
+                'Kleine Pill über der Überschrift der Sektion auf der Produktübersicht, z. B. "Kominex / Imexco". Standard, im Block überschreibbar.',
                 'hengegroup-theme',
             ),
         ],
@@ -657,7 +660,7 @@ function hengegroup_theme_get_product_category_fields(): array
             __('Überschrift', 'hengegroup-theme'),
             'text',
             __(
-                'Überschrift der Sektion auf der Produktübersicht. Leer = Kategoriename. Der Text darunter ist die Beschreibung der Kategorie.',
+                'Überschrift der Sektion auf der Produktübersicht. Leer = Kategoriename. Der Text darunter ist die Beschreibung der Kategorie. Beides Standard, im Block überschreibbar.',
                 'hengegroup-theme',
             ),
         ],

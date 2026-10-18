@@ -27,8 +27,8 @@ function renderBuehne({ count = 3, autoplay = true, autoplayInterval = 6000, loo
             >${items}</div>
             <div data-buehne-dots>
                 ${dots}
-                ${autoplay ? '<button data-buehne-pause aria-pressed="false" hidden><svg data-icon="pause"></svg></button><template data-buehne-play-icon><svg data-icon="play"></svg></template>' : ""}
             </div>
+            ${autoplay ? '<button data-buehne-pause aria-pressed="false" hidden><svg data-icon="pause"></svg></button><template data-buehne-play-icon><svg data-icon="play"></svg></template>' : ""}
         </div>
     `;
 

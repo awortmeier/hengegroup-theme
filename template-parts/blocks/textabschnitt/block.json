@@ -27,6 +27,10 @@
         "containerWidth": {
             "type": "string",
             "default": "small"
+        },
+        "spacingBottom": {
+            "type": "boolean",
+            "default": true
         }
     },
     "supports": {

@@ -17,11 +17,9 @@ if ($name === '') {
 
 $image_id = (int) ($attributes['imageId'] ?? 0);
 
-get_template_part('template-parts/base/card', null, [
-    'config' => [
-        'tag' => 'li',
-        'elevation' => 'raised',
-        'size' => 'lg',
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_card(
+    hengegroup_theme_get_block_card_config($attributes, $block ?? null, [
         'image' =>
             $image_id > 0
                 ? [
@@ -35,5 +33,5 @@ get_template_part('template-parts/base/card', null, [
         'title' => $name,
         'title_variant' => 'body-base',
         'description' => trim((string) ($attributes['role'] ?? '')),
-    ],
-]);
+    ]),
+);

@@ -10,6 +10,7 @@
     --color-henge-green-foreground: var(--color-neutral-100);
     --color-henge-blue: #075f8f;
     --color-henge-blue-foreground: var(--color-neutral-100);
+    --color-henge-blue-light: #6fb3dc; /* henge-blue auf dunklen Flaechen (zu wenig Kontrast) */
     --color-henge-grey: #646a6c;
     --color-henge-grey-foreground: var(--color-neutral-100);
     --color-grey-dark: var(--color-neutral-800);
@@ -60,10 +61,6 @@
     /* Auch fuer Elemente, die .wrapper nicht nutzen koennen (max-w-page). */
     --container-page: 1600px;
 
-    /* Karten-Stufen: flat (in Rastern), raised (einzeln, hervorgehoben), card-hover (verlinkt). */
-    --shadow-card-flat: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.1);
     --shadow-card-raised: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --radius-card-flat: 1rem;
     --radius-card-raised: 1.25rem;
 }

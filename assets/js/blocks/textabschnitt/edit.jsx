@@ -1,9 +1,15 @@
 // Editor for "Textabschnitt": heading/text as RichText in the canvas, heading tag, alignment and
-// width in the toolbar. alignfull is hardcoded so the width choice is visible in the editor.
+// width in the toolbar, bottom spacing in the sidebar. alignfull is hardcoded so the width choice is visible in the editor.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
-import { BlockControls, RichText, useBlockProps } from "@wordpress/block-editor";
-import { ToolbarButton, ToolbarDropdownMenu, ToolbarGroup } from "@wordpress/components";
+import { BlockControls, InspectorControls, RichText, useBlockProps } from "@wordpress/block-editor";
+import {
+    PanelBody,
+    ToggleControl,
+    ToolbarButton,
+    ToolbarDropdownMenu,
+    ToolbarGroup,
+} from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 import { ACCENT_FORMATS, HeadingTagDropdown } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/textabschnitt/block.json";
@@ -15,10 +21,12 @@ const CONTAINER_WIDTH_OPTIONS = [
 ];
 
 function Edit({ attributes, setAttributes }) {
-    const { heading, headingTag, text, textAlign, containerWidth } = attributes;
+    const { heading, headingTag, text, textAlign, containerWidth, spacingBottom } = attributes;
     const alignClass = textAlign === "left" ? "text-left" : "text-center";
     const wrapperClass = containerWidth === "default" ? "wrapper" : "wrapper-small";
-    const blockProps = useBlockProps({ className: "alignfull py-16 md:py-25 lg:py-35" });
+    const blockProps = useBlockProps({
+        className: spacingBottom ? "alignfull section-spacing" : "alignfull section-spacing-top",
+    });
     // Array + join: prettier-plugin-tailwindcss would eat the leading space in a template literal.
     const headingClassName = ["text-5xl font-semibold leading-tight", text !== "" ? "mb-7" : ""]
         .filter(Boolean)
@@ -59,6 +67,15 @@ function Edit({ attributes, setAttributes }) {
                     />
                 </ToolbarGroup>
             </BlockControls>
+            <InspectorControls>
+                <PanelBody title={__("Abstände", "hengegroup-theme")} initialOpen>
+                    <ToggleControl
+                        label={__("Abstand unten", "hengegroup-theme")}
+                        checked={spacingBottom}
+                        onChange={(value) => setAttributes({ spacingBottom: value })}
+                    />
+                </PanelBody>
+            </InspectorControls>
             <section {...blockProps}>
                 <div className={wrapperClass}>
                     <div className={`col-span-12 ${alignClass}`}>

@@ -118,12 +118,8 @@ get_header();
                 <?php
                 $footer = (string) ob_get_clean();
 
-                get_template_part('template-parts/base/card', null, [
-                    'config' => [
-                        'content' => $content,
-                        'footer' => $footer,
-                    ],
-                ]);
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                echo hengegroup_theme_render_card(['content' => $content, 'footer' => $footer]);
                 ?>
             <?php endforeach; ?>
         </div>

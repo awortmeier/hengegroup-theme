@@ -76,8 +76,10 @@ function hengegroup_theme_register_stellenangebote_taxonomies(): void
 
     register_taxonomy(
         HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY,
-        HENGEGROUP_THEME_JOB_POST_TYPE,
+        [HENGEGROUP_THEME_JOB_POST_TYPE, 'product'],
         array_merge($shared, [
+            'show_in_menu' => false,
+            'show_in_quick_edit' => false,
             'labels' => [
                 'name' => __('Unternehmen', 'hengegroup-theme'),
                 'singular_name' => __('Unternehmen', 'hengegroup-theme'),

@@ -27,9 +27,12 @@ printf(
     '<span class="flex justify-center pt-7.5" aria-hidden="true"><span class="relative z-1 size-3.5 rounded-full border-3 border-grey-light %s"></span></span>',
     esc_attr($accent['bg']),
 );
-get_template_part('template-parts/base/card', null, [
-    'config' => [
-        'class' => '!gap-2',
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_card(
+    hengegroup_theme_get_block_card_config($attributes, $block ?? null, [
+        // `tag`: the <li> is the timeline row; `accent` colours its dot, not the card.
+        'tag' => 'div',
+        'accent' => '',
         'title' => $title,
         'title_variant' => 'body-base',
         'content' =>
@@ -40,6 +43,6 @@ get_template_part('template-parts/base/card', null, [
                     'class' => 'text-pretty',
                 ])
                 : '',
-    ],
-]);
+    ]),
+);
 echo '</li>';

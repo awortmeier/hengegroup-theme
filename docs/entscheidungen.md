@@ -40,9 +40,15 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
 - **Eigenes Vokabular statt shadcn**, wo das Design es verlangt: Button-/Badge-Varianten heissen
   nach Markenfarben, `typography.php` nutzt `headline-*`/`body-*` mit fester Skala (keine
   Pixel-Einzelwerte aus dem Design).
-- **Karten**: zwei Stufen als Token (`card-flat`/`card-raised`, nicht `card`, weil `shadow-card` mit
-  der Farbe `--color-card` kollidieren wuerde). `card.php` ist die Standard-Karte; Kontaktkarte,
-  Download-Karte und Produktbox sind bewusst eigene Komponenten.
+- **Karten**: eine Schattenstufe als Token `card-raised` (nicht `card`, weil `shadow-card` mit
+  der Farbe `--color-card` kollidieren wuerde). Alle Karten ausser der Produktbox laufen ueber
+  `card.php` (`variant`, `accent`); die Kontaktkarte liefert nur Inhalte dazu. Die Klassen stehen in
+  `card-classes.json`, die PHP und Editor (`shared.jsx`) lesen, damit beide nicht auseinanderlaufen. Padding traegt immer
+  der Container, Abstaende innen kommen nur aus `gap` (Inhalt ist eine Spalte), nie aus Margins.
+- **Kartenvariante pro Karte**: erlaubte Varianten stehen als `enum` des `variant`-Attributs in der
+  `block.json` des Kind-Blocks, gelesen von render.php und Editor (Block-Variationen, Auswahl beim
+  Hinzufuegen). Enthaelt eine Karte Links/Buttons, ist nur das klickbar (kein Karten-Link, kein
+  Hover): keine verschachtelten Links und keine konkurrierenden Klickziele.
 - **Reduced Motion zentral** in `app.css` (Dauer auf 0.01ms), nicht per `motion-reduce:` je
   Komponente: deckt auch neue Komponenten ab. Ausgenommen Spinner und Toast-Countdown (Status).
   JS-Scrollen und Autoplay fragen `utils/reduced-motion.js`.
@@ -93,13 +99,15 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
   (Kategorie auf ihren Anker) und fehlt in der Sitemap. Deshalb kein `archive-product.php` und kein
   `woocommerce.php` im Root (das wuerde jedes WC-Override ueberschreiben).
 - **`product_cat` = Sektionen** der Uebersicht, mit Kicker/Farbe/Ueberschrift/Ansprechpartner als
-  Term-Meta.
+  Term-Meta. Den Kopf (auch bei Anwendungsgruppen) kann der Block ueberschreiben; leere Felder fallen
+  auf den Term zurueck, damit bestehende Seiten ohne Migration gleich bleiben.
 - **Anwendungen = Taxonomie `produkt_anwendung`** (zwei Ebenen: Gruppe > Anwendung), nicht
   oeffentlich, nur Uebersicht /anwendungen/. Zuordnung nur am Produkt; /anwendungen/ verlinkt
   Produkte, nicht umgekehrt.
 - **Koernungen als globales Attribut `pa_koernung`**, damit sie spaeter ohne Umbau zu Varianten
   werden. Chemische Analyse als freie Zeilen (reine Info).
-- **Badge** = Postmeta-Paar Text + Farbe, keine Taxonomie.
+- **Ein Unternehmen pro Produkt** aus `stellen_unternehmen` (geteilt mit den Stellen). Name und Farbe
+  bestimmen Badge, Anwendungsbereiche und Anfrage-Button; ohne Unternehmen kein Badge, Farbe gruen.
 - **Verwandte Produkte** = Up-Sells (im Editor umbenannt), aufgefuellt auf 4. Cross-Sells bleiben fuer
   den Warenkorb frei.
 - **Produktbeschreibungen nur im Visual-Editor** mit reduzierter Toolbar. Zusaetzlich
@@ -118,7 +126,8 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
 - **/karriere/ ist eine Seite aus Bloecken**, Stellen unter /karriere/<slug>/; ein `request`-Filter
   biegt Unterseiten der Karriereseite um.
 - **Listen (Aufgaben/Profil/Benefits) als Block `stellen-liste`**, damit JSON-LD sie zuordnen kann.
-  Leere Benefits-Liste = Standard-Benefits des Unternehmens.
+  Der Typ steuert die Zuordnung, die Ueberschrift ist frei (leer = die des Typs). Leere
+  Benefits-Liste = Standard-Benefits des Unternehmens.
 - **Abgelaufene/besetzte Stellen**: 301 auf /karriere/, raus aus Listen, Sitemap und JSON-LD.
   Pruefung zur Abfragezeit, kein Cron. Alte Live-URLs (`?job=`) per 301 ueber "Alte Stellen-ID".
 - **JobPosting** wird aus denselben Daten wie die Seite gebaut (`hengegroup_theme_get_job_data()`)

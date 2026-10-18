@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 // Block "Benefits": dunkle Flaeche, Ueberschrift, Einleitung, Kind-Bloecke (benefit) als <ul>.
-// `variant` (list | cards) geht per Block-Context an die Kinder.
+// `variant` (list | cards) ist nur noch Fallback fuer Benefits ohne eigene Variante (Block-Context).
 
 if (!is_array($attributes ?? null)) {
     return;
@@ -17,7 +17,6 @@ if (!in_array($heading_tag, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'], true)) {
 }
 
 $text = trim((string) ($attributes['text'] ?? ''));
-$is_cards = ($attributes['variant'] ?? 'list') === 'cards';
 $items = trim((string) ($content ?? ''));
 
 if ($items === '' && $heading === '') {
@@ -62,10 +61,13 @@ if ($heading !== '' || $text !== '') {
 }
 
 if ($items !== '') {
-    printf(
-        '<ul class="col-span-12 grid %s sm:grid-cols-2 lg:grid-cols-3">',
-        $is_cards ? 'gap-6' : 'gap-7',
+    $grid_class = hengegroup_theme_get_tile_grid_class(
+        (string) ($attributes['layout'] ?? ''),
+        isset($block) && $block instanceof WP_Block ? count($block->inner_blocks) : 0,
+        'sm:grid-cols-2 lg:grid-cols-3',
     );
+
+    printf('<ul class="%s">', esc_attr('col-span-12 grid gap-6 text-grey-light ' . $grid_class));
     echo $items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     echo '</ul>';
 }

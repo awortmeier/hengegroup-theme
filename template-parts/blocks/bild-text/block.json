@@ -1,0 +1,41 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/bild-text",
+    "title": "Bild & Text",
+    "category": "henge",
+    "icon": "align-pull-left",
+    "description": "Bild neben Überschrift und Text, Bild links oder rechts, auf heller, grauer oder dunkler Fläche. Im Text sind Absätze, Zwischenüberschriften und Listen möglich; nummerierte Listen erscheinen als 01, 02, …",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "imageId": {
+            "type": "number",
+            "default": 0
+        },
+        "imageAlt": {
+            "type": "string",
+            "default": ""
+        },
+        "imagePosition": {
+            "type": "string",
+            "default": "left"
+        },
+        "background": {
+            "type": "string",
+            "default": "light"
+        },
+        "heading": {
+            "type": "string",
+            "default": ""
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        }
+    },
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-bild-text-editor",
+    "render": "file:./render.php"
+}

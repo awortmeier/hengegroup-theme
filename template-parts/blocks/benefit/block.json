@@ -20,6 +20,14 @@
         "text": {
             "type": "string",
             "default": ""
+        },
+        "variant": {
+            "type": "string",
+            "enum": ["ghost", "default", "filled"]
+        },
+        "accent": {
+            "type": "string",
+            "default": "grey-dark"
         }
     },
     "usesContext": ["hengegroup-theme/benefitsVariant"],

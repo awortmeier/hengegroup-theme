@@ -15,6 +15,10 @@
         "headingTag": {
             "type": "string",
             "default": "h2"
+        },
+        "layout": {
+            "type": "string",
+            "default": "default"
         }
     },
     "allowedBlocks": ["hengegroup-theme/firma"],

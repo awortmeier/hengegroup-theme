@@ -12,6 +12,26 @@
             "type": "string",
             "enum": ["list", "contact"],
             "default": "list"
+        },
+        "emptyText": {
+            "type": "string",
+            "default": ""
+        },
+        "contactName": {
+            "type": "string",
+            "default": ""
+        },
+        "contactRole": {
+            "type": "string",
+            "default": ""
+        },
+        "contactEmail": {
+            "type": "string",
+            "default": ""
+        },
+        "contactPhone": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

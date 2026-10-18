@@ -123,7 +123,7 @@ function hengegroup_theme_render_job_details_meta_box(WP_Post $post): void
             __('— Unternehmen wählen —', 'hengegroup-theme'),
         ),
         __(
-            'Logo, Farbe, Website und Ansprechpartner kommen vom Unternehmen (Stellenangebote > Unternehmen).',
+            'Logo, Farbe, Website und Ansprechpartner kommen vom Unternehmen (Menüpunkt „Unternehmen“).',
             'hengegroup-theme',
         ),
         'hengegroup-theme-job-company',
@@ -493,6 +493,14 @@ function hengegroup_theme_get_job_term_fields(string $taxonomy): array
                     'hengegroup-theme',
                 ),
             ],
+            'address' => [
+                __('Adresse', 'hengegroup-theme'),
+                'textarea',
+                __(
+                    'Eine Angabe pro Zeile. Erscheint in der Kontaktkarte der Produktseiten; leer = Adresse aus Einstellungen > Footer.',
+                    'hengegroup-theme',
+                ),
+            ],
             'contact_name' => [
                 __('Ansprechpartner: Name', 'hengegroup-theme'),
                 'text',
@@ -774,6 +782,62 @@ function hengegroup_theme_register_job_term_column_filters(): void
     }
 }
 hengegroup_theme_register_job_term_column_filters();
+
+/**
+ * Gilt fuer Stellen und Produkte, darum eigener Hauptpunkt statt Untermenue beider Posttypes.
+ */
+function hengegroup_theme_get_company_menu_slug(): string
+{
+    return 'edit-tags.php?taxonomy=' .
+        HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY .
+        '&post_type=' .
+        HENGEGROUP_THEME_JOB_POST_TYPE;
+}
+
+function hengegroup_theme_action_admin_menu_companies(): void
+{
+    add_menu_page(
+        __('Unternehmen', 'hengegroup-theme'),
+        __('Unternehmen', 'hengegroup-theme'),
+        'manage_categories',
+        hengegroup_theme_get_company_menu_slug(),
+        '',
+        'dashicons-building',
+    );
+}
+add_action('admin_menu', 'hengegroup_theme_action_admin_menu_companies');
+
+function hengegroup_theme_filter_menu_order_companies(array $menu_order): array
+{
+    $slug = hengegroup_theme_get_company_menu_slug();
+    $menu_order = array_values(array_diff($menu_order, [$slug]));
+    $position = array_search(
+        'edit.php?post_type=' . HENGEGROUP_THEME_JOB_POST_TYPE,
+        $menu_order,
+        true,
+    );
+
+    array_splice($menu_order, $position === false ? count($menu_order) : (int) $position + 1, 0, [
+        $slug,
+    ]);
+
+    return $menu_order;
+}
+add_filter('menu_order', 'hengegroup_theme_filter_menu_order_companies', 20);
+
+/**
+ * Sonst markiert WordPress "Stellenangebote" als aktiven Menuepunkt.
+ */
+function hengegroup_theme_filter_parent_file_companies(string $parent_file): string
+{
+    $screen = get_current_screen();
+
+    return $screen instanceof WP_Screen &&
+        $screen->taxonomy === HENGEGROUP_THEME_JOB_COMPANY_TAXONOMY
+        ? hengegroup_theme_get_company_menu_slug()
+        : $parent_file;
+}
+add_filter('parent_file', 'hengegroup_theme_filter_parent_file_companies');
 
 function hengegroup_theme_action_admin_enqueue_scripts_job_terms(string $hook_suffix): void
 {

@@ -33,8 +33,8 @@ while (have_posts()):
         ]);
     };
     ?>
-  <article <?php wc_product_class('', $product); ?> data-slot="product-detail">
-    <section class="pt-28 pb-16 sm:pt-32 lg:pt-36 lg:pb-25" aria-labelledby="produkt-titel">
+  <article <?php wc_product_class('header-offset', $product); ?> data-slot="product-detail">
+    <section class="section-spacing" aria-labelledby="produkt-titel">
       <div class="wrapper items-start gap-y-10">
         <div class="<?php echo esc_attr(
             $data['image_id'] > 0 ? 'col-span-12 lg:col-span-8' : 'col-span-12 lg:col-span-9',
@@ -168,7 +168,7 @@ while (have_posts()):
               <?php foreach ($data['anwendungen'] as $anwendung): ?>
                 <?php printf(
                     '%s',
-                    hengegroup_theme_render_anwendung_card($anwendung, $data['badge_variant']), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                    hengegroup_theme_render_anwendung_card($anwendung, $data['accent']), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 ); ?>
               <?php endforeach; ?>
             </ul>
@@ -206,22 +206,26 @@ while (have_posts()):
                     ],
                 ]);
                 $download_action = (string) ob_get_clean();
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                echo hengegroup_theme_render_card([
+                    'tag' => 'li',
+                    'title' => $download['title'],
+                    'title_variant' => 'body-base',
+                    'description' => $download['meta'],
+                    'icon' => hengegroup_theme_render_icon([
+                        'name' => 'file',
+                        'set' => 'lucide',
+                    ]),
+                    'content' =>
+                        $download['description'] !== ''
+                            ? hengegroup_theme_render_typography([
+                                'variant' => 'body-sm',
+                                'text' => $download['description'],
+                            ])
+                            : '',
+                    'footer' => $download_action,
+                ]);
                 ?>
-                <li class="flex">
-                  <?php get_template_part('template-parts/base/attachment/attachment', null, [
-                      'config' => [
-                          'variant' => 'card',
-                          'title' => $download['title'],
-                          'description' => $download['meta'],
-                          'text' => $download['description'],
-                          'media' => [
-                              'icon' => ['name' => 'file', 'set' => 'lucide'],
-                          ],
-                          'actions' => $download_action,
-                          'class' => 'w-full',
-                      ],
-                  ]); ?>
-                </li>
               <?php endforeach; ?>
             </ul>
           </div>
@@ -229,9 +233,10 @@ while (have_posts()):
       </section>
     <?php endif; ?>
 
-    <?php $contact_card = hengegroup_theme_render_contact_card($data['contact'], [
-        'variant' => 'light',
-    ]); ?>
+    <?php $contact_card = hengegroup_theme_render_contact_card(
+        $data['contact'] + ['address' => $data['address']],
+        ['variant' => 'split', 'accent' => $data['accent']],
+    ); ?>
     <section id="kontakt" class="scroll-mt-24 bg-grey-dark section-spacing" aria-labelledby="kontakt-titel">
       <div class="wrapper gap-y-12">
         <div class="col-span-12 max-w-3xl">
@@ -278,6 +283,7 @@ while (have_posts()):
               'product_id' => $data['id'],
               'with_location' => false,
               'tone' => 'dark',
+              'accent' => $data['accent'],
               'message_label' => sprintf(
                   /* translators: %s: product name. */
                   __('Nachricht zu %s', 'hengegroup-theme'),

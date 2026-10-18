@@ -11,6 +11,14 @@
         "limit": {
             "type": "number",
             "default": 4
+        },
+        "companyId": {
+            "type": "number",
+            "default": 0
+        },
+        "emptyText": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

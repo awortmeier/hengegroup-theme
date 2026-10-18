@@ -30,7 +30,7 @@ import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/produkte/block.json";
 import produkteRasterMetadata from "../../../../template-parts/blocks/produkte-raster/block.json";
-import { ACCENT_FORMATS } from "../shared.jsx";
+import { ACCENT_FORMATS, buttonPreviewClassName } from "../shared.jsx";
 
 // Texts stay plain strings (render.php escapes them); create()/toHTMLString() only handles entity
 // escaping inside RichText.
@@ -150,15 +150,11 @@ function ProductPicker({ productIds, onChange }) {
     );
 }
 
-// Mirrors button.php grey-light/lg (on a RichText span; the link is set via the toolbar).
-const BUTTON_PREVIEW_CLASSNAME =
-    "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-7 text-lg font-medium whitespace-nowrap !bg-grey-light !text-grey-light-foreground";
-
 function Edit({ attributes, setAttributes, isSelected }) {
     const { heading, headingTag, text, buttonText, buttonUrl, productIds } = attributes;
     // alignfull without supports.align: theme.json contentSize would otherwise narrow the block.
     const blockProps = useBlockProps({
-        className: "alignfull bg-grey-dark py-16 md:py-24 lg:py-35",
+        className: "alignfull bg-grey-dark section-spacing",
     });
     const buttonRef = useRef();
     const [isEditingButtonUrl, setIsEditingButtonUrl] = useState(false);
@@ -226,7 +222,7 @@ function Edit({ attributes, setAttributes, isSelected }) {
                         <span ref={buttonRef} className="relative inline-block">
                             <RichText
                                 tagName="span"
-                                className={BUTTON_PREVIEW_CLASSNAME}
+                                className={buttonPreviewClassName("grey-light", "lg")}
                                 value={toRichTextValue(buttonText)}
                                 onChange={(html) =>
                                     setAttributes({ buttonText: fromRichTextValue(html) })

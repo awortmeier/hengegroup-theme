@@ -15,6 +15,26 @@
         "contactHeading": {
             "type": "string",
             "default": "Ansprechpartner"
+        },
+        "emptyText": {
+            "type": "string",
+            "default": "Aktuell sind keine Stellen ausgeschrieben. Initiativbewerbungen sind jederzeit willkommen."
+        },
+        "contactName": {
+            "type": "string",
+            "default": ""
+        },
+        "contactRole": {
+            "type": "string",
+            "default": ""
+        },
+        "contactEmail": {
+            "type": "string",
+            "default": ""
+        },
+        "contactPhone": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

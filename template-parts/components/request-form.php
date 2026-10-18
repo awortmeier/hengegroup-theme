@@ -16,6 +16,8 @@ declare(strict_types=1);
 //   hidden            array    name => value
 //   consent_purpose   string   "zur Bearbeitung meiner Anfrage" (default)
 //   tone              string   light (default) | dark
+//   accent            string   henge-green (default) | henge-blue | henge-grey | grey-dark,
+//                              Farbe von Absenden und Erfolgsmeldung
 //   submit_text       string   "Senden" (default)
 //   multipart         bool     enctype multipart/form-data
 //   class / attributes / data_attributes
@@ -47,6 +49,9 @@ $consent_purpose =
         ? $consent_purpose
         : __('zur Bearbeitung meiner Anfrage', 'hengegroup-theme');
 $tone = in_array($config['tone'] ?? '', ['light', 'dark'], true) ? $config['tone'] : 'light';
+$accent = in_array($config['accent'] ?? '', hengegroup_theme_get_badge_variants(), true)
+    ? $config['accent']
+    : 'henge-green';
 $submit_text = trim((string) ($config['submit_text'] ?? ''));
 $submit_text = $submit_text !== '' ? $submit_text : __('Senden', 'hengegroup-theme');
 $class_name = trim((string) ($config['class'] ?? ''));
@@ -54,14 +59,23 @@ $attributes = is_array($config['attributes'] ?? null) ? $config['attributes'] : 
 $data_attributes = is_array($config['data_attributes'] ?? null) ? $config['data_attributes'] : [];
 
 $is_dark = $tone === 'dark';
+
+// Auf dunklem Grund waere ein grey-dark-Button unsichtbar.
+if ($is_dark && $accent === 'grey-dark') {
+    $accent = 'henge-green';
+}
+
 $text_class = $is_dark ? 'text-grey-light' : 'text-grey-dark';
 $muted_class = $is_dark ? 'text-grey-light/70' : 'text-grey-dark/70';
 $privacy_id = $form_id . '-privacy';
 $privacy_error = (string) ($errors['privacy'] ?? '');
 
 if ($status === 'gesendet') {
+    $status_accent = hengegroup_theme_get_accent_classes($accent);
+
     printf(
-        '<div class="rounded-2xl bg-henge-green px-6 py-5 text-base text-henge-green-foreground" role="status" tabindex="-1" data-slot="request-form-status">%s</div>',
+        '<div class="%s rounded-2xl px-6 py-5 text-base" role="status" tabindex="-1" data-slot="request-form-status">%s</div>',
+        esc_attr($status_accent['bg'] . ' ' . $status_accent['fg']),
         esc_html($message),
     );
 
@@ -181,7 +195,7 @@ $privacy_field = hengegroup_theme_render_form_field([
         'config' => [
             'text' => $submit_text,
             'type' => 'submit',
-            'variant' => 'henge-green',
+            'variant' => $accent,
             'size' => 'lg',
             'data_attributes' => ['request-form-submit' => 'true'],
         ],

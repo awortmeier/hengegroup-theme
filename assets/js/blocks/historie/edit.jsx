@@ -16,6 +16,12 @@ import {
     accentClasses,
     AccentDropdown,
     AddItemTile,
+    CardInner,
+    cardClassName,
+    cardTitleClassName,
+    cardVariant,
+    cardVariations,
+    CardToolbar,
     fromRichTextValue,
     HeadingTagDropdown,
     toRichTextValue,
@@ -26,7 +32,7 @@ import entryMetadata from "../../../../template-parts/blocks/historie-eintrag/bl
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag } = attributes;
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
-    const blockProps = useBlockProps({ className: "alignfull py-16 md:py-25" });
+    const blockProps = useBlockProps({ className: "alignfull section-spacing" });
     const innerBlocksProps = useInnerBlocksProps(
         {
             className:
@@ -41,7 +47,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                         rootClientId={clientId}
                         blockName={entryMetadata.name}
                         label={__("+ Eintrag hinzufügen", "hengegroup-theme")}
-                        className="hover:border-grey-dark hover:text-grey-dark rounded-card-flat col-start-3 min-h-16 border-neutral-400 text-neutral-600"
+                        className="col-start-3 min-h-16"
                     />
                 </li>
             ),
@@ -80,6 +86,7 @@ function Edit({ attributes, setAttributes, clientId }) {
 
 function EntryEdit({ attributes, setAttributes }) {
     const { year, title, text, accent } = attributes;
+    const variant = cardVariant(entryMetadata, attributes.variant);
     const blockProps = useBlockProps({
         className:
             "grid grid-cols-[4.5rem_2rem_minmax(0,1fr)] items-start md:grid-cols-[6.875rem_2.75rem_minmax(0,1fr)]",
@@ -89,6 +96,12 @@ function EntryEdit({ attributes, setAttributes }) {
         <Fragment>
             <BlockControls group="block">
                 <ToolbarGroup>
+                    <CardToolbar
+                        metadata={entryMetadata}
+                        variant={variant}
+                        accent={accent}
+                        setAttributes={setAttributes}
+                    />
                     <AccentDropdown
                         value={accent}
                         onChange={(value) => setAttributes({ accent: value })}
@@ -110,24 +123,34 @@ function EntryEdit({ attributes, setAttributes }) {
                         className={`border-grey-light relative z-1 size-3.5 rounded-full border-3 ${accentClasses(accent).bg}`}
                     />
                 </span>
-                {/* Mirrors card.php flat/default. */}
-                <div className="bg-card text-card-foreground rounded-card-flat shadow-card-flat flex flex-col gap-2 py-6">
-                    <RichText
-                        tagName="h3"
-                        className="px-6 text-lg leading-normal font-extrabold"
-                        value={toRichTextValue(title)}
-                        onChange={(html) => setAttributes({ title: fromRichTextValue(html) })}
-                        placeholder={__("Titel eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
-                        disableLineBreaks
-                    />
-                    <RichText
-                        tagName="p"
-                        className="px-6 text-base leading-normal text-pretty"
-                        value={toRichTextValue(text)}
-                        onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-                        placeholder={__("Text eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
+                <div className={cardClassName({ variant })}>
+                    <CardInner
+                        variant={variant}
+                        title={
+                            <RichText
+                                tagName="h3"
+                                className={cardTitleClassName(variant, "body-base")}
+                                value={toRichTextValue(title)}
+                                onChange={(html) =>
+                                    setAttributes({ title: fromRichTextValue(html) })
+                                }
+                                placeholder={__("Titel eingeben…", "hengegroup-theme")}
+                                allowedFormats={[]}
+                                disableLineBreaks
+                            />
+                        }
+                        content={
+                            <RichText
+                                tagName="p"
+                                className="text-base leading-normal text-pretty"
+                                value={toRichTextValue(text)}
+                                onChange={(html) =>
+                                    setAttributes({ text: fromRichTextValue(html) })
+                                }
+                                placeholder={__("Text eingeben…", "hengegroup-theme")}
+                                allowedFormats={[]}
+                            />
+                        }
                     />
                 </div>
             </li>
@@ -143,5 +166,6 @@ registerBlockType(metadata, {
 
 registerBlockType(entryMetadata, {
     edit: EntryEdit,
+    variations: cardVariations(entryMetadata),
     save: () => null,
 });

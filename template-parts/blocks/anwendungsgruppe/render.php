@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-// Block "Anwendungsgruppe": Kicker/Farbe/Ueberschrift aus der gewaehlten Gruppe, Karten = alle
-// Anwendungen der Gruppe. Gruppe ohne Anwendungen rendert nichts. `id` = Gruppen-Slug.
+// Block "Anwendungsgruppe": Kicker/Farbe/Ueberschrift/Text aus dem Block (leer = aus der Gruppe),
+// Karten = alle Anwendungen der Gruppe. Gruppe ohne Anwendungen rendert nichts. `id` = Gruppen-Slug.
 
 if (
     !is_array($attributes ?? null) ||
@@ -34,11 +34,7 @@ printf(
 );
 echo '<div class="wrapper gap-y-6">';
 get_template_part('template-parts/components/section-intro', null, [
-    'config' => [
-        'kicker' => $group['kicker'],
-        'kicker_variant' => $group['variant'],
-        'heading' => $group['heading'],
-        'text' => $group['description'],
+    'config' => hengegroup_theme_get_section_intro_config($group, $attributes) + [
         'class' => 'col-span-12 mb-4',
     ],
 ]);

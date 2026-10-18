@@ -5,24 +5,15 @@ declare(strict_types=1);
 // Render-Helfer fuer die Produktbox und das Produktraster.
 
 /**
- * '' ohne Badge-Text.
+ * Badge mit Name und Farbe des Unternehmens; '' ohne Unternehmen.
  */
 function hengegroup_theme_render_product_badge(int $product_id): string
 {
-    $text = trim((string) get_post_meta($product_id, '_badge_text', true));
+    $company = hengegroup_theme_get_product_company($product_id);
 
-    if ($text === '') {
-        return '';
-    }
-
-    $variant = (string) get_post_meta($product_id, '_badge_variant', true);
-    $variants = hengegroup_theme_get_badge_variants();
-
-    if (!in_array($variant, $variants, true)) {
-        $variant = $variants[0];
-    }
-
-    return hengegroup_theme_render_label_badge($text, $variant);
+    return $company !== null
+        ? hengegroup_theme_render_label_badge($company['name'], $company['variant'])
+        : '';
 }
 
 /**

@@ -7,13 +7,23 @@
     @apply bg-grey-dark bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)] shadow-[inset_0_40px_40px_-40px_rgba(0,0,0,0.5),inset_0_-40px_40px_-40px_rgba(0,0,0,0.5)];
 }
 
-/* Vertikaler Abstand einer Seitensektion; -lg fuer Sektionen mit mehr Luft. */
+/* Vertikaler Abstand einer Seitensektion; -top/-bottom einseitig.
+   Sektionen bekommen ihr Padding nur ueber diese Utilities. */
 @utility section-spacing {
     @apply py-16 md:py-25;
 }
 
-@utility section-spacing-lg {
-    @apply py-16 md:py-25 lg:py-35;
+@utility section-spacing-top {
+    @apply pt-16 md:pt-25;
+}
+
+@utility section-spacing-bottom {
+    @apply pb-16 md:pb-25;
+}
+
+/* Hoehe des fixen Headers (header.php) fuer Seiten ohne Buehne; auf einen Wrapper, nicht die Sektion. */
+@utility header-offset {
+    @apply pt-19;
 }
 
 /* Nur die Farbstopps; Richtung per bg-linear-* an der Aufrufstelle. */

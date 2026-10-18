@@ -19,7 +19,7 @@
         },
         "buttonText": {
             "type": "string",
-            "default": "Zum Unternehmen"
+            "default": ""
         },
         "buttonUrl": {
             "type": "string",
@@ -28,6 +28,11 @@
         "accent": {
             "type": "string",
             "default": "henge-green"
+        },
+        "variant": {
+            "type": "string",
+            "enum": ["default", "filled"],
+            "default": "default"
         }
     },
     "supports": {

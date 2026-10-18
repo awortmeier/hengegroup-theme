@@ -319,6 +319,7 @@ ob_start();
         'consent_purpose' => __('zur Bearbeitung meiner Bewerbung', 'hengegroup-theme'),
         'submit_text' => __('Bewerbung senden', 'hengegroup-theme'),
         'multipart' => true,
+        'accent' => (string) ($job['company']['variant'] ?? ''),
         'data_attributes' => ['form' => 'application'],
     ],
 ]); ?>

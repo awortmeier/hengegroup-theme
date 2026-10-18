@@ -28,12 +28,6 @@ if ($autoplay_interval < 1000) {
 
 $allowed_accents = ['henge-green', 'henge-blue', 'henge-grey'];
 
-$accent_border_classes = [
-    'henge-green' => 'border-henge-green',
-    'henge-blue' => 'border-henge-blue',
-    'henge-grey' => 'border-henge-grey',
-];
-
 $accent_dot_classes = [
     'henge-green' => 'data-[active=true]:border-henge-green data-[active=true]:text-henge-green',
     'henge-blue' => 'data-[active=true]:border-henge-blue data-[active=true]:text-henge-blue',
@@ -85,49 +79,27 @@ foreach ($slides as $slide) {
     echo '<div class="absolute inset-0 bg-linear-to-b from-black/15 to-black/75"></div>';
     echo '<div class="relative flex h-full flex-col justify-end">';
     echo '<div class="wrapper pb-24">';
-    echo '<div class="col-span-12 max-w-xl rounded-xl border-l-4 ' .
-        esc_attr($accent_border_classes[$accent]) .
-        ' bg-black/55 p-4 backdrop-blur-md sm:p-5 md:p-6">';
+    $kicker = '';
 
     if ($badge_text !== '') {
+        ob_start();
         get_template_part('template-parts/base/badge', null, [
             'config' => [
                 'text' => $badge_text,
                 'variant' => $accent,
                 'font' => 'accent',
-                'class' => 'mb-2.5',
             ],
         ]);
+        $kicker = (string) ob_get_clean();
     }
 
-    if ($title !== '') {
-        get_template_part('template-parts/base/typography', null, [
-            'config' => [
-                'text' => $title,
-                'variant' => 'headline-sm',
-                'tag' => 'h2',
-                'color' => 'light',
-                'class' => 'mb-2.5',
-            ],
-        ]);
-    }
-
-    if ($text !== '') {
-        get_template_part('template-parts/base/typography', null, [
-            'config' => [
-                'text' => $text,
-                'variant' => 'body-base',
-                'color' => 'light',
-                'class' => 'mb-5',
-            ],
-        ]);
-    }
+    ob_start();
 
     // Button erscheint, sobald sein Text gepflegt ist (altes showPrimaryButton wird ignoriert).
     $has_primary_button = $primary_button_text !== '';
 
     if ($has_primary_button || $secondary_button_text !== '') {
-        echo '<div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-end">';
+        echo '<div class="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:justify-end">';
 
         if ($has_primary_button) {
             get_template_part('template-parts/base/button', null, [
@@ -156,7 +128,26 @@ foreach ($slides as $slide) {
         echo '</div>';
     }
 
-    echo '</div>'; // Glassmorphism-Content-Box
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo hengegroup_theme_render_card([
+        'variant' => 'glass',
+        'accent' => $accent,
+        'accent_border' => true,
+        'kicker' => $kicker,
+        'title' => $title,
+        'title_tag' => 'h2',
+        'title_variant' => 'headline-sm',
+        'content' =>
+            $text !== ''
+                ? hengegroup_theme_render_typography([
+                    'text' => $text,
+                    'variant' => 'body-base',
+                    'color' => 'light',
+                ])
+                : '',
+        'footer' => (string) ob_get_clean(),
+        'class' => 'col-span-12 max-w-xl',
+    ]);
     echo '</div>'; // .wrapper (deckelt/zentriert den Content wie jeder andere Block-Inhalt)
     echo '</div>'; // Slide-Content-Wrapper
 
@@ -277,7 +268,7 @@ if ($autoplay) {
             'variant' => 'ghost',
             'size' => 'icon-base',
             'aria_label' => __('Automatischen Slidewechsel anhalten', 'hengegroup-theme'),
-            'class' => 'self-center text-grey-light/70',
+            'class' => 'absolute right-4 bottom-6 z-10 text-grey-light/70 sm:right-6 lg:right-8',
             'attributes' => ['aria-pressed' => 'false', 'hidden' => true],
             'data_attributes' => ['buehne-pause' => ''],
         ],
@@ -291,8 +282,8 @@ if ($autoplay) {
 
 printf(
     '<div class="relative">%1$s<div class="absolute inset-x-0 bottom-7 z-10 mx-auto flex ' .
-        'max-w-page flex-wrap justify-center gap-2 px-4 sm:gap-5 sm:px-6 lg:px-8" ' .
-        'data-buehne-dots>%2$s%3$s</div></div>',
+        'max-w-page flex-wrap justify-center gap-2 px-14 sm:gap-5 sm:px-16" ' .
+        'data-buehne-dots>%2$s</div>%3$s</div>',
     $carousel_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $dots, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     $pause_control, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

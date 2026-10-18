@@ -5,7 +5,7 @@
     "title": "Karriere-Teaser",
     "category": "henge",
     "icon": "businessman",
-    "description": "Startseiten-Sektion mit Überschrift, Text, Button und den neuesten offenen Stellen (inkl. Unternehmens-Pill).",
+    "description": "Sektion mit Überschrift, Text, Button und den neuesten offenen Stellen (inkl. Unternehmens-Pill), wahlweise nur eines Unternehmens und auf dunkler Fläche.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "heading": {
@@ -31,6 +31,18 @@
         "limit": {
             "type": "number",
             "default": 4
+        },
+        "companyId": {
+            "type": "number",
+            "default": 0
+        },
+        "variant": {
+            "type": "string",
+            "default": "light"
+        },
+        "emptyText": {
+            "type": "string",
+            "default": "Aktuell sind keine Stellen ausgeschrieben."
         }
     },
     "supports": {

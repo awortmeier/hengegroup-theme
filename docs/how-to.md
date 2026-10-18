@@ -11,10 +11,11 @@ define("WP_DEFAULT_THEME", "hengegroup");
 ## Produktbereich pflegen
 
 1. Produkte > Kategorien: je Sektion der Uebersicht eine Kategorie (Kicker, Farbe, Ueberschrift,
-   optional Ansprechpartner).
+   optional Ansprechpartner). Kicker, Farbe, Ueberschrift und Text sind im Block ueberschreibbar.
 2. Produkte > Einstellungen: Uebersichtsseite und Standard-Ansprechpartner.
 3. Seite /produkte/: Buehne, je Kategorie ein Block "Produktkategorie", am Ende "Kontakt".
-4. Produkt: Beschreibung, Kurzbeschreibung, Beitragsbild, Badge (Text + Farbe), Kategorie,
+4. Produkt: Beschreibung, Kurzbeschreibung, Beitragsbild, Unternehmen (Menuepunkt
+   "Unternehmen", dieselbe Liste wie bei den Stellen), Kategorie,
    Anwendungen; Tab "Technische Daten" (Analyse, Downloads, Recycling); Attribut "Koernung";
    "Verwandte Produkte" fuer bis zu 4 feste Empfehlungen.
 5. Anwendungen: erst Gruppe (ohne Eltern), dann Anwendung mit Gruppe als Eltern. Zuordnung am Produkt
@@ -23,12 +24,12 @@ define("WP_DEFAULT_THEME", "hengegroup");
 6. Eingaenge (Produktanfragen/Bewerbungen): Status in der Seitenleiste setzen, damit der Zaehler nur
    Neues zeigt.
 
-Weitere Badge-Farbe: `hengegroup_theme_get_badge_variants()` erweitern.
+Weitere Unternehmens-Farbe: `hengegroup_theme_get_badge_variants()` erweitern.
 
 ## Stellenangebote pflegen
 
-1. Stellenangebote > Unternehmen/Standorte anlegen, unter Einstellungen Karriereseite und
-   Standard-Ansprechpartner waehlen.
+1. Unternehmen (eigener Menuepunkt) und Stellenangebote > Standorte anlegen, unter Einstellungen Karriereseite und
+   Standard-Ansprechpartner waehlen (im Block "Offene Stellen" ueberschreibbar).
 2. Neue Stelle: Einleitung, Listen-Bloecke ("Wir bieten dir" leer = Standard-Benefits),
    "Stellendetails"-Box. Der gelbe Hinweis nennt fehlende Google-Jobs-Angaben.
 3. Stelle beenden: "Gueltig bis" oder "besetzt" setzen, nicht loeschen (sonst keine 301).
@@ -62,6 +63,10 @@ in `hengegroup_theme_get_footer_options()`, dann `pnpm icons:tabler`.
 3. `vite.config.editor-<name>.js` per `createEditorBlockConfig()` und in `package.json`
    `build:assets` eintragen.
 4. In `hengegroup_theme_register_blocks()` (`inc/setup/theme-blocks.php`) registrieren.
+5. Kind-Block als Karte: `variant` mit `enum` der passenden Varianten in die `block.json`, in
+   render.php `hengegroup_theme_get_block_card_variant()` an `hengegroup_theme_render_card()` geben, im
+   Editor `cardClassName()`/`CardInner`, `CardToolbar` und `variations: cardVariations(metadata)`.
+   Kartenklassen nur in `template-parts/base/card-classes.json` aendern.
 
 ## Icons
 

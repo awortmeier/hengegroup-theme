@@ -27,7 +27,7 @@ import itemMetadata from "../../../../template-parts/blocks/kennzahl/block.json"
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag } = attributes;
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
-    const blockProps = useBlockProps({ className: "alignfull section-dark py-16 md:py-25" });
+    const blockProps = useBlockProps({ className: "alignfull section-dark section-spacing" });
     const innerBlocksProps = useInnerBlocksProps(
         {
             className: `col-span-12 grid grid-cols-[repeat(auto-fit,minmax(12.5rem,1fr))] gap-6 ${APPENDER_GRID_CELL_CLASSNAME}`,
@@ -41,7 +41,8 @@ function Edit({ attributes, setAttributes, clientId }) {
                     rootClientId={clientId}
                     blockName={itemMetadata.name}
                     label={__("+ Kennzahl", "hengegroup-theme")}
-                    className="border-grey-light/40 text-grey-light/80 hover:border-grey-light hover:text-grey-light min-h-24 rounded-xl"
+                    tone="dark"
+                    className="min-h-24"
                 />
             ),
         }

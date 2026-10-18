@@ -1,5 +1,5 @@
 // Editor for "Unternehmen der Gruppe" (parent) and "Unternehmen" (child card), edited directly in the
-// canvas. Markup mirrors the render.php files (card.php raised/lg, button.php outline).
+// canvas. Markup mirrors the render.php files (card.php via CardInner, button.php outline/grey-light).
 import { createElement as el, Fragment, useEffect, useRef, useState } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {
@@ -14,9 +14,14 @@ import { Popover, ToolbarButton, ToolbarGroup } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 import {
     ACCENT_FORMATS,
-    accentClasses,
-    AccentDropdown,
     AddItemTile,
+    CardInner,
+    cardClassName,
+    cardVariant,
+    cardVariations,
+    buttonPreviewClassName,
+    cardButtonVariant,
+    CardToolbar,
     APPENDER_GRID_CELL_CLASSNAME,
     fromRichTextValue,
     HeadingTagDropdown,
@@ -24,20 +29,25 @@ import {
     MediaToolbarButtons,
     toRichTextValue,
     useMediaUrl,
+    TileLayoutDropdown,
+    tileGridClass,
+    useInnerBlockCount,
 } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/firmen/block.json";
 import companyMetadata from "../../../../template-parts/blocks/firma/block.json";
 
-const BUTTON_PREVIEW_CLASSNAME =
-    "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-grey-dark bg-background px-4 text-base font-medium whitespace-nowrap shadow-xs";
-
 function Edit({ attributes, setAttributes, clientId }) {
-    const { heading, headingTag } = attributes;
+    const { heading, headingTag, layout } = attributes;
+    const gridClass = tileGridClass(
+        layout,
+        useInnerBlockCount(clientId),
+        "md:grid-cols-2 lg:grid-cols-3"
+    );
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
-    const blockProps = useBlockProps({ className: "alignfull bg-neutral-200 py-16 md:py-25" });
+    const blockProps = useBlockProps({ className: "alignfull bg-neutral-200 section-spacing" });
     const innerBlocksProps = useInnerBlocksProps(
         {
-            className: `col-span-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3 ${APPENDER_GRID_CELL_CLASSNAME}`,
+            className: `col-span-12 grid gap-6 ${gridClass} ${APPENDER_GRID_CELL_CLASSNAME}`,
         },
         {
             allowedBlocks: [companyMetadata.name],
@@ -48,7 +58,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                     rootClientId={clientId}
                     blockName={companyMetadata.name}
                     label={__("+ Unternehmen hinzufügen", "hengegroup-theme")}
-                    className="hover:border-grey-dark hover:text-grey-dark rounded-card-raised h-full min-h-60 border-neutral-400 text-neutral-600"
+                    className="h-full min-h-60"
                 />
             ),
         }
@@ -58,6 +68,11 @@ function Edit({ attributes, setAttributes, clientId }) {
         <Fragment>
             <BlockControls group="block">
                 <ToolbarGroup>
+                    <TileLayoutDropdown
+                        value={layout}
+                        onChange={(value) => setAttributes({ layout: value })}
+                        withDefault
+                    />
                     <HeadingTagDropdown
                         value={headingTag}
                         onChange={(value) => setAttributes({ headingTag: value })}
@@ -84,8 +99,13 @@ function Edit({ attributes, setAttributes, clientId }) {
 
 function CompanyEdit({ attributes, setAttributes, isSelected }) {
     const { logoId, text, buttonText, buttonUrl, accent } = attributes;
+    const variant = cardVariant(companyMetadata, attributes.variant);
     const blockProps = useBlockProps({
-        className: `bg-card text-card-foreground rounded-card-raised shadow-card-raised flex flex-col gap-4 border-l-4 py-7 ${accentClasses(accent).border}`,
+        className: cardClassName({
+            variant,
+            accent,
+            accentBorder: variant === "default",
+        }),
     });
     const logoUrl = useMediaUrl(logoId, "medium");
     const selectLogo = (media) => setAttributes({ logoId: media.id });
@@ -102,84 +122,100 @@ function CompanyEdit({ attributes, setAttributes, isSelected }) {
         <Fragment>
             <BlockControls group="block">
                 <ToolbarGroup>
+                    <CardToolbar
+                        metadata={companyMetadata}
+                        variant={variant}
+                        accent={accent}
+                        setAttributes={setAttributes}
+                        accentFor={["default", "filled"]}
+                    />
                     <MediaToolbarButtons
                         value={logoId}
                         onSelect={selectLogo}
                         onRemove={() => setAttributes({ logoId: 0 })}
                     />
-                    <AccentDropdown
-                        value={accent}
-                        onChange={(value) => setAttributes({ accent: value })}
-                    />
                 </ToolbarGroup>
                 <ToolbarGroup>
                     <ToolbarButton
                         icon="admin-links"
-                        label={__("Button-Link bearbeiten", "hengegroup-theme")}
+                        label={__(
+                            "Link bearbeiten (ohne Button-Text: ganze Karte)",
+                            "hengegroup-theme"
+                        )}
                         onClick={() => setIsEditingLink(true)}
                         isPressed={isEditingLink}
                     />
                 </ToolbarGroup>
             </BlockControls>
             <li {...blockProps}>
-                <div className="flex-1 px-7">
-                    <div className="mb-4.5 flex h-14 items-center">
-                        {logoUrl ? (
-                            <img src={logoUrl} alt="" className="h-auto max-h-13 w-auto max-w-55" />
-                        ) : (
-                            <MediaPicker value={logoId} onSelect={selectLogo}>
-                                {(open) => (
-                                    <button
-                                        type="button"
-                                        className="flex h-13 w-55 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-neutral-300 bg-transparent text-sm text-neutral-500"
-                                        onClick={open}
-                                    >
-                                        {__("Logo auswählen", "hengegroup-theme")}
-                                    </button>
-                                )}
-                            </MediaPicker>
-                        )}
-                    </div>
-                    <RichText
-                        tagName="p"
-                        className="text-base leading-normal text-pretty"
-                        value={toRichTextValue(text)}
-                        onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-                        placeholder={__("Text eingeben…", "hengegroup-theme")}
-                        allowedFormats={[]}
-                    />
-                </div>
-                <div className="flex items-center px-7">
-                    <span ref={buttonRef} className="relative ml-auto inline-block">
-                        <RichText
-                            tagName="span"
-                            className={BUTTON_PREVIEW_CLASSNAME}
-                            value={toRichTextValue(buttonText)}
-                            onChange={(html) =>
-                                setAttributes({ buttonText: fromRichTextValue(html) })
-                            }
-                            placeholder={__("Button-Text…", "hengegroup-theme")}
-                            allowedFormats={[]}
-                            disableLineBreaks
-                        />
-                        {isEditingLink && isSelected && (
-                            <Popover
-                                placement="bottom-end"
-                                anchor={buttonRef.current}
-                                onClose={() => setIsEditingLink(false)}
-                            >
-                                <LinkControl
-                                    value={{ url: buttonUrl }}
-                                    onChange={(next) =>
-                                        setAttributes({ buttonUrl: next.url || "" })
-                                    }
-                                    onRemove={() => setAttributes({ buttonUrl: "" })}
-                                    settings={[]}
+                <CardInner
+                    variant={variant}
+                    accent={accent}
+                    leading={
+                        <div className="flex h-14 items-center">
+                            {logoUrl ? (
+                                <img
+                                    src={logoUrl}
+                                    alt=""
+                                    className="h-auto max-h-13 w-auto max-w-55"
                                 />
-                            </Popover>
-                        )}
-                    </span>
-                </div>
+                            ) : (
+                                <MediaPicker value={logoId} onSelect={selectLogo}>
+                                    {(open) => (
+                                        <button
+                                            type="button"
+                                            className="flex h-13 w-55 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-neutral-300 bg-transparent text-sm text-neutral-500"
+                                            onClick={open}
+                                        >
+                                            {__("Logo auswählen", "hengegroup-theme")}
+                                        </button>
+                                    )}
+                                </MediaPicker>
+                            )}
+                        </div>
+                    }
+                    content={
+                        <RichText
+                            tagName="p"
+                            className="text-base leading-normal text-pretty"
+                            value={toRichTextValue(text)}
+                            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
+                            placeholder={__("Text eingeben…", "hengegroup-theme")}
+                            allowedFormats={[]}
+                        />
+                    }
+                    footer={
+                        <span ref={buttonRef} className="relative ml-auto inline-block">
+                            <RichText
+                                tagName="span"
+                                className={buttonPreviewClassName(cardButtonVariant(variant))}
+                                value={toRichTextValue(buttonText)}
+                                onChange={(html) =>
+                                    setAttributes({ buttonText: fromRichTextValue(html) })
+                                }
+                                placeholder={__("Button-Text…", "hengegroup-theme")}
+                                allowedFormats={[]}
+                                disableLineBreaks
+                            />
+                            {isEditingLink && isSelected && (
+                                <Popover
+                                    placement="bottom-end"
+                                    anchor={buttonRef.current}
+                                    onClose={() => setIsEditingLink(false)}
+                                >
+                                    <LinkControl
+                                        value={{ url: buttonUrl }}
+                                        onChange={(next) =>
+                                            setAttributes({ buttonUrl: next.url || "" })
+                                        }
+                                        onRemove={() => setAttributes({ buttonUrl: "" })}
+                                        settings={[]}
+                                    />
+                                </Popover>
+                            )}
+                        </span>
+                    }
+                />
             </li>
         </Fragment>
     );
@@ -193,5 +229,6 @@ registerBlockType(metadata, {
 
 registerBlockType(companyMetadata, {
     edit: CompanyEdit,
+    variations: cardVariations(companyMetadata),
     save: () => null,
 });

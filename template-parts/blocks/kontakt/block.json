@@ -5,7 +5,7 @@
     "title": "Kontakt",
     "category": "henge",
     "icon": "email",
-    "description": "Kontakt-Sektion mit Firmen-Kontaktkarte (Daten aus Einstellungen > Footer) und Anfrageformular. Anfragen landen im Menüpunkt Produktanfragen.",
+    "description": "Kontakt-Sektion mit Kontaktkarte und Anfrageformular. Ohne eigene Kontaktdaten zeigt die Karte die Daten aus Einstellungen > Footer. Anfragen landen im Menüpunkt Produktanfragen.",
     "textdomain": "hengegroup-theme",
     "attributes": {
         "heading": {
@@ -15,6 +15,30 @@
         "text": {
             "type": "string",
             "default": "Sie haben einen bestimmten Wunsch oder Fragen zu unserem Leistungsspektrum? Dann nehmen Sie einfach über das Formular oder per Telefon Kontakt mit uns auf. Wir freuen uns auf Ihre Anfrage."
+        },
+        "accent": {
+            "type": "string",
+            "default": "henge-grey"
+        },
+        "contactName": {
+            "type": "string",
+            "default": ""
+        },
+        "contactEmail": {
+            "type": "string",
+            "default": ""
+        },
+        "contactPhone": {
+            "type": "string",
+            "default": ""
+        },
+        "contactFax": {
+            "type": "string",
+            "default": ""
+        },
+        "contactAddress": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

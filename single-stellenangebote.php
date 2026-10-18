@@ -82,8 +82,8 @@ while (have_posts()):
     $facts = array_filter($facts, static fn(array $fact): bool => $fact['value'] !== '');
     $application_email = $job['contact']['email'];
     ?>
-  <article <?php post_class(); ?> data-slot="job-posting">
-    <header class="wrapper pt-28 pb-10 sm:pt-32 lg:pt-36">
+  <article <?php post_class('header-offset'); ?> data-slot="job-posting">
+    <header class="wrapper mb-10 section-spacing-top">
       <div class="col-span-12 lg:col-span-8">
         <?php if (hengegroup_theme_is_job_expired((int) get_the_ID())): ?>
           <p class="mb-6 rounded-xl border border-henge-blue/30 bg-white px-5 py-4 text-base text-grey-dark" role="status">
@@ -134,7 +134,7 @@ while (have_posts()):
       </div>
     </header>
 
-    <div class="wrapper gap-y-10 pb-20">
+    <div class="wrapper gap-y-10 section-spacing-bottom">
       <?php if ($facts !== []): ?>
         <?php ob_start(); ?>
         <dl class="grid content-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -165,17 +165,16 @@ while (have_posts()):
         </dl>
         <?php
         $facts_markup = (string) ob_get_clean();
-        get_template_part('template-parts/base/card', null, [
-            'config' => [
-                'content' => $facts_markup,
-                'class' => 'col-span-12 self-start lg:col-span-8',
-            ],
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo hengegroup_theme_render_card([
+            'content' => $facts_markup,
+            'class' => 'col-span-12 self-start lg:col-span-8',
         ]);
         ?>
       <?php endif; ?>
 
       <?php $contact_card = hengegroup_theme_render_contact_card($job['contact'], [
-          'variant' => 'dark',
+          'variant' => 'filled',
       ]); ?>
       <?php if ($contact_card !== ''): ?>
         <aside class="col-span-12 self-start lg:col-span-4 lg:col-start-9 lg:row-span-2 lg:row-start-1" aria-label="<?php esc_attr_e(

@@ -1,0 +1,59 @@
+{
+    "variants": ["default", "filled", "split", "ghost", "glass"],
+    "darkVariants": ["filled", "split", "glass"],
+    "plainVariants": ["ghost", "glass"],
+    "defaultAccent": {
+        "filled": "grey-dark",
+        "other": "henge-grey"
+    },
+    "surface": {
+        "default": "bg-card text-card-foreground",
+        "filled": "text-grey-light",
+        "split": "bg-card text-card-foreground",
+        "ghost": "text-current",
+        "glass": "bg-black/55 text-grey-light backdrop-blur-md"
+    },
+    "shape": {
+        "raised": "rounded-card-raised shadow-card-raised",
+        "plain": "rounded-card-raised"
+    },
+    "hover": {
+        "raised": "hover:shadow-lg",
+        "ghost": "",
+        "glass": "hover:bg-black/65"
+    },
+    "root": "flex flex-col",
+    "horizontal": "sm:grid sm:grid-cols-[240px_1fr]",
+    "clip": "overflow-hidden",
+    "accentBorder": "border-l-4",
+    "link": "cursor-pointer no-underline transition-[box-shadow,translate,background-color] duration-200 motion-safe:hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
+    "media": {
+        "vertical": "relative",
+        "horizontal": "relative min-h-45"
+    },
+    "body": "flex min-w-0 flex-1 flex-col gap-3",
+    "padding": "p-7",
+    "splitBody": "flex min-w-0 flex-1 flex-col",
+    "splitTop": "flex flex-col gap-3 text-grey-light",
+    "splitTopPadding": "px-7 pt-7 pb-5",
+    "splitFooter": "flex flex-1 flex-col gap-3 bg-card text-card-foreground",
+    "splitFooterPadding": "px-7 pt-5 pb-7",
+    "titleRow": "flex min-w-0 items-center gap-3.5",
+    "iconBox": "flex size-11 shrink-0 items-center justify-center rounded-xl [&_svg:not([class*='size-'])]:size-5",
+    "icon": {
+        "dark": "bg-white/10 text-grey-light",
+        "light": "bg-muted text-foreground"
+    },
+    "title": "font-extrabold",
+    "description": {
+        "dark": "text-pretty text-grey-light/60",
+        "ghost": "text-pretty opacity-80",
+        "light": "text-pretty text-muted-foreground"
+    },
+    "content": "flex flex-col gap-3",
+    "footer": "mt-auto flex items-center gap-3",
+    "button": {
+        "dark": "grey-light",
+        "light": "outline"
+    }
+}

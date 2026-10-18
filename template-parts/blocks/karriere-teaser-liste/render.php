@@ -8,17 +8,24 @@ if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_
     return;
 }
 
-$list_markup = hengegroup_theme_render_job_teaser_list((int) ($attributes['limit'] ?? 4));
+$list_markup = hengegroup_theme_render_job_teaser_list(
+    (int) ($attributes['limit'] ?? 4),
+    (int) ($attributes['companyId'] ?? 0),
+);
 
 if ($list_markup !== '') {
     echo $list_markup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     return;
 }
 
-get_template_part('template-parts/base/typography', null, [
-    'config' => [
-        'variant' => 'body-base',
-        'color' => 'neutral',
-        'text' => __('Aktuell sind keine Stellen ausgeschrieben.', 'hengegroup-theme'),
-    ],
-]);
+$empty_text = trim((string) ($attributes['emptyText'] ?? ''));
+
+if ($empty_text !== '') {
+    get_template_part('template-parts/base/typography', null, [
+        'config' => [
+            'variant' => 'body-base',
+            'color' => 'neutral',
+            'text' => $empty_text,
+        ],
+    ]);
+}

@@ -8,6 +8,11 @@ if (!function_exists('hengegroup_theme_render_company_contact_row')) {
     return;
 }
 
+$contact_row = hengegroup_theme_render_company_contact_row(
+    hengegroup_theme_get_contact_block_contact(is_array($attributes ?? null) ? $attributes : []),
+    (string) ($attributes['accent'] ?? 'henge-grey'),
+);
+
 echo '<div class="wrapper gap-y-12">';
-echo hengegroup_theme_render_company_contact_row(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo $contact_row; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 echo '</div>';
