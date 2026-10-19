@@ -10,35 +10,22 @@ import {
     useBlockProps,
     useInnerBlocksProps,
 } from "@wordpress/block-editor";
-import {
-    PanelBody,
-    TextControl,
-    ToolbarButton,
-    ToolbarDropdownMenu,
-    ToolbarGroup,
-} from "@wordpress/components";
+import { PanelBody, TextControl, ToolbarButton, ToolbarGroup } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
 import {
     ACCENT_FORMATS,
     HeadingTagDropdown,
     MediaPicker,
     MediaToolbarButtons,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
     useMediaUrl,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
 } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/bild-text/block.json";
-
-const BACKGROUND_OPTIONS = [
-    { title: __("Hell", "hengegroup-theme"), value: "light" },
-    { title: __("Grau", "hengegroup-theme"), value: "muted" },
-    { title: __("Dunkel", "hengegroup-theme"), value: "dark" },
-];
-
-// Literals mirror render.php (Tailwind scanner).
-const SECTION_CLASSES = {
-    light: "",
-    muted: "bg-neutral-200",
-    dark: "section-dark text-grey-light",
-};
 
 const BODY_CLASSNAME =
     "flex flex-col gap-4.5 text-lg leading-[1.6] [&_a]:underline [&_a]:underline-offset-4 [&_:is(h2,h3,h4)]:mt-1.5 [&_:is(h2,h3,h4)]:text-[15px] [&_:is(h2,h3,h4)]:font-semibold [&_p]:m-0 [&_p]:text-pretty [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:flex [&_ol]:flex-col [&_ol]:[counter-reset:item] [&_ol>li]:flex [&_ol>li]:items-baseline [&_ol>li]:gap-3.5 [&_ol>li]:border-t [&_ol>li]:py-3 [&_ol>li]:text-base [&_ol>li]:leading-[1.45] [&_ol>li]:[counter-increment:item] [&_ol>li:last-child]:border-b [&_ol>li]:before:shrink-0 [&_ol>li]:before:text-[13px] [&_ol>li]:before:font-bold [&_ol>li]:before:tabular-nums [&_ol>li]:before:content-[counter(item,decimal-leading-zero)]";
@@ -56,11 +43,12 @@ const INNER_TEMPLATE = [
 ];
 
 function Edit({ attributes, setAttributes }) {
-    const { imageId, imageAlt, imagePosition, background, heading, headingTag } = attributes;
-    const isDark = background === "dark";
+    const { imageId, imageAlt, imagePosition, heading, headingTag } = attributes;
+    const background = sectionBackground(attributes.background);
+    const isDark = background.dark;
     const imageUrl = useMediaUrl(imageId);
     const blockProps = useBlockProps({
-        className: `alignfull section-spacing ${SECTION_CLASSES[background] || ""}`,
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
     });
     const innerBlocksProps = useInnerBlocksProps(
         { className: `${BODY_CLASSNAME} ${BODY_TONE_CLASSNAME[isDark ? "dark" : "light"]}` },
@@ -103,14 +91,13 @@ function Edit({ attributes, setAttributes }) {
                     />
                 </ToolbarGroup>
                 <ToolbarGroup>
-                    <ToolbarDropdownMenu
-                        icon="admin-appearance"
-                        label={__("Hintergrund", "hengegroup-theme")}
-                        controls={BACKGROUND_OPTIONS.map((option) => ({
-                            title: option.title,
-                            isActive: option.value === background,
-                            onClick: () => setAttributes({ background: option.value }),
-                        }))}
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
                     />
                 </ToolbarGroup>
             </BlockControls>
@@ -145,7 +132,7 @@ function Edit({ attributes, setAttributes }) {
                                         <img
                                             src={imageUrl}
                                             alt=""
-                                            className="rounded-card-raised shadow-card-raised aspect-4/3 w-full object-cover"
+                                            className="rounded-card-raised shadow-raised aspect-4/3 w-full object-cover"
                                         />
                                     </button>
                                 ) : (
@@ -160,17 +147,22 @@ function Edit({ attributes, setAttributes }) {
                             }
                         </MediaPicker>
                     </div>
-                    <div className="col-span-12 lg:col-span-6">
-                        <RichText
-                            tagName={headingTag}
-                            className={`mb-4.5 text-4xl leading-tight font-semibold text-balance lg:text-[42px] lg:leading-[1.12] ${
-                                isDark ? "text-grey-light" : ""
-                            }`}
-                            value={heading}
-                            onChange={(html) => setAttributes({ heading: html })}
-                            placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={ACCENT_FORMATS}
-                            disableLineBreaks
+                    <div className="col-span-12 flex flex-col gap-5 lg:col-span-6">
+                        <SectionHeaderInner
+                            color={background.color}
+                            title={
+                                <RichText
+                                    tagName={headingTag}
+                                    className={
+                                        sectionHeaderClassNames({ color: background.color }).title
+                                    }
+                                    value={heading}
+                                    onChange={(html) => setAttributes({ heading: html })}
+                                    placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                    allowedFormats={ACCENT_FORMATS}
+                                    disableLineBreaks
+                                />
+                            }
                         />
                         <div {...innerBlocksProps} />
                     </div>

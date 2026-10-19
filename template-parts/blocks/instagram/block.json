@@ -1,0 +1,47 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "hengegroup-theme/instagram",
+    "title": "Instagram",
+    "category": "henge",
+    "icon": "instagram",
+    "description": "Überschrift, Text, Button zum Profil und die neuesten Instagram-Beiträge (Einstellungen > Instagram).",
+    "textdomain": "hengegroup-theme",
+    "attributes": {
+        "heading": {
+            "type": "string",
+            "default": "Folge uns"
+        },
+        "headingTag": {
+            "type": "string",
+            "default": "h2"
+        },
+        "text": {
+            "type": "string",
+            "default": "Entdecke die Welt der HENGEGROUP auf Instagram. Tauche ein in visuelle Geschichten, besondere Momente und exklusive Einblicke."
+        },
+        "buttonText": {
+            "type": "string",
+            "default": "Instagram"
+        },
+        "count": {
+            "type": "number",
+            "default": 3
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted", "dark"],
+            "default": "dark"
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
+        }
+    },
+    "supports": {
+        "html": false
+    },
+    "editorScript": "hengegroup-theme-instagram-editor",
+    "render": "file:./render.php"
+}

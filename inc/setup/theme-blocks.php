@@ -168,6 +168,11 @@ function hengegroup_theme_register_blocks(): void
         'hengegroup-theme-standorte-editor',
         'js/blocks/standorte-edit.js',
     );
+    hengegroup_theme_register_theme_block(
+        'instagram',
+        'hengegroup-theme-instagram-editor',
+        'js/blocks/instagram-edit.js',
+    );
 
     // Kind-Bloecke, clientseitig im edit.jsx des Eltern-Blocks registriert.
     foreach (

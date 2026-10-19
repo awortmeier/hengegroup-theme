@@ -39,6 +39,8 @@ function hengegroup_theme_action_admin_menu_cleanup(): void
         'site-editor.php?p=/pattern',
         // Keine Widget-Bereiche registriert.
         'widgets.php',
+        // Schriften kommen aus dem Theme.
+        'font-library.php',
     ];
 
     remove_menu_page('edit.php');
@@ -136,7 +138,8 @@ function hengegroup_theme_action_block_hidden_admin_pages(): void
     if (
         $pagenow === 'customize.php' ||
         $pagenow === 'site-editor.php' ||
-        $pagenow === 'widgets.php'
+        $pagenow === 'widgets.php' ||
+        $pagenow === 'font-library.php'
     ) {
         wp_safe_redirect(admin_url());
         exit();

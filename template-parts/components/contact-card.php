@@ -75,7 +75,10 @@ foreach (hengegroup_theme_get_contact_rows($email, $phone, $fax) as $contact_row
         esc_html($contact_row['label']),
         $contact_row['href'] !== null
             ? sprintf(
-                '<a class="text-current underline-offset-4 hover:underline" href="%1$s">%2$s</a>',
+                '<a class="%1$s" href="%2$s">%3$s</a>',
+                $variant === 'filled'
+                    ? 'text-current underline-offset-4 transition-colors hover:underline hover:text-henge-blue-light'
+                    : 'text-current underline-offset-4 transition-colors hover:underline hover:text-henge-blue',
                 esc_attr($contact_row['href']),
                 esc_html($contact_row['text']),
             )

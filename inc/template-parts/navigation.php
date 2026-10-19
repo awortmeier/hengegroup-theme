@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 // Maps the "primary" wp_nav_menu() location onto navigation-menu.php items. One level of children
 // becomes a dropdown panel; deeper levels are skipped. A parent with a real URL stays a link.
+// CSS class "font-accent" (menu item field) sets a child, or all children of a parent, in Crillee.
 
 /**
  * [] when no menu is assigned. Current page via _wp_menu_item_classes_by_context(), like core.
@@ -36,7 +37,7 @@ function hengegroup_theme_primary_navigation_items(string $location = 'primary')
         $children_by_parent[$parent_id][] = $menu_item;
     }
 
-    $panel_link_class = 'flex flex-col gap-1 rounded-lg p-2.5 hover:bg-henge-green/10';
+    $panel_link_class = 'flex flex-col gap-1 rounded-lg p-2.5';
 
     $items = [];
 
@@ -50,6 +51,7 @@ function hengegroup_theme_primary_navigation_items(string $location = 'primary')
             in_array('current_page_parent', $item_classes, true);
 
         $children = $children_by_parent[(int) $menu_item->ID] ?? [];
+        $children_accent = in_array('font-accent', $item_classes, true);
 
         if ($children === []) {
             $items[] = ['text' => $item_text, 'href' => $item_href, 'active' => $item_active];
@@ -60,6 +62,7 @@ function hengegroup_theme_primary_navigation_items(string $location = 'primary')
 
         foreach ($children as $child_item) {
             $child_classes = is_array($child_item->classes ?? null) ? $child_item->classes : [];
+            $child_accent = $children_accent || in_array('font-accent', $child_classes, true);
 
             get_template_part('template-parts/base/navigation-menu/navigation-menu-link', null, [
                 'config' => [
@@ -67,7 +70,9 @@ function hengegroup_theme_primary_navigation_items(string $location = 'primary')
                     'class' => $panel_link_class,
                     'active' => in_array('current-menu-item', $child_classes, true),
                     'content' =>
-                        '<span class="text-sm font-semibold">' .
+                        '<span class="text-base font-semibold' .
+                        ($child_accent ? ' font-accent' : '') .
+                        '">' .
                         esc_html((string) $child_item->title) .
                         '</span>',
                 ],

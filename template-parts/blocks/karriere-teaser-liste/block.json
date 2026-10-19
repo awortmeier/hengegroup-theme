@@ -19,6 +19,11 @@
         "emptyText": {
             "type": "string",
             "default": ""
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted", "dark"],
+            "default": "light"
         }
     },
     "supports": {

@@ -1,6 +1,6 @@
 // Editor for "Ansprechpartner" (parent) and its person cards, edited directly in the canvas. Markup
-// mirrors contact-card.php (lower = contact, optional portrait on the left); the accent reaches the
-// cards via block context.
+// mirrors contact-card.php (lower = contact, optional portrait on the left); cards take their own accent
+// or the section's via block context.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
 import {
@@ -23,6 +23,7 @@ import {
     cardVariant,
     cardVariations,
     CardToolbar,
+    CHILD_ACCENT_PROPS,
     APPENDER_GRID_CELL_CLASSNAME,
     fromRichTextValue,
     HeadingTagDropdown,
@@ -33,6 +34,12 @@ import {
     TileLayoutDropdown,
     tileGridClass,
     useInnerBlockCount,
+    SectionHeaderInner,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    sectionHeaderClassNames,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
 } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/ansprechpartner/block.json";
 import personMetadata from "../../../../template-parts/blocks/ansprechpartner-person/block.json";
@@ -45,11 +52,14 @@ const CONTACT_FIELDS = [
 
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag, accent, layout } = attributes;
+    const background = sectionBackground(attributes.background);
     const isFull = layout === "full";
     const gridClass = `${tileGridClass(isFull ? "full" : "grid-4", useInnerBlockCount(clientId))} ${
         isFull ? "" : "lg:has-[[data-slot=card-media]]:grid-cols-2"
     }`;
-    const blockProps = useBlockProps({ className: "alignfull bg-neutral-200 section-spacing" });
+    const blockProps = useBlockProps({
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
+    });
     const innerBlocksProps = useInnerBlocksProps(
         {
             className: `col-span-12 grid gap-6 ${gridClass} ${APPENDER_GRID_CELL_CLASSNAME}`,
@@ -60,6 +70,7 @@ function Edit({ attributes, setAttributes, clientId }) {
             orientation: "horizontal",
             renderAppender: () => (
                 <AddItemTile
+                    tone={background.tone}
                     rootClientId={clientId}
                     blockName={personMetadata.name}
                     label={__("+ Ansprechpartner hinzufügen", "hengegroup-theme")}
@@ -85,18 +96,34 @@ function Edit({ attributes, setAttributes, clientId }) {
                         value={layout}
                         onChange={(value) => setAttributes({ layout: value })}
                     />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
+                    />
                 </ToolbarGroup>
             </BlockControls>
             <section {...blockProps}>
                 <div className="wrapper gap-y-10">
-                    <RichText
-                        tagName={headingTag}
-                        className="col-span-12 text-4xl leading-tight font-semibold"
-                        value={heading}
-                        onChange={(html) => setAttributes({ heading: html })}
-                        placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                        allowedFormats={ACCENT_FORMATS}
-                        disableLineBreaks
+                    <SectionHeaderInner
+                        color={background.color}
+                        className="col-span-12"
+                        title={
+                            <RichText
+                                tagName={headingTag}
+                                className={
+                                    sectionHeaderClassNames({ color: background.color }).title
+                                }
+                                value={heading}
+                                onChange={(html) => setAttributes({ heading: html })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
+                                disableLineBreaks
+                            />
+                        }
                     />
                     <ul {...innerBlocksProps} />
                 </div>
@@ -106,7 +133,7 @@ function Edit({ attributes, setAttributes, clientId }) {
 }
 
 function PersonEdit({ attributes, setAttributes, context }) {
-    const accent = context["hengegroup-theme/ansprechpartner-accent"];
+    const accent = attributes.accent || context["hengegroup-theme/ansprechpartner-accent"];
     const variant = cardVariant(personMetadata, attributes.variant);
     const { imageId } = attributes;
     const imageUrl = useMediaUrl(imageId);
@@ -142,8 +169,9 @@ function PersonEdit({ attributes, setAttributes, context }) {
                     <CardToolbar
                         metadata={personMetadata}
                         variant={variant}
-                        accent={accent}
+                        accent={attributes.accent}
                         setAttributes={setAttributes}
+                        {...CHILD_ACCENT_PROPS}
                     />
                     <MediaToolbarButtons
                         value={imageId}

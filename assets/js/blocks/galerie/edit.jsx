@@ -15,7 +15,15 @@ import { useSelect } from "@wordpress/data";
 import { __, sprintf } from "@wordpress/i18n";
 import metadata from "../../../../template-parts/blocks/galerie/block.json";
 import { getBentoTileShapes, TILE_CLASSNAMES } from "./layout.js";
-import { ACCENT_FORMATS } from "../shared.jsx";
+import {
+    ACCENT_FORMATS,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
+} from "../shared.jsx";
 
 const HEADING_TAG_OPTIONS = [
     { title: __("Überschrift 1 (H1)", "hengegroup-theme"), value: "h1" },
@@ -32,7 +40,10 @@ const TILE_BUTTON_CLASSNAME =
 
 function Edit({ attributes, setAttributes }) {
     const { heading, headingTag, imageIds } = attributes;
-    const blockProps = useBlockProps({ className: "alignfull section-spacing" });
+    const background = sectionBackground(attributes.background);
+    const blockProps = useBlockProps({
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
+    });
     const mediaById = useSelect(
         (select) => Object.fromEntries(imageIds.map((id) => [id, select("core").getMedia(id)])),
         [imageIds]
@@ -73,6 +84,14 @@ function Edit({ attributes, setAttributes }) {
                             onClick: () => setAttributes({ headingTag: option.value }),
                         }))}
                     />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
+                    />
                 </ToolbarGroup>
                 {imageIds.length > 0 && (
                     <ToolbarGroup>
@@ -97,14 +116,22 @@ function Edit({ attributes, setAttributes }) {
             </BlockControls>
             <section {...blockProps}>
                 <div className="wrapper gap-y-10">
-                    <RichText
-                        tagName={headingTag}
-                        className="col-span-12 text-4xl leading-tight font-semibold"
-                        value={heading}
-                        onChange={(html) => setAttributes({ heading: html })}
-                        placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                        allowedFormats={ACCENT_FORMATS}
-                        disableLineBreaks
+                    <SectionHeaderInner
+                        color={background.color}
+                        className="col-span-12"
+                        title={
+                            <RichText
+                                tagName={headingTag}
+                                className={
+                                    sectionHeaderClassNames({ color: background.color }).title
+                                }
+                                value={heading}
+                                onChange={(html) => setAttributes({ heading: html })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
+                                disableLineBreaks
+                            />
+                        }
                     />
                     {imageIds.length > 0 && (
                         <ul className="col-span-12 grid grid-cols-1 gap-5 sm:grid-flow-dense sm:grid-cols-3">
@@ -123,7 +150,7 @@ function Edit({ attributes, setAttributes }) {
                                             <img
                                                 src={url}
                                                 alt=""
-                                                className="size-full rounded-2xl object-cover"
+                                                className="shadow-raised size-full rounded-2xl object-cover"
                                             />
                                         ) : (
                                             <div className="size-full animate-pulse rounded-2xl bg-neutral-200" />

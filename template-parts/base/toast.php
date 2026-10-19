@@ -274,7 +274,7 @@ foreach ($toasts_config as $toast_config) {
 
     $card_classes =
         'pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-2xl ' .
-        'border px-4 py-4 shadow-lg animate-[hg-toast-in_0.28s_cubic-bezier(0.2,0.9,0.3,1)] ' .
+        'border px-4 py-4 shadow-overlay animate-[hg-toast-in_0.28s_cubic-bezier(0.2,0.9,0.3,1)] ' .
         ($is_error ? 'border-destructive/25 bg-destructive/6' : 'border-foreground/8 bg-card') .
         ' ' .
         $type_accent_classes[$type];

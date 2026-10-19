@@ -10,10 +10,18 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 - Header, Footer (Einstellungen > Footer), 404 nach Design.
 - Bloecke: Buehne, Buehne (statisch), Textabschnitt, Produkte, Produktkategorie, Kontakt, Anwendungsgruppe,
   Offene Stellen, Karriere-Teaser, Stellen-Liste, Benefits, Auszeichnungen, Galerie, Historie, Personen,
-  Kennzahlen, Unternehmen der Gruppe, Bild & Text, Ansprechpartner, Standorte.
-- Bild & Text: Bild links/rechts, hell/grau/dunkel, Text als Absaetze, Zwischenueberschriften und
+  Kennzahlen, Unternehmen der Gruppe, Bild & Text, Ansprechpartner, Standorte, Instagram.
+- Einstellungen > Instagram: Business-Konto per Access-Token verbinden, Beitraege werden stuendlich
+  abgeglichen und lokal gespeichert.
+- Hintergrund (Keine, Grau, Dunkelgrau) und Abstand (oben und unten, nur oben, nur unten) in allen
+  Sektions-Bloecken ausser Buehne in der Block-Toolbar waehlbar; Produkte nutzen dafuer jetzt `section-dark` statt flachem Dunkelgrau.
+- Bild & Text: Bild links/rechts, Text als Absaetze, Zwischenueberschriften und
   nummerierte Listen (01, 02, ...).
 - Kontakt: Akzentfarbe der Karte und eigene Kontaktdaten statt Einstellungen > Footer.
+- Ansprechpartner und Standorte: Akzentfarbe je Karte waehlbar (Standard: wie Abschnitt).
+- Farbauswahl bei Unternehmen, Produktkategorien und Anwendungen zeigt Blau, Gruen, Grau, Dunkelgrau statt der technischen Werte.
+- Einheitliches Schattensystem (raised, overlay, Sektions-Inset), auf dunklen Flaechen automatisch kraeftiger; Header, Glas-Karte der Buehne, Galerie- und Instagram-Bilder haben jetzt Schatten, die Kontakt-Sektion der Produktseite ist `section-dark`.
+- Hauptmenue: groessere Schrift, Hover ohne Hintergrund und aktiver Punkt in Blau; Dropdown-Eintraege mit neutral-grauem Hover. Textlinks haben allgemein Blau als Hover-Farbe (`henge-blue`, auf dunklem Grund `henge-blue-light`).
 - Offene Stellen: eigener Ansprechpartner statt Karriere > Einstellungen und Hinweistext ohne Stellen.
 - Karriere-Teaser: Hinweistext ohne Stellen im Block pflegbar.
 - Stellen-Liste: Ueberschrift im Block aenderbar.
@@ -22,10 +30,13 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 - Kontaktkarte und Ansprechpartner wahlweise mit Porträt links neben der Karte.
 - Kachel-Bloecke (Ansprechpartner, Standorte, Auszeichnungen, Unternehmen, Personen, Benefits-Karten)
   waehlbar in voller Breite oder im 4er-Raster; Akzentfarben heissen Blau, Gruen, Grau, Dunkelgrau.
+- Header zeigt das weisse Hengegroup-Logo (mobil die Bildmarke) statt des Seitennamens.
+- Hauptmenue: CSS-Klasse `font-accent` am Menuepunkt setzt Unterpunkte in Crillee (Unternehmen).
 - Offene Stellen ohne Abstand nach oben.
 - Sektionsabstaende nur noch ueber section-spacing, -top und -bottom; header-offset fuer Seiten
   ohne Buehne (404, Produkt, Stellenanzeige).
-- Karriere-Teaser: Filter auf ein Unternehmen (dann ohne Unternehmens-Badge) und dunkle Variante.
+- Karriere-Teaser: Filter auf ein Unternehmen (dann ohne Unternehmens-Badge und ohne offene Stellen
+  ausgeblendet) und dunkle Variante.
 - Benefits wahlweise als Karten (Unternehmensseite), neue Icons Entwicklung und Nachhaltigkeit.
 - Hauptmenue: Punkte mit Unterpunkten und echter URL bleiben Links zur Seite, das Dropdown oeffnet per
   Hover oder ueber einen eigenen Chevron-Button; Punkte mit "#" bleiben reine Dropdowns.
@@ -42,6 +53,10 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 
 ### Changed
 
+- Sektionskoepfe aller Bloecke, der Produkt- und der Stellenseite laufen ueber `section-header.php`
+  (Kicker, Titel, Text, Meta, Buttons) mit zwei Groessen: Titel 36/42 bzw. 48 px, Abstaende 20 px
+  im Kopf, 32 px zu den Buttons und 40 px zum Inhalt; ersetzt `components/section-intro`.
+- Typografie-Klassen in `typography-classes.json`, die PHP und Editor lesen.
 - Alle Karten (ausser der Produktbox, inkl. Download-Karte) laufen ueber `card.php` mit den Varianten Weiss,
   Einfarbig, Zweigeteilt, Transparent und Glas, Akzentfarbe, Farbrand links und einheitlichem Padding.
 - Kontaktkarte, Standort, Ansprechpartner und die Inhaltsbox der Buehne nutzen `card.php`.
@@ -55,8 +70,8 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 - Karten: Klassen in `card-classes.json` fuer PHP und Editor; Logo/Siegel als Leading-Visual
   (Unternehmen, Auszeichnung), Badge als Kicker (Buehne); ungenutzte Optionen (`size`, `action`,
   `media_badge`, `footer_divider`) entfernt.
-- Karten haben nur noch eine Schattenstufe (`card-raised`); `elevation` und die Tokens `card-flat`
-  und `card-hover` entfallen.
+- Die Tokens `card-raised` (Schatten), `card-flat` und `card-hover` sowie die Karten-Option `elevation`
+  entfallen.
 - Kind-Bloecke holen Grundwerte ihrer Karte aus `hengegroup_theme_get_block_card_config()`;
   `hengegroup_theme_get_accent_classes()` liefert zusaetzlich die Textfarbe (`fg`) und ersetzt
   `hengegroup_theme_get_variant_background_class()`.
@@ -69,7 +84,6 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 - Unternehmen ist ein eigener Menuepunkt unter Stellenangebote statt Untermenue von Stellen und Produkten.
 - Kontaktkarte der Produktseite als Split-Karte: oben Firmenfarbe, unten Adresse des Unternehmens
   (neues Feld, sonst Footer-Adresse).
-- Textabschnitt: Abstand unten abschaltbar (Seitenleiste > Abstaende).
 - Block "Ansprechpartner": graue Sektion mit Split-Kontaktkarten (oben Name/Funktion in der
   Akzentfarbe, unten E-Mail/Telefon/Fax).
 - Backend aufgeraeumt (ungenutzte WooCommerce-Menues, Datei-Editor, Versand aus).
@@ -81,7 +95,7 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 - Anfrage- und Bewerbungsformular teilen sich die Huelle `components/request-form` (Banner,
   Spam-Schutz, Datenschutz, Absenden); die Anfrage fokussiert jetzt auch ihre Statusmeldung.
 - Wiederkehrende Klassenketten als Utilities `section-dark`, `brand-gradient`, `rich-text`
-  (`app.css`); Kopf von Produktkategorie und Anwendungsgruppe als Komponente `section-intro`.
+  (`app.css`).
 - Bei `prefers-reduced-motion` laufen Transitionen und Animationen sofort durch, Carousel-Navigation
   scrollt ohne Smooth-Scrolling.
 - Seiten, die mit einer Buehne beginnen, zeigen den Seitentitel nur noch fuer Screenreader bzw. gar
@@ -91,7 +105,9 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/). Version in
 
 ### Removed
 
+- Showcase-Seiten (`page-component-showcase-*.php`).
 - Windows-/PowerShell-Skripte, Vorlagen-Skripte (`rename-theme.sh`, `pull-base-updates.sh`), `archive-product.php`, `archive-stellenangebote.php`, `woocommerce.php`.
+- Admin-Menue Design > Schriften (Font Library), Seite leitet aufs Dashboard um.
 
 ## [1.0.0] - 2026-08-12
 

@@ -160,7 +160,7 @@ foreach ($slides as $slide) {
             'content' => $slide_content,
             'id' => $item_id,
             'class' =>
-                'absolute inset-0 h-full w-full opacity-0 transition-opacity duration-700 ' .
+                'elevation-dark absolute inset-0 h-full w-full opacity-0 transition-opacity duration-700 ' .
                 'ease-in-out data-[state=active]:opacity-100' .
                 ($image_id > 0 ? '' : ' bg-grey-dark'),
             'attributes' => [

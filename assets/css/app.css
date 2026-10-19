@@ -4,7 +4,12 @@
 
 /* Wiederkehrende Klassenketten als eigene Utilities (per @apply), damit Varianten wie lg: greifen. */
 @utility section-dark {
-    @apply bg-grey-dark bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)] shadow-[inset_0_40px_40px_-40px_rgba(0,0,0,0.5),inset_0_-40px_40px_-40px_rgba(0,0,0,0.5)];
+    @apply elevation-dark bg-grey-dark inset-shadow-section bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)];
+}
+
+/* Dunkler Grund: verstaerkt alle Schatten-Tokens darin (siehe tokens.css). */
+@utility elevation-dark {
+    --shadow-strength: 3;
 }
 
 /* Vertikaler Abstand einer Seitensektion; -top/-bottom einseitig.
@@ -33,7 +38,7 @@
 
 /* Fliesstext aus dem Editor (the_content, Produktbeschreibung); Groesse/Farbe setzt der Aufrufer. */
 @utility rich-text {
-    @apply [&_a]:text-henge-green [&_a]:underline [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_li]:leading-[1.7] [&_ol]:mb-3.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3.5 [&_p:last-child]:mb-0 [&_ul]:mb-3.5 [&_ul]:list-disc [&_ul]:pl-5;
+    @apply [&_a]:text-henge-green [&_a:hover]:text-henge-blue [&_a]:underline [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_li]:leading-[1.7] [&_ol]:mb-3.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3.5 [&_p:last-child]:mb-0 [&_ul]:mb-3.5 [&_ul]:list-disc [&_ul]:pl-5;
 }
 
 @layer base {

@@ -21,20 +21,25 @@ if (!in_array($heading_tag, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'], true)) {
     $heading_tag = 'h2';
 }
 
-echo '<section class="section-spacing">';
+$background = hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''));
+$spacing_class = hengegroup_theme_get_section_spacing_class(
+    (string) ($attributes['spacing'] ?? ''),
+);
+
+printf(
+    '<section class="%1$s" data-background="%2$s">',
+    esc_attr(trim($spacing_class . ' ' . $background['class'])),
+    esc_attr($background['name']),
+);
 echo '<div class="wrapper gap-y-10">';
 
-if ($heading !== '') {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'text' => $heading,
-            'accent_markup' => true,
-            'variant' => 'headline-sm',
-            'tag' => $heading_tag,
-            'class' => 'col-span-12',
-        ],
-    ]);
-}
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_section_header([
+    'title' => $heading,
+    'title_tag' => $heading_tag,
+    'color' => $background['color'],
+    'class' => 'col-span-12',
+]);
 
 $grid_class = hengegroup_theme_get_tile_grid_class(
     (string) ($attributes['layout'] ?? ''),

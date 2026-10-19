@@ -25,14 +25,23 @@ import {
     fromRichTextValue,
     HeadingTagDropdown,
     toRichTextValue,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
 } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/historie/block.json";
 import entryMetadata from "../../../../template-parts/blocks/historie-eintrag/block.json";
 
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag } = attributes;
+    const background = sectionBackground(attributes.background);
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
-    const blockProps = useBlockProps({ className: "alignfull section-spacing" });
+    const blockProps = useBlockProps({
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
+    });
     const innerBlocksProps = useInnerBlocksProps(
         {
             className:
@@ -44,6 +53,7 @@ function Edit({ attributes, setAttributes, clientId }) {
             renderAppender: () => (
                 <li className="grid grid-cols-[4.5rem_2rem_minmax(0,1fr)] md:grid-cols-[6.875rem_2.75rem_minmax(0,1fr)]">
                     <AddItemTile
+                        tone={background.tone}
                         rootClientId={clientId}
                         blockName={entryMetadata.name}
                         label={__("+ Eintrag hinzufügen", "hengegroup-theme")}
@@ -62,19 +72,34 @@ function Edit({ attributes, setAttributes, clientId }) {
                         value={headingTag}
                         onChange={(value) => setAttributes({ headingTag: value })}
                     />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
+                    />
                 </ToolbarGroup>
             </BlockControls>
             <section {...blockProps}>
                 <div className="wrapper">
-                    <div className="col-span-12 xl:col-span-10 xl:col-start-2">
-                        <RichText
-                            tagName={headingTag}
-                            className="mb-12 text-4xl leading-tight font-semibold"
-                            value={heading}
-                            onChange={(html) => setAttributes({ heading: html })}
-                            placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={ACCENT_FORMATS}
-                            disableLineBreaks
+                    <div className="col-span-12 flex flex-col gap-10 xl:col-span-10 xl:col-start-2">
+                        <SectionHeaderInner
+                            color={background.color}
+                            title={
+                                <RichText
+                                    tagName={headingTag}
+                                    className={
+                                        sectionHeaderClassNames({ color: background.color }).title
+                                    }
+                                    value={heading}
+                                    onChange={(html) => setAttributes({ heading: html })}
+                                    placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                    allowedFormats={ACCENT_FORMATS}
+                                    disableLineBreaks
+                                />
+                            }
                         />
                         <ol {...innerBlocksProps} />
                     </div>
@@ -84,9 +109,18 @@ function Edit({ attributes, setAttributes, clientId }) {
     );
 }
 
-function EntryEdit({ attributes, setAttributes }) {
+// Mirrors historie-eintrag/render.php: the dot's ring has the section colour.
+const RING_CLASSES = {
+    light: "border-grey-light",
+    muted: "border-neutral-200",
+    dark: "border-grey-dark",
+};
+
+function EntryEdit({ attributes, setAttributes, context }) {
     const { year, title, text, accent } = attributes;
     const variant = cardVariant(entryMetadata, attributes.variant);
+    const ringClass =
+        RING_CLASSES[sectionBackground(context["hengegroup-theme/historie-background"]).name];
     const blockProps = useBlockProps({
         className:
             "grid grid-cols-[4.5rem_2rem_minmax(0,1fr)] items-start md:grid-cols-[6.875rem_2.75rem_minmax(0,1fr)]",
@@ -120,7 +154,7 @@ function EntryEdit({ attributes, setAttributes }) {
                 />
                 <span className="flex justify-center pt-7.5" aria-hidden="true">
                     <span
-                        className={`border-grey-light relative z-1 size-3.5 rounded-full border-3 ${accentClasses(accent).bg}`}
+                        className={`relative z-1 size-3.5 rounded-full border-3 ${ringClass} ${accentClasses(accent).bg}`}
                     />
                 </span>
                 <div className={cardClassName({ variant })}>

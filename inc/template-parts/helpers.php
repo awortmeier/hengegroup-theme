@@ -172,21 +172,47 @@ function hengegroup_theme_render_card(array $card_config): string
     return (string) ob_get_clean();
 }
 
-/**
- * Class lists of card.php, shared with the block editor (assets/js/blocks/shared.jsx).
- */
-function hengegroup_theme_get_card_classes(): array
+function hengegroup_theme_render_section_header(array $section_header_config): string
 {
-    static $classes = null;
+    ob_start();
+    get_template_part('template-parts/base/section-header', null, [
+        'config' => $section_header_config,
+    ]);
 
-    if ($classes === null) {
+    return (string) ob_get_clean();
+}
+
+/**
+ * Class lists of template-parts/base/<name>-classes.json, shared with the block editor
+ * (assets/js/blocks/shared.jsx).
+ */
+function hengegroup_theme_get_component_classes(string $name): array
+{
+    static $classes = [];
+
+    if (!isset($classes[$name])) {
         $json = (string) file_get_contents(
-            get_template_directory() . '/template-parts/base/card-classes.json',
+            get_template_directory() . '/template-parts/base/' . $name . '-classes.json',
         );
-        $classes = (array) json_decode($json, true);
+        $classes[$name] = (array) json_decode($json, true);
     }
 
-    return $classes;
+    return $classes[$name];
+}
+
+function hengegroup_theme_get_card_classes(): array
+{
+    return hengegroup_theme_get_component_classes('card');
+}
+
+function hengegroup_theme_get_typography_classes(): array
+{
+    return hengegroup_theme_get_component_classes('typography');
+}
+
+function hengegroup_theme_get_section_header_classes(): array
+{
+    return hengegroup_theme_get_component_classes('section-header');
 }
 
 /**
@@ -571,6 +597,43 @@ function hengegroup_theme_get_accent_classes(string $color, string $fallback = '
 }
 
 /**
+ * Section background of a block (light = body, muted, dark), as literals for the Tailwind scanner.
+ * Unknown values fall back to light. `color` is the matching section-header/typography color.
+ *
+ * @return array{name: string, class: string, dark: bool, color: string}
+ */
+function hengegroup_theme_get_section_background(string $background): array
+{
+    $classes = [
+        'light' => '',
+        'muted' => 'bg-neutral-200',
+        'dark' => 'section-dark text-grey-light',
+    ];
+    $name = isset($classes[$background]) ? $background : 'light';
+
+    return [
+        'name' => $name,
+        'class' => $classes[$name],
+        'dark' => $name === 'dark',
+        'color' => $name === 'dark' ? 'light' : 'default',
+    ];
+}
+
+/**
+ * Vertical padding of a section block (both, top, bottom); unknown values fall back to both.
+ */
+function hengegroup_theme_get_section_spacing_class(string $spacing): string
+{
+    $classes = [
+        'both' => 'section-spacing',
+        'top' => 'section-spacing-top',
+        'bottom' => 'section-spacing-bottom',
+    ];
+
+    return $classes[$spacing] ?? $classes['both'];
+}
+
+/**
  * Card variant of a card block. The allowed values are the `enum` of its `variant` attribute in
  * block.json (shared with the editor); without a valid value $fallback, else the first one.
  */
@@ -610,6 +673,20 @@ function hengegroup_theme_get_block_card_config(
         ),
         'accent' => (string) ($attributes['accent'] ?? ''),
     ];
+}
+
+function hengegroup_theme_get_child_card_accent(
+    array $attributes,
+    ?WP_Block $block,
+    string $context_key,
+): string {
+    $accent = trim((string) ($attributes['accent'] ?? ''));
+
+    if ($accent !== '' || $block === null) {
+        return $accent;
+    }
+
+    return (string) ($block->context[$context_key] ?? '');
 }
 
 function hengegroup_theme_pick_card_variant(

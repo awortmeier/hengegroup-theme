@@ -17,6 +17,8 @@ import { useDispatch, useSelect } from "@wordpress/data";
 import { __ } from "@wordpress/i18n";
 import { create, toHTMLString } from "@wordpress/rich-text";
 import CARD from "../../../template-parts/base/card-classes.json";
+import SECTION_HEADER from "../../../template-parts/base/section-header-classes.json";
+import TYPOGRAPHY from "../../../template-parts/base/typography-classes.json";
 
 // Texts stay plain strings; render.php escapes them.
 export function toRichTextValue(text) {
@@ -78,25 +80,110 @@ export const ACCENT_CLASSES = {
     },
 };
 
-const ACCENT_OPTIONS = [
-    { title: __("Blau", "hengegroup-theme"), value: "henge-blue" },
-    { title: __("Grün", "hengegroup-theme"), value: "henge-green" },
-    { title: __("Grau", "hengegroup-theme"), value: "henge-grey" },
-    { title: __("Dunkelgrau", "hengegroup-theme"), value: "grey-dark" },
+// Mirrors hengegroup_theme_get_badge_variant_labels().
+export const ACCENT_OPTIONS = [
+    { label: __("Blau", "hengegroup-theme"), value: "henge-blue" },
+    { label: __("Grün", "hengegroup-theme"), value: "henge-green" },
+    { label: __("Grau", "hengegroup-theme"), value: "henge-grey" },
+    { label: __("Dunkelgrau", "hengegroup-theme"), value: "grey-dark" },
 ];
 
 export function accentClasses(value) {
     return ACCENT_CLASSES[value] || ACCENT_CLASSES["grey-dark"];
 }
 
-export function AccentDropdown({ value, onChange }) {
+// inheritTitle adds an empty option, e.g. for cards that otherwise take the section's accent.
+export function AccentDropdown({ value, onChange, inheritTitle = "" }) {
+    const options = inheritTitle
+        ? [{ label: inheritTitle, value: "" }, ...ACCENT_OPTIONS]
+        : ACCENT_OPTIONS;
+
     return (
         <ToolbarDropdownMenu
             icon="admin-appearance"
             label={__("Akzentfarbe", "hengegroup-theme")}
-            controls={ACCENT_OPTIONS.map((option) => ({
-                title: option.title,
+            controls={options.map((option) => ({
+                title: option.label,
                 isActive: option.value === value,
+                onClick: () => onChange(option.value),
+            }))}
+        />
+    );
+}
+
+// Mirrors hengegroup_theme_get_section_background() (literals for the Tailwind scanner).
+const SECTION_BACKGROUND_CLASSES = {
+    light: "",
+    muted: "bg-neutral-200",
+    dark: "section-dark text-grey-light",
+};
+
+const SECTION_BACKGROUND_OPTIONS = [
+    { title: __("Keine", "hengegroup-theme"), value: "light" },
+    { title: __("Grau", "hengegroup-theme"), value: "muted" },
+    { title: __("Dunkelgrau", "hengegroup-theme"), value: "dark" },
+];
+
+export function sectionBackground(value) {
+    const name = value in SECTION_BACKGROUND_CLASSES ? value : "light";
+    const dark = name === "dark";
+
+    return {
+        name,
+        className: SECTION_BACKGROUND_CLASSES[name],
+        dark,
+        color: dark ? "light" : "default",
+        tone: dark ? "dark" : "light",
+    };
+}
+
+export function SectionBackgroundDropdown({ value, onChange }) {
+    const current = sectionBackground(value).name;
+
+    return (
+        <ToolbarDropdownMenu
+            icon="color-picker"
+            label={__("Hintergrund", "hengegroup-theme")}
+            controls={SECTION_BACKGROUND_OPTIONS.map((option) => ({
+                title: option.title,
+                isActive: option.value === current,
+                onClick: () => onChange(option.value),
+            }))}
+        />
+    );
+}
+
+// Mirrors hengegroup_theme_get_section_spacing_class() (literals for the Tailwind scanner).
+const SECTION_SPACING_CLASSES = {
+    both: "section-spacing",
+    top: "section-spacing-top",
+    bottom: "section-spacing-bottom",
+};
+
+const SECTION_SPACING_OPTIONS = [
+    { title: __("Abstand oben und unten", "hengegroup-theme"), value: "both" },
+    { title: __("Nur Abstand oben", "hengegroup-theme"), value: "top" },
+    { title: __("Nur Abstand unten", "hengegroup-theme"), value: "bottom" },
+];
+
+export function sectionSpacing(value) {
+    return value in SECTION_SPACING_CLASSES ? value : "both";
+}
+
+export function sectionSpacingClassName(value) {
+    return SECTION_SPACING_CLASSES[sectionSpacing(value)];
+}
+
+export function SectionSpacingDropdown({ value, onChange }) {
+    const current = sectionSpacing(value);
+
+    return (
+        <ToolbarDropdownMenu
+            icon="sort"
+            label={__("Abstand", "hengegroup-theme")}
+            controls={SECTION_SPACING_OPTIONS.map((option) => ({
+                title: option.title,
+                isActive: option.value === current,
                 onClick: () => onChange(option.value),
             }))}
         />
@@ -130,13 +217,10 @@ export function SectionIntroPanel({ attributes, setAttributes, defaults = {} }) 
                     {
                         value: "",
                         label: defaultVariant
-                            ? `${__("Standard", "hengegroup-theme")} (${defaultVariant.title})`
+                            ? `${__("Standard", "hengegroup-theme")} (${defaultVariant.label})`
                             : __("Standard", "hengegroup-theme"),
                     },
-                    ...ACCENT_OPTIONS.map((option) => ({
-                        value: option.value,
-                        label: option.title,
-                    })),
+                    ...ACCENT_OPTIONS,
                 ]}
                 onChange={(value) => setAttributes({ kickerVariant: value })}
             />
@@ -354,7 +438,14 @@ export function CardVariantDropdown({ metadata, value, onChange }) {
     );
 }
 
-export function CardToolbar({ metadata, variant, accent, setAttributes, accentFor = ["filled"] }) {
+export function CardToolbar({
+    metadata,
+    variant,
+    accent,
+    setAttributes,
+    accentFor = ["filled"],
+    accentInheritTitle = "",
+}) {
     return (
         <Fragment>
             <CardVariantDropdown
@@ -366,11 +457,17 @@ export function CardToolbar({ metadata, variant, accent, setAttributes, accentFo
                 <AccentDropdown
                     value={accent}
                     onChange={(value) => setAttributes({ accent: value })}
+                    inheritTitle={accentInheritTitle}
                 />
             )}
         </Fragment>
     );
 }
+
+export const CHILD_ACCENT_PROPS = {
+    accentFor: ["split", "filled"],
+    accentInheritTitle: __("Wie Abschnitt", "hengegroup-theme"),
+};
 
 // Mirrors button.php (variant + size, without hover/focus: the preview is RichText).
 const BUTTON_PREVIEW_VARIANTS = {
@@ -422,15 +519,8 @@ export function cardClassName({
         .join(" ");
 }
 
-// Mirrors typography.php for the card title variants.
-const CARD_TITLE_CLASSES = {
-    "body-lg": "text-2xl leading-normal",
-    "body-base": "text-lg leading-normal",
-    "body-sm": "text-base leading-normal",
-};
-
 export function cardTitleClassName(variant, titleVariant = "body-lg") {
-    return `${CARD_TITLE_CLASSES[titleVariant]} ${CARD.title} ${isDarkCard(variant) ? "text-grey-light" : ""}`;
+    return `${typographyClassName(titleVariant, isDarkCard(variant) ? "light" : "default")} ${CARD.title}`;
 }
 
 export function cardDescriptionClassName(variant) {
@@ -540,5 +630,70 @@ export function CardInner({
                 </div>
             )}
         </Fragment>
+    );
+}
+
+// Classes of typography.php.
+export function typographyClassName(variant = "body-base", color = "default") {
+    return [
+        TYPOGRAPHY.variants[variant] || TYPOGRAPHY.variants["body-base"],
+        TYPOGRAPHY.colors[color],
+    ]
+        .filter(Boolean)
+        .join(" ");
+}
+
+// Classes of section-header.php per slot; title/description go to the RichText elements.
+export function sectionHeaderClassNames({ size = "sm", color = "default", align = "start" } = {}) {
+    const row = (base) => `${base} ${SECTION_HEADER.align[align].row}`.trim();
+
+    return {
+        root: `${SECTION_HEADER.root} ${SECTION_HEADER.align[align].root}`.trim(),
+        text: SECTION_HEADER.text,
+        kicker: row(SECTION_HEADER.kicker),
+        title: `${typographyClassName(SECTION_HEADER.title[size].variant, color)} ${SECTION_HEADER.title[size].class}`,
+        description: typographyClassName(SECTION_HEADER.description[size], color),
+        meta: row(`${SECTION_HEADER.meta} ${SECTION_HEADER.metaColor[color]}`),
+        actions: row(SECTION_HEADER.actions),
+    };
+}
+
+// Markup of section-header.php; slots are editor nodes. Pass the title/description classes from
+// sectionHeaderClassNames() to their RichText.
+export function SectionHeaderInner({
+    size,
+    color,
+    align,
+    className = "",
+    kicker,
+    title,
+    description,
+    meta,
+    actions,
+}) {
+    const classes = sectionHeaderClassNames({ size, color, align });
+
+    return (
+        <div className={`${classes.root} ${className}`.trim()} data-slot="section-header">
+            <div className={classes.text} data-slot="section-header-text">
+                {kicker && (
+                    <div className={classes.kicker} data-slot="section-header-kicker">
+                        {kicker}
+                    </div>
+                )}
+                {title}
+                {description}
+                {meta && (
+                    <div className={classes.meta} data-slot="section-header-meta">
+                        {meta}
+                    </div>
+                )}
+            </div>
+            {actions && (
+                <div className={classes.actions} data-slot="section-header-actions">
+                    {actions}
+                </div>
+            )}
+        </div>
     );
 }

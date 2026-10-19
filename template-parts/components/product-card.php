@@ -41,7 +41,7 @@ $anwendung_badges_markup =
     $variant === 'default' ? hengegroup_theme_render_product_anwendung_badges($product_id) : '';
 ?>
 <article
-  class="flex h-full flex-col rounded-2xl bg-neutral-50 shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+  class="flex h-full flex-col rounded-2xl bg-neutral-50 text-card-foreground shadow-raised"
   data-product-id="<?php echo esc_attr((string) $product_id); ?>"
   data-slot="product-card"
   data-variant="<?php echo esc_attr($variant); ?>"

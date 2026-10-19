@@ -27,20 +27,25 @@ if ($image_ids === []) {
     return;
 }
 
-echo '<section class="section-spacing">';
+$background = hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''));
+$spacing_class = hengegroup_theme_get_section_spacing_class(
+    (string) ($attributes['spacing'] ?? ''),
+);
+
+printf(
+    '<section class="%1$s" data-background="%2$s">',
+    esc_attr(trim($spacing_class . ' ' . $background['class'])),
+    esc_attr($background['name']),
+);
 echo '<div class="wrapper gap-y-10">';
 
-if ($heading !== '') {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'text' => $heading,
-            'accent_markup' => true,
-            'variant' => 'headline-sm',
-            'tag' => $heading_tag,
-            'class' => 'col-span-12',
-        ],
-    ]);
-}
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_section_header([
+    'title' => $heading,
+    'title_tag' => $heading_tag,
+    'color' => $background['color'],
+    'class' => 'col-span-12',
+]);
 
 echo '<ul class="col-span-12 grid grid-cols-1 gap-5 sm:grid-flow-dense sm:grid-cols-3">';
 
@@ -61,7 +66,7 @@ foreach (hengegroup_theme_get_bento_tile_shapes(count($image_ids)) as $index => 
         'alt' => $alt,
         'decorative' => $alt === '',
         'loading' => 'lazy',
-        'class' => 'size-full rounded-2xl object-cover',
+        'class' => 'size-full rounded-2xl object-cover shadow-raised',
     ]);
 
     printf(

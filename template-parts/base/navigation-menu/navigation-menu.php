@@ -67,35 +67,41 @@ $group_name = $id . '-group';
 $color_classes = [
     'default' => [
         'idle' => 'text-foreground/85',
-        'hover' =>
-            'hover:bg-henge-green/10 hover:text-henge-green group-open:bg-henge-green/10 group-open:text-henge-green',
+        'list' => '',
+        'hover' => 'hover:text-henge-blue group-open:text-henge-blue',
+        'split_hover' =>
+            'group-hover/item:text-henge-blue group-has-[details[open]]/item:text-henge-blue',
+        'panel_link' => '[&_[data-slot=navigation-menu-link]:hover]:bg-accent',
         'panel_border' => 'border-border',
         'panel_bg' => 'bg-popover',
         'panel_text' => 'text-popover-foreground',
-        'panel_shadow' => 'shadow-[0_12px_32px_rgba(0,0,0,0.14)]',
-        'split_item' => 'hover:bg-henge-green/10 has-[details[open]]:bg-henge-green/10',
+        'panel_shadow' => 'shadow-overlay',
     ],
     'light' => [
         'idle' => 'text-grey-light/85',
-        'hover' =>
-            'hover:bg-grey-light/10 hover:text-henge-green group-open:bg-grey-light/10 group-open:text-henge-green',
+        // henge-blue hat auf dunklem Grund zu wenig Kontrast; das List-Element ueberstimmt die
+        // aktive Farbe aus navigation-menu-link.php.
+        'list' => '[&_[data-active=true]]:text-henge-blue-light',
+        'hover' => 'hover:text-henge-blue-light group-open:text-henge-blue-light',
+        'split_hover' =>
+            'group-hover/item:text-henge-blue-light group-has-[details[open]]/item:text-henge-blue-light',
+        'panel_link' => '[&_[data-slot=navigation-menu-link]:hover]:bg-neutral-700',
         'panel_border' => 'border-grey-light/15',
         'panel_bg' => 'bg-neutral-800',
         'panel_text' => 'text-grey-light',
-        'panel_shadow' => 'shadow-[0_20px_48px_rgba(0,0,0,0.45)]',
-        'split_item' => 'hover:bg-grey-light/10 has-[details[open]]:bg-grey-light/10',
+        'panel_shadow' => 'shadow-overlay',
     ],
 ];
 
 $trigger_button_base =
-    'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2.5 text-sm font-medium outline-none ' .
+    'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2.5 text-base font-medium outline-none ' .
     'transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 ' .
     $color_classes[$color]['hover'];
 
 $split_part_base =
-    'inline-flex items-center rounded-lg py-2.5 text-sm font-medium outline-none transition-colors ' .
-    'focus-visible:ring-[3px] focus-visible:ring-ring/50 group-hover/item:text-henge-green ' .
-    'group-has-[details[open]]/item:text-henge-green';
+    'inline-flex items-center rounded-lg py-2.5 text-base font-medium outline-none transition-colors ' .
+    'focus-visible:ring-[3px] focus-visible:ring-ring/50 ' .
+    $color_classes[$color]['split_hover'];
 
 $icon_class =
     'pointer-events-none size-3.5 shrink-0 transition-transform duration-200 group-open:-scale-y-100';
@@ -109,6 +115,8 @@ $content_classes = trim(
         $color_classes[$color]['panel_text'] .
         ' ' .
         $color_classes[$color]['panel_shadow'] .
+        ' ' .
+        $color_classes[$color]['panel_link'] .
         ' animate-[hg-popover-in_140ms_ease-out]',
 );
 
@@ -179,10 +187,7 @@ foreach ($items_config as $item) {
                     '<details class="group" data-slot="navigation-menu-trigger-item" name="%3$s" id="%4$s">' .
                     '<summary class="%5$s" data-slot="navigation-menu-trigger" aria-haspopup="true" aria-label="%6$s">%7$s</summary>%8$s' .
                     '</details></li>',
-                esc_attr(
-                    'group/item relative flex items-center rounded-lg transition-colors ' .
-                        $color_classes[$color]['split_item'],
-                ),
+                esc_attr('group/item relative flex items-center'),
                 $link_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 esc_attr($group_name),
                 esc_attr($item_id),
@@ -247,7 +252,8 @@ if (trim($items_markup) === '') {
 }
 
 $list_markup = sprintf(
-    '<ul class="flex flex-wrap items-center gap-0.5" data-slot="navigation-menu-list">%s</ul>',
+    '<ul class="%1$s" data-slot="navigation-menu-list">%2$s</ul>',
+    esc_attr(trim('flex flex-wrap items-center gap-0.5 ' . $color_classes[$color]['list'])),
     $items_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 

@@ -25,19 +25,25 @@ if ($anwendungen === []) {
     return;
 }
 
-$background = ($attributes['background'] ?? 'light') === 'muted' ? 'bg-neutral-200' : '';
+$background = hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''));
+$spacing_class = hengegroup_theme_get_section_spacing_class(
+    (string) ($attributes['spacing'] ?? ''),
+);
 
 printf(
-    '<section id="%1$s" class="%2$s" data-slot="anwendungsgruppe">',
+    '<section id="%1$s" class="%2$s" data-slot="anwendungsgruppe" data-background="%3$s">',
     esc_attr($group['slug']),
-    esc_attr(trim('scroll-mt-24 section-spacing ' . $background)),
+    esc_attr(trim('scroll-mt-24 ' . $spacing_class . ' ' . $background['class'])),
+    esc_attr($background['name']),
 );
-echo '<div class="wrapper gap-y-6">';
-get_template_part('template-parts/components/section-intro', null, [
-    'config' => hengegroup_theme_get_section_intro_config($group, $attributes) + [
-        'class' => 'col-span-12 mb-4',
+echo '<div class="wrapper gap-y-10">';
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_section_header(
+    hengegroup_theme_get_term_section_header_config($group, $attributes) + [
+        'color' => $background['color'],
+        'class' => 'col-span-12',
     ],
-]);
+);
 echo '<ul class="col-span-12 flex flex-col gap-6">';
 
 foreach ($anwendungen as $anwendung) {

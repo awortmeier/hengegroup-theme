@@ -195,7 +195,7 @@ $actions_markup =
 $base_classes =
     'group/attachment relative flex min-w-0 items-center gap-3 rounded-2xl ' .
     'border border-border bg-card text-card-foreground shadow-xs ' .
-    'transition-[color,box-shadow,border-color] has-[>a]:hover:shadow-md has-[>a]:hover:bg-muted/50 ' .
+    'transition-[color,box-shadow,border-color] has-[>a]:hover:shadow-raised has-[>a]:hover:bg-muted/50 ' .
     'has-[>a:focus-visible]:ring-[3px] has-[>a:focus-visible]:ring-ring/50 ' .
     'data-[state=idle]:border-dashed data-[state=error]:border-destructive/40 ' .
     'data-[state=error]:bg-destructive/5 ' .

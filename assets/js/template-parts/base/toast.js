@@ -29,7 +29,7 @@ const LIFE_CLASSES =
     "animate-[hg-toast-life_var(--toast-duration)_linear_forwards]";
 const CARD_BASE_CLASSES =
     "pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-2xl " +
-    "border px-4 py-4 shadow-lg animate-[hg-toast-in_0.28s_cubic-bezier(0.2,0.9,0.3,1)]";
+    "border px-4 py-4 shadow-overlay animate-[hg-toast-in_0.28s_cubic-bezier(0.2,0.9,0.3,1)]";
 const CARD_CLASSES_DEFAULT = "border-foreground/8 bg-card";
 const CARD_CLASSES_ERROR = "border-destructive/25 bg-destructive/6";
 

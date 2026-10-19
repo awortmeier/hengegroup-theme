@@ -71,7 +71,7 @@ $trigger_markup = sprintf(
 
 $content_classes =
     'absolute z-50 min-w-32 rounded-2xl border border-border bg-popover p-1 ' .
-    'text-popover-foreground shadow-[0_12px_32px_rgba(0,0,0,0.14)] ' .
+    'text-popover-foreground shadow-overlay ' .
     'animate-[hg-popover-in_140ms_ease-out] ' .
     hengegroup_theme_floating_position_classes($side, $align);
 

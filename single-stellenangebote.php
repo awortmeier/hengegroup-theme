@@ -83,10 +83,10 @@ while (have_posts()):
     $application_email = $job['contact']['email'];
     ?>
   <article <?php post_class('header-offset'); ?> data-slot="job-posting">
-    <header class="wrapper mb-10 section-spacing-top">
-      <div class="col-span-12 lg:col-span-8">
+    <header class="wrapper pb-10 section-spacing-top">
+      <div class="col-span-12 flex flex-col gap-6 lg:col-span-8">
         <?php if (hengegroup_theme_is_job_expired((int) get_the_ID())): ?>
-          <p class="mb-6 rounded-xl border border-henge-blue/30 bg-white px-5 py-4 text-base text-grey-dark" role="status">
+          <p class="rounded-xl border border-henge-blue/30 bg-white px-5 py-4 text-base text-grey-dark" role="status">
             <?php esc_html_e(
                 'Nur für Redakteure sichtbar: Diese Stelle ist abgelaufen bzw. besetzt. Besucher werden auf die Karriereseite weitergeleitet, Google erhält keine Stellendaten mehr.',
                 'hengegroup-theme',
@@ -94,43 +94,30 @@ while (have_posts()):
           </p>
         <?php endif; ?>
 
-        <?php if ($job['company'] !== null): ?>
-          <div class="mb-4.5">
-            <?php $company_badge = hengegroup_theme_render_label_badge(
-                $job['company']['name'],
-                $job['company']['variant'],
-                'px-3.5 tracking-[1.5px]',
-            ); ?>
-            <?php printf(
-                '%s',
-                $company_badge, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            ); ?>
-          </div>
-        <?php endif; ?>
-
-        <?php get_template_part('template-parts/base/typography', null, [
-            'config' => [
-                'variant' => 'headline-sm',
-                'tag' => 'h1',
-                'text' => get_the_title(),
-                'class' => 'mb-3.5 text-balance',
-            ],
-        ]); ?>
-
-        <?php if ($location_label !== ''): ?>
-          <p class="flex items-center gap-2 text-base text-grey-dark/60">
-            <?php $location_icon = hengegroup_theme_render_icon([
-                'name' => 'map-pin',
-                'set' => 'lucide',
-                'class' => 'size-4 shrink-0',
-            ]); ?>
-            <?php printf(
-                '%s',
-                $location_icon, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            ); ?>
-            <?php echo esc_html($location_label); ?>
-          </p>
-        <?php endif; ?>
+        <?php
+        $location_meta =
+            $location_label !== ''
+                ? hengegroup_theme_render_icon([
+                        'name' => 'map-pin',
+                        'set' => 'lucide',
+                        'class' => 'size-4 shrink-0',
+                    ]) . esc_html($location_label)
+                : '';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        echo hengegroup_theme_render_section_header([
+            'kicker' =>
+                $job['company'] !== null
+                    ? hengegroup_theme_render_label_badge(
+                        $job['company']['name'],
+                        $job['company']['variant'],
+                        'px-3.5 tracking-[1.5px]',
+                    )
+                    : '',
+            'title' => get_the_title(),
+            'title_tag' => 'h1',
+            'meta' => $location_meta,
+        ]);
+        ?>
       </div>
     </header>
 
@@ -197,32 +184,25 @@ while (have_posts()):
 
   <section id="bewerbung" class="bg-neutral-200 section-spacing" aria-labelledby="bewerbung-titel">
       <div class="wrapper-small">
-        <div class="col-span-12">
-          <?php get_template_part('template-parts/base/typography', null, [
-              'config' => [
-                  'variant' => 'headline-sm',
-                  'tag' => 'h2',
-                  'text' => __('Bewerbungsformular', 'hengegroup-theme'),
-                  'class' => 'mb-3',
-                  'attributes' => ['id' => 'bewerbung-titel'],
-              ],
+        <div class="col-span-12 flex flex-col gap-10">
+          <?php $application_header = hengegroup_theme_render_section_header([
+              'title' => __('Bewerbungsformular', 'hengegroup-theme'),
+              'title_id' => 'bewerbung-titel',
+              'description' => sprintf(
+                  /* translators: %s: job title. */
+                  __('Bewerbung für: %s', 'hengegroup-theme'),
+                  get_the_title(),
+              ),
           ]); ?>
-          <?php get_template_part('template-parts/base/typography', null, [
-              'config' => [
-                  'variant' => 'body-sm',
-                  'text' => sprintf(
-                      /* translators: %s: job title. */
-                      __('Bewerbung für: %s', 'hengegroup-theme'),
-                      get_the_title(),
-                  ),
-                  'class' => 'mb-6 opacity-70',
-              ],
-          ]); ?>
+          <?php printf(
+              '%s',
+              $application_header, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+          ); ?>
           <?php get_template_part('template-parts/components/job-application-form', null, [
               'job' => $job,
           ]); ?>
           <?php if ($application_email !== ''): ?>
-          <p class="mt-8 text-sm text-grey-dark/70">
+          <p class="text-sm text-grey-dark/70">
             <?php printf(
                 /* translators: %s: application e-mail address (link). */
                 esc_html__('Lieber per E-Mail? Schick deine Unterlagen an %s.', 'hengegroup-theme'),

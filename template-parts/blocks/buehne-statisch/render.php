@@ -41,7 +41,7 @@ if ($image_id > 0) {
 echo '<div class="pointer-events-none absolute inset-0 bg-linear-to-b from-grey-dark/25 to-grey-dark/70"></div>';
 echo '<div class="absolute inset-x-0 bottom-0 pb-10 md:pb-14">';
 echo '<div class="wrapper">';
-echo '<div class="col-span-12">';
+echo '<div class="col-span-12 flex flex-col gap-3.5">';
 
 if ($title !== '') {
     printf(
@@ -57,7 +57,7 @@ if ($text !== '') {
             'text' => $text,
             'variant' => 'body-lg',
             'color' => 'light',
-            'class' => 'max-w-2xl font-medium' . ($title !== '' ? ' mt-3.5' : ''),
+            'class' => 'max-w-2xl font-medium',
         ],
     ]);
 }

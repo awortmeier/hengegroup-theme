@@ -94,7 +94,7 @@ $trigger_markup = sprintf(
 // Position classes only paint the pre-JS state; hover-card.js overrides them inline.
 $content_classes =
     'absolute z-50 w-64 rounded-2xl border border-border bg-popover p-4 text-popover-foreground ' .
-    'shadow-[0_12px_32px_rgba(0,0,0,0.14)] opacity-0 scale-[0.98] pointer-events-none ' .
+    'shadow-overlay opacity-0 scale-[0.98] pointer-events-none ' .
     'transition-[opacity,scale] duration-[160ms] ease-out ' .
     'group-data-[state=open]:pointer-events-auto group-data-[state=open]:opacity-100 ' .
     'group-data-[state=open]:scale-100 ' .

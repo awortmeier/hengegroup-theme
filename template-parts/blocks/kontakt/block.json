@@ -39,6 +39,16 @@
         "contactAddress": {
             "type": "string",
             "default": ""
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted", "dark"],
+            "default": "light"
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
     },
     "supports": {

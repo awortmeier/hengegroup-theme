@@ -593,7 +593,7 @@ function hengegroup_theme_get_job_term_field_control(
         return hengegroup_theme_get_job_admin_select(
             $id,
             $name,
-            array_combine($variants, $variants),
+            hengegroup_theme_get_badge_variant_labels(),
             in_array($value, $variants, true) ? $value : $variants[0],
         );
     }

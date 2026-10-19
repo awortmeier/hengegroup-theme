@@ -19,6 +19,16 @@
         "layout": {
             "type": "string",
             "default": "default"
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted", "dark"],
+            "default": "muted"
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
     },
     "allowedBlocks": ["hengegroup-theme/firma"],

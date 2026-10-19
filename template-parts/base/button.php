@@ -93,7 +93,7 @@ $variant_classes = [
     'outline' =>
         'border border-grey-dark !bg-background shadow-xs hover:!bg-grey-light hover:!text-grey-light-foreground',
     'ghost' => 'hover:!bg-grey-light hover:!text-grey-light-foreground',
-    'link' => '!text-grey-dark underline-offset-4 hover:underline',
+    'link' => '!text-grey-dark underline-offset-4 hover:underline hover:!text-henge-blue',
 ];
 
 $size_classes = [

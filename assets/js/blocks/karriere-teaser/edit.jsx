@@ -25,7 +25,16 @@ import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/karriere-teaser/block.json";
 import listeMetadata from "../../../../template-parts/blocks/karriere-teaser-liste/block.json";
-import { ACCENT_FORMATS, buttonPreviewClassName } from "../shared.jsx";
+import {
+    ACCENT_FORMATS,
+    buttonPreviewClassName,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
+} from "../shared.jsx";
 
 function toRichTextValue(text) {
     return toHTMLString({ value: create({ text }) });
@@ -61,11 +70,11 @@ function Edit({ attributes, setAttributes, isSelected }) {
         variant,
         emptyText,
     } = attributes;
-    const isDark = variant === "dark";
+    // The background is stored as `variant` (existing content).
+    const background = sectionBackground(variant);
+    const headerClasses = sectionHeaderClassNames({ size: "base", color: background.color });
     const blockProps = useBlockProps({
-        className: `alignfull section-spacing ${
-            isDark ? "section-dark text-grey-light" : "bg-grey-light"
-        }`,
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
     });
     const buttonRef = useRef();
     const [isEditingButtonUrl, setIsEditingButtonUrl] = useState(false);
@@ -88,6 +97,14 @@ function Edit({ attributes, setAttributes, isSelected }) {
                             isActive: option.value === headingTag,
                             onClick: () => setAttributes({ headingTag: option.value }),
                         }))}
+                    />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ variant: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
                     />
                 </ToolbarGroup>
                 <ToolbarGroup>
@@ -128,21 +145,17 @@ function Edit({ attributes, setAttributes, isSelected }) {
                         ]}
                         onChange={(value) => setAttributes({ companyId: parseInt(value, 10) || 0 })}
                     />
-                    <SelectControl
-                        __nextHasNoMarginBottom
-                        __next40pxDefaultSize
-                        label={__("Hintergrund", "hengegroup-theme")}
-                        value={variant}
-                        options={[
-                            { value: "light", label: __("Hell", "hengegroup-theme") },
-                            { value: "dark", label: __("Dunkel", "hengegroup-theme") },
-                        ]}
-                        onChange={(value) => setAttributes({ variant: value })}
-                    />
                     <TextareaControl
                         __nextHasNoMarginBottom
                         label={__("Text ohne offene Stellen", "hengegroup-theme")}
-                        help={__("Leer lassen = kein Hinweis.", "hengegroup-theme")}
+                        help={
+                            companyId
+                                ? __(
+                                      "Mit Unternehmen wird die Sektion ohne offene Stellen auf der Website ausgeblendet.",
+                                      "hengegroup-theme"
+                                  )
+                                : __("Leer lassen = kein Hinweis.", "hengegroup-theme")
+                        }
                         value={emptyText}
                         onChange={(value) => setAttributes({ emptyText: value })}
                     />
@@ -150,77 +163,91 @@ function Edit({ attributes, setAttributes, isSelected }) {
             </InspectorControls>
             <section {...blockProps}>
                 <div className="wrapper items-start gap-y-10">
-                    <div className="col-span-12 lg:col-span-6 lg:pr-8">
-                        <RichText
-                            tagName={headingTag}
-                            className="mb-5 text-5xl leading-tight font-semibold"
-                            value={heading}
-                            onChange={(html) => setAttributes({ heading: html })}
-                            placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={ACCENT_FORMATS}
-                            disableLineBreaks
-                        />
-                        <RichText
-                            tagName="p"
-                            className={`text-2xl leading-normal ${
-                                buttonText.trim() !== "" ? "mb-8" : ""
-                            }`}
-                            value={toRichTextValue(text)}
-                            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-                            placeholder={__("Text eingeben…", "hengegroup-theme")}
-                            allowedFormats={[]}
-                        />
-                        <span ref={buttonRef} className="relative inline-block">
+                    <SectionHeaderInner
+                        size="base"
+                        color={background.color}
+                        className="col-span-12 lg:col-span-6 lg:pr-8"
+                        title={
                             <RichText
-                                tagName="span"
-                                className={buttonPreviewClassName(
-                                    isDark ? "grey-light" : "grey-dark",
-                                    "lg"
-                                )}
-                                value={toRichTextValue(buttonText)}
-                                onChange={(html) =>
-                                    setAttributes({ buttonText: fromRichTextValue(html) })
-                                }
-                                placeholder={__("Button-Text eingeben…", "hengegroup-theme")}
-                                allowedFormats={[]}
+                                tagName={headingTag}
+                                className={headerClasses.title}
+                                value={heading}
+                                onChange={(html) => setAttributes({ heading: html })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
                                 disableLineBreaks
                             />
-                            {isEditingButtonUrl && isSelected && (
-                                <Popover
-                                    placement="bottom-start"
-                                    anchor={buttonRef.current}
-                                    onClose={() => setIsEditingButtonUrl(false)}
-                                >
-                                    {/* Outside the editor iframe, no Tailwind there. */}
-                                    <p
-                                        style={{
-                                            margin: 0,
-                                            padding: "12px 16px 0",
-                                            fontSize: "12px",
-                                            color: "#757575",
-                                        }}
+                        }
+                        description={
+                            <RichText
+                                tagName="p"
+                                className={headerClasses.description}
+                                value={toRichTextValue(text)}
+                                onChange={(html) =>
+                                    setAttributes({ text: fromRichTextValue(html) })
+                                }
+                                placeholder={__("Text eingeben…", "hengegroup-theme")}
+                                allowedFormats={[]}
+                            />
+                        }
+                        actions={
+                            <span ref={buttonRef} className="relative inline-block">
+                                <RichText
+                                    tagName="span"
+                                    className={buttonPreviewClassName(
+                                        background.dark ? "grey-light" : "grey-dark",
+                                        "lg"
+                                    )}
+                                    value={toRichTextValue(buttonText)}
+                                    onChange={(html) =>
+                                        setAttributes({ buttonText: fromRichTextValue(html) })
+                                    }
+                                    placeholder={__("Button-Text eingeben…", "hengegroup-theme")}
+                                    allowedFormats={[]}
+                                    disableLineBreaks
+                                />
+                                {isEditingButtonUrl && isSelected && (
+                                    <Popover
+                                        placement="bottom-start"
+                                        anchor={buttonRef.current}
+                                        onClose={() => setIsEditingButtonUrl(false)}
                                     >
-                                        {__(
-                                            "Leer lassen = Karriereseite (Karriere > Einstellungen), Abschnitt „Offene Stellen“.",
-                                            "hengegroup-theme"
-                                        )}
-                                    </p>
-                                    <LinkControl
-                                        value={{ url: buttonUrl }}
-                                        onChange={(nextValue) =>
-                                            setAttributes({ buttonUrl: nextValue.url || "" })
-                                        }
-                                        onRemove={() => setAttributes({ buttonUrl: "" })}
-                                        settings={[]}
-                                    />
-                                </Popover>
-                            )}
-                        </span>
-                    </div>
+                                        {/* Outside the editor iframe, no Tailwind there. */}
+                                        <p
+                                            style={{
+                                                margin: 0,
+                                                padding: "12px 16px 0",
+                                                fontSize: "12px",
+                                                color: "#757575",
+                                            }}
+                                        >
+                                            {__(
+                                                "Leer lassen = Karriereseite (Karriere > Einstellungen), Abschnitt „Offene Stellen“.",
+                                                "hengegroup-theme"
+                                            )}
+                                        </p>
+                                        <LinkControl
+                                            value={{ url: buttonUrl }}
+                                            onChange={(nextValue) =>
+                                                setAttributes({ buttonUrl: nextValue.url || "" })
+                                            }
+                                            onRemove={() => setAttributes({ buttonUrl: "" })}
+                                            settings={[]}
+                                        />
+                                    </Popover>
+                                )}
+                            </span>
+                        }
+                    />
                     <div className="col-span-12 lg:col-span-6">
                         <ServerSideRender
                             block={listeMetadata.name}
-                            attributes={{ limit, companyId, emptyText }}
+                            attributes={{
+                                limit,
+                                companyId,
+                                emptyText,
+                                background: background.name,
+                            }}
                         />
                     </div>
                 </div>

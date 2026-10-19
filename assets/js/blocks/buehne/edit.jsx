@@ -33,12 +33,10 @@ import { decodeEntities } from "@wordpress/html-entities";
 import { __, sprintf } from "@wordpress/i18n";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/buehne/block.json";
+import { ACCENT_OPTIONS as ALL_ACCENT_OPTIONS } from "../shared.jsx";
 
-const ACCENT_OPTIONS = [
-    { label: __("Blau", "hengegroup-theme"), value: "henge-blue" },
-    { label: __("Grün", "hengegroup-theme"), value: "henge-green" },
-    { label: __("Grau", "hengegroup-theme"), value: "henge-grey" },
-];
+// Mirrors $allowed_accents in buehne/render.php.
+const ACCENT_OPTIONS = ALL_ACCENT_OPTIONS.filter((option) => option.value !== "grey-dark");
 
 function createSlide() {
     return {

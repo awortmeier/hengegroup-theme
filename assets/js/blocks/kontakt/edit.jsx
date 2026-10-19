@@ -2,30 +2,30 @@
 // ServerSideRender of kontakt-vorschau (a preview of this block would show the texts twice).
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
-import { InspectorControls, RichText, useBlockProps } from "@wordpress/block-editor";
-import { PanelBody, SelectControl, TextControl, TextareaControl } from "@wordpress/components";
+import { BlockControls, InspectorControls, RichText, useBlockProps } from "@wordpress/block-editor";
+import {
+    PanelBody,
+    SelectControl,
+    TextControl,
+    TextareaControl,
+    ToolbarGroup,
+} from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
-import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/kontakt/block.json";
 import vorschauMetadata from "../../../../template-parts/blocks/kontakt-vorschau/block.json";
-import { ACCENT_FORMATS } from "../shared.jsx";
-
-// Texts stay plain strings; render.php escapes them.
-function toRichTextValue(text) {
-    return toHTMLString({ value: create({ text }) });
-}
-
-function fromRichTextValue(html) {
-    return create({ html }).text;
-}
-
-const ACCENT_OPTIONS = [
-    { label: __("Blau", "hengegroup-theme"), value: "henge-blue" },
-    { label: __("Grün", "hengegroup-theme"), value: "henge-green" },
-    { label: __("Grau", "hengegroup-theme"), value: "henge-grey" },
-    { label: __("Dunkelgrau", "hengegroup-theme"), value: "grey-dark" },
-];
+import {
+    ACCENT_FORMATS,
+    fromRichTextValue,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
+    toRichTextValue,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
+    ACCENT_OPTIONS,
+} from "../shared.jsx";
 
 const CONTACT_FIELDS = [
     ["contactName", __("Name", "hengegroup-theme")],
@@ -36,15 +36,32 @@ const CONTACT_FIELDS = [
 
 function Edit({ attributes, setAttributes }) {
     const { heading, text, accent, contactAddress } = attributes;
+    const background = sectionBackground(attributes.background);
     const previewAttributes = {
         accent,
+        background: background.name,
         contactAddress,
         ...Object.fromEntries(CONTACT_FIELDS.map(([key]) => [key, attributes[key]])),
     };
-    const blockProps = useBlockProps({ className: "alignfull section-spacing" });
+    const blockProps = useBlockProps({
+        className: `alignfull flex flex-col gap-10 ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
+    });
+    const headerClasses = sectionHeaderClassNames({ color: background.color });
 
     return (
         <Fragment>
+            <BlockControls group="block">
+                <ToolbarGroup>
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
+                    />
+                </ToolbarGroup>
+            </BlockControls>
             <InspectorControls>
                 <PanelBody title={__("Kontaktkarte", "hengegroup-theme")} initialOpen>
                     <SelectControl
@@ -80,26 +97,34 @@ function Edit({ attributes, setAttributes }) {
                 </PanelBody>
             </InspectorControls>
             <section {...blockProps}>
-                <div className="wrapper mb-12">
-                    <div className="col-span-12 max-w-3xl">
-                        <RichText
-                            tagName="h2"
-                            className="mb-5 text-4xl leading-tight font-semibold lg:text-[42px]"
-                            value={heading}
-                            onChange={(html) => setAttributes({ heading: html })}
-                            placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={ACCENT_FORMATS}
-                            disableLineBreaks
-                        />
-                        <RichText
-                            tagName="p"
-                            className="text-lg leading-normal lg:text-[22px] lg:leading-[1.4]"
-                            value={toRichTextValue(text)}
-                            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-                            placeholder={__("Text eingeben…", "hengegroup-theme")}
-                            allowedFormats={[]}
-                        />
-                    </div>
+                <div className="wrapper">
+                    <SectionHeaderInner
+                        color={background.color}
+                        className="col-span-12 max-w-3xl"
+                        title={
+                            <RichText
+                                tagName="h2"
+                                className={headerClasses.title}
+                                value={heading}
+                                onChange={(html) => setAttributes({ heading: html })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
+                                disableLineBreaks
+                            />
+                        }
+                        description={
+                            <RichText
+                                tagName="p"
+                                className={headerClasses.description}
+                                value={toRichTextValue(text)}
+                                onChange={(html) =>
+                                    setAttributes({ text: fromRichTextValue(html) })
+                                }
+                                placeholder={__("Text eingeben…", "hengegroup-theme")}
+                                allowedFormats={[]}
+                            />
+                        }
+                    />
                 </div>
                 <ServerSideRender block={vorschauMetadata.name} attributes={previewAttributes} />
             </section>

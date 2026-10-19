@@ -22,21 +22,25 @@ if (!in_array($heading_tag, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'], true)) {
     $heading_tag = 'h2';
 }
 
-echo '<section class="section-dark section-spacing">';
-echo '<div class="wrapper gap-y-12">';
+$background = hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''));
+$spacing_class = hengegroup_theme_get_section_spacing_class(
+    (string) ($attributes['spacing'] ?? ''),
+);
 
-if ($heading !== '') {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'text' => $heading,
-            'accent_markup' => true,
-            'variant' => 'headline-sm',
-            'tag' => $heading_tag,
-            'color' => 'light',
-            'class' => 'col-span-12',
-        ],
-    ]);
-}
+printf(
+    '<section class="%1$s" data-background="%2$s">',
+    esc_attr(trim($spacing_class . ' ' . $background['class'])),
+    esc_attr($background['name']),
+);
+echo '<div class="wrapper gap-y-10">';
+
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_section_header([
+    'title' => $heading,
+    'title_tag' => $heading_tag,
+    'color' => $background['color'],
+    'class' => 'col-span-12',
+]);
 
 echo '<ul class="col-span-12 grid grid-cols-[repeat(auto-fit,minmax(12.5rem,1fr))] gap-6">';
 echo $items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

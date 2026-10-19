@@ -38,11 +38,17 @@
         },
         "variant": {
             "type": "string",
+            "enum": ["light", "muted", "dark"],
             "default": "light"
         },
         "emptyText": {
             "type": "string",
             "default": "Aktuell sind keine Stellen ausgeschrieben."
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
     },
     "supports": {

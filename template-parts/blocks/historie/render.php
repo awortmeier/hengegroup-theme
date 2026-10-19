@@ -22,21 +22,25 @@ if (!in_array($heading_tag, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'], true)) {
     $heading_tag = 'h2';
 }
 
-echo '<section class="section-spacing">';
-echo '<div class="wrapper">';
-echo '<div class="col-span-12 xl:col-span-10 xl:col-start-2">';
+$background = hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''));
+$spacing_class = hengegroup_theme_get_section_spacing_class(
+    (string) ($attributes['spacing'] ?? ''),
+);
 
-if ($heading !== '') {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'text' => $heading,
-            'accent_markup' => true,
-            'variant' => 'headline-sm',
-            'tag' => $heading_tag,
-            'class' => 'mb-12',
-        ],
-    ]);
-}
+printf(
+    '<section class="%1$s" data-background="%2$s">',
+    esc_attr(trim($spacing_class . ' ' . $background['class'])),
+    esc_attr($background['name']),
+);
+echo '<div class="wrapper">';
+echo '<div class="col-span-12 flex flex-col gap-10 xl:col-span-10 xl:col-start-2">';
+
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_section_header([
+    'title' => $heading,
+    'title_tag' => $heading_tag,
+    'color' => $background['color'],
+]);
 
 echo '<ol class="relative flex flex-col gap-5 before:absolute before:inset-y-2 before:left-[calc(5.5rem-1px)] before:w-0.5 before:bg-linear-to-b before:brand-gradient md:before:left-[calc(8.25rem-1px)]">';
 echo $items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

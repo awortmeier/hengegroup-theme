@@ -1,0 +1,26 @@
+{
+    "sizes": ["sm", "base"],
+    "colors": ["default", "light"],
+    "aligns": ["start", "center"],
+    "root": "flex flex-col gap-8",
+    "text": "flex flex-col gap-5",
+    "kicker": "flex",
+    "title": {
+        "sm": { "variant": "headline-sm", "class": "text-pretty lg:text-[42px]" },
+        "base": { "variant": "headline-base", "class": "text-pretty" }
+    },
+    "description": {
+        "sm": "body-base",
+        "base": "body-lg"
+    },
+    "meta": "flex flex-wrap items-center gap-2 text-base",
+    "metaColor": {
+        "default": "text-grey-dark/60",
+        "light": "text-grey-light/60"
+    },
+    "actions": "flex flex-wrap gap-3",
+    "align": {
+        "start": { "root": "", "row": "" },
+        "center": { "root": "text-center", "row": "justify-center" }
+    }
+}

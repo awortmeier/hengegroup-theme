@@ -166,7 +166,7 @@ $content_markup = sprintf(
         '[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2 ' .
         '[&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full ' .
         '[&::-webkit-scrollbar-thumb]:bg-border ' .
-        'rounded-lg border border-input bg-background p-1 shadow-md" ' .
+        'rounded-lg border border-input bg-background p-1 shadow-overlay" ' .
         'data-slot="combobox-content" id="%1$s" role="listbox" hidden></div>',
     esc_attr($id . '-listbox'),
 );

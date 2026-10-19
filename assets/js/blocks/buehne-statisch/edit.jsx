@@ -158,7 +158,7 @@ function Edit({ attributes, setAttributes, isSelected }) {
                 <div className="from-grey-dark/25 to-grey-dark/70 pointer-events-none absolute inset-0 bg-linear-to-b"></div>
                 <div className="absolute inset-x-0 bottom-0 pb-10 md:pb-14">
                     <div className="wrapper">
-                        <div className="col-span-12">
+                        <div className="col-span-12 flex flex-col gap-3.5">
                             <RichText
                                 tagName={titleTag}
                                 className="font-accent text-grey-light m-0 text-[clamp(2.375rem,6vw,4rem)] leading-[1.05] font-semibold"
@@ -172,7 +172,7 @@ function Edit({ attributes, setAttributes, isSelected }) {
                             />
                             <RichText
                                 tagName="p"
-                                className="text-grey-light mt-3.5 max-w-2xl text-2xl leading-normal font-medium"
+                                className="text-grey-light max-w-2xl text-2xl leading-normal font-medium"
                                 value={toRichTextValue(text)}
                                 onChange={(html) =>
                                     setAttributes({ text: fromRichTextValue(html) })

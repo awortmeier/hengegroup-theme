@@ -92,7 +92,7 @@ $trigger_markup = sprintf(
 // Position classes only paint the pre-JS state; tooltip.js overrides them inline.
 $content_classes =
     'absolute z-50 max-w-xs rounded-lg bg-neutral-900 px-[11px] py-[7px] text-[13px] ' .
-    'leading-[1.4] text-neutral-50 text-pretty shadow-[0_6px_18px_rgba(0,0,0,0.18)] ' .
+    'leading-[1.4] text-neutral-50 text-pretty shadow-overlay ' .
     'opacity-0 pointer-events-none transition-opacity duration-[140ms] ease-out ' .
     'group-data-[state=open]:pointer-events-auto group-data-[state=open]:opacity-100 ' .
     hengegroup_theme_floating_position_classes($side, $align);

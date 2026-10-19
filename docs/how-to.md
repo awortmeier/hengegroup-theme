@@ -24,7 +24,7 @@ define("WP_DEFAULT_THEME", "hengegroup");
 6. Eingaenge (Produktanfragen/Bewerbungen): Status in der Seitenleiste setzen, damit der Zaehler nur
    Neues zeigt.
 
-Weitere Unternehmens-Farbe: `hengegroup_theme_get_badge_variants()` erweitern.
+Weitere Unternehmens-Farbe: `hengegroup_theme_get_badge_variant_labels()` und `ACCENT_OPTIONS` in `assets/js/blocks/shared.jsx` erweitern.
 
 ## Stellenangebote pflegen
 
@@ -37,11 +37,25 @@ Weitere Unternehmens-Farbe: `hengegroup_theme_get_badge_variants()` erweitern.
    `hengegroup_theme_build_job_posting_schema()` ausgeben, in `single-stellenangebote.php` anzeigen,
    Test in `tests/Unit/CareersTest.php`.
 
+## Hauptmenue
+
+Design > Menues, Position "primary". CSS-Klasse `font-accent` (Feld ueber "Ansicht anpassen"
+einblenden) setzt einen Unterpunkt in Crillee, am Elternpunkt alle seine Unterpunkte.
+
 ## Footer
 
 Kontaktdaten und Social-URLs unter Einstellungen > Footer, Links ueber die Menue-Position
 "Footermenü". Weiteres Netzwerk: Eintrag in `hengegroup_theme_get_footer_social_networks()` und Key
 in `hengegroup_theme_get_footer_options()`, dann `pnpm icons:tabler`.
+
+## Instagram
+
+1. Meta-App mit Produkt "Instagram API mit Instagram-Login", Business-Konto als Tester hinzufuegen,
+   dort "Access-Token generieren" (long-lived, Berechtigung `instagram_business_basic`).
+2. Token unter Einstellungen > Instagram speichern: gleicht sofort ab, danach stuendlich per WP-Cron
+   und verlaengert das Token selbst. Laeuft es doch ab (Fehlermeldung dort), neues Token eintragen.
+3. Block "Instagram" auf der Seite einfuegen; Texte und Anzahl im Block, Beitraege und Profil-Link
+   kommen aus den Einstellungen.
 
 ## Neues Formular
 
@@ -67,6 +81,14 @@ in `hengegroup_theme_get_footer_options()`, dann `pnpm icons:tabler`.
    render.php `hengegroup_theme_get_block_card_variant()` an `hengegroup_theme_render_card()` geben, im
    Editor `cardClassName()`/`CardInner`, `CardToolbar` und `variations: cardVariations(metadata)`.
    Kartenklassen nur in `template-parts/base/card-classes.json` aendern.
+6. Ueberschrift + Text des Blocks ueber `hengegroup_theme_render_section_header()`, im Editor
+   `SectionHeaderInner` mit den Klassen aus `sectionHeaderClassNames()`. Klassen nur in
+   `section-header-classes.json`/`typography-classes.json` aendern.
+7. Hintergrund: `background` mit `enum` `light`/`muted`/`dark` in die `block.json`, in render.php
+   `hengegroup_theme_get_section_background()` (Klasse an die `<section>`, `color` an den Kopf), im
+   Editor `sectionBackground()` und `SectionBackgroundDropdown` in der Block-Toolbar. Abstand genauso
+   mit `spacing` (`both`/`top`/`bottom`), `hengegroup_theme_get_section_spacing_class()` und
+   `sectionSpacingClassName()`/`SectionSpacingDropdown`.
 
 ## Icons
 

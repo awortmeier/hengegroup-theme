@@ -15,7 +15,20 @@
         "headingTag": {
             "type": "string",
             "default": "h2"
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted", "dark"],
+            "default": "light"
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
+    },
+    "providesContext": {
+        "hengegroup-theme/historie-background": "background"
     },
     "allowedBlocks": ["hengegroup-theme/historie-eintrag"],
     "supports": {

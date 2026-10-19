@@ -4,9 +4,19 @@ declare(strict_types=1);
 
 // Produkt-Unternehmen: genau ein Term aus `stellen_unternehmen`, Metabox im Produkt-Editor.
 
+function hengegroup_theme_get_badge_variant_labels(): array
+{
+    return [
+        'henge-blue' => __('Blau', 'hengegroup-theme'),
+        'henge-green' => __('Grün', 'hengegroup-theme'),
+        'henge-grey' => __('Grau', 'hengegroup-theme'),
+        'grey-dark' => __('Dunkelgrau', 'hengegroup-theme'),
+    ];
+}
+
 function hengegroup_theme_get_badge_variants(): array
 {
-    return ['henge-blue', 'henge-green', 'henge-grey', 'grey-dark'];
+    return array_keys(hengegroup_theme_get_badge_variant_labels());
 }
 
 function hengegroup_theme_action_add_meta_boxes_product_company(): void

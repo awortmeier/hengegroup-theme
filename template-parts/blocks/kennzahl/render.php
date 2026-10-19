@@ -24,7 +24,6 @@ get_template_part('template-parts/base/typography', null, [
         'text' => $value,
         'variant' => 'headline-base',
         'tag' => 'p',
-        'color' => 'light',
         'class' => '!leading-none tabular-nums',
     ],
 ]);
@@ -34,7 +33,6 @@ if ($label !== '') {
         'config' => [
             'text' => $label,
             'variant' => 'body-sm',
-            'color' => 'light',
             'class' => 'mt-2.5',
         ],
     ]);

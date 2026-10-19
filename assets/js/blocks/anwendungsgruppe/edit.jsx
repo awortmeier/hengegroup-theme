@@ -1,4 +1,4 @@
-// Editor for "Anwendungsgruppe": group, background and section head in the sidebar; ServerSideRender
+// Editor for "Anwendungsgruppe": group and section head in the sidebar; ServerSideRender
 // preview. Groups (with head defaults) come from window.hengegroupThemeAnwendungGroups.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
@@ -7,7 +7,13 @@ import { PanelBody, Placeholder, SelectControl, ToolbarGroup } from "@wordpress/
 import { __ } from "@wordpress/i18n";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/anwendungsgruppe/block.json";
-import { HeadingTagDropdown, SectionIntroPanel } from "../shared.jsx";
+import {
+    HeadingTagDropdown,
+    SectionBackgroundDropdown,
+    SectionIntroPanel,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
+} from "../shared.jsx";
 
 const groups = Array.isArray(window.hengegroupThemeAnwendungGroups)
     ? window.hengegroupThemeAnwendungGroups
@@ -43,6 +49,14 @@ function Edit({ attributes, setAttributes }) {
                             value={headingTag}
                             onChange={(value) => setAttributes({ headingTag: value })}
                         />
+                        <SectionBackgroundDropdown
+                            value={background}
+                            onChange={(value) => setAttributes({ background: value })}
+                        />
+                        <SectionSpacingDropdown
+                            value={attributes.spacing}
+                            onChange={(value) => setAttributes({ spacing: value })}
+                        />
                     </ToolbarGroup>
                 </BlockControls>
             )}
@@ -51,17 +65,6 @@ function Edit({ attributes, setAttributes }) {
                     <GroupSelect
                         value={groupId}
                         onChange={(next) => setAttributes({ groupId: next })}
-                    />
-                    <SelectControl
-                        __nextHasNoMarginBottom
-                        __next40pxDefaultSize
-                        label={__("Hintergrund", "hengegroup-theme")}
-                        value={background}
-                        options={[
-                            { value: "light", label: __("Hell", "hengegroup-theme") },
-                            { value: "muted", label: __("Grau", "hengegroup-theme") },
-                        ]}
-                        onChange={(next) => setAttributes({ background: next })}
                     />
                 </PanelBody>
                 {selected && (

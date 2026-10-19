@@ -15,6 +15,16 @@
         "headingTag": {
             "type": "string",
             "default": "h2"
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted", "dark"],
+            "default": "dark"
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
     },
     "allowedBlocks": ["hengegroup-theme/kennzahl"],

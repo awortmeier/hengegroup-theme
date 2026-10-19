@@ -34,6 +34,16 @@
             "items": {
                 "type": "number"
             }
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted", "dark"],
+            "default": "dark"
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
     },
     "supports": {

@@ -864,7 +864,7 @@ function hengegroup_theme_render_job_row(array $job, bool $with_company_badge): 
 /**
  * Aktive Stellen nach Unternehmen; ohne Unternehmen unter dem Seitennamen.
  */
-function hengegroup_theme_render_jobs_grouped(): string
+function hengegroup_theme_render_jobs_grouped(bool $on_dark = false): string
 {
     $groups = [];
 
@@ -899,9 +899,11 @@ function hengegroup_theme_render_jobs_grouped(): string
 
     foreach ($groups as $group) {
         $name = $group['company']['name'] ?? get_bloginfo('name');
-        $text_class = hengegroup_theme_get_job_company_text_class(
-            $group['company']['variant'] ?? 'grey-dark',
-        );
+        $variant = $group['company']['variant'] ?? 'grey-dark';
+        $text_class =
+            $on_dark && $variant === 'grey-dark'
+                ? 'text-grey-light'
+                : hengegroup_theme_get_job_company_text_class($variant);
         $location_label = implode(' · ', array_keys($group['locations']));
         $rows = implode(
             '',
@@ -914,7 +916,11 @@ function hengegroup_theme_render_jobs_grouped(): string
         $location_markup =
             $location_label !== ''
                 ? sprintf(
-                    '<p class="flex items-center gap-1.5 text-sm text-grey-dark/60">%1$s%2$s</p>',
+                    '<p class="%1$s">%2$s%3$s</p>',
+                    esc_attr(
+                        'flex items-center gap-1.5 text-sm ' .
+                            ($on_dark ? 'text-grey-light/60' : 'text-grey-dark/60'),
+                    ),
                     hengegroup_theme_render_icon([
                         'name' => 'map-pin',
                         'set' => 'lucide',
@@ -925,7 +931,7 @@ function hengegroup_theme_render_jobs_grouped(): string
                 : '';
 
         $markup .= sprintf(
-            '<div class="mb-12 last:mb-0" data-slot="job-group"><div class="mb-4.5 flex flex-wrap items-center gap-x-3.5 gap-y-1">%1$s%2$s</div><ul class="flex flex-col gap-3">%3$s</ul></div>',
+            '<div class="flex flex-col gap-4.5" data-slot="job-group"><div class="flex flex-wrap items-center gap-x-3.5 gap-y-1">%1$s%2$s</div><ul class="flex flex-col gap-3">%3$s</ul></div>',
             hengegroup_theme_render_typography([
                 'variant' => 'body-lg',
                 'tag' => 'h2',
@@ -937,7 +943,7 @@ function hengegroup_theme_render_jobs_grouped(): string
         );
     }
 
-    return $markup;
+    return '<div class="flex flex-col gap-12">' . $markup . '</div>';
 }
 
 /**
@@ -1038,9 +1044,9 @@ function hengegroup_theme_get_benefit_icons(): array
 /**
  * Gruppierte Stellen oder Hinweis auf Initiativbewerbung.
  */
-function hengegroup_theme_render_open_jobs_list(string $empty_text): string
+function hengegroup_theme_render_open_jobs_list(string $empty_text, bool $on_dark = false): string
 {
-    $groups_markup = hengegroup_theme_render_jobs_grouped();
+    $groups_markup = hengegroup_theme_render_jobs_grouped($on_dark);
 
     if ($groups_markup !== '' || trim($empty_text) === '') {
         return $groups_markup;

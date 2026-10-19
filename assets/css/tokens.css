@@ -61,6 +61,19 @@
     /* Auch fuer Elemente, die .wrapper nicht nutzen koennen (max-w-page). */
     --container-page: 1600px;
 
-    --shadow-card-raised: 0 8px 24px rgba(0, 0, 0, 0.12);
     --radius-card-raised: 1.25rem;
+}
+
+/*
+ * Schatten in drei Ebenen: raised (Karten, Bilder, Header), overlay (Popover, Menues, Dialoge) und
+ * inset-shadow-section (dunkle Flaechen). inline, damit --shadow-strength am Element greift:
+ * dunkle Flaechen setzen es per `elevation-dark` hoch, sonst waeren Schatten dort unsichtbar.
+ */
+@theme inline {
+    --shadow-raised: 0 8px 24px rgb(0 0 0 / calc(0.12 * var(--shadow-strength, 1)));
+    --shadow-raised-hover: 0 14px 32px rgb(0 0 0 / calc(0.18 * var(--shadow-strength, 1)));
+    --shadow-overlay: 0 12px 32px rgb(0 0 0 / calc(0.16 * var(--shadow-strength, 1)));
+    --inset-shadow-section:
+        inset 0 40px 40px -40px rgb(0 0 0 / 0.5), inset 0 -40px 40px -40px rgb(0 0 0 / 0.5);
+    --inset-shadow-section-top: inset 0 40px 40px -40px rgb(0 0 0 / 0.5);
 }

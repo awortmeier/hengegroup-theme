@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 // Block "Textabschnitt". heading/text sind RichText-HTML mit dem Format "Akzent-Schrift".
-// containerWidth waehlt .wrapper-small (default) oder .wrapper; spacingBottom false = ohne Abstand unten.
+// containerWidth waehlt .wrapper-small (default) oder .wrapper.
 
 if (!is_array($attributes ?? null)) {
     return;
@@ -34,38 +34,34 @@ if (!in_array($container_width, ['default', 'small'], true)) {
     $container_width = 'small';
 }
 
-$align_class = $text_align === 'center' ? 'text-center' : 'text-left';
 $wrapper_class = $container_width === 'small' ? 'wrapper-small' : 'wrapper';
 
-$spacing_class =
-    ($attributes['spacingBottom'] ?? true) === false ? 'section-spacing-top' : 'section-spacing';
+$spacing = (string) ($attributes['spacing'] ?? 'both');
 
-echo '<section class="' . esc_attr($spacing_class) . '">';
+// Altes Attribut `spacingBottom: false` (= nur oben) gilt, solange `spacing` nicht gesetzt ist.
+if ($spacing === 'both' && ($attributes['spacingBottom'] ?? true) === false) {
+    $spacing = 'top';
+}
+
+$spacing_class = hengegroup_theme_get_section_spacing_class($spacing);
+
+$background = hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''));
+
+printf(
+    '<section class="%1$s" data-background="%2$s">',
+    esc_attr(trim($spacing_class . ' ' . $background['class'])),
+    esc_attr($background['name']),
+);
 echo '<div class="' . esc_attr($wrapper_class) . '">';
-echo '<div class="col-span-12 ' . esc_attr($align_class) . '">';
-
-if ($has_heading) {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'text' => $heading,
-            'accent_markup' => true,
-            'variant' => 'headline-base',
-            'tag' => $heading_tag,
-            'class' => $has_text ? 'mb-7' : '',
-        ],
-    ]);
-}
-
-if ($has_text) {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'text' => $text,
-            'accent_markup' => true,
-            'variant' => 'body-lg',
-        ],
-    ]);
-}
-
-echo '</div>';
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_section_header([
+    'size' => 'base',
+    'align' => $text_align === 'center' ? 'center' : 'start',
+    'title' => $heading,
+    'title_tag' => $heading_tag,
+    'description' => $text,
+    'color' => $background['color'],
+    'class' => 'col-span-12',
+]);
 echo '</div>';
 echo '</section>';

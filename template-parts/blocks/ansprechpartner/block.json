@@ -23,6 +23,16 @@
         "layout": {
             "type": "string",
             "default": "grid-4"
+        },
+        "background": {
+            "type": "string",
+            "enum": ["light", "muted", "dark"],
+            "default": "muted"
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
     },
     "providesContext": {

@@ -11,6 +11,7 @@ if (!function_exists('hengegroup_theme_render_company_contact_row')) {
 $contact_row = hengegroup_theme_render_company_contact_row(
     hengegroup_theme_get_contact_block_contact(is_array($attributes ?? null) ? $attributes : []),
     (string) ($attributes['accent'] ?? 'henge-grey'),
+    hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''))['dark'],
 );
 
 echo '<div class="wrapper gap-y-12">';

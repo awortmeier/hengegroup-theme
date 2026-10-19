@@ -30,7 +30,16 @@ import { create, toHTMLString } from "@wordpress/rich-text";
 import ServerSideRender from "@wordpress/server-side-render";
 import metadata from "../../../../template-parts/blocks/produkte/block.json";
 import produkteRasterMetadata from "../../../../template-parts/blocks/produkte-raster/block.json";
-import { ACCENT_FORMATS, buttonPreviewClassName } from "../shared.jsx";
+import {
+    ACCENT_FORMATS,
+    buttonPreviewClassName,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
+} from "../shared.jsx";
 
 // Texts stay plain strings (render.php escapes them); create()/toHTMLString() only handles entity
 // escaping inside RichText.
@@ -153,8 +162,10 @@ function ProductPicker({ productIds, onChange }) {
 function Edit({ attributes, setAttributes, isSelected }) {
     const { heading, headingTag, text, buttonText, buttonUrl, productIds } = attributes;
     // alignfull without supports.align: theme.json contentSize would otherwise narrow the block.
+    const background = sectionBackground(attributes.background);
+    const headerClasses = sectionHeaderClassNames({ size: "base", color: background.color });
     const blockProps = useBlockProps({
-        className: "alignfull bg-grey-dark section-spacing",
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
     });
     const buttonRef = useRef();
     const [isEditingButtonUrl, setIsEditingButtonUrl] = useState(false);
@@ -179,6 +190,14 @@ function Edit({ attributes, setAttributes, isSelected }) {
                             onClick: () => setAttributes({ headingTag: option.value }),
                         }))}
                     />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
+                    />
                 </ToolbarGroup>
                 <ToolbarGroup>
                     <ToolbarButton
@@ -199,57 +218,69 @@ function Edit({ attributes, setAttributes, isSelected }) {
             </InspectorControls>
             <section {...blockProps}>
                 <div className="wrapper gap-y-10">
-                    <div className="col-span-12 max-w-2xl">
-                        <RichText
-                            tagName={headingTag}
-                            className="text-grey-light mb-4 text-5xl leading-tight font-semibold"
-                            value={heading}
-                            onChange={(html) => setAttributes({ heading: html })}
-                            placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={ACCENT_FORMATS}
-                            disableLineBreaks
-                        />
-                        <RichText
-                            tagName="p"
-                            className={`text-grey-light text-lg leading-normal ${
-                                buttonText.trim() !== "" ? "mb-8" : ""
-                            }`}
-                            value={toRichTextValue(text)}
-                            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-                            placeholder={__("Text eingeben…", "hengegroup-theme")}
-                            allowedFormats={[]}
-                        />
-                        <span ref={buttonRef} className="relative inline-block">
+                    <SectionHeaderInner
+                        size="base"
+                        color={background.color}
+                        className="col-span-12 max-w-3xl"
+                        title={
                             <RichText
-                                tagName="span"
-                                className={buttonPreviewClassName("grey-light", "lg")}
-                                value={toRichTextValue(buttonText)}
-                                onChange={(html) =>
-                                    setAttributes({ buttonText: fromRichTextValue(html) })
-                                }
-                                placeholder={__("Button-Text eingeben…", "hengegroup-theme")}
-                                allowedFormats={[]}
+                                tagName={headingTag}
+                                className={headerClasses.title}
+                                value={heading}
+                                onChange={(html) => setAttributes({ heading: html })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
                                 disableLineBreaks
                             />
-                            {isEditingButtonUrl && isSelected && (
-                                <Popover
-                                    placement="bottom-start"
-                                    anchor={buttonRef.current}
-                                    onClose={() => setIsEditingButtonUrl(false)}
-                                >
-                                    <LinkControl
-                                        value={{ url: buttonUrl }}
-                                        onChange={(nextValue) =>
-                                            setAttributes({ buttonUrl: nextValue.url || "" })
-                                        }
-                                        settings={[]}
-                                    />
-                                </Popover>
-                            )}
-                        </span>
-                    </div>
+                        }
+                        description={
+                            <RichText
+                                tagName="p"
+                                className={headerClasses.description}
+                                value={toRichTextValue(text)}
+                                onChange={(html) =>
+                                    setAttributes({ text: fromRichTextValue(html) })
+                                }
+                                placeholder={__("Text eingeben…", "hengegroup-theme")}
+                                allowedFormats={[]}
+                            />
+                        }
+                        actions={
+                            <span ref={buttonRef} className="relative inline-block">
+                                <RichText
+                                    tagName="span"
+                                    className={buttonPreviewClassName(
+                                        background.dark ? "grey-light" : "grey-dark",
+                                        "lg"
+                                    )}
+                                    value={toRichTextValue(buttonText)}
+                                    onChange={(html) =>
+                                        setAttributes({ buttonText: fromRichTextValue(html) })
+                                    }
+                                    placeholder={__("Button-Text eingeben…", "hengegroup-theme")}
+                                    allowedFormats={[]}
+                                    disableLineBreaks
+                                />
+                                {isEditingButtonUrl && isSelected && (
+                                    <Popover
+                                        placement="bottom-start"
+                                        anchor={buttonRef.current}
+                                        onClose={() => setIsEditingButtonUrl(false)}
+                                    >
+                                        <LinkControl
+                                            value={{ url: buttonUrl }}
+                                            onChange={(nextValue) =>
+                                                setAttributes({ buttonUrl: nextValue.url || "" })
+                                            }
+                                            settings={[]}
+                                        />
+                                    </Popover>
+                                )}
+                            </span>
+                        }
+                    />
                     {productIds.length === 0 ? (
-                        <p className="text-grey-light col-span-12">
+                        <p className="col-span-12">
                             {__(
                                 "Noch keine Produkte ausgewählt — im rechten Bereich Produkte hinzufügen.",
                                 "hengegroup-theme"

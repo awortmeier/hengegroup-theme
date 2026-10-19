@@ -14,25 +14,36 @@
 // Transparenz/Blur. Der Verlauf oben als border-image, weil border-* keinen Verlauf kann.
 ?>
     <header
-        class="fixed inset-x-0 top-0 z-50 border-t-2 border-t-transparent bg-grey-dark px-6 py-4.5 transition-[background-color,backdrop-filter] duration-300 ease-out sm:px-12 data-[scrolled=true]:bg-grey-dark/70 data-[scrolled=true]:backdrop-blur-[6px] [border-image:linear-gradient(90deg,var(--color-henge-grey),var(--color-henge-green),var(--color-henge-blue))_1]"
+        class="elevation-dark fixed inset-x-0 top-0 z-50 shadow-raised border-t-2 border-t-transparent bg-grey-dark px-6 py-4.5 transition-[background-color,backdrop-filter] duration-300 ease-out sm:px-12 data-[scrolled=true]:bg-grey-dark/70 data-[scrolled=true]:backdrop-blur-[6px] [border-image:linear-gradient(90deg,var(--color-henge-grey),var(--color-henge-green),var(--color-henge-blue))_1]"
         id="siteHeader"
         data-site-header
         data-scrolled="false"
     >
         <div class="mx-auto flex max-w-[2000px] items-center justify-between gap-4">
-            <?php if (has_custom_logo()): ?>
-                <div class="shrink-0 [&_img]:h-8 [&_img]:w-auto">
-                    <?php the_custom_logo(); ?>
-                </div>
-            <?php else: ?>
-                <a
-                    class="inline-flex shrink-0 items-center text-xl font-semibold text-grey-light no-underline"
-                    href="<?php echo esc_url(home_url('/')); ?>"
-                    aria-label="<?php echo esc_attr(get_bloginfo('name')); ?>"
+            <a
+                class="inline-flex shrink-0 items-center"
+                href="<?php echo esc_url(home_url('/')); ?>"
+                aria-label="<?php echo esc_attr(get_bloginfo('name')); ?>"
+            >
+                <img
+                    class="hidden h-11 w-auto sm:block"
+                    src="<?php echo esc_url(
+                        get_theme_file_uri('assets/images/logos/logo-hengegroup-wbm-claim.svg'),
+                    ); ?>"
+                    alt=""
+                    width="387"
+                    height="73"
                 >
-                    <span><?php bloginfo('name'); ?></span>
-                </a>
-            <?php endif; ?>
+                <img
+                    class="h-10 w-auto sm:hidden"
+                    src="<?php echo esc_url(
+                        get_theme_file_uri('assets/images/logos/logo-hengegroup-wm.svg'),
+                    ); ?>"
+                    alt=""
+                    width="140"
+                    height="130"
+                >
+            </a>
 
             <div class="flex flex-wrap items-center justify-end gap-3">
                 <?php get_template_part(

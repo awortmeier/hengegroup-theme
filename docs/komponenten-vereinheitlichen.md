@@ -93,12 +93,10 @@ Ziel: die Auspraegungen auf wenige Achsen und Slots verdichten.
    Gap-Spalte, Footer unten).
 4. Bestehende Aufrufer muessen weiter funktionieren; wo die DOM-Struktur sich aendert, Aufrufer im
    selben Schritt anpassen.
-5. Showcase-Seite (`page-component-showcase-<name>.php`): jede Variante und jede Auspraegung aus
-   der Nutzerliste, beschriftet mit Variante + Slots. Auf Dev als private Seite anlegen, falls
-   nicht vorhanden (wp-cli, `--post_status=private`, `--page_template=...`).
-6. Pruefen, deployen.
+5. Pruefen, deployen. Es gibt keine Showcase-Seiten: geprueft wird auf den echten Seiten auf Dev.
+   Aendert sich die Optik bestehender Aufrufer, Phase 4 direkt anschliessen.
 
-**Stopp:** Nutzer prueft die Showcase-Seite und die Zuordnung.
+**Stopp:** Nutzer prueft die betroffenen Seiten (Liste mit URL je Auspraegung) und die Zuordnung.
 
 ## Phase 4: Alles umstellen
 
@@ -135,7 +133,7 @@ Der Nutzer meldet Abweichungen (Abstaende, Hover, Klickbarkeit, Optik). Pro Meld
 Die fertige Komponente nur lesen, nichts aendern. Pruefen:
 
 - Stehen Klassen oder Logik doppelt (PHP und JSX, mehrere Bloecke, mehrere Helfer)?
-- Gibt es Optionen, die nur die Showcase-Seite nutzt? (Je Option alle Aufrufer pruefen.)
+- Gibt es Optionen, die kein Aufrufer nutzt? (Je Option alle Aufrufer pruefen.)
 - Gibt es Reste frueherer Runden (Klassen fuer entfernte Mechanismen, Ueberschreibungen, die nicht
   mehr greifen)?
 - Gibt es mehr als einen Aufrufweg?
@@ -166,6 +164,7 @@ Gelten fuer jede Komponente mit Flaeche und Inhalt. Spalte "Card" zeigt die dort
 | Hover/Fokus         | Nur wenn das ganze Element klickbar ist.                                                           | Download-Karte ohne Hover                                   |
 | Listen-Markup       | Ein verlinktes Listenelement bleibt `<li>`, der Link kommt hinein.                                 | `<li>` um das `<a>`                                         |
 | Farben auf Flaechen | Text-, Icon- und Button-Farbe folgen der Flaeche (hell/dunkel), zentral, nicht je Aufrufer.        | `darkVariants`, `button` in der JSON                        |
+| Breite/Raster       | Die Komponente setzt keine Breite und keinen Rasterplatz; das gibt der Aufrufer per `class`.       | Sektionskopf: `col-span-12 max-w-3xl`                       |
 | Barrierefreiheit    | Dekorative Bilder `decorative`, sichtbarer Text statt `aria-label`, wo moeglich.                   | Logo-Alt aus der Mediathek                                  |
 
 Komponenten ohne Flaeche (Formularfelder, Tabs, Accordion): Padding-, Gap-, Stufen-, Slot- und
@@ -275,20 +274,22 @@ node inspect.mjs <url> '1' card.png '[data-slot=card][data-variant=split]'
 
 ## Stolperfallen
 
-| Falle                                                               | Folge                                       | Abhilfe                                                                                      |
-| ------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `>` in einer nicht escapten Klasse (`[&>a]:flex-1`) im Block-Output | `wptexturize` zerlegt das Tag, Optik weg    | Klassen ueber `esc_attr`/`hengegroup_theme_render_attributes()`, sonst ohne `>` (`*:flex-1`) |
-| Grid mit festen Zeilen und Gap, obwohl eine Zeile leer ist          | unsichtbarer Zusatzabstand                  | Zeilen nur bei Inhalt                                                                        |
-| Stretched Link ueber Elementen mit Buttons                          | zwei Klickziele, Hover auf nicht Klickbarem | Regel "ganz oder nur Buttons"                                                                |
-| `tag: li` plus `href`                                               | `<a>` direkt im `<ul>`                      | `<li>` um den Link                                                                           |
-| Margins im Inhalt plus Gap der Komponente                           | doppelte, ungleiche Abstaende               | Margins entfernen                                                                            |
-| `phpcs:ignore` hinter mehrzeiligem `echo`                           | Lint-Fehler                                 | Kommentar in die Zeile vor dem `echo`                                                        |
-| Prettier verschiebt `phpcs:ignore` zwischen `?>` und `<?php`        | Lint-Fehler                                 | Aufruf in den vorherigen PHP-Block ziehen                                                    |
-| `prettier --write .`                                                | fremde Dateien umformatiert                 | nur eigene Pfade formatieren                                                                 |
-| Klassen zur Laufzeit zusammengesetzt                                | Tailwind erzeugt sie nicht                  | nur vollstaendige Literale (JSON oder Code)                                                  |
-| Bestandsinhalte ohne neues Attribut                                 | Optik aendert sich ungewollt                | im `enum` kein `default`, Fallback im Code                                                   |
-| Nur HTTP 200 geprueft                                               | kaputte Optik bleibt unbemerkt              | messen und Screenshots ansehen                                                               |
-| `curl`-HTML statt DOM gelesen                                       | Umbauten durch WordPress/Parser uebersehen  | DOM im Browser auslesen                                                                      |
+| Falle                                                               | Folge                                          | Abhilfe                                                                                      |
+| ------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `>` in einer nicht escapten Klasse (`[&>a]:flex-1`) im Block-Output | `wptexturize` zerlegt das Tag, Optik weg       | Klassen ueber `esc_attr`/`hengegroup_theme_render_attributes()`, sonst ohne `>` (`*:flex-1`) |
+| Grid mit festen Zeilen und Gap, obwohl eine Zeile leer ist          | unsichtbarer Zusatzabstand                     | Zeilen nur bei Inhalt                                                                        |
+| Stretched Link ueber Elementen mit Buttons                          | zwei Klickziele, Hover auf nicht Klickbarem    | Regel "ganz oder nur Buttons"                                                                |
+| `tag: li` plus `href`                                               | `<a>` direkt im `<ul>`                         | `<li>` um den Link                                                                           |
+| Margins im Inhalt plus Gap der Komponente                           | doppelte, ungleiche Abstaende                  | Margins entfernen                                                                            |
+| `phpcs:ignore` hinter mehrzeiligem `echo`                           | Lint-Fehler                                    | Kommentar in die Zeile vor dem `echo`                                                        |
+| Prettier verschiebt `phpcs:ignore` zwischen `?>` und `<?php`        | Lint-Fehler                                    | Aufruf in den vorherigen PHP-Block ziehen                                                    |
+| `prettier --write .`                                                | fremde Dateien umformatiert                    | nur eigene Pfade formatieren                                                                 |
+| Klassen zur Laufzeit zusammengesetzt                                | Tailwind erzeugt sie nicht                     | nur vollstaendige Literale (JSON oder Code)                                                  |
+| Bestandsinhalte ohne neues Attribut                                 | Optik aendert sich ungewollt                   | im `enum` kein `default`, Fallback im Code                                                   |
+| `<?php // phpcs:ignore` vor `echo` in HTML-Templates                | Prettier verschiebt den Kommentar, Lint-Fehler | Markup in eine Variable rendern, dann `printf('%s', $var, // phpcs:ignore ...)`              |
+| Kinder per `contents` direkt im `.wrapper`-Grid, Kopf darueber      | Kopf-Abstand = Zeilenabstand der Karten        | Kinder in `col-span-12 grid grid-cols-subgrid` mit eigenem `gap-y`                           |
+| Nur HTTP 200 geprueft                                               | kaputte Optik bleibt unbemerkt                 | messen und Screenshots ansehen                                                               |
+| `curl`-HTML statt DOM gelesen                                       | Umbauten durch WordPress/Parser uebersehen     | DOM im Browser auslesen                                                                      |
 
 ## Referenz: Card
 
@@ -300,7 +301,6 @@ node inspect.mjs <url> '1' card.png '[data-slot=card][data-variant=split]'
 | Projektkomponente auf Basis | `template-parts/components/contact-card.php`                                                                                                     |
 | Block mit Varianten         | `template-parts/blocks/firma/` (`block.json`, `render.php`)                                                                                      |
 | Editor                      | `assets/js/blocks/shared.jsx` (`CardInner`, `cardClassName`, `CardToolbar`, `cardVariations`, `AddItemTile`), `assets/js/blocks/firmen/edit.jsx` |
-| Showcase                    | `page-component-showcase-card.php`                                                                                                               |
 
 ## Checkliste
 
@@ -334,5 +334,4 @@ node inspect.mjs <url> '1' card.png '[data-slot=card][data-variant=split]'
 - [ ] Dev: Status, keine PHP-Fehler, Anzahl je Variante unveraendert
 - [ ] Gemessen (Padding, Margins), Screenshots jeder Variante angesehen
 - [ ] Editor geprueft oder als offen gemeldet
-- [ ] Showcase aktuell
 - [ ] CHANGELOG, `entscheidungen.md`, `how-to.md`; neue allgemeine Regeln hier ergaenzt

@@ -372,9 +372,9 @@ function hengegroup_theme_get_product_category_data(WP_Term $term): array
 }
 
 /**
- * section-intro.php-Config aus Gruppen-/Kategoriedaten; gepflegte Block-Attribute gewinnen.
+ * section-header.php-Config aus Gruppen-/Kategoriedaten; gepflegte Block-Attribute gewinnen.
  */
-function hengegroup_theme_get_section_intro_config(array $term_data, array $attributes): array
+function hengegroup_theme_get_term_section_header_config(array $term_data, array $attributes): array
 {
     $value = static function (string $attribute, string $fallback) use ($attributes): string {
         $override = trim((string) ($attributes[$attribute] ?? ''));
@@ -382,15 +382,29 @@ function hengegroup_theme_get_section_intro_config(array $term_data, array $attr
         return $override !== '' ? $override : $fallback;
     };
     $variant = $value('kickerVariant', $term_data['variant']);
+    $kicker = $value('kicker', $term_data['kicker']);
+    $kicker_markup = '';
+
+    if ($kicker !== '') {
+        ob_start();
+        get_template_part('template-parts/base/badge', null, [
+            'config' => [
+                'text' => $kicker,
+                'variant' => in_array($variant, hengegroup_theme_get_badge_variants(), true)
+                    ? $variant
+                    : $term_data['variant'],
+                'font' => 'accent',
+                'class' => 'px-3.5 tracking-[1.5px] uppercase',
+            ],
+        ]);
+        $kicker_markup = (string) ob_get_clean();
+    }
 
     return [
-        'kicker' => $value('kicker', $term_data['kicker']),
-        'kicker_variant' => in_array($variant, hengegroup_theme_get_badge_variants(), true)
-            ? $variant
-            : $term_data['variant'],
-        'heading' => $value('heading', $term_data['heading']),
-        'heading_tag' => (string) ($attributes['headingTag'] ?? 'h2'),
-        'text' => $value('text', $term_data['description']),
+        'kicker' => $kicker_markup,
+        'title' => $value('heading', $term_data['heading']),
+        'title_tag' => (string) ($attributes['headingTag'] ?? 'h2'),
+        'description' => $value('text', $term_data['description']),
     ];
 }
 
@@ -758,6 +772,7 @@ function hengegroup_theme_validate_product_inquiry(array $values, bool $with_loc
 function hengegroup_theme_render_company_contact_row(
     array $contact = [],
     string $accent = 'henge-grey',
+    bool $on_dark = false,
 ): string {
     $card = hengegroup_theme_render_company_contact_card($contact, $accent);
 
@@ -765,7 +780,7 @@ function hengegroup_theme_render_company_contact_row(
     get_template_part('template-parts/components/inquiry-form', null, [
         'product_id' => 0,
         'with_location' => true,
-        'tone' => 'light',
+        'tone' => $on_dark ? 'dark' : 'light',
     ]);
     $form = (string) ob_get_clean();
 

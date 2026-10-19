@@ -9,7 +9,7 @@ declare(strict_types=1);
 //   text / label   string   link text
 //   content        string   richer pre-rendered body (wins over text)
 //   href           string   required
-//   active         bool     aria-current="page", henge-green
+//   active         bool     aria-current="page", henge-blue
 //   class / attributes / data_attributes
 
 if (!isset($args['config']) || !is_array($args['config'])) {
@@ -36,7 +36,7 @@ $base_class =
     'outline-none rounded-lg transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 if ($active) {
-    $base_class .= ' text-henge-green font-semibold';
+    $base_class .= ' text-henge-blue font-semibold';
 }
 
 $element_attributes = $attributes;

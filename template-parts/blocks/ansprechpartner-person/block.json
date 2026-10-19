@@ -38,6 +38,10 @@
             "type": "string",
             "enum": ["split", "filled"],
             "default": "split"
+        },
+        "accent": {
+            "type": "string",
+            "default": ""
         }
     },
     "supports": {

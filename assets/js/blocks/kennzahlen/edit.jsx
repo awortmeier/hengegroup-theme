@@ -20,14 +20,23 @@ import {
     fromRichTextValue,
     HeadingTagDropdown,
     toRichTextValue,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
 } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/kennzahlen/block.json";
 import itemMetadata from "../../../../template-parts/blocks/kennzahl/block.json";
 
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag } = attributes;
+    const background = sectionBackground(attributes.background);
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
-    const blockProps = useBlockProps({ className: "alignfull section-dark section-spacing" });
+    const blockProps = useBlockProps({
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
+    });
     const innerBlocksProps = useInnerBlocksProps(
         {
             className: `col-span-12 grid grid-cols-[repeat(auto-fit,minmax(12.5rem,1fr))] gap-6 ${APPENDER_GRID_CELL_CLASSNAME}`,
@@ -41,7 +50,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                     rootClientId={clientId}
                     blockName={itemMetadata.name}
                     label={__("+ Kennzahl", "hengegroup-theme")}
-                    tone="dark"
+                    tone={background.tone}
                     className="min-h-24"
                 />
             ),
@@ -56,18 +65,34 @@ function Edit({ attributes, setAttributes, clientId }) {
                         value={headingTag}
                         onChange={(value) => setAttributes({ headingTag: value })}
                     />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
+                    />
                 </ToolbarGroup>
             </BlockControls>
             <section {...blockProps}>
-                <div className="wrapper gap-y-12">
-                    <RichText
-                        tagName={headingTag}
-                        className="text-grey-light col-span-12 text-4xl leading-tight font-semibold"
-                        value={heading}
-                        onChange={(html) => setAttributes({ heading: html })}
-                        placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                        allowedFormats={ACCENT_FORMATS}
-                        disableLineBreaks
+                <div className="wrapper gap-y-10">
+                    <SectionHeaderInner
+                        className="col-span-12"
+                        color={background.color}
+                        title={
+                            <RichText
+                                tagName={headingTag}
+                                className={
+                                    sectionHeaderClassNames({ color: background.color }).title
+                                }
+                                value={heading}
+                                onChange={(html) => setAttributes({ heading: html })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
+                                disableLineBreaks
+                            />
+                        }
                     />
                     <ul {...innerBlocksProps} />
                 </div>
@@ -95,7 +120,7 @@ function ItemEdit({ attributes, setAttributes }) {
             <li {...blockProps}>
                 <RichText
                     tagName="p"
-                    className="text-grey-light text-5xl leading-none font-semibold tabular-nums"
+                    className="text-5xl leading-none font-semibold tabular-nums"
                     value={toRichTextValue(value)}
                     onChange={(html) => setAttributes({ value: fromRichTextValue(html) })}
                     placeholder={__("Wert", "hengegroup-theme")}
@@ -104,7 +129,7 @@ function ItemEdit({ attributes, setAttributes }) {
                 />
                 <RichText
                     tagName="p"
-                    className="text-grey-light mt-2.5 text-base leading-normal"
+                    className="mt-2.5 text-base leading-normal"
                     value={toRichTextValue(label)}
                     onChange={(html) => setAttributes({ label: fromRichTextValue(html) })}
                     placeholder={__("Beschriftung eingeben…", "hengegroup-theme")}

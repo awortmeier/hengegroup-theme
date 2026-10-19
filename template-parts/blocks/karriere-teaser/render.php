@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 // Block "Karriere-Teaser": Text + Button links, neueste Stellen rechts (companyId > 0: nur dieses
-// Unternehmen). Ohne Button-URL geht der Button auf die Karriereseite (#stellen).
+// Unternehmen, ohne Stellen dann ganz ausgeblendet). Ohne Button-URL geht der Button auf die
+// Karriereseite (#stellen).
 
 if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_job_teaser_list')) {
     return;
@@ -22,43 +23,22 @@ $button_url = trim((string) ($attributes['buttonUrl'] ?? ''));
 $limit = (int) ($attributes['limit'] ?? 4);
 $company_id = (int) ($attributes['companyId'] ?? 0);
 $empty_text = trim((string) ($attributes['emptyText'] ?? ''));
-$is_dark = ($attributes['variant'] ?? 'light') === 'dark';
-$color = $is_dark ? 'light' : 'default';
+// Der Hintergrund heisst hier aus Kompatibilitaet mit bestehenden Inhalten `variant`.
+$background = hengegroup_theme_get_section_background((string) ($attributes['variant'] ?? ''));
+$spacing_class = hengegroup_theme_get_section_spacing_class(
+    (string) ($attributes['spacing'] ?? ''),
+);
+$is_dark = $background['dark'];
 $list_markup = hengegroup_theme_render_job_teaser_list($limit, $company_id);
 
-printf(
-    '<section class="%1$s" data-block="karriere-teaser" data-variant="%2$s">',
-    esc_attr($is_dark ? 'section-dark section-spacing' : 'section-spacing'),
-    esc_attr($is_dark ? 'dark' : 'light'),
-);
-echo '<div class="wrapper items-start gap-y-10">';
-echo '<div class="col-span-12 lg:col-span-6 lg:pr-8">';
-
-if ($heading !== '') {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'text' => $heading,
-            'accent_markup' => true,
-            'variant' => 'headline-base',
-            'tag' => $heading_tag,
-            'color' => $color,
-            'class' => 'mb-5',
-        ],
-    ]);
+if ($list_markup === '' && $company_id > 0) {
+    return;
 }
 
-if ($text !== '') {
-    get_template_part('template-parts/base/typography', null, [
-        'config' => [
-            'text' => $text,
-            'variant' => 'body-lg',
-            'color' => $color,
-            'class' => $button_text !== '' ? 'mb-8' : '',
-        ],
-    ]);
-}
+$actions = '';
 
 if ($button_text !== '') {
+    ob_start();
     get_template_part('template-parts/base/button', null, [
         'config' => [
             'text' => $button_text,
@@ -70,9 +50,27 @@ if ($button_text !== '') {
             'size' => 'lg',
         ],
     ]);
+    $actions = (string) ob_get_clean();
 }
 
-echo '</div>';
+printf(
+    '<section class="%1$s" data-block="karriere-teaser" data-background="%2$s">',
+    esc_attr(trim($spacing_class . ' ' . $background['class'])),
+    esc_attr($background['name']),
+);
+echo '<div class="wrapper items-start gap-y-10">';
+
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_section_header([
+    'size' => 'base',
+    'color' => $background['color'],
+    'title' => $heading,
+    'title_tag' => $heading_tag,
+    'description' => $text,
+    'actions' => $actions,
+    'class' => 'col-span-12 lg:col-span-6 lg:pr-8',
+]);
+
 echo '<div class="col-span-12 lg:col-span-6">';
 
 if ($list_markup !== '') {

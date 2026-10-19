@@ -1,7 +1,7 @@
 {
     "variants": ["default", "filled", "split", "ghost", "glass"],
     "darkVariants": ["filled", "split", "glass"],
-    "plainVariants": ["ghost", "glass"],
+    "plainVariants": ["ghost"],
     "defaultAccent": {
         "filled": "grey-dark",
         "other": "henge-grey"
@@ -14,11 +14,11 @@
         "glass": "bg-black/55 text-grey-light backdrop-blur-md"
     },
     "shape": {
-        "raised": "rounded-card-raised shadow-card-raised",
+        "raised": "rounded-card-raised shadow-raised",
         "plain": "rounded-card-raised"
     },
     "hover": {
-        "raised": "hover:shadow-lg",
+        "raised": "hover:shadow-raised-hover",
         "ghost": "",
         "glass": "hover:bg-black/65"
     },

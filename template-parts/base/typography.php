@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-// Text with a fixed size scale. `variant` (look) and `tag` (semantics) are independent: pass `tag`
-// whenever the heading level differs from the visual size.
+// Text with a fixed size scale (typography-classes.json, shared with the block editor). `variant`
+// (look) and `tag` (semantics) are independent: pass `tag` whenever the heading level differs from
+// the visual size.
 //
 // Config:
 //   text / content   string   required
@@ -41,55 +42,23 @@ if ($data_slot === '') {
     $data_slot = 'typography';
 }
 
-$variant_default_tags = [
-    'headline-lg' => 'h1',
-    'headline-base' => 'h2',
-    'headline-sm' => 'h3',
-    'headline-xs' => 'h4',
-    'body-lg' => 'p',
-    'body-base' => 'p',
-    'body-sm' => 'p',
-    'body-xs' => 'small',
-];
+$classes = hengegroup_theme_get_typography_classes();
 
-if (!array_key_exists($variant, $variant_default_tags)) {
+if (!isset($classes['variants'][$variant])) {
     $variant = 'body-base';
 }
 
 $allowed_tags = ['p', 'span', 'div', 'strong', 'em', 'small', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
 
 if (!in_array($tag, $allowed_tags, true)) {
-    $tag = $variant_default_tags[$variant];
+    $tag = (string) $classes['tags'][$variant];
 }
 
-$allowed_colors = ['default', 'light', 'neutral'];
-
-if (!in_array($color, $allowed_colors, true)) {
+if (!isset($classes['colors'][$color])) {
     $color = 'default';
 }
 
-$variant_classes = [
-    'headline-lg' => 'text-6xl font-semibold leading-tight',
-    'headline-base' => 'text-5xl font-semibold leading-tight',
-    'headline-sm' => 'text-4xl font-semibold leading-tight',
-    'headline-xs' => 'text-3xl font-semibold leading-tight',
-    'body-lg' => 'text-2xl leading-normal',
-    'body-base' => 'text-lg leading-normal',
-    'body-sm' => 'text-base leading-normal',
-    'body-xs' => 'text-sm leading-normal',
-];
-
-$color_classes = [
-    'default' => '',
-    'light' => 'text-grey-light',
-    'neutral' => 'text-muted-foreground',
-];
-
-$computed_class = $variant_classes[$variant];
-
-if ($color_classes[$color] !== '') {
-    $computed_class .= ' ' . $color_classes[$color];
-}
+$computed_class = trim($classes['variants'][$variant] . ' ' . $classes['colors'][$color]);
 
 $element_attributes = $attributes;
 $element_attributes['class'] = trim(

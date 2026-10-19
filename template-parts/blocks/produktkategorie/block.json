@@ -14,7 +14,7 @@
         },
         "background": {
             "type": "string",
-            "enum": ["light", "muted"],
+            "enum": ["light", "muted", "dark"],
             "default": "light"
         },
         "kicker": {
@@ -36,6 +36,11 @@
         "text": {
             "type": "string",
             "default": ""
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
     },
     "supports": {

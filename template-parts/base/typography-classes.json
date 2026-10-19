@@ -1,0 +1,27 @@
+{
+    "variants": {
+        "headline-lg": "text-6xl font-semibold leading-tight",
+        "headline-base": "text-5xl font-semibold leading-tight",
+        "headline-sm": "text-4xl font-semibold leading-tight",
+        "headline-xs": "text-3xl font-semibold leading-tight",
+        "body-lg": "text-2xl leading-normal",
+        "body-base": "text-lg leading-normal",
+        "body-sm": "text-base leading-normal",
+        "body-xs": "text-sm leading-normal"
+    },
+    "tags": {
+        "headline-lg": "h1",
+        "headline-base": "h2",
+        "headline-sm": "h3",
+        "headline-xs": "h4",
+        "body-lg": "p",
+        "body-base": "p",
+        "body-sm": "p",
+        "body-xs": "small"
+    },
+    "colors": {
+        "default": "",
+        "light": "text-grey-light",
+        "neutral": "text-muted-foreground"
+    }
+}

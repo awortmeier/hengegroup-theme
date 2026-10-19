@@ -9,12 +9,17 @@ if (!is_array($attributes ?? null) || !function_exists('hengegroup_theme_render_
     return;
 }
 
+$on_dark = hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''))[
+    'dark'
+];
+
 if (($attributes['part'] ?? 'list') === 'contact') {
     // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     echo hengegroup_theme_render_contact_card(hengegroup_theme_get_open_jobs_contact($attributes), [
-        'variant' => 'filled',
+        'variant' => $on_dark ? 'default' : 'filled',
     ]);
     return;
 }
 
-echo hengegroup_theme_render_open_jobs_list((string) ($attributes['emptyText'] ?? '')); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_open_jobs_list((string) ($attributes['emptyText'] ?? ''), $on_dark);

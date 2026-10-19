@@ -24,7 +24,11 @@ if ($empty_text !== '') {
     get_template_part('template-parts/base/typography', null, [
         'config' => [
             'variant' => 'body-base',
-            'color' => 'neutral',
+            'color' => hengegroup_theme_get_section_background(
+                (string) ($attributes['background'] ?? ''),
+            )['dark']
+                ? 'light'
+                : 'neutral',
             'text' => $empty_text,
         ],
     ]);

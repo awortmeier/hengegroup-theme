@@ -1,17 +1,21 @@
-// Editor for "Textabschnitt": heading/text as RichText in the canvas, heading tag, alignment and
-// width in the toolbar, bottom spacing in the sidebar. alignfull is hardcoded so the width choice is visible in the editor.
+// Editor for "Textabschnitt": heading/text as RichText in the canvas, heading tag, alignment, width,
+// background and spacing in the toolbar. alignfull is hardcoded so the width choice is visible in the editor.
 import { createElement as el, Fragment } from "@wordpress/element";
 import { registerBlockType } from "@wordpress/blocks";
-import { BlockControls, InspectorControls, RichText, useBlockProps } from "@wordpress/block-editor";
-import {
-    PanelBody,
-    ToggleControl,
-    ToolbarButton,
-    ToolbarDropdownMenu,
-    ToolbarGroup,
-} from "@wordpress/components";
+import { BlockControls, RichText, useBlockProps } from "@wordpress/block-editor";
+import { ToolbarButton, ToolbarDropdownMenu, ToolbarGroup } from "@wordpress/components";
 import { __ } from "@wordpress/i18n";
-import { ACCENT_FORMATS, HeadingTagDropdown } from "../shared.jsx";
+import {
+    ACCENT_FORMATS,
+    HeadingTagDropdown,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
+    sectionSpacing,
+} from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/textabschnitt/block.json";
 
 // "default" = .wrapper, "small" = .wrapper-small.
@@ -22,15 +26,18 @@ const CONTAINER_WIDTH_OPTIONS = [
 
 function Edit({ attributes, setAttributes }) {
     const { heading, headingTag, text, textAlign, containerWidth, spacingBottom } = attributes;
-    const alignClass = textAlign === "left" ? "text-left" : "text-center";
+    // Legacy `spacingBottom: false` (= top only) applies while `spacing` is unset, as in render.php.
+    const spacing =
+        sectionSpacing(attributes.spacing) === "both" && spacingBottom === false
+            ? "top"
+            : sectionSpacing(attributes.spacing);
+    const align = textAlign === "left" ? "start" : "center";
+    const background = sectionBackground(attributes.background);
+    const headerClasses = sectionHeaderClassNames({ size: "base", align, color: background.color });
     const wrapperClass = containerWidth === "default" ? "wrapper" : "wrapper-small";
     const blockProps = useBlockProps({
-        className: spacingBottom ? "alignfull section-spacing" : "alignfull section-spacing-top",
+        className: `alignfull ${sectionSpacingClassName(spacing)} ${background.className}`,
     });
-    // Array + join: prettier-plugin-tailwindcss would eat the leading space in a template literal.
-    const headingClassName = ["text-5xl font-semibold leading-tight", text !== "" ? "mb-7" : ""]
-        .filter(Boolean)
-        .join(" ");
 
     return (
         <Fragment>
@@ -65,39 +72,46 @@ function Edit({ attributes, setAttributes }) {
                             onClick: () => setAttributes({ containerWidth: option.value }),
                         }))}
                     />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={spacing}
+                        onChange={(value) => setAttributes({ spacing: value, spacingBottom: true })}
+                    />
                 </ToolbarGroup>
             </BlockControls>
-            <InspectorControls>
-                <PanelBody title={__("Abstände", "hengegroup-theme")} initialOpen>
-                    <ToggleControl
-                        label={__("Abstand unten", "hengegroup-theme")}
-                        checked={spacingBottom}
-                        onChange={(value) => setAttributes({ spacingBottom: value })}
-                    />
-                </PanelBody>
-            </InspectorControls>
             <section {...blockProps}>
                 <div className={wrapperClass}>
-                    <div className={`col-span-12 ${alignClass}`}>
-                        <RichText
-                            tagName={headingTag}
-                            className={headingClassName}
-                            value={heading}
-                            onChange={(value) => setAttributes({ heading: value })}
-                            placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={ACCENT_FORMATS}
-                            disableLineBreaks
-                        />
-                        <RichText
-                            tagName="p"
-                            className="text-2xl leading-normal"
-                            value={text}
-                            onChange={(value) => setAttributes({ text: value })}
-                            placeholder={__("Text eingeben…", "hengegroup-theme")}
-                            allowedFormats={ACCENT_FORMATS}
-                            disableLineBreaks
-                        />
-                    </div>
+                    <SectionHeaderInner
+                        size="base"
+                        align={align}
+                        color={background.color}
+                        className="col-span-12"
+                        title={
+                            <RichText
+                                tagName={headingTag}
+                                className={headerClasses.title}
+                                value={heading}
+                                onChange={(value) => setAttributes({ heading: value })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
+                                disableLineBreaks
+                            />
+                        }
+                        description={
+                            <RichText
+                                tagName="p"
+                                className={headerClasses.description}
+                                value={text}
+                                onChange={(value) => setAttributes({ text: value })}
+                                placeholder={__("Text eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
+                                disableLineBreaks
+                            />
+                        }
+                    />
                 </div>
             </section>
         </Fragment>

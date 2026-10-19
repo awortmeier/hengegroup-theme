@@ -22,7 +22,8 @@
         },
         "background": {
             "type": "string",
-            "default": "light"
+            "default": "light",
+            "enum": ["light", "muted", "dark"]
         },
         "heading": {
             "type": "string",
@@ -31,6 +32,11 @@
         "headingTag": {
             "type": "string",
             "default": "h2"
+        },
+        "spacing": {
+            "type": "string",
+            "enum": ["both", "top", "bottom"],
+            "default": "both"
         }
     },
     "supports": {

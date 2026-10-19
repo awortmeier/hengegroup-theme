@@ -56,11 +56,11 @@ $footer_heading = static function (string $text, array $attributes = []): void {
         ],
     ]);
 };
-$footer_link_class = 'text-grey-light no-underline';
+$footer_link_class = 'text-grey-light no-underline transition-colors hover:text-henge-blue-light';
 ?>
 
 <footer
-    class="bg-grey-dark py-14 text-grey-light shadow-[inset_0_40px_40px_-40px_rgb(0_0_0/0.5)] sm:px-12"
+    class="elevation-dark bg-grey-dark py-14 text-grey-light inset-shadow-section-top sm:px-12"
 >
     <div class="wrapper gap-y-12 pb-8">
         <div class="col-span-12 sm:col-span-6 lg:col-span-4">
@@ -155,7 +155,7 @@ $footer_link_class = 'text-grey-light no-underline';
                 <?php $footer_heading(__('Links', 'hengegroup-theme'), [
                     'id' => 'footer-links-heading',
                 ]); ?>
-                <div class="text-sm [&_a]:text-grey-light [&_a]:no-underline">
+                <div class="text-sm [&_a]:text-grey-light [&_a]:no-underline [&_a]:transition-colors [&_a:hover]:text-henge-blue-light">
                     <?php printf(
                         '%s',
                         $footer_menu, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

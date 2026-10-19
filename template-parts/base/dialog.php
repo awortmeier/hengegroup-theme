@@ -136,7 +136,7 @@ if (trim($inner_html) === '') {
 // `display` would override the UA's dialog:not([open]) { display: none }.
 $content_classes =
     'open:flex m-auto w-full max-w-[calc(100%-2rem)] flex-col gap-6 rounded-2xl bg-background p-8 ' .
-    'text-foreground shadow-[0_12px_32px_rgba(0,0,0,0.14)] outline-hidden sm:max-w-lg ' .
+    'text-foreground shadow-overlay outline-hidden sm:max-w-lg ' .
     'animate-[hg-dialog-in_180ms_ease-out] ' .
     '[&::backdrop]:bg-black/50 [&::backdrop]:animate-[hg-dialog-overlay-in_180ms_ease-out]';
 

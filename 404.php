@@ -30,7 +30,7 @@ defined('ABSPATH') || exit();
                 ],
             ]); ?>
             <?php $link_class =
-                'text-grey-dark underline underline-offset-4 hover:text-henge-green'; ?>
+                'text-grey-dark underline underline-offset-4 hover:text-henge-blue'; ?>
             <p class="max-w-[560px] text-xl leading-normal text-pretty text-grey-dark">
                 <?php printf(
                     /* translators: 1: link to the home page, 2: link to the product overview. */ esc_html__(

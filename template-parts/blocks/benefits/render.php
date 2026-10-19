@@ -24,41 +24,27 @@ if ($items === '' && $heading === '') {
 }
 
 $anchor = trim((string) ($attributes['anchor'] ?? ''));
+$background = hengegroup_theme_get_section_background((string) ($attributes['background'] ?? ''));
+$spacing_class = hengegroup_theme_get_section_spacing_class(
+    (string) ($attributes['spacing'] ?? ''),
+);
 
 printf(
-    '<section%s class="scroll-mt-24 section-dark section-spacing">',
+    '<section%1$s class="%2$s" data-background="%3$s">',
     $anchor !== '' ? ' id="' . esc_attr($anchor) . '"' : '',
+    esc_attr(trim('scroll-mt-24 ' . $spacing_class . ' ' . $background['class'])),
+    esc_attr($background['name']),
 );
-echo '<div class="wrapper gap-y-12">';
+echo '<div class="wrapper gap-y-10">';
 
-if ($heading !== '' || $text !== '') {
-    echo '<div class="col-span-12 max-w-3xl">';
-
-    if ($heading !== '') {
-        get_template_part('template-parts/base/typography', null, [
-            'config' => [
-                'text' => $heading,
-                'accent_markup' => true,
-                'variant' => 'headline-sm',
-                'tag' => $heading_tag,
-                'color' => 'light',
-                'class' => 'mb-5',
-            ],
-        ]);
-    }
-
-    if ($text !== '') {
-        get_template_part('template-parts/base/typography', null, [
-            'config' => [
-                'text' => $text,
-                'variant' => 'body-base',
-                'color' => 'light',
-            ],
-        ]);
-    }
-
-    echo '</div>';
-}
+// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+echo hengegroup_theme_render_section_header([
+    'title' => $heading,
+    'title_tag' => $heading_tag,
+    'description' => $text,
+    'color' => $background['color'],
+    'class' => 'col-span-12 max-w-3xl',
+]);
 
 if ($items !== '') {
     $grid_class = hengegroup_theme_get_tile_grid_class(
@@ -67,7 +53,7 @@ if ($items !== '') {
         'sm:grid-cols-2 lg:grid-cols-3',
     );
 
-    printf('<ul class="%s">', esc_attr('col-span-12 grid gap-6 text-grey-light ' . $grid_class));
+    printf('<ul class="%s">', esc_attr('col-span-12 grid gap-6 ' . $grid_class));
     echo $items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     echo '</ul>';
 }

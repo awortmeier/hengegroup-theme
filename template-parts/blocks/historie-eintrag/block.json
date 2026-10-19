@@ -8,6 +8,7 @@
     "description": "Ein Eintrag im Block „Historie“: Jahr, Titel, Text und Akzentfarbe des Punkts.",
     "textdomain": "hengegroup-theme",
     "parent": ["hengegroup-theme/historie"],
+    "usesContext": ["hengegroup-theme/historie-background"],
     "attributes": {
         "year": {
             "type": "string",

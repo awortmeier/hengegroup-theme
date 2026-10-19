@@ -27,6 +27,12 @@ import {
     TileLayoutDropdown,
     tileGridClass,
     useInnerBlockCount,
+    SectionHeaderInner,
+    sectionHeaderClassNames,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
 } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/benefits/block.json";
 import benefitMetadata from "../../../../template-parts/blocks/benefit/block.json";
@@ -38,6 +44,7 @@ const DEFAULT_ICON = Object.keys(ICONS)[0] || "";
 
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag, text, layout } = attributes;
+    const background = sectionBackground(attributes.background);
     const gridClass = tileGridClass(
         layout,
         useInnerBlockCount(clientId),
@@ -45,12 +52,12 @@ function Edit({ attributes, setAttributes, clientId }) {
     );
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
     const blockProps = useBlockProps({
-        className:
-            "alignfull bg-grey-dark bg-[radial-gradient(ellipse_60%_50%_at_20%_20%,rgba(255,255,255,0.08),transparent_60%),radial-gradient(ellipse_50%_40%_at_80%_70%,rgba(255,255,255,0.05),transparent_60%)] shadow-[inset_0_40px_40px_-40px_rgba(0,0,0,0.5),inset_0_-40px_40px_-40px_rgba(0,0,0,0.5)] section-spacing",
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
     });
+    const headerClasses = sectionHeaderClassNames({ color: background.color });
     const innerBlocksProps = useInnerBlocksProps(
         {
-            className: `text-grey-light col-span-12 grid gap-6 ${gridClass} ${APPENDER_GRID_CELL_CLASSNAME}`,
+            className: `col-span-12 grid gap-6 ${gridClass} ${APPENDER_GRID_CELL_CLASSNAME}`,
         },
         {
             allowedBlocks: [benefitMetadata.name],
@@ -61,7 +68,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                     rootClientId={clientId}
                     blockName={CHILD_BLOCK_NAME}
                     label={__("+ Benefit hinzufügen", "hengegroup-theme")}
-                    tone="dark"
+                    tone={background.tone}
                     className="min-h-16"
                 />
             ),
@@ -81,29 +88,45 @@ function Edit({ attributes, setAttributes, clientId }) {
                         onChange={(value) => setAttributes({ layout: value })}
                         withDefault
                     />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
+                    />
                 </ToolbarGroup>
             </BlockControls>
             <section {...blockProps}>
-                <div className="wrapper gap-y-12">
-                    <div className="col-span-12 max-w-3xl">
-                        <RichText
-                            tagName={headingTag}
-                            className="text-grey-light mb-5 text-4xl leading-tight font-semibold"
-                            value={heading}
-                            onChange={(html) => setAttributes({ heading: html })}
-                            placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                            allowedFormats={ACCENT_FORMATS}
-                            disableLineBreaks
-                        />
-                        <RichText
-                            tagName="p"
-                            className="text-grey-light text-lg leading-normal"
-                            value={toRichTextValue(text)}
-                            onChange={(html) => setAttributes({ text: fromRichTextValue(html) })}
-                            placeholder={__("Einleitung eingeben…", "hengegroup-theme")}
-                            allowedFormats={[]}
-                        />
-                    </div>
+                <div className="wrapper gap-y-10">
+                    <SectionHeaderInner
+                        color={background.color}
+                        className="col-span-12 max-w-3xl"
+                        title={
+                            <RichText
+                                tagName={headingTag}
+                                className={headerClasses.title}
+                                value={heading}
+                                onChange={(html) => setAttributes({ heading: html })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
+                                disableLineBreaks
+                            />
+                        }
+                        description={
+                            <RichText
+                                tagName="p"
+                                className={headerClasses.description}
+                                value={toRichTextValue(text)}
+                                onChange={(html) =>
+                                    setAttributes({ text: fromRichTextValue(html) })
+                                }
+                                placeholder={__("Einleitung eingeben…", "hengegroup-theme")}
+                                allowedFormats={[]}
+                            />
+                        }
+                    />
                     <ul {...innerBlocksProps} />
                 </div>
             </section>

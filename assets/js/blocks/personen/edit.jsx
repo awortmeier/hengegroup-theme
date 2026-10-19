@@ -31,19 +31,28 @@ import {
     TileLayoutDropdown,
     tileGridClass,
     useInnerBlockCount,
+    SectionHeaderInner,
+    sectionBackground,
+    SectionBackgroundDropdown,
+    sectionHeaderClassNames,
+    sectionSpacingClassName,
+    SectionSpacingDropdown,
 } from "../shared.jsx";
 import metadata from "../../../../template-parts/blocks/personen/block.json";
 import personMetadata from "../../../../template-parts/blocks/person/block.json";
 
 function Edit({ attributes, setAttributes, clientId }) {
     const { heading, headingTag, layout } = attributes;
+    const background = sectionBackground(attributes.background);
     const gridClass = tileGridClass(
         layout,
         useInnerBlockCount(clientId),
         "mx-auto w-full max-w-225 md:grid-cols-2"
     );
     // Full width in the editor iframe (theme.json contentSize would otherwise apply).
-    const blockProps = useBlockProps({ className: "alignfull section-spacing" });
+    const blockProps = useBlockProps({
+        className: `alignfull ${sectionSpacingClassName(attributes.spacing)} ${background.className}`,
+    });
     const innerBlocksProps = useInnerBlocksProps(
         {
             className: `col-span-12 grid gap-8 ${gridClass} ${APPENDER_GRID_CELL_CLASSNAME}`,
@@ -54,6 +63,7 @@ function Edit({ attributes, setAttributes, clientId }) {
             orientation: "horizontal",
             renderAppender: () => (
                 <AddItemTile
+                    tone={background.tone}
                     rootClientId={clientId}
                     blockName={personMetadata.name}
                     label={__("+ Person hinzufügen", "hengegroup-theme")}
@@ -76,18 +86,34 @@ function Edit({ attributes, setAttributes, clientId }) {
                         value={headingTag}
                         onChange={(value) => setAttributes({ headingTag: value })}
                     />
+                    <SectionBackgroundDropdown
+                        value={background.name}
+                        onChange={(value) => setAttributes({ background: value })}
+                    />
+                    <SectionSpacingDropdown
+                        value={attributes.spacing}
+                        onChange={(value) => setAttributes({ spacing: value })}
+                    />
                 </ToolbarGroup>
             </BlockControls>
             <section {...blockProps}>
                 <div className="wrapper gap-y-10">
-                    <RichText
-                        tagName={headingTag}
-                        className="col-span-12 text-4xl leading-tight font-semibold"
-                        value={heading}
-                        onChange={(html) => setAttributes({ heading: html })}
-                        placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
-                        allowedFormats={ACCENT_FORMATS}
-                        disableLineBreaks
+                    <SectionHeaderInner
+                        color={background.color}
+                        className="col-span-12"
+                        title={
+                            <RichText
+                                tagName={headingTag}
+                                className={
+                                    sectionHeaderClassNames({ color: background.color }).title
+                                }
+                                value={heading}
+                                onChange={(html) => setAttributes({ heading: html })}
+                                placeholder={__("Überschrift eingeben…", "hengegroup-theme")}
+                                allowedFormats={ACCENT_FORMATS}
+                                disableLineBreaks
+                            />
+                        }
                     />
                     <ul {...innerBlocksProps} />
                 </div>

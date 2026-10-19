@@ -19,7 +19,8 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
   Config je Lauf nimmt (`vite.config.editor.factory.js`).
 - **`.wrapper`** (12-Spalten-Grid, `app.css`) ist eine CSS-Klasse statt Template-Part: ein
   Grid-Container hat keine Config-API ueber `col-span-*` hinaus.
-- **Komponenten-Showcase und Performance-Tooling** zurueckgestellt (siehe `to-do.md`).
+- **Keine Showcase-Seiten**: Komponenten werden auf den echten Seiten auf Dev geprueft.
+  Performance-Tooling zurueckgestellt.
 - **Kein `CONTRIBUTING.md`** (Alleinentwickler), **kein RTL-Support**.
 
 ## Styling
@@ -40,11 +41,22 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
 - **Eigenes Vokabular statt shadcn**, wo das Design es verlangt: Button-/Badge-Varianten heissen
   nach Markenfarben, `typography.php` nutzt `headline-*`/`body-*` mit fester Skala (keine
   Pixel-Einzelwerte aus dem Design).
-- **Karten**: eine Schattenstufe als Token `card-raised` (nicht `card`, weil `shadow-card` mit
-  der Farbe `--color-card` kollidieren wuerde). Alle Karten ausser der Produktbox laufen ueber
+- **Schatten**: nur die Tokens `shadow-raised` (Karten, Bilder, Header), `shadow-raised-hover`,
+  `shadow-overlay` (Popover, Menues, Dialoge) und `inset-shadow-section(-top)`; `shadow-xs` bleibt
+  fuer Formular-Controls. Dunkle Flaechen setzen `elevation-dark`, das alle Schatten darin
+  verdreifacht, statt eigener Dark-Werte. Alle Karten ausser der Produktbox laufen ueber
   `card.php` (`variant`, `accent`); die Kontaktkarte liefert nur Inhalte dazu. Die Klassen stehen in
   `card-classes.json`, die PHP und Editor (`shared.jsx`) lesen, damit beide nicht auseinanderlaufen. Padding traegt immer
   der Container, Abstaende innen kommen nur aus `gap` (Inhalt ist eine Spalte), nie aus Margins.
+- **Sektionskopf** (`section-header.php`): zwei Groessen statt freier Klassen, Groesse fest je Block
+  (nicht im Editor waehlbar), nur `textabschnitt` waehlt die Ausrichtung. Breite und Rasterplatz
+  setzt der Aufrufer, Kopf und Inhalt trennt das `gap-y-10` der Sektion. Display-Titel (Buehne, 404) bleiben ausserhalb.
+- **Sektionshintergrund und -abstand** (`background`: Keine = body, Grau = `neutral-200`,
+  Dunkelgrau = `section-dark`; `spacing`: oben und unten, nur oben, nur unten) an jedem
+  Sektions-Block ausser Buehne und Stellen-Liste (liegt im Fliesstext). Default ist das bisherige
+  Aussehen des Blocks; Inhalte erben die Textfarbe der Sektion. Wegen bestehender Inhalte heisst der
+  Hintergrund beim Karriere-Teaser weiter `variant`, und beim Textabschnitt gilt `spacingBottom: false`
+  als "nur oben", solange `spacing` nicht gesetzt ist.
 - **Kartenvariante pro Karte**: erlaubte Varianten stehen als `enum` des `variant`-Attributs in der
   `block.json` des Kind-Blocks, gelesen von render.php und Editor (Block-Variationen, Auswahl beim
   Hinzufuegen). Enthaelt eine Karte Links/Buttons, ist nur das klickbar (kein Karten-Link, kein
@@ -60,6 +72,9 @@ Nur aktuell gueltige Entscheidungen, die nicht aus dem Code ersichtlich sind. Hi
 
 - **Header-/Footer-Navigation** aus `wp_nav_menu`, Kontaktdaten unter Einstellungen > Footer (nicht
   Customizer, der ist ausgeblendet). Leere Felder blenden Zeilen aus.
+- **Instagram-Feed zentral** (Einstellungen > Instagram, Option statt Block-Attribut): ein Token,
+  ein Abgleich fuer alle Bloecke. Bilder werden als lokale JPEG-Kopien gespeichert, weil die
+  CDN-URLs von Instagram ablaufen und Besucher so keine Daten an Meta senden (DSGVO).
 - **Sprachumschalter** ist nur Optik: Mehrsprachigkeit kommt per Multisite (kein Hreflang-Plugin),
   erst dann echte Links und `hreflang`.
 - **Datei-Editor** (Theme/Plugin) im Backend entfernt: Code nur ueber Repo + Deploy. Kein

@@ -16,8 +16,7 @@ Offene Punkte. Erledigtes entfernen; bewusste Entscheidungen nach `entscheidunge
 - **Mobile-Navigation** (Design fehlt).
 - **Sprachumschalter** verlinkt auf `#`, bis das Multisite-Netzwerk existiert.
 - **Dark Mode** ueber `tokens.css` (ob ueberhaupt).
-- **Automatisierte a11y-/Visual-Regression-Tests** (Playwright + axe gegen eine Showcase-Seite in
-  wp-env).
+- **Automatisierte a11y-/Visual-Regression-Tests** (Playwright + axe gegen die Seiten auf Dev).
 - **DSGVO**: Exporter/Eraser (`wp_privacy_personal_data_exporters`/`_erasers`) und
   `wp_add_privacy_policy_content()` fuer Bewerbungen und Produktanfragen.
 - **Product-JSON-LD** (optional, fuer KI-Suchen).

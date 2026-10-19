@@ -265,7 +265,7 @@ $table_markup = sprintf(
     $body_markup, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 );
 
-$card_classes = 'rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-sm';
+$card_classes = 'rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-raised';
 
 $wrapper_attributes = $attributes;
 $wrapper_attributes['class'] = trim($card_classes . ($class_name !== '' ? ' ' . $class_name : ''));
